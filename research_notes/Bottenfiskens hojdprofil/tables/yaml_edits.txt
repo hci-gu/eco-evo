@@ -1,0 +1,197 @@
+# YAML edits for fgconfig/fg_library.yaml interaction_definitions (NOT applied).
+# Rule A + band overlap with every member's search profile f_m(z); one section, every pair at once.
+# Per pair: the keys to set (others unchanged). 'dark_ratio: REMOVE' = delete the key.
+# light_threshold_deg unchanged on every pair (krill pairs 0 / mackerel -5; fish pairs -5; benthivore
+# fish pairs 0). depth_access_table rows as the krill pairs (loader renormalises to an equal-cell mean 1).
+# The three benthic rows are recommendation [J] (section 'Benthic pairs'); final_nobenthic leaves them out.
+
+  predatory_fish_preys_on_krill:
+    # band (saithe exp 15 m) + rule A: R_sat on 25 mm krill |C0| 0.4 0.57 m vs 0.87 (x0.45); n/d rule
+    # was: max_intake_rate 0.026, dark_ratio 0.02, light_threshold_deg 0.0, stage_access None, table yes
+    max_intake_rate: 0.0117
+    dark_ratio: 0.0245
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.0306}
+      - {depth_m: 100.0, factor: 0.0141}
+      - {depth_m: 149.9, factor: 0.0141}
+      - {depth_m: 150.0, factor: 0.00262}
+      - {depth_m: 249.9, factor: 0.00262}
+      - {depth_m: 250.0, factor: 6.91e-05}
+
+  whiting_preys_on_krill:
+    # band 10 m + rule A: x1.00 (2 L cap binds); no dark_ratio (stomachs: no diel difference, Onsrud et al. 2004)
+    # was: max_intake_rate 0.043, dark_ratio None, light_threshold_deg None, stage_access None, table yes
+    max_intake_rate: 0.043
+    # dark_ratio: none today, none proposed
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.148}
+      - {depth_m: 100.0, factor: 0.0354}
+      - {depth_m: 149.9, factor: 0.0354}
+      - {depth_m: 150.0, factor: 0.00199}
+      - {depth_m: 249.9, factor: 0.00199}
+      - {depth_m: 250.0, factor: 0.0}
+
+  planktivorous_fish_preys_on_krill:
+    # band + rule A: x1.00 (2 L cap binds); dark_ratio 0.57 from the stomachs (245)
+    # was: max_intake_rate 0.023, dark_ratio 0.57, light_threshold_deg 0.0, stage_access None, table yes
+    max_intake_rate: 0.023
+    dark_ratio: 0.57
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.0707}
+      - {depth_m: 100.0, factor: 0.0211}
+      - {depth_m: 149.9, factor: 0.0211}
+      - {depth_m: 150.0, factor: 0.00377}
+      - {depth_m: 249.9, factor: 0.00377}
+      - {depth_m: 250.0, factor: 0.00171}
+
+  benthivorous_fish_preys_on_krill:
+    # member search profiles (this note) + rule A: x0.52; LRD bed-bound, haddock >= 35 cm rise by day; n/d integral
+    # was: max_intake_rate 0.013, dark_ratio 0.03, light_threshold_deg 0.0, stage_access None, table yes
+    max_intake_rate: 0.00679
+    dark_ratio: 0.036
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.0225}
+      - {depth_m: 100.0, factor: 0.00583}
+      - {depth_m: 149.9, factor: 0.00583}
+      - {depth_m: 150.0, factor: 0.000701}
+      - {depth_m: 249.9, factor: 0.000701}
+      - {depth_m: 250.0, factor: 1.52e-05}
+
+  mackerel_preys_on_krill:
+    # band + rule A: x1.00; dark_ratio 0.42 from the stomachs (245)
+    # was: max_intake_rate 0.0039, dark_ratio 0.42, light_threshold_deg -5.0, stage_access None, table yes
+    max_intake_rate: 0.0039
+    dark_ratio: 0.42
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.00532}
+      - {depth_m: 100.0, factor: 0.00429}
+      - {depth_m: 149.9, factor: 0.00429}
+      - {depth_m: 150.0, factor: 0.0031}
+      - {depth_m: 249.9, factor: 0.0031}
+      - {depth_m: 250.0, factor: 0.00284}
+
+  predatory_fish_preys_on_planktivorous_fish:
+    # band x0.49 x rule A x5.93 = x2.90 (saithe 0.92 of a); n/d rule
+    # was: max_intake_rate 0.006, dark_ratio 0.41, light_threshold_deg -5.0, stage_access [0.65, 0.18], table no
+    max_intake_rate: 0.0174
+    dark_ratio: 0.0594
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.0384}
+      - {depth_m: 100.0, factor: 0.0211}
+      - {depth_m: 149.9, factor: 0.0211}
+      - {depth_m: 150.0, factor: 0.00716}
+      - {depth_m: 249.9, factor: 0.00716}
+      - {depth_m: 250.0, factor: 0.00286}
+
+  predatory_fish_preys_on_benthivorous_fish:
+    # band x1.45 x rule A x5.24 = x7.60 (saithe 0.89, hake 0.05; 243 time factors replaced by the profile); window aw on the band a's member shares, a(L) exponent from the band a (kexp +1.7)
+    # was: max_intake_rate 0.0055, dark_ratio 0.48, light_threshold_deg -5.0, stage_access [0.42, 0.12], table no
+    max_intake_rate: 0.0418
+    dark_ratio: 0.165
+    stage_access: [0.392, 0.0388]
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.0693}
+      - {depth_m: 100.0, factor: 0.057}
+      - {depth_m: 149.9, factor: 0.057}
+      - {depth_m: 150.0, factor: 0.0234}
+      - {depth_m: 249.9, factor: 0.0234}
+      - {depth_m: 250.0, factor: 0.0128}
+
+  predatory_fish_preys_on_whiting:
+    # band x0.46 x rule A x6.02 = x2.76; n/d rule
+    # was: max_intake_rate 0.013, dark_ratio 0.48, light_threshold_deg -5.0, stage_access [0.41, 0.08], table no
+    max_intake_rate: 0.0359
+    dark_ratio: 0.137
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.0599}
+      - {depth_m: 100.0, factor: 0.0495}
+      - {depth_m: 149.9, factor: 0.0495}
+      - {depth_m: 150.0, factor: 0.0199}
+      - {depth_m: 249.9, factor: 0.0199}
+      - {depth_m: 250.0, factor: 0.0097}
+
+  predatory_fish_preys_on_mackerel:
+    # band x0.13 x rule A x1.19 = x0.155 (spurdog summer surface 0.76 of a); OFF in every reading
+    # was: max_intake_rate 0.00088, dark_ratio 0.92, light_threshold_deg -5.0, stage_access [0.14, 0.14], table no
+    max_intake_rate: 0.000137
+    dark_ratio: 0.923
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.000229}
+      - {depth_m: 100.0, factor: 0.000127}
+      - {depth_m: 149.9, factor: 0.000127}
+      - {depth_m: 150.0, factor: 0.000102}
+      - {depth_m: 249.9, factor: 0.000102}
+      - {depth_m: 250.0, factor: 0.000102}
+
+  whiting_preys_on_planktivorous_fish:
+    # band (whiting 10 m) x0.75 x rule A x2.06 = x1.55; n/d rule
+    # was: max_intake_rate 0.0212, dark_ratio 0.48, light_threshold_deg -5.0, stage_access [0.18, 0.0073], table no
+    max_intake_rate: 0.0329
+    dark_ratio: 0.212
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.0626}
+      - {depth_m: 100.0, factor: 0.0341}
+      - {depth_m: 149.9, factor: 0.0341}
+      - {depth_m: 150.0, factor: 0.0205}
+      - {depth_m: 249.9, factor: 0.0205}
+      - {depth_m: 250.0, factor: 0.0159}
+
+  whiting_preys_on_benthivorous_fish:
+    # band x0.20 x rule A x2.51 = x0.49; FLAGGED OPEN until whiting's height above the bed is measured
+    # was: max_intake_rate 0.21, dark_ratio 0.64, light_threshold_deg -5.0, stage_access [0.038, 0.0064], table no
+    max_intake_rate: 0.103
+    dark_ratio: 0.565
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.132}
+      - {depth_m: 100.0, factor: 0.119}
+      - {depth_m: 149.9, factor: 0.119}
+      - {depth_m: 150.0, factor: 0.0825}
+      - {depth_m: 249.9, factor: 0.0825}
+      - {depth_m: 250.0, factor: 0.0715}
+
+  mackerel_preys_on_planktivorous_fish:
+    # band x0.61 x rule A x1.53 = x0.93; no table (derived shape flat +-1 %); dark_ratio 0.16 from the stomachs (228)
+    # was: max_intake_rate 0.0266, dark_ratio 0.16, light_threshold_deg -5.0, stage_access [0.02, 0.0029], table no
+    max_intake_rate: 0.0248
+    dark_ratio: 0.16
+
+  benthivorous_fish_preys_on_planktivorous_fish:
+    # rule A at the bed x1.25 x member search profiles x0.87 = x1.08 (cod 0.68 / haddock 0.32; pout 0.85 of a); n/d integral
+    # was: max_intake_rate 0.0198, dark_ratio 0.06, light_threshold_deg 0.0, stage_access [0.62, 0.18], table no
+    max_intake_rate: 0.0214
+    dark_ratio: 0.141
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.0401}
+      - {depth_m: 100.0, factor: 0.0262}
+      - {depth_m: 149.9, factor: 0.0262}
+      - {depth_m: 150.0, factor: 0.0114}
+      - {depth_m: 249.9, factor: 0.0114}
+      - {depth_m: 250.0, factor: 0.00685}
+
+  benthivorous_fish_preys_on_whiting:
+    # rule A at the bed x1.19 x member search profiles x0.90 = x1.07 (cod 0.94 of a); n/d integral
+    # was: max_intake_rate 0.021, dark_ratio 0.15, light_threshold_deg 0.0, stage_access [0.68, 0.24], table no
+    max_intake_rate: 0.0226
+    dark_ratio: 0.168
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.0366}
+      - {depth_m: 100.0, factor: 0.0306}
+      - {depth_m: 149.9, factor: 0.0306}
+      - {depth_m: 150.0, factor: 0.0129}
+      - {depth_m: 249.9, factor: 0.0129}
+      - {depth_m: 250.0, factor: 0.00738}
+
+  benthivorous_fish_preys_on_benthic_infauna:
+    # x tau_bed 0.71: members' search-time share in bed contact (0-2 m; flatfish and LRD 1, cod 0.70, haddock 0.56 by size)
+    # was: max_intake_rate 0.036, dark_ratio None, light_threshold_deg None, stage_access None, table no
+    max_intake_rate: 0.0256
+
+  benthivorous_fish_preys_on_mobile_epifauna:
+    # x tau_bed 0.74 (epifauna member weights a_enc x e)
+    # was: max_intake_rate 0.15, dark_ratio None, light_threshold_deg None, stage_access None, table no
+    max_intake_rate: 0.11
+
+  benthivorous_fish_preys_on_norway_lobster:
+    # x tau_bed 0.70 (cod; with haddock / LRD weights 0.69)
+    # was: max_intake_rate 0.44, dark_ratio None, light_threshold_deg None, stage_access None, table no
+    max_intake_rate: 0.308

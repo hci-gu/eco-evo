@@ -204,20 +204,34 @@ fabricates mass.
   schooling left to the prey's hide action). Since section 223.26 every
   a is per tonne of the WHOLE predator group (the engine has no phi
   since 221; the 220 "per capable tonne" values over-credited by 1/phi):
-  planktivores -> zoo 0.0122 (243.3); benthivores -> infauna 0.036, -> epifauna
-  0.15, -> Nephrops 0.44, -> planktivores 0.0198 (243.3: per species, pout 0.87 of it), -> whiting 0.021 (251: membership 0.320, whiting's own band share 0.7 day / 0.5 night);
+  Since section 269 every visual fish pair (krill and fish prey) has ONE
+  vision rule (rule A: R^2 = R_nv^2 (1 - g) + R_sat^2 g, g = E/(E + 0.02 lx),
+  R_sat = min(image-area R0, 2 L_pred), |C0| krill 0.4 / fish 0.7, R_nv
+  0.1 / 0.3 m, the measured light at depth) and the BAND overlap: one
+  search-time profile f_m(z) per member shared by all its prey, the only
+  convention consistent with the 242 concurrent search (in-layer 1/H
+  credited a full search budget per prey layer); the benthivores' profiles
+  are North Sea field occupancy (Hobson et al. 2007: cod 0.70 in the bottom
+  2 m; flatfish bed-bound; large haddock off the bed by day) and their bed
+  pairs carry the bed-contact share of search time (~0.71). Each such pair
+  has its own class `depth_access_table`; the rule's night/day except where
+  stomachs give it (planktivores -> krill 0.57, mackerel -> krill 0.42, ->
+  planktivores 0.16, whiting -> krill none). research_notes/"Synregel i
+  vattenpelaren", "En synregel for fiskparen", "Overlapp i fiskparen",
+  "Bottenfiskens hojdprofil" (o-umlaut). Values:
+  planktivores -> zoo 0.0122 (243.3); benthivores -> infauna 0.0256 (269; was 0.036), -> epifauna
+  0.110 (0.15), -> Nephrops 0.308 (0.44), -> planktivores 0.0214 (0.0198), -> whiting 0.0226 (0.021);
   whiting -> epifauna 0.0116 (232: a_enc e x the vertical overlap
-  H_bed/H_whiting; was 0.27), -> planktivores 0.0212, -> zoo 0.000138
+  H_bed/H_whiting; was 0.27), -> planktivores 0.0329 (0.0212), -> zoo 0.000138
   (copepods only since 245; was 0.0023), -> krill 0.043, ->
-  benthivores 0.21; water column -> planktivores 0.0060, -> zoo
-  3.13e-05 (245; was 0.000241), -> krill 0.026, -> benthivores 0.0055 (243: the in-layer 0.0651 x each
-  member's foraging time near the bed, for concurrent search), -> whiting
-  0.013, -> mackerel 0.00088
-  (f 0.14 since 244, was 0.29; booked M2 0.021, rarely paid); mackerel -> planktivores
-  0.0266 (243.3: herring and sprat only, no overlap with the near-bed
-  pout and deep blue whiting), -> zoo 0.00084 (245: measured clearance,
+  benthivores 0.103 (0.21; flagged open: 0.12 of its booking, whiting's
+  height above the bed unmeasured); water column -> planktivores 0.0174 (0.0060), -> zoo
+  3.13e-05 (245; was 0.000241), -> krill 0.0117 (0.026), -> benthivores 0.0418 (0.0055;
+  stage_access [0.392, 0.0388] re-weighted on the band a's members), -> whiting
+  0.0359 (0.013), -> mackerel 0.000137 (0.00088; OFF in every reading); mackerel -> planktivores
+  0.0248 (0.0266; herring and sprat only), -> zoo 0.00084 (245: measured clearance,
   daytime biting on Calanus; was 0.0023), -> krill 0.0039; planktivores
-  -> krill 0.023, benthivores -> krill 0.013 (section 253: the measured box
+  -> krill 0.023, benthivores -> krill 0.00679 (0.013; before 269: section 253: the measured box
   light, 44 SMHI CTD PAR casts, ~x6 the old central profile at 80-150 m;
   research_notes/"Ljus under 50 m"; section 262: the day layer deeper over
   150-250 m beds and the < 100 m class weighted by krill presence, Sep-Apr 0.43,
@@ -247,7 +261,12 @@ fabricates mass.
 - Daylight (opt-in, section 137): a pair with `dark_ratio` < 1 has
   `a(t) = a * m(t)`, m from the sun's elevation vs `light_threshold_deg`,
   normalised so the library `a` is the annual mean; every DM then also
-  observes the light level (last input slot). Since section 220 (derived
+  observes the light level (last input slot). Since section 269 the visual
+  fish pairs take the vision rule's night/day (water column -> planktivores
+  0.0594, -> benthivores 0.165, -> whiting 0.137, -> mackerel 0.923, -> krill
+  0.0245; whiting -> planktivores 0.212, -> benthivores 0.565; benthivores
+  -> krill 0.036, -> planktivores 0.141, -> whiting 0.168), stomach values
+  where they exist; the list below is the pre-269 history. Since section 220 (derived
   night/day ratios): planktivores -> zoo 0.02 (0.03 since 243.3) at 0 deg; benthivores ->
   planktivores 0.06 and -> whiting 0.15 (251) at 0 deg (140 m is too dim
   for -5); at -5 deg (223.26): whiting -> planktivores 0.33 (0.48 since 243.3), -> zoo

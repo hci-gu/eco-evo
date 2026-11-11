@@ -1,0 +1,8834 @@
+{
+ "repro_overlap_A_band_T": {
+  "equal": {
+   "benthivorous_fish": [
+    6.588458333333334,
+    {
+     "benthic_infauna": 0.5921110958611606,
+     "krill": 0.023511295819989647,
+     "mobile_epifauna": 0.3086474537595741,
+     "norway_lobster": 0.03543295929463915,
+     "planktivorous_fish": 0.03724694371162089,
+     "whiting": 0.0030502515530159142
+    }
+   ],
+   "mackerel": [
+    1.5878333333333332,
+    {
+     "krill": 0.6587342275275211,
+     "planktivorous_fish": 0.04291806954038219,
+     "zooplankton": 0.29834770293209667
+    }
+   ],
+   "planktivorous_fish": [
+    26.02722222222222,
+    {
+     "krill": 0.37781576933287864,
+     "zooplankton": 0.6221842306671214
+    }
+   ],
+   "porpoises": [
+    0.06531736111111111,
+    {
+     "benthivorous_fish": 0.3882894969260996,
+     "planktivorous_fish": 0.32766519593089893,
+     "predatory_fish": 0.020538825480550905,
+     "whiting": 0.2635064816624506
+    }
+   ],
+   "predatory_fish": [
+    1.6483041666666665,
+    {
+     "benthivorous_fish": 0.12660007304601137,
+     "krill": 0.4749589425567889,
+     "mackerel": 0.00019465875413323593,
+     "planktivorous_fish": 0.36889486221674195,
+     "whiting": 0.025718037324227644,
+     "zooplankton": 0.003633426102096899
+    }
+   ],
+   "seals": [
+    0.08887652777777777,
+    {
+     "benthivorous_fish": 0.576191773099249,
+     "planktivorous_fish": 0.29165206954356976,
+     "predatory_fish": 0.005847371341312049,
+     "whiting": 0.12630878601586915
+    }
+   ],
+   "whiting": [
+    1.6822805555555556,
+    {
+     "benthivorous_fish": 0.011806248684190196,
+     "krill": 0.8122848754275651,
+     "mobile_epifauna": 0.08476285543370825,
+     "planktivorous_fish": 0.08219736387849703,
+     "zooplankton": 0.008948656576039393
+    }
+   ]
+  },
+  "field": {
+   "predatory_fish": [
+    1.6483041666666665,
+    {
+     "benthivorous_fish": 0.14607340752481723,
+     "krill": 0.4738369264964529,
+     "mackerel": 0.00025682993682641677,
+     "planktivorous_fish": 0.35567847564735355,
+     "whiting": 0.01830375657522815,
+     "zooplankton": 0.00585060381932179
+    }
+   ],
+   "whiting": [
+    1.6822805555555556,
+    {
+     "benthivorous_fish": 0.006953682268278939,
+     "krill": 0.8832241447069399,
+     "mobile_epifauna": 0.03950750516643019,
+     "planktivorous_fish": 0.06614374777665365,
+     "zooplankton": 0.004170920081697619
+    }
+   ]
+  },
+  "cls": {
+   "benthivorous_fish": [
+    {
+     "benthic_infauna": {
+      "enc": 0.5483701411986456,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.057463520290190626,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.285846776021956,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.03281542438117594,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.0575400777361613,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.017964060371870504,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.5770745711186932,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.034077605340381345,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.3008094228434238,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.0345331474639593,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.05058584620222718,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.002919407031315158,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.6164391538131536,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.002453028106058919,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.3213288461440173,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.036888792656243174,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.022743725226859253,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.00014645405366786287,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.6237410034425352,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.0,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.32513505297175144,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.03732574805617055,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.013791556402528835,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 6.639127013901313e-06,
+      "book": 0.012180391214434332
+     }
+    }
+   ],
+   "mackerel": [
+    {
+     "krill": {
+      "enc": 0.5440571394621885,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.05734002344633208,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.3986028370914794,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.6937379192941676,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.03851595541529163,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2677461252905407,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.66515430245491,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.04211067177472913,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2927350257703608,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.6806649554287109,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.040160029968129535,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2791750146031596,
+      "book": 0.5510653930933137
+     }
+    }
+   ],
+   "planktivorous_fish": [
+    {
+     "krill": {
+      "enc": 0.56287683240717,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.43712316759283,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.4749774604803058,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.5250225395196942,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.16399603557383186,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.8360039644261681,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.09437965582204395,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.9056203441779561,
+      "book": 0.6021473243825909
+     }
+    }
+   ],
+   "predatory_fish": [
+    {
+     "benthivorous_fish": {
+      "enc": 0.10685310833185778,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.3912595523267846,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.000163470448146306,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.41718661702278437,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.08273815204018614,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.0017990998302408116,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.11622792682032007,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.5612634861701188,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.00011989171179386939,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.30315397547399514,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.01685548701328728,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.0023792328104848687,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.17017168938519545,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.4513940691920164,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0003434167199289069,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.3668847756815525,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.002720640039092042,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.008485408982214662,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.3546022271532747,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.05311841587479829,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.001308222055148297,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.5582679990942134,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.0003785618187580534,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.032324574003807234,
+      "book": 0.010027140689210038
+     }
+    }
+   ],
+   "whiting": [
+    {
+     "benthivorous_fish": {
+      "enc": 0.0063797930747604755,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.8885546521168572,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.03513620366718672,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.06621992183522646,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.0037094293059692224,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.009899459244881023,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.8611523700436279,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.06047650629476797,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.06208698703673779,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.006384677379985326,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.0404189500000934,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.3459931183518477,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.35616667724990014,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.2198197217193653,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.03760153267879336,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.0584518740564435,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.0,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.5943121332044133,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.2844927645667626,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.06274322817238069,
+      "book": 0.022538848553798493
+     }
+    }
+   ]
+  },
+  "prey": {
+   "benthic_infauna": {
+    "total": 1.05,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.0396,
+      "ratio": 1.05,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "benthivorous_fish": {
+    "total": 0.85,
+    "pairs": {
+     "whiting": {
+      "booked": 0.1067,
+      "ratio": 0.12,
+      "verdict": "OFF",
+      "field": 0.07
+     },
+     "predatory_fish": {
+      "booked": 0.0833,
+      "ratio": 1.64,
+      "verdict": "ok",
+      "field": 1.89
+     },
+     "seals": {
+      "booked": 0.0373,
+      "ratio": 0.9,
+      "verdict": "ok",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.0068,
+      "ratio": 2.44,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "krill": {
+    "total": 1.04,
+    "pairs": {
+     "planktivorous_fish": {
+      "booked": 2.071,
+      "ratio": 0.95,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.1873,
+      "ratio": 1.46,
+      "verdict": "ok",
+      "field": 1.59
+     },
+     "mackerel": {
+      "booked": 0.125,
+      "ratio": 1.67,
+      "verdict": "ok",
+      "field": null
+     },
+     "predatory_fish": {
+      "booked": 0.119,
+      "ratio": 1.32,
+      "verdict": "ok",
+      "field": 1.31
+     },
+     "benthivorous_fish": {
+      "booked": 0.035,
+      "ratio": 0.89,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "mackerel": {
+    "total": 0.02,
+    "pairs": {
+     "predatory_fish": {
+      "booked": 0.021,
+      "ratio": 0.02,
+      "verdict": "OFF",
+      "field": 0.02
+     }
+    }
+   },
+   "mobile_epifauna": {
+    "total": 0.93,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.54,
+      "ratio": 1.0,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0761,
+      "ratio": 0.5,
+      "verdict": "ok",
+      "field": 0.23
+     }
+    }
+   },
+   "norway_lobster": {
+    "total": 2.26,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.0225,
+      "ratio": 2.26,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "phytoplankton": {
+    "total": 1.0,
+    "pairs": {}
+   },
+   "planktivorous_fish": {
+    "total": 0.64,
+    "pairs": {
+     "predatory_fish": {
+      "booked": 0.174,
+      "ratio": 0.74,
+      "verdict": "ok",
+      "field": 0.71
+     },
+     "benthivorous_fish": {
+      "booked": 0.1023,
+      "ratio": 0.51,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0545,
+      "ratio": 0.54,
+      "verdict": "ok",
+      "field": 0.43
+     },
+     "mackerel": {
+      "booked": 0.0186,
+      "ratio": 0.78,
+      "verdict": "ok",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.00946,
+      "ratio": 0.48,
+      "verdict": "ok",
+      "field": null
+     },
+     "seals": {
+      "booked": 0.00501,
+      "ratio": 1.1,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "predatory_fish": {
+    "total": 0.56,
+    "pairs": {
+     "seals": {
+      "booked": 0.0033,
+      "ratio": 0.26,
+      "verdict": "OFF",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.0021,
+      "ratio": 1.04,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "whiting": {
+    "total": 0.55,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.18,
+      "ratio": 0.25,
+      "verdict": "OFF",
+      "field": null
+     },
+     "predatory_fish": {
+      "booked": 0.157,
+      "ratio": 0.61,
+      "verdict": "ok",
+      "field": 0.43
+     },
+     "porpoises": {
+      "booked": 0.0201,
+      "ratio": 1.92,
+      "verdict": "ok",
+      "field": null
+     },
+     "seals": {
+      "booked": 0.0139,
+      "ratio": 1.81,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "zooplankton": {
+    "total": 1.01,
+    "pairs": {
+     "planktivorous_fish": {
+      "booked": 1.612,
+      "ratio": 1.03,
+      "verdict": "ok",
+      "field": null
+     },
+     "mackerel": {
+      "booked": 0.09,
+      "ratio": 0.54,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0039,
+      "ratio": 0.4,
+      "verdict": "ok",
+      "field": 0.19
+     },
+     "predatory_fish": {
+      "booked": 0.0017,
+      "ratio": 0.36,
+      "verdict": "ok",
+      "field": 0.58
+     }
+    }
+   }
+  },
+  "off": [
+   "Diet gate: OFF pairs - whiting -> benthivorous_fish enc 0.012 vs booked 0.097",
+   "Diet gate at the field spread: OFF pairs - whiting -> benthivorous_fish enc 0.007 vs booked 0.097; whiting -> mobile_epifauna enc 0.040 vs booked 0.171"
+  ]
+ },
+ "final": {
+  "equal": {
+   "benthivorous_fish": [
+    6.588458333333334,
+    {
+     "benthic_infauna": 0.5809525378063572,
+     "krill": 0.024185945207249888,
+     "mobile_epifauna": 0.3122943206967221,
+     "norway_lobster": 0.03422200470287733,
+     "planktivorous_fish": 0.04452535543439057,
+     "whiting": 0.0038198361524028127
+    }
+   ],
+   "mackerel": [
+    1.5878333333333332,
+    {
+     "krill": 0.6587342275275211,
+     "planktivorous_fish": 0.04291806954038219,
+     "zooplankton": 0.29834770293209667
+    }
+   ],
+   "planktivorous_fish": [
+    26.02722222222222,
+    {
+     "krill": 0.37781576933287864,
+     "zooplankton": 0.6221842306671214
+    }
+   ],
+   "porpoises": [
+    0.06531736111111111,
+    {
+     "benthivorous_fish": 0.3882894969260996,
+     "planktivorous_fish": 0.32766519593089893,
+     "predatory_fish": 0.020538825480550905,
+     "whiting": 0.2635064816624506
+    }
+   ],
+   "predatory_fish": [
+    1.6483041666666665,
+    {
+     "benthivorous_fish": 0.07509083076228658,
+     "krill": 0.5029699080858347,
+     "mackerel": 0.00020613886149283396,
+     "planktivorous_fish": 0.3906506401241341,
+     "whiting": 0.027234772756317173,
+     "zooplankton": 0.003847709409934614
+    }
+   ],
+   "seals": [
+    0.08887652777777777,
+    {
+     "benthivorous_fish": 0.576191773099249,
+     "planktivorous_fish": 0.29165206954356976,
+     "predatory_fish": 0.005847371341312049,
+     "whiting": 0.12630878601586915
+    }
+   ],
+   "whiting": [
+    1.6822805555555556,
+    {
+     "benthivorous_fish": 0.011806248684190196,
+     "krill": 0.8122848754275651,
+     "mobile_epifauna": 0.08476285543370825,
+     "planktivorous_fish": 0.08219736387849703,
+     "zooplankton": 0.008948656576039393
+    }
+   ]
+  },
+  "field": {
+   "predatory_fish": [
+    1.6483041666666665,
+    {
+     "benthivorous_fish": 0.08743428991043704,
+     "krill": 0.5063752963138438,
+     "mackerel": 0.00027446644212461167,
+     "planktivorous_fish": 0.3801029076186471,
+     "whiting": 0.019560675078595855,
+     "zooplankton": 0.006252364636351649
+    }
+   ],
+   "whiting": [
+    1.6822805555555556,
+    {
+     "benthivorous_fish": 0.006953682268278939,
+     "krill": 0.8832241447069399,
+     "mobile_epifauna": 0.03950750516643019,
+     "planktivorous_fish": 0.06614374777665365,
+     "zooplankton": 0.004170920081697619
+    }
+   ]
+  },
+  "cls": {
+   "benthivorous_fish": [
+    {
+     "benthic_infauna": {
+      "enc": 0.5297460772831123,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.053781018494286174,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.28476799838341704,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.03120560040337791,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.07848664108866205,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.022012664347144408,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.5676444153262233,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.0351516838262791,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.30514046422959107,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.03343806694468922,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.05494918737191444,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.003676182301302875,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.6068233572996921,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.0054834333829478455,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.3262013259575054,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.03574596965483576,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.02555940578030056,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.00018650792471834173,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.6165174945258958,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.00014148608634269866,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.3314124642223102,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.03631701941906978,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.015603412416311444,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 8.123330070150062e-06,
+      "book": 0.012180391214434332
+     }
+    }
+   ],
+   "mackerel": [
+    {
+     "krill": {
+      "enc": 0.5440571394621885,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.05734002344633208,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.3986028370914794,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.6937379192941676,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.03851595541529163,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2677461252905407,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.66515430245491,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.04211067177472913,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2927350257703608,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.6806649554287109,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.040160029968129535,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2791750146031596,
+      "book": 0.5510653930933137
+     }
+    }
+   ],
+   "planktivorous_fish": [
+    {
+     "krill": {
+      "enc": 0.56287683240717,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.43712316759283,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.4749774604803058,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.5250225395196942,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.16399603557383186,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.8360039644261681,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.09437965582204395,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.9056203441779561,
+      "book": 0.6021473243825909
+     }
+    }
+   ],
+   "predatory_fish": [
+    {
+     "benthivorous_fish": {
+      "enc": 0.0628005318541343,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.4105576000637292,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0001715332813554805,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.43776346224647855,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.0868190359399983,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.001887836614304088,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.06860726145840187,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.591506284586014,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0001263518877377212,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.3194889496797791,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.017763718367197374,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.002507434020869982,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.10302580814278874,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.487918796266028,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0003712044176948691,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.3965714003272085,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.0029407816884325744,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.009172009157847272,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.2353207903691962,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.06293568087292974,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0015500056697437072,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.6614462433400995,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.0004485270395146772,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.038298752708516036,
+      "book": 0.010027140689210038
+     }
+    }
+   ],
+   "whiting": [
+    {
+     "benthivorous_fish": {
+      "enc": 0.0063797930747604755,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.8885546521168572,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.03513620366718672,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.06621992183522646,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.0037094293059692224,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.009899459244881023,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.8611523700436279,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.06047650629476797,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.06208698703673779,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.006384677379985326,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.0404189500000934,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.3459931183518477,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.35616667724990014,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.2198197217193653,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.03760153267879336,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.0584518740564435,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.0,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.5943121332044133,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.2844927645667626,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.06274322817238069,
+      "book": 0.022538848553798493
+     }
+    }
+   ]
+  },
+  "prey": {
+   "benthic_infauna": {
+    "total": 1.03,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.0396,
+      "ratio": 1.03,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "benthivorous_fish": {
+    "total": 0.62,
+    "pairs": {
+     "whiting": {
+      "booked": 0.1067,
+      "ratio": 0.12,
+      "verdict": "OFF",
+      "field": 0.07
+     },
+     "predatory_fish": {
+      "booked": 0.0833,
+      "ratio": 0.97,
+      "verdict": "ok",
+      "field": 1.13
+     },
+     "seals": {
+      "booked": 0.0373,
+      "ratio": 0.9,
+      "verdict": "ok",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.0068,
+      "ratio": 2.44,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "krill": {
+    "total": 1.04,
+    "pairs": {
+     "planktivorous_fish": {
+      "booked": 2.071,
+      "ratio": 0.95,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.1873,
+      "ratio": 1.46,
+      "verdict": "ok",
+      "field": 1.59
+     },
+     "mackerel": {
+      "booked": 0.125,
+      "ratio": 1.67,
+      "verdict": "ok",
+      "field": null
+     },
+     "predatory_fish": {
+      "booked": 0.119,
+      "ratio": 1.39,
+      "verdict": "ok",
+      "field": 1.4
+     },
+     "benthivorous_fish": {
+      "booked": 0.035,
+      "ratio": 0.91,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "mackerel": {
+    "total": 0.02,
+    "pairs": {
+     "predatory_fish": {
+      "booked": 0.021,
+      "ratio": 0.02,
+      "verdict": "OFF",
+      "field": 0.03
+     }
+    }
+   },
+   "mobile_epifauna": {
+    "total": 0.95,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.54,
+      "ratio": 1.01,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0761,
+      "ratio": 0.5,
+      "verdict": "ok",
+      "field": 0.23
+     }
+    }
+   },
+   "norway_lobster": {
+    "total": 2.19,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.0225,
+      "ratio": 2.19,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "phytoplankton": {
+    "total": 1.0,
+    "pairs": {}
+   },
+   "planktivorous_fish": {
+    "total": 0.69,
+    "pairs": {
+     "predatory_fish": {
+      "booked": 0.174,
+      "ratio": 0.78,
+      "verdict": "ok",
+      "field": 0.76
+     },
+     "benthivorous_fish": {
+      "booked": 0.1023,
+      "ratio": 0.61,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0545,
+      "ratio": 0.54,
+      "verdict": "ok",
+      "field": 0.43
+     },
+     "mackerel": {
+      "booked": 0.0186,
+      "ratio": 0.78,
+      "verdict": "ok",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.00946,
+      "ratio": 0.48,
+      "verdict": "ok",
+      "field": null
+     },
+     "seals": {
+      "booked": 0.00501,
+      "ratio": 1.1,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "predatory_fish": {
+    "total": 0.56,
+    "pairs": {
+     "seals": {
+      "booked": 0.0033,
+      "ratio": 0.26,
+      "verdict": "OFF",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.0021,
+      "ratio": 1.04,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "whiting": {
+    "total": 0.6,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.18,
+      "ratio": 0.31,
+      "verdict": "OFF",
+      "field": null
+     },
+     "predatory_fish": {
+      "booked": 0.157,
+      "ratio": 0.64,
+      "verdict": "ok",
+      "field": 0.46
+     },
+     "porpoises": {
+      "booked": 0.0201,
+      "ratio": 1.92,
+      "verdict": "ok",
+      "field": null
+     },
+     "seals": {
+      "booked": 0.0139,
+      "ratio": 1.81,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "zooplankton": {
+    "total": 1.01,
+    "pairs": {
+     "planktivorous_fish": {
+      "booked": 1.612,
+      "ratio": 1.03,
+      "verdict": "ok",
+      "field": null
+     },
+     "mackerel": {
+      "booked": 0.09,
+      "ratio": 0.54,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0039,
+      "ratio": 0.4,
+      "verdict": "ok",
+      "field": 0.19
+     },
+     "predatory_fish": {
+      "booked": 0.0017,
+      "ratio": 0.38,
+      "verdict": "ok",
+      "field": 0.62
+     }
+    }
+   }
+  },
+  "off": [
+   "Diet gate: OFF pairs - whiting -> benthivorous_fish enc 0.012 vs booked 0.097",
+   "Diet gate at the field spread: OFF pairs - whiting -> benthivorous_fish enc 0.007 vs booked 0.097; whiting -> mobile_epifauna enc 0.040 vs booked 0.171"
+  ]
+ },
+ "final_nobenthic": {
+  "equal": {
+   "benthivorous_fish": [
+    6.588458333333334,
+    {
+     "benthic_infauna": 0.5988421547693391,
+     "krill": 0.017728510466644448,
+     "mobile_epifauna": 0.31215612672253124,
+     "norway_lobster": 0.03583575758362652,
+     "planktivorous_fish": 0.032637476976216724,
+     "whiting": 0.0027999734816417524
+    }
+   ],
+   "mackerel": [
+    1.5878333333333332,
+    {
+     "krill": 0.6587342275275211,
+     "planktivorous_fish": 0.04291806954038219,
+     "zooplankton": 0.29834770293209667
+    }
+   ],
+   "planktivorous_fish": [
+    26.02722222222222,
+    {
+     "krill": 0.37781576933287864,
+     "zooplankton": 0.6221842306671214
+    }
+   ],
+   "porpoises": [
+    0.06531736111111111,
+    {
+     "benthivorous_fish": 0.3882894969260996,
+     "planktivorous_fish": 0.32766519593089893,
+     "predatory_fish": 0.020538825480550905,
+     "whiting": 0.2635064816624506
+    }
+   ],
+   "predatory_fish": [
+    1.6483041666666665,
+    {
+     "benthivorous_fish": 0.07509083076228658,
+     "krill": 0.5029699080858347,
+     "mackerel": 0.00020613886149283396,
+     "planktivorous_fish": 0.3906506401241341,
+     "whiting": 0.027234772756317173,
+     "zooplankton": 0.003847709409934614
+    }
+   ],
+   "seals": [
+    0.08887652777777777,
+    {
+     "benthivorous_fish": 0.576191773099249,
+     "planktivorous_fish": 0.29165206954356976,
+     "predatory_fish": 0.005847371341312049,
+     "whiting": 0.12630878601586915
+    }
+   ],
+   "whiting": [
+    1.6822805555555556,
+    {
+     "benthivorous_fish": 0.011806248684190196,
+     "krill": 0.8122848754275651,
+     "mobile_epifauna": 0.08476285543370825,
+     "planktivorous_fish": 0.08219736387849703,
+     "zooplankton": 0.008948656576039393
+    }
+   ]
+  },
+  "field": {
+   "predatory_fish": [
+    1.6483041666666665,
+    {
+     "benthivorous_fish": 0.08743428991043704,
+     "krill": 0.5063752963138438,
+     "mackerel": 0.00027446644212461167,
+     "planktivorous_fish": 0.3801029076186471,
+     "whiting": 0.019560675078595855,
+     "zooplankton": 0.006252364636351649
+    }
+   ],
+   "whiting": [
+    1.6822805555555556,
+    {
+     "benthivorous_fish": 0.006953682268278939,
+     "krill": 0.8832241447069399,
+     "mobile_epifauna": 0.03950750516643019,
+     "planktivorous_fish": 0.06614374777665365,
+     "zooplankton": 0.004170920081697619
+    }
+   ]
+  },
+  "cls": {
+   "benthivorous_fish": [
+    {
+     "benthic_infauna": {
+      "enc": 0.5592190801370627,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.04037204290493788,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.2915019603323691,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.03346464378355156,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.058917925509956094,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.016524347332122904,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.5887249155417482,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.02592505295510325,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.30688235268164654,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.03523032436639558,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.04052609825170832,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.0027112562033981716,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.6181599677343126,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.003972177358729255,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.32222584814055527,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.036991769158538565,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.018515132008133157,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.0001351055997312959,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.6252821958773327,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.00010204268184260314,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.3259384243729611,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.03741797569586368,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.011253502658911858,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 5.858713088176039e-06,
+      "book": 0.012180391214434332
+     }
+    }
+   ],
+   "mackerel": [
+    {
+     "krill": {
+      "enc": 0.5440571394621885,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.05734002344633208,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.3986028370914794,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.6937379192941676,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.03851595541529163,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2677461252905407,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.66515430245491,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.04211067177472913,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2927350257703608,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.6806649554287109,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.040160029968129535,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2791750146031596,
+      "book": 0.5510653930933137
+     }
+    }
+   ],
+   "planktivorous_fish": [
+    {
+     "krill": {
+      "enc": 0.56287683240717,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.43712316759283,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.4749774604803058,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.5250225395196942,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.16399603557383186,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.8360039644261681,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.09437965582204395,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.9056203441779561,
+      "book": 0.6021473243825909
+     }
+    }
+   ],
+   "predatory_fish": [
+    {
+     "benthivorous_fish": {
+      "enc": 0.0628005318541343,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.4105576000637292,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0001715332813554805,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.43776346224647855,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.0868190359399983,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.001887836614304088,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.06860726145840187,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.591506284586014,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0001263518877377212,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.3194889496797791,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.017763718367197374,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.002507434020869982,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.10302580814278874,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.487918796266028,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0003712044176948691,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.3965714003272085,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.0029407816884325744,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.009172009157847272,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.2353207903691962,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.06293568087292974,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0015500056697437072,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.6614462433400995,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.0004485270395146772,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.038298752708516036,
+      "book": 0.010027140689210038
+     }
+    }
+   ],
+   "whiting": [
+    {
+     "benthivorous_fish": {
+      "enc": 0.0063797930747604755,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.8885546521168572,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.03513620366718672,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.06621992183522646,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.0037094293059692224,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.009899459244881023,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.8611523700436279,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.06047650629476797,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.06208698703673779,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.006384677379985326,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.0404189500000934,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.3459931183518477,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.35616667724990014,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.2198197217193653,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.03760153267879336,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.0584518740564435,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.0,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.5943121332044133,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.2844927645667626,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.06274322817238069,
+      "book": 0.022538848553798493
+     }
+    }
+   ]
+  },
+  "prey": {
+   "benthic_infauna": {
+    "total": 1.06,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.0396,
+      "ratio": 1.06,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "benthivorous_fish": {
+    "total": 0.62,
+    "pairs": {
+     "whiting": {
+      "booked": 0.1067,
+      "ratio": 0.12,
+      "verdict": "OFF",
+      "field": 0.07
+     },
+     "predatory_fish": {
+      "booked": 0.0833,
+      "ratio": 0.97,
+      "verdict": "ok",
+      "field": 1.13
+     },
+     "seals": {
+      "booked": 0.0373,
+      "ratio": 0.9,
+      "verdict": "ok",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.0068,
+      "ratio": 2.44,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "krill": {
+    "total": 1.04,
+    "pairs": {
+     "planktivorous_fish": {
+      "booked": 2.071,
+      "ratio": 0.95,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.1873,
+      "ratio": 1.46,
+      "verdict": "ok",
+      "field": 1.59
+     },
+     "mackerel": {
+      "booked": 0.125,
+      "ratio": 1.67,
+      "verdict": "ok",
+      "field": null
+     },
+     "predatory_fish": {
+      "booked": 0.119,
+      "ratio": 1.39,
+      "verdict": "ok",
+      "field": 1.4
+     },
+     "benthivorous_fish": {
+      "booked": 0.035,
+      "ratio": 0.67,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "mackerel": {
+    "total": 0.02,
+    "pairs": {
+     "predatory_fish": {
+      "booked": 0.021,
+      "ratio": 0.02,
+      "verdict": "OFF",
+      "field": 0.03
+     }
+    }
+   },
+   "mobile_epifauna": {
+    "total": 0.94,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.54,
+      "ratio": 1.01,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0761,
+      "ratio": 0.5,
+      "verdict": "ok",
+      "field": 0.23
+     }
+    }
+   },
+   "norway_lobster": {
+    "total": 2.29,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.0225,
+      "ratio": 2.29,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "phytoplankton": {
+    "total": 1.0,
+    "pairs": {}
+   },
+   "planktivorous_fish": {
+    "total": 0.65,
+    "pairs": {
+     "predatory_fish": {
+      "booked": 0.174,
+      "ratio": 0.78,
+      "verdict": "ok",
+      "field": 0.76
+     },
+     "benthivorous_fish": {
+      "booked": 0.1023,
+      "ratio": 0.45,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0545,
+      "ratio": 0.54,
+      "verdict": "ok",
+      "field": 0.43
+     },
+     "mackerel": {
+      "booked": 0.0186,
+      "ratio": 0.78,
+      "verdict": "ok",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.00946,
+      "ratio": 0.48,
+      "verdict": "ok",
+      "field": null
+     },
+     "seals": {
+      "booked": 0.00501,
+      "ratio": 1.1,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "predatory_fish": {
+    "total": 0.56,
+    "pairs": {
+     "seals": {
+      "booked": 0.0033,
+      "ratio": 0.26,
+      "verdict": "OFF",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.0021,
+      "ratio": 1.04,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "whiting": {
+    "total": 0.55,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.18,
+      "ratio": 0.23,
+      "verdict": "OFF",
+      "field": null
+     },
+     "predatory_fish": {
+      "booked": 0.157,
+      "ratio": 0.64,
+      "verdict": "ok",
+      "field": 0.46
+     },
+     "porpoises": {
+      "booked": 0.0201,
+      "ratio": 1.92,
+      "verdict": "ok",
+      "field": null
+     },
+     "seals": {
+      "booked": 0.0139,
+      "ratio": 1.81,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "zooplankton": {
+    "total": 1.01,
+    "pairs": {
+     "planktivorous_fish": {
+      "booked": 1.612,
+      "ratio": 1.03,
+      "verdict": "ok",
+      "field": null
+     },
+     "mackerel": {
+      "booked": 0.09,
+      "ratio": 0.54,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0039,
+      "ratio": 0.4,
+      "verdict": "ok",
+      "field": 0.19
+     },
+     "predatory_fish": {
+      "booked": 0.0017,
+      "ratio": 0.38,
+      "verdict": "ok",
+      "field": 0.62
+     }
+    }
+   }
+  },
+  "off": [
+   "Diet gate: OFF pairs - whiting -> benthivorous_fish enc 0.012 vs booked 0.097",
+   "Diet gate at the field spread: OFF pairs - whiting -> benthivorous_fish enc 0.007 vs booked 0.097; whiting -> mobile_epifauna enc 0.040 vs booked 0.171"
+  ]
+ },
+ "final_win243": {
+  "equal": {
+   "benthivorous_fish": [
+    6.588458333333334,
+    {
+     "benthic_infauna": 0.5809525378063572,
+     "krill": 0.024185945207249888,
+     "mobile_epifauna": 0.3122943206967221,
+     "norway_lobster": 0.03422200470287733,
+     "planktivorous_fish": 0.04452535543439057,
+     "whiting": 0.0038198361524028127
+    }
+   ],
+   "mackerel": [
+    1.5878333333333332,
+    {
+     "krill": 0.6587342275275211,
+     "planktivorous_fish": 0.04291806954038219,
+     "zooplankton": 0.29834770293209667
+    }
+   ],
+   "planktivorous_fish": [
+    26.02722222222222,
+    {
+     "krill": 0.37781576933287864,
+     "zooplankton": 0.6221842306671214
+    }
+   ],
+   "porpoises": [
+    0.06531736111111111,
+    {
+     "benthivorous_fish": 0.3882894969260996,
+     "planktivorous_fish": 0.32766519593089893,
+     "predatory_fish": 0.020538825480550905,
+     "whiting": 0.2635064816624506
+    }
+   ],
+   "predatory_fish": [
+    1.6483041666666665,
+    {
+     "benthivorous_fish": 0.12660007304601137,
+     "krill": 0.4749589425567889,
+     "mackerel": 0.00019465875413323593,
+     "planktivorous_fish": 0.36889486221674195,
+     "whiting": 0.025718037324227644,
+     "zooplankton": 0.003633426102096899
+    }
+   ],
+   "seals": [
+    0.08887652777777777,
+    {
+     "benthivorous_fish": 0.576191773099249,
+     "planktivorous_fish": 0.29165206954356976,
+     "predatory_fish": 0.005847371341312049,
+     "whiting": 0.12630878601586915
+    }
+   ],
+   "whiting": [
+    1.6822805555555556,
+    {
+     "benthivorous_fish": 0.011806248684190196,
+     "krill": 0.8122848754275651,
+     "mobile_epifauna": 0.08476285543370825,
+     "planktivorous_fish": 0.08219736387849703,
+     "zooplankton": 0.008948656576039393
+    }
+   ]
+  },
+  "field": {
+   "predatory_fish": [
+    1.6483041666666665,
+    {
+     "benthivorous_fish": 0.14607340752481723,
+     "krill": 0.4738369264964529,
+     "mackerel": 0.00025682993682641677,
+     "planktivorous_fish": 0.35567847564735355,
+     "whiting": 0.01830375657522815,
+     "zooplankton": 0.00585060381932179
+    }
+   ],
+   "whiting": [
+    1.6822805555555556,
+    {
+     "benthivorous_fish": 0.006953682268278939,
+     "krill": 0.8832241447069399,
+     "mobile_epifauna": 0.03950750516643019,
+     "planktivorous_fish": 0.06614374777665365,
+     "zooplankton": 0.004170920081697619
+    }
+   ]
+  },
+  "cls": {
+   "benthivorous_fish": [
+    {
+     "benthic_infauna": {
+      "enc": 0.5297460772831123,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.053781018494286174,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.28476799838341704,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.03120560040337791,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.07848664108866205,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.022012664347144408,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.5676444153262233,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.0351516838262791,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.30514046422959107,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.03343806694468922,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.05494918737191444,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.003676182301302875,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.6068233572996921,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.0054834333829478455,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.3262013259575054,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.03574596965483576,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.02555940578030056,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.00018650792471834173,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.6165174945258958,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.00014148608634269866,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.3314124642223102,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.03631701941906978,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.015603412416311444,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 8.123330070150062e-06,
+      "book": 0.012180391214434332
+     }
+    }
+   ],
+   "mackerel": [
+    {
+     "krill": {
+      "enc": 0.5440571394621885,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.05734002344633208,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.3986028370914794,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.6937379192941676,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.03851595541529163,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2677461252905407,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.66515430245491,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.04211067177472913,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2927350257703608,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.6806649554287109,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.040160029968129535,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2791750146031596,
+      "book": 0.5510653930933137
+     }
+    }
+   ],
+   "planktivorous_fish": [
+    {
+     "krill": {
+      "enc": 0.56287683240717,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.43712316759283,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.4749774604803058,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.5250225395196942,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.16399603557383186,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.8360039644261681,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.09437965582204395,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.9056203441779561,
+      "book": 0.6021473243825909
+     }
+    }
+   ],
+   "predatory_fish": [
+    {
+     "benthivorous_fish": {
+      "enc": 0.10685310833185778,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.3912595523267846,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.000163470448146306,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.41718661702278437,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.08273815204018614,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.0017990998302408116,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.11622792682032007,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.5612634861701188,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.00011989171179386939,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.30315397547399514,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.01685548701328728,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.0023792328104848687,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.17017168938519545,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.4513940691920164,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0003434167199289069,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.3668847756815525,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.002720640039092042,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.008485408982214662,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.3546022271532747,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.05311841587479829,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.001308222055148297,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.5582679990942134,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.0003785618187580534,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.032324574003807234,
+      "book": 0.010027140689210038
+     }
+    }
+   ],
+   "whiting": [
+    {
+     "benthivorous_fish": {
+      "enc": 0.0063797930747604755,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.8885546521168572,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.03513620366718672,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.06621992183522646,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.0037094293059692224,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.009899459244881023,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.8611523700436279,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.06047650629476797,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.06208698703673779,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.006384677379985326,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.0404189500000934,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.3459931183518477,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.35616667724990014,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.2198197217193653,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.03760153267879336,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.0584518740564435,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.0,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.5943121332044133,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.2844927645667626,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.06274322817238069,
+      "book": 0.022538848553798493
+     }
+    }
+   ]
+  },
+  "prey": {
+   "benthic_infauna": {
+    "total": 1.03,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.0396,
+      "ratio": 1.03,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "benthivorous_fish": {
+    "total": 0.85,
+    "pairs": {
+     "whiting": {
+      "booked": 0.1067,
+      "ratio": 0.12,
+      "verdict": "OFF",
+      "field": 0.07
+     },
+     "predatory_fish": {
+      "booked": 0.0833,
+      "ratio": 1.64,
+      "verdict": "ok",
+      "field": 1.89
+     },
+     "seals": {
+      "booked": 0.0373,
+      "ratio": 0.9,
+      "verdict": "ok",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.0068,
+      "ratio": 2.44,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "krill": {
+    "total": 1.04,
+    "pairs": {
+     "planktivorous_fish": {
+      "booked": 2.071,
+      "ratio": 0.95,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.1873,
+      "ratio": 1.46,
+      "verdict": "ok",
+      "field": 1.59
+     },
+     "mackerel": {
+      "booked": 0.125,
+      "ratio": 1.67,
+      "verdict": "ok",
+      "field": null
+     },
+     "predatory_fish": {
+      "booked": 0.119,
+      "ratio": 1.32,
+      "verdict": "ok",
+      "field": 1.31
+     },
+     "benthivorous_fish": {
+      "booked": 0.035,
+      "ratio": 0.91,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "mackerel": {
+    "total": 0.02,
+    "pairs": {
+     "predatory_fish": {
+      "booked": 0.021,
+      "ratio": 0.02,
+      "verdict": "OFF",
+      "field": 0.02
+     }
+    }
+   },
+   "mobile_epifauna": {
+    "total": 0.95,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.54,
+      "ratio": 1.01,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0761,
+      "ratio": 0.5,
+      "verdict": "ok",
+      "field": 0.23
+     }
+    }
+   },
+   "norway_lobster": {
+    "total": 2.19,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.0225,
+      "ratio": 2.19,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "phytoplankton": {
+    "total": 1.0,
+    "pairs": {}
+   },
+   "planktivorous_fish": {
+    "total": 0.67,
+    "pairs": {
+     "predatory_fish": {
+      "booked": 0.174,
+      "ratio": 0.74,
+      "verdict": "ok",
+      "field": 0.71
+     },
+     "benthivorous_fish": {
+      "booked": 0.1023,
+      "ratio": 0.61,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0545,
+      "ratio": 0.54,
+      "verdict": "ok",
+      "field": 0.43
+     },
+     "mackerel": {
+      "booked": 0.0186,
+      "ratio": 0.78,
+      "verdict": "ok",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.00946,
+      "ratio": 0.48,
+      "verdict": "ok",
+      "field": null
+     },
+     "seals": {
+      "booked": 0.00501,
+      "ratio": 1.1,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "predatory_fish": {
+    "total": 0.56,
+    "pairs": {
+     "seals": {
+      "booked": 0.0033,
+      "ratio": 0.26,
+      "verdict": "OFF",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.0021,
+      "ratio": 1.04,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "whiting": {
+    "total": 0.58,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.18,
+      "ratio": 0.31,
+      "verdict": "OFF",
+      "field": null
+     },
+     "predatory_fish": {
+      "booked": 0.157,
+      "ratio": 0.61,
+      "verdict": "ok",
+      "field": 0.43
+     },
+     "porpoises": {
+      "booked": 0.0201,
+      "ratio": 1.92,
+      "verdict": "ok",
+      "field": null
+     },
+     "seals": {
+      "booked": 0.0139,
+      "ratio": 1.81,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "zooplankton": {
+    "total": 1.01,
+    "pairs": {
+     "planktivorous_fish": {
+      "booked": 1.612,
+      "ratio": 1.03,
+      "verdict": "ok",
+      "field": null
+     },
+     "mackerel": {
+      "booked": 0.09,
+      "ratio": 0.54,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0039,
+      "ratio": 0.4,
+      "verdict": "ok",
+      "field": 0.19
+     },
+     "predatory_fish": {
+      "booked": 0.0017,
+      "ratio": 0.36,
+      "verdict": "ok",
+      "field": 0.58
+     }
+    }
+   }
+  },
+  "off": [
+   "Diet gate: OFF pairs - whiting -> benthivorous_fish enc 0.012 vs booked 0.097",
+   "Diet gate at the field spread: OFF pairs - whiting -> benthivorous_fish enc 0.007 vs booked 0.097; whiting -> mobile_epifauna enc 0.040 vs booked 0.171"
+  ]
+ },
+ "final_deep": {
+  "equal": {
+   "benthivorous_fish": [
+    6.588458333333334,
+    {
+     "benthic_infauna": 0.5840822151876542,
+     "krill": 0.03757750203557645,
+     "mobile_epifauna": 0.316512550013819,
+     "norway_lobster": 0.01761003771413871,
+     "planktivorous_fish": 0.04114965684379651,
+     "whiting": 0.003068038205015097
+    }
+   ],
+   "mackerel": [
+    1.5878333333333332,
+    {
+     "krill": 0.6587342275275211,
+     "planktivorous_fish": 0.04291806954038219,
+     "zooplankton": 0.29834770293209667
+    }
+   ],
+   "planktivorous_fish": [
+    26.02722222222222,
+    {
+     "krill": 0.37781576933287864,
+     "zooplankton": 0.6221842306671214
+    }
+   ],
+   "porpoises": [
+    0.06531736111111111,
+    {
+     "benthivorous_fish": 0.3882894969260996,
+     "planktivorous_fish": 0.32766519593089893,
+     "predatory_fish": 0.020538825480550905,
+     "whiting": 0.2635064816624506
+    }
+   ],
+   "predatory_fish": [
+    1.6483041666666665,
+    {
+     "benthivorous_fish": 0.07509083076228658,
+     "krill": 0.5029699080858347,
+     "mackerel": 0.00020613886149283396,
+     "planktivorous_fish": 0.3906506401241341,
+     "whiting": 0.027234772756317173,
+     "zooplankton": 0.003847709409934614
+    }
+   ],
+   "seals": [
+    0.08887652777777777,
+    {
+     "benthivorous_fish": 0.576191773099249,
+     "planktivorous_fish": 0.29165206954356976,
+     "predatory_fish": 0.005847371341312049,
+     "whiting": 0.12630878601586915
+    }
+   ],
+   "whiting": [
+    1.6822805555555556,
+    {
+     "benthivorous_fish": 0.011806248684190196,
+     "krill": 0.8122848754275651,
+     "mobile_epifauna": 0.08476285543370825,
+     "planktivorous_fish": 0.08219736387849703,
+     "zooplankton": 0.008948656576039393
+    }
+   ]
+  },
+  "field": {
+   "predatory_fish": [
+    1.6483041666666665,
+    {
+     "benthivorous_fish": 0.08743428991043704,
+     "krill": 0.5063752963138438,
+     "mackerel": 0.00027446644212461167,
+     "planktivorous_fish": 0.3801029076186471,
+     "whiting": 0.019560675078595855,
+     "zooplankton": 0.006252364636351649
+    }
+   ],
+   "whiting": [
+    1.6822805555555556,
+    {
+     "benthivorous_fish": 0.006953682268278939,
+     "krill": 0.8832241447069399,
+     "mobile_epifauna": 0.03950750516643019,
+     "planktivorous_fish": 0.06614374777665365,
+     "zooplankton": 0.004170920081697619
+    }
+   ]
+  },
+  "cls": {
+   "benthivorous_fish": [
+    {
+     "benthic_infauna": {
+      "enc": 0.5378343259950871,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.06573346024886384,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.29145094573882335,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.01621566710722209,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.07112838863243127,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.01763721227757247,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.5647492981060146,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.05876984110131901,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.30603609528603803,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.017027151623654663,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.0505406703557664,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.002876943527207024,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.6099237090223465,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.016422627595044842,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.33051598462816867,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.01838915693603183,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.024592868910483005,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.00015565290792535813,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.6259260783823329,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.0010392047674613063,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.3391876246827543,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.01887162724691846,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.01496859080052128,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 6.874120011778423e-06,
+      "book": 0.012180391214434332
+     }
+    }
+   ],
+   "mackerel": [
+    {
+     "krill": {
+      "enc": 0.5440571394621885,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.05734002344633208,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.3986028370914794,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.6937379192941676,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.03851595541529163,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2677461252905407,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.66515430245491,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.04211067177472913,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2927350257703608,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.6806649554287109,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.040160029968129535,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2791750146031596,
+      "book": 0.5510653930933137
+     }
+    }
+   ],
+   "planktivorous_fish": [
+    {
+     "krill": {
+      "enc": 0.56287683240717,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.43712316759283,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.4749774604803058,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.5250225395196942,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.16399603557383186,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.8360039644261681,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.09437965582204395,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.9056203441779561,
+      "book": 0.6021473243825909
+     }
+    }
+   ],
+   "predatory_fish": [
+    {
+     "benthivorous_fish": {
+      "enc": 0.0628005318541343,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.4105576000637292,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0001715332813554805,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.43776346224647855,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.0868190359399983,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.001887836614304088,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.06860726145840187,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.591506284586014,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0001263518877377212,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.3194889496797791,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.017763718367197374,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.002507434020869982,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.10302580814278874,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.487918796266028,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0003712044176948691,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.3965714003272085,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.0029407816884325744,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.009172009157847272,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.2353207903691962,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.06293568087292974,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0015500056697437072,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.6614462433400995,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.0004485270395146772,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.038298752708516036,
+      "book": 0.010027140689210038
+     }
+    }
+   ],
+   "whiting": [
+    {
+     "benthivorous_fish": {
+      "enc": 0.0063797930747604755,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.8885546521168572,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.03513620366718672,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.06621992183522646,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.0037094293059692224,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.009899459244881023,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.8611523700436279,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.06047650629476797,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.06208698703673779,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.006384677379985326,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.0404189500000934,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.3459931183518477,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.35616667724990014,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.2198197217193653,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.03760153267879336,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.0584518740564435,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.0,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.5943121332044133,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.2844927645667626,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.06274322817238069,
+      "book": 0.022538848553798493
+     }
+    }
+   ]
+  },
+  "prey": {
+   "benthic_infauna": {
+    "total": 1.04,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.0396,
+      "ratio": 1.04,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "benthivorous_fish": {
+    "total": 0.62,
+    "pairs": {
+     "whiting": {
+      "booked": 0.1067,
+      "ratio": 0.12,
+      "verdict": "OFF",
+      "field": 0.07
+     },
+     "predatory_fish": {
+      "booked": 0.0833,
+      "ratio": 0.97,
+      "verdict": "ok",
+      "field": 1.13
+     },
+     "seals": {
+      "booked": 0.0373,
+      "ratio": 0.9,
+      "verdict": "ok",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.0068,
+      "ratio": 2.44,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "krill": {
+    "total": 1.05,
+    "pairs": {
+     "planktivorous_fish": {
+      "booked": 2.071,
+      "ratio": 0.95,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.1873,
+      "ratio": 1.46,
+      "verdict": "ok",
+      "field": 1.59
+     },
+     "mackerel": {
+      "booked": 0.125,
+      "ratio": 1.67,
+      "verdict": "ok",
+      "field": null
+     },
+     "predatory_fish": {
+      "booked": 0.119,
+      "ratio": 1.39,
+      "verdict": "ok",
+      "field": 1.4
+     },
+     "benthivorous_fish": {
+      "booked": 0.035,
+      "ratio": 1.41,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "mackerel": {
+    "total": 0.02,
+    "pairs": {
+     "predatory_fish": {
+      "booked": 0.021,
+      "ratio": 0.02,
+      "verdict": "OFF",
+      "field": 0.03
+     }
+    }
+   },
+   "mobile_epifauna": {
+    "total": 0.96,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.54,
+      "ratio": 1.02,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0761,
+      "ratio": 0.5,
+      "verdict": "ok",
+      "field": 0.23
+     }
+    }
+   },
+   "norway_lobster": {
+    "total": 1.13,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.0225,
+      "ratio": 1.13,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "phytoplankton": {
+    "total": 1.0,
+    "pairs": {}
+   },
+   "planktivorous_fish": {
+    "total": 0.68,
+    "pairs": {
+     "predatory_fish": {
+      "booked": 0.174,
+      "ratio": 0.78,
+      "verdict": "ok",
+      "field": 0.76
+     },
+     "benthivorous_fish": {
+      "booked": 0.1023,
+      "ratio": 0.56,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0545,
+      "ratio": 0.54,
+      "verdict": "ok",
+      "field": 0.43
+     },
+     "mackerel": {
+      "booked": 0.0186,
+      "ratio": 0.78,
+      "verdict": "ok",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.00946,
+      "ratio": 0.48,
+      "verdict": "ok",
+      "field": null
+     },
+     "seals": {
+      "booked": 0.00501,
+      "ratio": 1.1,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "predatory_fish": {
+    "total": 0.56,
+    "pairs": {
+     "seals": {
+      "booked": 0.0033,
+      "ratio": 0.26,
+      "verdict": "OFF",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.0021,
+      "ratio": 1.04,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "whiting": {
+    "total": 0.57,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.18,
+      "ratio": 0.25,
+      "verdict": "OFF",
+      "field": null
+     },
+     "predatory_fish": {
+      "booked": 0.157,
+      "ratio": 0.64,
+      "verdict": "ok",
+      "field": 0.46
+     },
+     "porpoises": {
+      "booked": 0.0201,
+      "ratio": 1.92,
+      "verdict": "ok",
+      "field": null
+     },
+     "seals": {
+      "booked": 0.0139,
+      "ratio": 1.81,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "zooplankton": {
+    "total": 1.01,
+    "pairs": {
+     "planktivorous_fish": {
+      "booked": 1.612,
+      "ratio": 1.03,
+      "verdict": "ok",
+      "field": null
+     },
+     "mackerel": {
+      "booked": 0.09,
+      "ratio": 0.54,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0039,
+      "ratio": 0.4,
+      "verdict": "ok",
+      "field": 0.19
+     },
+     "predatory_fish": {
+      "booked": 0.0017,
+      "ratio": 0.38,
+      "verdict": "ok",
+      "field": 0.62
+     }
+    }
+   }
+  },
+  "off": [
+   "Diet gate: OFF pairs - whiting -> benthivorous_fish enc 0.012 vs booked 0.097",
+   "Diet gate at the field spread: OFF pairs - whiting -> benthivorous_fish enc 0.007 vs booked 0.097; whiting -> mobile_epifauna enc 0.040 vs booked 0.171"
+  ]
+ },
+ "final_bedbound": {
+  "equal": {
+   "benthivorous_fish": [
+    6.588458333333334,
+    {
+     "benthic_infauna": 0.5700850833211777,
+     "krill": 0.028418166716644263,
+     "mobile_epifauna": 0.3104872649722225,
+     "norway_lobster": 0.03380742036046587,
+     "planktivorous_fish": 0.05271819110577526,
+     "whiting": 0.00448387352371441
+    }
+   ],
+   "mackerel": [
+    1.5878333333333332,
+    {
+     "krill": 0.6587342275275211,
+     "planktivorous_fish": 0.04291806954038219,
+     "zooplankton": 0.29834770293209667
+    }
+   ],
+   "planktivorous_fish": [
+    26.02722222222222,
+    {
+     "krill": 0.37781576933287864,
+     "zooplankton": 0.6221842306671214
+    }
+   ],
+   "porpoises": [
+    0.06531736111111111,
+    {
+     "benthivorous_fish": 0.3882894969260996,
+     "planktivorous_fish": 0.32766519593089893,
+     "predatory_fish": 0.020538825480550905,
+     "whiting": 0.2635064816624506
+    }
+   ],
+   "predatory_fish": [
+    1.6483041666666665,
+    {
+     "benthivorous_fish": 0.07509083076228658,
+     "krill": 0.5029699080858347,
+     "mackerel": 0.00020613886149283396,
+     "planktivorous_fish": 0.3906506401241341,
+     "whiting": 0.027234772756317173,
+     "zooplankton": 0.003847709409934614
+    }
+   ],
+   "seals": [
+    0.08887652777777777,
+    {
+     "benthivorous_fish": 0.576191773099249,
+     "planktivorous_fish": 0.29165206954356976,
+     "predatory_fish": 0.005847371341312049,
+     "whiting": 0.12630878601586915
+    }
+   ],
+   "whiting": [
+    1.6822805555555556,
+    {
+     "benthivorous_fish": 0.011806248684190196,
+     "krill": 0.8122848754275651,
+     "mobile_epifauna": 0.08476285543370825,
+     "planktivorous_fish": 0.08219736387849703,
+     "zooplankton": 0.008948656576039393
+    }
+   ]
+  },
+  "field": {
+   "predatory_fish": [
+    1.6483041666666665,
+    {
+     "benthivorous_fish": 0.08743428991043704,
+     "krill": 0.5063752963138438,
+     "mackerel": 0.00027446644212461167,
+     "planktivorous_fish": 0.3801029076186471,
+     "whiting": 0.019560675078595855,
+     "zooplankton": 0.006252364636351649
+    }
+   ],
+   "whiting": [
+    1.6822805555555556,
+    {
+     "benthivorous_fish": 0.006953682268278939,
+     "krill": 0.8832241447069399,
+     "mobile_epifauna": 0.03950750516643019,
+     "planktivorous_fish": 0.06614374777665365,
+     "zooplankton": 0.004170920081697619
+    }
+   ]
+  },
+  "cls": {
+   "benthivorous_fish": [
+    {
+     "benthic_infauna": {
+      "enc": 0.5098528813189452,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.06544772901334606,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.2776828078656127,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.03023550551494315,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.09149419048693921,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.02528688580021359,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.554468828763637,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.04146419877398871,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.3019821342320289,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.03288133880224102,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.06490153852203083,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.00430196090607357,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.6019646318425149,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.0038224433775809453,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.32784992559697484,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.0356979544742229,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.03044308252289588,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.00022196218581051755,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.6120983810721824,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 1.8721252357806474e-07,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.3333691018994025,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.03629891024391089,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.018223847629982144,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 9.571941998451648e-06,
+      "book": 0.012180391214434332
+     }
+    }
+   ],
+   "mackerel": [
+    {
+     "krill": {
+      "enc": 0.5440571394621885,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.05734002344633208,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.3986028370914794,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.6937379192941676,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.03851595541529163,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2677461252905407,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.66515430245491,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.04211067177472913,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2927350257703608,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.6806649554287109,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.040160029968129535,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2791750146031596,
+      "book": 0.5510653930933137
+     }
+    }
+   ],
+   "planktivorous_fish": [
+    {
+     "krill": {
+      "enc": 0.56287683240717,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.43712316759283,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.4749774604803058,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.5250225395196942,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.16399603557383186,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.8360039644261681,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.09437965582204395,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.9056203441779561,
+      "book": 0.6021473243825909
+     }
+    }
+   ],
+   "predatory_fish": [
+    {
+     "benthivorous_fish": {
+      "enc": 0.0628005318541343,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.4105576000637292,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0001715332813554805,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.43776346224647855,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.0868190359399983,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.001887836614304088,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.06860726145840187,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.591506284586014,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0001263518877377212,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.3194889496797791,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.017763718367197374,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.002507434020869982,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.10302580814278874,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.487918796266028,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0003712044176948691,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.3965714003272085,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.0029407816884325744,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.009172009157847272,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.2353207903691962,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.06293568087292974,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0015500056697437072,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.6614462433400995,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.0004485270395146772,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.038298752708516036,
+      "book": 0.010027140689210038
+     }
+    }
+   ],
+   "whiting": [
+    {
+     "benthivorous_fish": {
+      "enc": 0.0063797930747604755,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.8885546521168572,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.03513620366718672,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.06621992183522646,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.0037094293059692224,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.009899459244881023,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.8611523700436279,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.06047650629476797,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.06208698703673779,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.006384677379985326,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.0404189500000934,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.3459931183518477,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.35616667724990014,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.2198197217193653,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.03760153267879336,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.0584518740564435,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.0,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.5943121332044133,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.2844927645667626,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.06274322817238069,
+      "book": 0.022538848553798493
+     }
+    }
+   ]
+  },
+  "prey": {
+   "benthic_infauna": {
+    "total": 1.01,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.0396,
+      "ratio": 1.01,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "benthivorous_fish": {
+    "total": 0.62,
+    "pairs": {
+     "whiting": {
+      "booked": 0.1067,
+      "ratio": 0.12,
+      "verdict": "OFF",
+      "field": 0.07
+     },
+     "predatory_fish": {
+      "booked": 0.0833,
+      "ratio": 0.97,
+      "verdict": "ok",
+      "field": 1.13
+     },
+     "seals": {
+      "booked": 0.0373,
+      "ratio": 0.9,
+      "verdict": "ok",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.0068,
+      "ratio": 2.44,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "krill": {
+    "total": 1.05,
+    "pairs": {
+     "planktivorous_fish": {
+      "booked": 2.071,
+      "ratio": 0.95,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.1873,
+      "ratio": 1.46,
+      "verdict": "ok",
+      "field": 1.59
+     },
+     "mackerel": {
+      "booked": 0.125,
+      "ratio": 1.67,
+      "verdict": "ok",
+      "field": null
+     },
+     "predatory_fish": {
+      "booked": 0.119,
+      "ratio": 1.39,
+      "verdict": "ok",
+      "field": 1.4
+     },
+     "benthivorous_fish": {
+      "booked": 0.035,
+      "ratio": 1.07,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "mackerel": {
+    "total": 0.02,
+    "pairs": {
+     "predatory_fish": {
+      "booked": 0.021,
+      "ratio": 0.02,
+      "verdict": "OFF",
+      "field": 0.03
+     }
+    }
+   },
+   "mobile_epifauna": {
+    "total": 0.94,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.54,
+      "ratio": 1.0,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0761,
+      "ratio": 0.5,
+      "verdict": "ok",
+      "field": 0.23
+     }
+    }
+   },
+   "norway_lobster": {
+    "total": 2.16,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.0225,
+      "ratio": 2.16,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "phytoplankton": {
+    "total": 1.0,
+    "pairs": {}
+   },
+   "planktivorous_fish": {
+    "total": 0.72,
+    "pairs": {
+     "predatory_fish": {
+      "booked": 0.174,
+      "ratio": 0.78,
+      "verdict": "ok",
+      "field": 0.76
+     },
+     "benthivorous_fish": {
+      "booked": 0.1023,
+      "ratio": 0.72,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0545,
+      "ratio": 0.54,
+      "verdict": "ok",
+      "field": 0.43
+     },
+     "mackerel": {
+      "booked": 0.0186,
+      "ratio": 0.78,
+      "verdict": "ok",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.00946,
+      "ratio": 0.48,
+      "verdict": "ok",
+      "field": null
+     },
+     "seals": {
+      "booked": 0.00501,
+      "ratio": 1.1,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "predatory_fish": {
+    "total": 0.56,
+    "pairs": {
+     "seals": {
+      "booked": 0.0033,
+      "ratio": 0.26,
+      "verdict": "OFF",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.0021,
+      "ratio": 1.04,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "whiting": {
+    "total": 0.62,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.18,
+      "ratio": 0.37,
+      "verdict": "ok",
+      "field": null
+     },
+     "predatory_fish": {
+      "booked": 0.157,
+      "ratio": 0.64,
+      "verdict": "ok",
+      "field": 0.46
+     },
+     "porpoises": {
+      "booked": 0.0201,
+      "ratio": 1.92,
+      "verdict": "ok",
+      "field": null
+     },
+     "seals": {
+      "booked": 0.0139,
+      "ratio": 1.81,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "zooplankton": {
+    "total": 1.01,
+    "pairs": {
+     "planktivorous_fish": {
+      "booked": 1.612,
+      "ratio": 1.03,
+      "verdict": "ok",
+      "field": null
+     },
+     "mackerel": {
+      "booked": 0.09,
+      "ratio": 0.54,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0039,
+      "ratio": 0.4,
+      "verdict": "ok",
+      "field": 0.19
+     },
+     "predatory_fish": {
+      "booked": 0.0017,
+      "ratio": 0.38,
+      "verdict": "ok",
+      "field": 0.62
+     }
+    }
+   }
+  },
+  "off": [
+   "Diet gate: OFF pairs - whiting -> benthivorous_fish enc 0.012 vs booked 0.097",
+   "Diet gate at the field spread: OFF pairs - whiting -> benthivorous_fish enc 0.007 vs booked 0.097; whiting -> mobile_epifauna enc 0.040 vs booked 0.171"
+  ]
+ },
+ "final_rest50": {
+  "equal": {
+   "benthivorous_fish": [
+    6.588458333333334,
+    {
+     "benthic_infauna": 0.571798976780389,
+     "krill": 0.030992452926804276,
+     "mobile_epifauna": 0.31296236463264093,
+     "norway_lobster": 0.030717933609969175,
+     "planktivorous_fish": 0.04926955333064979,
+     "whiting": 0.004258718719547056
+    }
+   ],
+   "mackerel": [
+    1.5878333333333332,
+    {
+     "krill": 0.6587342275275211,
+     "planktivorous_fish": 0.04291806954038219,
+     "zooplankton": 0.29834770293209667
+    }
+   ],
+   "planktivorous_fish": [
+    26.02722222222222,
+    {
+     "krill": 0.37781576933287864,
+     "zooplankton": 0.6221842306671214
+    }
+   ],
+   "porpoises": [
+    0.06531736111111111,
+    {
+     "benthivorous_fish": 0.3882894969260996,
+     "planktivorous_fish": 0.32766519593089893,
+     "predatory_fish": 0.020538825480550905,
+     "whiting": 0.2635064816624506
+    }
+   ],
+   "predatory_fish": [
+    1.6483041666666665,
+    {
+     "benthivorous_fish": 0.07509083076228658,
+     "krill": 0.5029699080858347,
+     "mackerel": 0.00020613886149283396,
+     "planktivorous_fish": 0.3906506401241341,
+     "whiting": 0.027234772756317173,
+     "zooplankton": 0.003847709409934614
+    }
+   ],
+   "seals": [
+    0.08887652777777777,
+    {
+     "benthivorous_fish": 0.576191773099249,
+     "planktivorous_fish": 0.29165206954356976,
+     "predatory_fish": 0.005847371341312049,
+     "whiting": 0.12630878601586915
+    }
+   ],
+   "whiting": [
+    1.6822805555555556,
+    {
+     "benthivorous_fish": 0.011806248684190196,
+     "krill": 0.8122848754275651,
+     "mobile_epifauna": 0.08476285543370825,
+     "planktivorous_fish": 0.08219736387849703,
+     "zooplankton": 0.008948656576039393
+    }
+   ]
+  },
+  "field": {
+   "predatory_fish": [
+    1.6483041666666665,
+    {
+     "benthivorous_fish": 0.08743428991043704,
+     "krill": 0.5063752963138438,
+     "mackerel": 0.00027446644212461167,
+     "planktivorous_fish": 0.3801029076186471,
+     "whiting": 0.019560675078595855,
+     "zooplankton": 0.006252364636351649
+    }
+   ],
+   "whiting": [
+    1.6822805555555556,
+    {
+     "benthivorous_fish": 0.006953682268278939,
+     "krill": 0.8832241447069399,
+     "mobile_epifauna": 0.03950750516643019,
+     "planktivorous_fish": 0.06614374777665365,
+     "zooplankton": 0.004170920081697619
+    }
+   ]
+  },
+  "cls": {
+   "benthivorous_fish": [
+    {
+     "benthic_infauna": {
+      "enc": 0.5161978262720736,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.0635702425209793,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.2825302228380588,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.027730953011351724,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.08578263312066628,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.024188122236870335,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.5551303662379776,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.0466016762658655,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.30383914479082375,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.02982246983195533,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.06053314340340538,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.004073199469972552,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.6012278979926347,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.008608319094310148,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.3290696770714135,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.03229890119599197,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.028584055864279728,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.00021114878136994287,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.6136593524674437,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.00020010347125906755,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.3358737770195556,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.03296673833586006,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.017290920287595556,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 9.108418286155682e-06,
+      "book": 0.012180391214434332
+     }
+    }
+   ],
+   "mackerel": [
+    {
+     "krill": {
+      "enc": 0.5440571394621885,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.05734002344633208,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.3986028370914794,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.6937379192941676,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.03851595541529163,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2677461252905407,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.66515430245491,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.04211067177472913,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2927350257703608,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.6806649554287109,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.040160029968129535,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2791750146031596,
+      "book": 0.5510653930933137
+     }
+    }
+   ],
+   "planktivorous_fish": [
+    {
+     "krill": {
+      "enc": 0.56287683240717,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.43712316759283,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.4749774604803058,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.5250225395196942,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.16399603557383186,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.8360039644261681,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.09437965582204395,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.9056203441779561,
+      "book": 0.6021473243825909
+     }
+    }
+   ],
+   "predatory_fish": [
+    {
+     "benthivorous_fish": {
+      "enc": 0.0628005318541343,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.4105576000637292,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0001715332813554805,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.43776346224647855,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.0868190359399983,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.001887836614304088,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.06860726145840187,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.591506284586014,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0001263518877377212,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.3194889496797791,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.017763718367197374,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.002507434020869982,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.10302580814278874,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.487918796266028,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0003712044176948691,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.3965714003272085,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.0029407816884325744,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.009172009157847272,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.2353207903691962,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.06293568087292974,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0015500056697437072,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.6614462433400995,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.0004485270395146772,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.038298752708516036,
+      "book": 0.010027140689210038
+     }
+    }
+   ],
+   "whiting": [
+    {
+     "benthivorous_fish": {
+      "enc": 0.0063797930747604755,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.8885546521168572,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.03513620366718672,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.06621992183522646,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.0037094293059692224,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.009899459244881023,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.8611523700436279,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.06047650629476797,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.06208698703673779,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.006384677379985326,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.0404189500000934,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.3459931183518477,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.35616667724990014,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.2198197217193653,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.03760153267879336,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.0584518740564435,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.0,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.5943121332044133,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.2844927645667626,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.06274322817238069,
+      "book": 0.022538848553798493
+     }
+    }
+   ]
+  },
+  "prey": {
+   "benthic_infauna": {
+    "total": 1.02,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.0396,
+      "ratio": 1.02,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "benthivorous_fish": {
+    "total": 0.62,
+    "pairs": {
+     "whiting": {
+      "booked": 0.1067,
+      "ratio": 0.12,
+      "verdict": "OFF",
+      "field": 0.07
+     },
+     "predatory_fish": {
+      "booked": 0.0833,
+      "ratio": 0.97,
+      "verdict": "ok",
+      "field": 1.13
+     },
+     "seals": {
+      "booked": 0.0373,
+      "ratio": 0.9,
+      "verdict": "ok",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.0068,
+      "ratio": 2.44,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "krill": {
+    "total": 1.05,
+    "pairs": {
+     "planktivorous_fish": {
+      "booked": 2.071,
+      "ratio": 0.95,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.1873,
+      "ratio": 1.46,
+      "verdict": "ok",
+      "field": 1.59
+     },
+     "mackerel": {
+      "booked": 0.125,
+      "ratio": 1.67,
+      "verdict": "ok",
+      "field": null
+     },
+     "predatory_fish": {
+      "booked": 0.119,
+      "ratio": 1.39,
+      "verdict": "ok",
+      "field": 1.4
+     },
+     "benthivorous_fish": {
+      "booked": 0.035,
+      "ratio": 1.17,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "mackerel": {
+    "total": 0.02,
+    "pairs": {
+     "predatory_fish": {
+      "booked": 0.021,
+      "ratio": 0.02,
+      "verdict": "OFF",
+      "field": 0.03
+     }
+    }
+   },
+   "mobile_epifauna": {
+    "total": 0.95,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.54,
+      "ratio": 1.01,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0761,
+      "ratio": 0.5,
+      "verdict": "ok",
+      "field": 0.23
+     }
+    }
+   },
+   "norway_lobster": {
+    "total": 1.96,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.0225,
+      "ratio": 1.96,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "phytoplankton": {
+    "total": 1.0,
+    "pairs": {}
+   },
+   "planktivorous_fish": {
+    "total": 0.71,
+    "pairs": {
+     "predatory_fish": {
+      "booked": 0.174,
+      "ratio": 0.78,
+      "verdict": "ok",
+      "field": 0.76
+     },
+     "benthivorous_fish": {
+      "booked": 0.1023,
+      "ratio": 0.67,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0545,
+      "ratio": 0.54,
+      "verdict": "ok",
+      "field": 0.43
+     },
+     "mackerel": {
+      "booked": 0.0186,
+      "ratio": 0.78,
+      "verdict": "ok",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.00946,
+      "ratio": 0.48,
+      "verdict": "ok",
+      "field": null
+     },
+     "seals": {
+      "booked": 0.00501,
+      "ratio": 1.1,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "predatory_fish": {
+    "total": 0.56,
+    "pairs": {
+     "seals": {
+      "booked": 0.0033,
+      "ratio": 0.26,
+      "verdict": "OFF",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.0021,
+      "ratio": 1.04,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "whiting": {
+    "total": 0.61,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.18,
+      "ratio": 0.35,
+      "verdict": "ok",
+      "field": null
+     },
+     "predatory_fish": {
+      "booked": 0.157,
+      "ratio": 0.64,
+      "verdict": "ok",
+      "field": 0.46
+     },
+     "porpoises": {
+      "booked": 0.0201,
+      "ratio": 1.92,
+      "verdict": "ok",
+      "field": null
+     },
+     "seals": {
+      "booked": 0.0139,
+      "ratio": 1.81,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "zooplankton": {
+    "total": 1.01,
+    "pairs": {
+     "planktivorous_fish": {
+      "booked": 1.612,
+      "ratio": 1.03,
+      "verdict": "ok",
+      "field": null
+     },
+     "mackerel": {
+      "booked": 0.09,
+      "ratio": 0.54,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0039,
+      "ratio": 0.4,
+      "verdict": "ok",
+      "field": 0.19
+     },
+     "predatory_fish": {
+      "booked": 0.0017,
+      "ratio": 0.38,
+      "verdict": "ok",
+      "field": 0.62
+     }
+    }
+   }
+  },
+  "off": [
+   "Diet gate: OFF pairs - whiting -> benthivorous_fish enc 0.012 vs booked 0.097",
+   "Diet gate at the field spread: OFF pairs - whiting -> benthivorous_fish enc 0.007 vs booked 0.097; whiting -> mobile_epifauna enc 0.040 vs booked 0.171"
+  ]
+ },
+ "final_deep_rest50": {
+  "equal": {
+   "benthivorous_fish": [
+    6.588458333333334,
+    {
+     "benthic_infauna": 0.5728763499932126,
+     "krill": 0.04757275551444288,
+     "mobile_epifauna": 0.31883535040575656,
+     "norway_lobster": 0.012262378380756122,
+     "planktivorous_fish": 0.04511635410801656,
+     "whiting": 0.0033368115978151917
+    }
+   ],
+   "mackerel": [
+    1.5878333333333332,
+    {
+     "krill": 0.6587342275275211,
+     "planktivorous_fish": 0.04291806954038219,
+     "zooplankton": 0.29834770293209667
+    }
+   ],
+   "planktivorous_fish": [
+    26.02722222222222,
+    {
+     "krill": 0.37781576933287864,
+     "zooplankton": 0.6221842306671214
+    }
+   ],
+   "porpoises": [
+    0.06531736111111111,
+    {
+     "benthivorous_fish": 0.3882894969260996,
+     "planktivorous_fish": 0.32766519593089893,
+     "predatory_fish": 0.020538825480550905,
+     "whiting": 0.2635064816624506
+    }
+   ],
+   "predatory_fish": [
+    1.6483041666666665,
+    {
+     "benthivorous_fish": 0.07509083076228658,
+     "krill": 0.5029699080858347,
+     "mackerel": 0.00020613886149283396,
+     "planktivorous_fish": 0.3906506401241341,
+     "whiting": 0.027234772756317173,
+     "zooplankton": 0.003847709409934614
+    }
+   ],
+   "seals": [
+    0.08887652777777777,
+    {
+     "benthivorous_fish": 0.576191773099249,
+     "planktivorous_fish": 0.29165206954356976,
+     "predatory_fish": 0.005847371341312049,
+     "whiting": 0.12630878601586915
+    }
+   ],
+   "whiting": [
+    1.6822805555555556,
+    {
+     "benthivorous_fish": 0.011806248684190196,
+     "krill": 0.8122848754275651,
+     "mobile_epifauna": 0.08476285543370825,
+     "planktivorous_fish": 0.08219736387849703,
+     "zooplankton": 0.008948656576039393
+    }
+   ]
+  },
+  "field": {
+   "predatory_fish": [
+    1.6483041666666665,
+    {
+     "benthivorous_fish": 0.08743428991043704,
+     "krill": 0.5063752963138438,
+     "mackerel": 0.00027446644212461167,
+     "planktivorous_fish": 0.3801029076186471,
+     "whiting": 0.019560675078595855,
+     "zooplankton": 0.006252364636351649
+    }
+   ],
+   "whiting": [
+    1.6822805555555556,
+    {
+     "benthivorous_fish": 0.006953682268278939,
+     "krill": 0.8832241447069399,
+     "mobile_epifauna": 0.03950750516643019,
+     "planktivorous_fish": 0.06614374777665365,
+     "zooplankton": 0.004170920081697619
+    }
+   ]
+  },
+  "cls": {
+   "benthivorous_fish": [
+    {
+     "benthic_infauna": {
+      "enc": 0.5231649378174523,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.07806930179452735,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.2911683756381452,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.011198309064667017,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.07736491457464816,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.01903416111055964,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.5491477382911375,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.07534925433105617,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.30562914940485497,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.01175446909955726,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.055022031766183026,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.003097357107211045,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.6021393846118049,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.022493346927727222,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.3351217443137356,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.012888751599106995,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.02718554231276547,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.0001712302348597012,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.6224926934560571,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.0013818053219742117,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.34644941451228817,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.013324412757665136,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.01634416927693553,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 7.504675079934513e-06,
+      "book": 0.012180391214434332
+     }
+    }
+   ],
+   "mackerel": [
+    {
+     "krill": {
+      "enc": 0.5440571394621885,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.05734002344633208,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.3986028370914794,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.6937379192941676,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.03851595541529163,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2677461252905407,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.66515430245491,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.04211067177472913,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2927350257703608,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.6806649554287109,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.040160029968129535,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2791750146031596,
+      "book": 0.5510653930933137
+     }
+    }
+   ],
+   "planktivorous_fish": [
+    {
+     "krill": {
+      "enc": 0.56287683240717,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.43712316759283,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.4749774604803058,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.5250225395196942,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.16399603557383186,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.8360039644261681,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.09437965582204395,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.9056203441779561,
+      "book": 0.6021473243825909
+     }
+    }
+   ],
+   "predatory_fish": [
+    {
+     "benthivorous_fish": {
+      "enc": 0.0628005318541343,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.4105576000637292,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0001715332813554805,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.43776346224647855,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.0868190359399983,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.001887836614304088,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.06860726145840187,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.591506284586014,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0001263518877377212,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.3194889496797791,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.017763718367197374,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.002507434020869982,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.10302580814278874,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.487918796266028,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0003712044176948691,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.3965714003272085,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.0029407816884325744,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.009172009157847272,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.2353207903691962,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.06293568087292974,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0015500056697437072,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.6614462433400995,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.0004485270395146772,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.038298752708516036,
+      "book": 0.010027140689210038
+     }
+    }
+   ],
+   "whiting": [
+    {
+     "benthivorous_fish": {
+      "enc": 0.0063797930747604755,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.8885546521168572,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.03513620366718672,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.06621992183522646,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.0037094293059692224,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.009899459244881023,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.8611523700436279,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.06047650629476797,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.06208698703673779,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.006384677379985326,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.0404189500000934,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.3459931183518477,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.35616667724990014,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.2198197217193653,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.03760153267879336,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.0584518740564435,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.0,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.5943121332044133,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.2844927645667626,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.06274322817238069,
+      "book": 0.022538848553798493
+     }
+    }
+   ]
+  },
+  "prey": {
+   "benthic_infauna": {
+    "total": 1.02,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.0396,
+      "ratio": 1.02,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "benthivorous_fish": {
+    "total": 0.62,
+    "pairs": {
+     "whiting": {
+      "booked": 0.1067,
+      "ratio": 0.12,
+      "verdict": "OFF",
+      "field": 0.07
+     },
+     "predatory_fish": {
+      "booked": 0.0833,
+      "ratio": 0.97,
+      "verdict": "ok",
+      "field": 1.13
+     },
+     "seals": {
+      "booked": 0.0373,
+      "ratio": 0.9,
+      "verdict": "ok",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.0068,
+      "ratio": 2.44,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "krill": {
+    "total": 1.06,
+    "pairs": {
+     "planktivorous_fish": {
+      "booked": 2.071,
+      "ratio": 0.95,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.1873,
+      "ratio": 1.46,
+      "verdict": "ok",
+      "field": 1.59
+     },
+     "mackerel": {
+      "booked": 0.125,
+      "ratio": 1.67,
+      "verdict": "ok",
+      "field": null
+     },
+     "predatory_fish": {
+      "booked": 0.119,
+      "ratio": 1.39,
+      "verdict": "ok",
+      "field": 1.4
+     },
+     "benthivorous_fish": {
+      "booked": 0.035,
+      "ratio": 1.79,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "mackerel": {
+    "total": 0.02,
+    "pairs": {
+     "predatory_fish": {
+      "booked": 0.021,
+      "ratio": 0.02,
+      "verdict": "OFF",
+      "field": 0.03
+     }
+    }
+   },
+   "mobile_epifauna": {
+    "total": 0.96,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.54,
+      "ratio": 1.03,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0761,
+      "ratio": 0.5,
+      "verdict": "ok",
+      "field": 0.23
+     }
+    }
+   },
+   "norway_lobster": {
+    "total": 0.78,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.0225,
+      "ratio": 0.78,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "phytoplankton": {
+    "total": 1.0,
+    "pairs": {}
+   },
+   "planktivorous_fish": {
+    "total": 0.7,
+    "pairs": {
+     "predatory_fish": {
+      "booked": 0.174,
+      "ratio": 0.78,
+      "verdict": "ok",
+      "field": 0.76
+     },
+     "benthivorous_fish": {
+      "booked": 0.1023,
+      "ratio": 0.62,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0545,
+      "ratio": 0.54,
+      "verdict": "ok",
+      "field": 0.43
+     },
+     "mackerel": {
+      "booked": 0.0186,
+      "ratio": 0.78,
+      "verdict": "ok",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.00946,
+      "ratio": 0.48,
+      "verdict": "ok",
+      "field": null
+     },
+     "seals": {
+      "booked": 0.00501,
+      "ratio": 1.1,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "predatory_fish": {
+    "total": 0.56,
+    "pairs": {
+     "seals": {
+      "booked": 0.0033,
+      "ratio": 0.26,
+      "verdict": "OFF",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.0021,
+      "ratio": 1.04,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "whiting": {
+    "total": 0.58,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.18,
+      "ratio": 0.27,
+      "verdict": "OFF",
+      "field": null
+     },
+     "predatory_fish": {
+      "booked": 0.157,
+      "ratio": 0.64,
+      "verdict": "ok",
+      "field": 0.46
+     },
+     "porpoises": {
+      "booked": 0.0201,
+      "ratio": 1.92,
+      "verdict": "ok",
+      "field": null
+     },
+     "seals": {
+      "booked": 0.0139,
+      "ratio": 1.81,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "zooplankton": {
+    "total": 1.01,
+    "pairs": {
+     "planktivorous_fish": {
+      "booked": 1.612,
+      "ratio": 1.03,
+      "verdict": "ok",
+      "field": null
+     },
+     "mackerel": {
+      "booked": 0.09,
+      "ratio": 0.54,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0039,
+      "ratio": 0.4,
+      "verdict": "ok",
+      "field": 0.19
+     },
+     "predatory_fish": {
+      "booked": 0.0017,
+      "ratio": 0.38,
+      "verdict": "ok",
+      "field": 0.62
+     }
+    }
+   }
+  },
+  "off": [
+   "Diet gate: OFF pairs - whiting -> benthivorous_fish enc 0.012 vs booked 0.097",
+   "Diet gate at the field spread: OFF pairs - whiting -> benthivorous_fish enc 0.007 vs booked 0.097; whiting -> mobile_epifauna enc 0.040 vs booked 0.171"
+  ]
+ },
+ "final_sw_contact": {
+  "equal": {
+   "benthivorous_fish": [
+    6.588458333333334,
+    {
+     "benthic_infauna": 0.5838755838011186,
+     "krill": 0.019548484269115988,
+     "mobile_epifauna": 0.31484952817327005,
+     "norway_lobster": 0.03923371535684736,
+     "planktivorous_fish": 0.0391337200257471,
+     "whiting": 0.0033589683739008204
+    }
+   ],
+   "mackerel": [
+    1.5878333333333332,
+    {
+     "krill": 0.6587342275275211,
+     "planktivorous_fish": 0.04291806954038219,
+     "zooplankton": 0.29834770293209667
+    }
+   ],
+   "planktivorous_fish": [
+    26.02722222222222,
+    {
+     "krill": 0.37781576933287864,
+     "zooplankton": 0.6221842306671214
+    }
+   ],
+   "porpoises": [
+    0.06531736111111111,
+    {
+     "benthivorous_fish": 0.3882894969260996,
+     "planktivorous_fish": 0.32766519593089893,
+     "predatory_fish": 0.020538825480550905,
+     "whiting": 0.2635064816624506
+    }
+   ],
+   "predatory_fish": [
+    1.6483041666666665,
+    {
+     "benthivorous_fish": 0.07509083076228658,
+     "krill": 0.5029699080858347,
+     "mackerel": 0.00020613886149283396,
+     "planktivorous_fish": 0.3906506401241341,
+     "whiting": 0.027234772756317173,
+     "zooplankton": 0.003847709409934614
+    }
+   ],
+   "seals": [
+    0.08887652777777777,
+    {
+     "benthivorous_fish": 0.576191773099249,
+     "planktivorous_fish": 0.29165206954356976,
+     "predatory_fish": 0.005847371341312049,
+     "whiting": 0.12630878601586915
+    }
+   ],
+   "whiting": [
+    1.6822805555555556,
+    {
+     "benthivorous_fish": 0.011806248684190196,
+     "krill": 0.8122848754275651,
+     "mobile_epifauna": 0.08476285543370825,
+     "planktivorous_fish": 0.08219736387849703,
+     "zooplankton": 0.008948656576039393
+    }
+   ]
+  },
+  "field": {
+   "predatory_fish": [
+    1.6483041666666665,
+    {
+     "benthivorous_fish": 0.08743428991043704,
+     "krill": 0.5063752963138438,
+     "mackerel": 0.00027446644212461167,
+     "planktivorous_fish": 0.3801029076186471,
+     "whiting": 0.019560675078595855,
+     "zooplankton": 0.006252364636351649
+    }
+   ],
+   "whiting": [
+    1.6822805555555556,
+    {
+     "benthivorous_fish": 0.006953682268278939,
+     "krill": 0.8832241447069399,
+     "mobile_epifauna": 0.03950750516643019,
+     "planktivorous_fish": 0.06614374777665365,
+     "zooplankton": 0.004170920081697619
+    }
+   ]
+  },
+  "cls": {
+   "benthivorous_fish": [
+    {
+     "benthic_infauna": {
+      "enc": 0.5387372491820689,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.04476088953051968,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.29050909717799867,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.03620062984812169,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.07012769303565454,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.019664441225636542,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.5728960938422695,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.027959156725014086,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.30892893938854654,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.0384959448527196,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.048473206502685044,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.0032466586887653316,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.6059148786186287,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.0043907350631651075,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.32673401481234193,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.04071465315168819,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.022084227260728763,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.00016149109344745557,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.6139074427220935,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.000124724232400855,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.3310439313539586,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.04125171617282922,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.013665060605994796,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 7.124912722951991e-06,
+      "book": 0.012180391214434332
+     }
+    }
+   ],
+   "mackerel": [
+    {
+     "krill": {
+      "enc": 0.5440571394621885,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.05734002344633208,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.3986028370914794,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.6937379192941676,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.03851595541529163,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2677461252905407,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.66515430245491,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.04211067177472913,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2927350257703608,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.6806649554287109,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.040160029968129535,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2791750146031596,
+      "book": 0.5510653930933137
+     }
+    }
+   ],
+   "planktivorous_fish": [
+    {
+     "krill": {
+      "enc": 0.56287683240717,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.43712316759283,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.4749774604803058,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.5250225395196942,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.16399603557383186,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.8360039644261681,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.09437965582204395,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.9056203441779561,
+      "book": 0.6021473243825909
+     }
+    }
+   ],
+   "predatory_fish": [
+    {
+     "benthivorous_fish": {
+      "enc": 0.0628005318541343,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.4105576000637292,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0001715332813554805,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.43776346224647855,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.0868190359399983,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.001887836614304088,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.06860726145840187,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.591506284586014,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0001263518877377212,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.3194889496797791,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.017763718367197374,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.002507434020869982,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.10302580814278874,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.487918796266028,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0003712044176948691,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.3965714003272085,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.0029407816884325744,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.009172009157847272,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.2353207903691962,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.06293568087292974,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0015500056697437072,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.6614462433400995,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.0004485270395146772,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.038298752708516036,
+      "book": 0.010027140689210038
+     }
+    }
+   ],
+   "whiting": [
+    {
+     "benthivorous_fish": {
+      "enc": 0.0063797930747604755,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.8885546521168572,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.03513620366718672,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.06621992183522646,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.0037094293059692224,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.009899459244881023,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.8611523700436279,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.06047650629476797,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.06208698703673779,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.006384677379985326,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.0404189500000934,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.3459931183518477,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.35616667724990014,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.2198197217193653,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.03760153267879336,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.0584518740564435,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.0,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.5943121332044133,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.2844927645667626,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.06274322817238069,
+      "book": 0.022538848553798493
+     }
+    }
+   ]
+  },
+  "prey": {
+   "benthic_infauna": {
+    "total": 1.04,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.0396,
+      "ratio": 1.04,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "benthivorous_fish": {
+    "total": 0.62,
+    "pairs": {
+     "whiting": {
+      "booked": 0.1067,
+      "ratio": 0.12,
+      "verdict": "OFF",
+      "field": 0.07
+     },
+     "predatory_fish": {
+      "booked": 0.0833,
+      "ratio": 0.97,
+      "verdict": "ok",
+      "field": 1.13
+     },
+     "seals": {
+      "booked": 0.0373,
+      "ratio": 0.9,
+      "verdict": "ok",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.0068,
+      "ratio": 2.44,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "krill": {
+    "total": 1.04,
+    "pairs": {
+     "planktivorous_fish": {
+      "booked": 2.071,
+      "ratio": 0.95,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.1873,
+      "ratio": 1.46,
+      "verdict": "ok",
+      "field": 1.59
+     },
+     "mackerel": {
+      "booked": 0.125,
+      "ratio": 1.67,
+      "verdict": "ok",
+      "field": null
+     },
+     "predatory_fish": {
+      "booked": 0.119,
+      "ratio": 1.39,
+      "verdict": "ok",
+      "field": 1.4
+     },
+     "benthivorous_fish": {
+      "booked": 0.035,
+      "ratio": 0.74,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "mackerel": {
+    "total": 0.02,
+    "pairs": {
+     "predatory_fish": {
+      "booked": 0.021,
+      "ratio": 0.02,
+      "verdict": "OFF",
+      "field": 0.03
+     }
+    }
+   },
+   "mobile_epifauna": {
+    "total": 0.95,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.54,
+      "ratio": 1.02,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0761,
+      "ratio": 0.5,
+      "verdict": "ok",
+      "field": 0.23
+     }
+    }
+   },
+   "norway_lobster": {
+    "total": 2.51,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.0225,
+      "ratio": 2.51,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "phytoplankton": {
+    "total": 1.0,
+    "pairs": {}
+   },
+   "planktivorous_fish": {
+    "total": 0.67,
+    "pairs": {
+     "predatory_fish": {
+      "booked": 0.174,
+      "ratio": 0.78,
+      "verdict": "ok",
+      "field": 0.76
+     },
+     "benthivorous_fish": {
+      "booked": 0.1023,
+      "ratio": 0.53,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0545,
+      "ratio": 0.54,
+      "verdict": "ok",
+      "field": 0.43
+     },
+     "mackerel": {
+      "booked": 0.0186,
+      "ratio": 0.78,
+      "verdict": "ok",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.00946,
+      "ratio": 0.48,
+      "verdict": "ok",
+      "field": null
+     },
+     "seals": {
+      "booked": 0.00501,
+      "ratio": 1.1,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "predatory_fish": {
+    "total": 0.56,
+    "pairs": {
+     "seals": {
+      "booked": 0.0033,
+      "ratio": 0.26,
+      "verdict": "OFF",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.0021,
+      "ratio": 1.04,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "whiting": {
+    "total": 0.58,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.18,
+      "ratio": 0.28,
+      "verdict": "OFF",
+      "field": null
+     },
+     "predatory_fish": {
+      "booked": 0.157,
+      "ratio": 0.64,
+      "verdict": "ok",
+      "field": 0.46
+     },
+     "porpoises": {
+      "booked": 0.0201,
+      "ratio": 1.92,
+      "verdict": "ok",
+      "field": null
+     },
+     "seals": {
+      "booked": 0.0139,
+      "ratio": 1.81,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "zooplankton": {
+    "total": 1.01,
+    "pairs": {
+     "planktivorous_fish": {
+      "booked": 1.612,
+      "ratio": 1.03,
+      "verdict": "ok",
+      "field": null
+     },
+     "mackerel": {
+      "booked": 0.09,
+      "ratio": 0.54,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0039,
+      "ratio": 0.4,
+      "verdict": "ok",
+      "field": 0.19
+     },
+     "predatory_fish": {
+      "booked": 0.0017,
+      "ratio": 0.38,
+      "verdict": "ok",
+      "field": 0.62
+     }
+    }
+   }
+  },
+  "off": [
+   "Diet gate: OFF pairs - whiting -> benthivorous_fish enc 0.012 vs booked 0.097",
+   "Diet gate at the field spread: OFF pairs - whiting -> benthivorous_fish enc 0.007 vs booked 0.097; whiting -> mobile_epifauna enc 0.040 vs booked 0.171"
+  ]
+ },
+ "final_pout_albert": {
+  "equal": {
+   "benthivorous_fish": [
+    6.588458333333334,
+    {
+     "benthic_infauna": 0.5360086600899752,
+     "krill": 0.022314862643510267,
+     "mobile_epifauna": 0.2881344851722709,
+     "norway_lobster": 0.03157450857456497,
+     "planktivorous_fish": 0.11844315902745119,
+     "whiting": 0.0035243244922275175
+    }
+   ],
+   "mackerel": [
+    1.5878333333333332,
+    {
+     "krill": 0.6587342275275211,
+     "planktivorous_fish": 0.04291806954038219,
+     "zooplankton": 0.29834770293209667
+    }
+   ],
+   "planktivorous_fish": [
+    26.02722222222222,
+    {
+     "krill": 0.37781576933287864,
+     "zooplankton": 0.6221842306671214
+    }
+   ],
+   "porpoises": [
+    0.06531736111111111,
+    {
+     "benthivorous_fish": 0.3882894969260996,
+     "planktivorous_fish": 0.32766519593089893,
+     "predatory_fish": 0.020538825480550905,
+     "whiting": 0.2635064816624506
+    }
+   ],
+   "predatory_fish": [
+    1.6483041666666665,
+    {
+     "benthivorous_fish": 0.07509083076228658,
+     "krill": 0.5029699080858347,
+     "mackerel": 0.00020613886149283396,
+     "planktivorous_fish": 0.3906506401241341,
+     "whiting": 0.027234772756317173,
+     "zooplankton": 0.003847709409934614
+    }
+   ],
+   "seals": [
+    0.08887652777777777,
+    {
+     "benthivorous_fish": 0.576191773099249,
+     "planktivorous_fish": 0.29165206954356976,
+     "predatory_fish": 0.005847371341312049,
+     "whiting": 0.12630878601586915
+    }
+   ],
+   "whiting": [
+    1.6822805555555556,
+    {
+     "benthivorous_fish": 0.011806248684190196,
+     "krill": 0.8122848754275651,
+     "mobile_epifauna": 0.08476285543370825,
+     "planktivorous_fish": 0.08219736387849703,
+     "zooplankton": 0.008948656576039393
+    }
+   ]
+  },
+  "field": {
+   "predatory_fish": [
+    1.6483041666666665,
+    {
+     "benthivorous_fish": 0.08743428991043704,
+     "krill": 0.5063752963138438,
+     "mackerel": 0.00027446644212461167,
+     "planktivorous_fish": 0.3801029076186471,
+     "whiting": 0.019560675078595855,
+     "zooplankton": 0.006252364636351649
+    }
+   ],
+   "whiting": [
+    1.6822805555555556,
+    {
+     "benthivorous_fish": 0.006953682268278939,
+     "krill": 0.8832241447069399,
+     "mobile_epifauna": 0.03950750516643019,
+     "planktivorous_fish": 0.06614374777665365,
+     "zooplankton": 0.004170920081697619
+    }
+   ]
+  },
+  "cls": {
+   "benthivorous_fish": [
+    {
+     "benthic_infauna": {
+      "enc": 0.46681425880240607,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.047392038115331665,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.25093864361916884,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.02749849380196875,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.18795892208784976,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.019397643573274927,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.5070475338957957,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.03139918955453194,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.27256626807561374,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.029868503811146262,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.1558347602628978,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.0032837444000145054,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.5801664184930463,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.005242553485394117,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.31187173781608934,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.03417569699770964,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.06836527832682739,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.0001783148809332523,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.6031272904674638,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.00013841313612736932,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.32421448433877564,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.035528246504865066,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.036983618654102136,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 7.94689866594968e-06,
+      "book": 0.012180391214434332
+     }
+    }
+   ],
+   "mackerel": [
+    {
+     "krill": {
+      "enc": 0.5440571394621885,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.05734002344633208,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.3986028370914794,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.6937379192941676,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.03851595541529163,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2677461252905407,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.66515430245491,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.04211067177472913,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2927350257703608,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.6806649554287109,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.040160029968129535,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2791750146031596,
+      "book": 0.5510653930933137
+     }
+    }
+   ],
+   "planktivorous_fish": [
+    {
+     "krill": {
+      "enc": 0.56287683240717,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.43712316759283,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.4749774604803058,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.5250225395196942,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.16399603557383186,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.8360039644261681,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.09437965582204395,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.9056203441779561,
+      "book": 0.6021473243825909
+     }
+    }
+   ],
+   "predatory_fish": [
+    {
+     "benthivorous_fish": {
+      "enc": 0.0628005318541343,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.4105576000637292,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0001715332813554805,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.43776346224647855,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.0868190359399983,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.001887836614304088,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.06860726145840187,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.591506284586014,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0001263518877377212,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.3194889496797791,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.017763718367197374,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.002507434020869982,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.10302580814278874,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.487918796266028,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0003712044176948691,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.3965714003272085,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.0029407816884325744,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.009172009157847272,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.2353207903691962,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.06293568087292974,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0015500056697437072,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.6614462433400995,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.0004485270395146772,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.038298752708516036,
+      "book": 0.010027140689210038
+     }
+    }
+   ],
+   "whiting": [
+    {
+     "benthivorous_fish": {
+      "enc": 0.0063797930747604755,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.8885546521168572,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.03513620366718672,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.06621992183522646,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.0037094293059692224,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.009899459244881023,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.8611523700436279,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.06047650629476797,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.06208698703673779,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.006384677379985326,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.0404189500000934,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.3459931183518477,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.35616667724990014,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.2198197217193653,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.03760153267879336,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.0584518740564435,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.0,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.5943121332044133,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.2844927645667626,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.06274322817238069,
+      "book": 0.022538848553798493
+     }
+    }
+   ]
+  },
+  "prey": {
+   "benthic_infauna": {
+    "total": 0.95,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.0396,
+      "ratio": 0.95,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "benthivorous_fish": {
+    "total": 0.62,
+    "pairs": {
+     "whiting": {
+      "booked": 0.1067,
+      "ratio": 0.12,
+      "verdict": "OFF",
+      "field": 0.07
+     },
+     "predatory_fish": {
+      "booked": 0.0833,
+      "ratio": 0.97,
+      "verdict": "ok",
+      "field": 1.13
+     },
+     "seals": {
+      "booked": 0.0373,
+      "ratio": 0.9,
+      "verdict": "ok",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.0068,
+      "ratio": 2.44,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "krill": {
+    "total": 1.04,
+    "pairs": {
+     "planktivorous_fish": {
+      "booked": 2.071,
+      "ratio": 0.95,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.1873,
+      "ratio": 1.46,
+      "verdict": "ok",
+      "field": 1.59
+     },
+     "mackerel": {
+      "booked": 0.125,
+      "ratio": 1.67,
+      "verdict": "ok",
+      "field": null
+     },
+     "predatory_fish": {
+      "booked": 0.119,
+      "ratio": 1.39,
+      "verdict": "ok",
+      "field": 1.4
+     },
+     "benthivorous_fish": {
+      "booked": 0.035,
+      "ratio": 0.84,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "mackerel": {
+    "total": 0.02,
+    "pairs": {
+     "predatory_fish": {
+      "booked": 0.021,
+      "ratio": 0.02,
+      "verdict": "OFF",
+      "field": 0.03
+     }
+    }
+   },
+   "mobile_epifauna": {
+    "total": 0.88,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.54,
+      "ratio": 0.93,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0761,
+      "ratio": 0.5,
+      "verdict": "ok",
+      "field": 0.23
+     }
+    }
+   },
+   "norway_lobster": {
+    "total": 2.02,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.0225,
+      "ratio": 2.02,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "phytoplankton": {
+    "total": 1.0,
+    "pairs": {}
+   },
+   "planktivorous_fish": {
+    "total": 0.98,
+    "pairs": {
+     "predatory_fish": {
+      "booked": 0.174,
+      "ratio": 0.78,
+      "verdict": "ok",
+      "field": 0.76
+     },
+     "benthivorous_fish": {
+      "booked": 0.1023,
+      "ratio": 1.62,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0545,
+      "ratio": 0.54,
+      "verdict": "ok",
+      "field": 0.43
+     },
+     "mackerel": {
+      "booked": 0.0186,
+      "ratio": 0.78,
+      "verdict": "ok",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.00946,
+      "ratio": 0.48,
+      "verdict": "ok",
+      "field": null
+     },
+     "seals": {
+      "booked": 0.00501,
+      "ratio": 1.1,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "predatory_fish": {
+    "total": 0.56,
+    "pairs": {
+     "seals": {
+      "booked": 0.0033,
+      "ratio": 0.26,
+      "verdict": "OFF",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.0021,
+      "ratio": 1.04,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "whiting": {
+    "total": 0.58,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.18,
+      "ratio": 0.29,
+      "verdict": "OFF",
+      "field": null
+     },
+     "predatory_fish": {
+      "booked": 0.157,
+      "ratio": 0.64,
+      "verdict": "ok",
+      "field": 0.46
+     },
+     "porpoises": {
+      "booked": 0.0201,
+      "ratio": 1.92,
+      "verdict": "ok",
+      "field": null
+     },
+     "seals": {
+      "booked": 0.0139,
+      "ratio": 1.81,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "zooplankton": {
+    "total": 1.01,
+    "pairs": {
+     "planktivorous_fish": {
+      "booked": 1.612,
+      "ratio": 1.03,
+      "verdict": "ok",
+      "field": null
+     },
+     "mackerel": {
+      "booked": 0.09,
+      "ratio": 0.54,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0039,
+      "ratio": 0.4,
+      "verdict": "ok",
+      "field": 0.19
+     },
+     "predatory_fish": {
+      "booked": 0.0017,
+      "ratio": 0.38,
+      "verdict": "ok",
+      "field": 0.62
+     }
+    }
+   }
+  },
+  "off": [
+   "Diet gate: OFF pairs - whiting -> benthivorous_fish enc 0.012 vs booked 0.097",
+   "Diet gate at the field spread: OFF pairs - whiting -> benthivorous_fish enc 0.007 vs booked 0.097; whiting -> mobile_epifauna enc 0.040 vs booked 0.171"
+  ]
+ },
+ "final_win_lo": {
+  "equal": {
+   "benthivorous_fish": [
+    6.588458333333334,
+    {
+     "benthic_infauna": 0.5809525378063572,
+     "krill": 0.024185945207249888,
+     "mobile_epifauna": 0.3122943206967221,
+     "norway_lobster": 0.03422200470287733,
+     "planktivorous_fish": 0.04452535543439057,
+     "whiting": 0.0038198361524028127
+    }
+   ],
+   "mackerel": [
+    1.5878333333333332,
+    {
+     "krill": 0.6587342275275211,
+     "planktivorous_fish": 0.04291806954038219,
+     "zooplankton": 0.29834770293209667
+    }
+   ],
+   "planktivorous_fish": [
+    26.02722222222222,
+    {
+     "krill": 0.37781576933287864,
+     "zooplankton": 0.6221842306671214
+    }
+   ],
+   "porpoises": [
+    0.06531736111111111,
+    {
+     "benthivorous_fish": 0.3882894969260996,
+     "planktivorous_fish": 0.32766519593089893,
+     "predatory_fish": 0.020538825480550905,
+     "whiting": 0.2635064816624506
+    }
+   ],
+   "predatory_fish": [
+    1.6483041666666665,
+    {
+     "benthivorous_fish": 0.05132107899886126,
+     "krill": 0.5158960096505177,
+     "mackerel": 0.0002114365379884818,
+     "planktivorous_fish": 0.40069018676375373,
+     "whiting": 0.027934694228913773,
+     "zooplankton": 0.00394659381996519
+    }
+   ],
+   "seals": [
+    0.08887652777777777,
+    {
+     "benthivorous_fish": 0.576191773099249,
+     "planktivorous_fish": 0.29165206954356976,
+     "predatory_fish": 0.005847371341312049,
+     "whiting": 0.12630878601586915
+    }
+   ],
+   "whiting": [
+    1.6822805555555556,
+    {
+     "benthivorous_fish": 0.011806248684190196,
+     "krill": 0.8122848754275651,
+     "mobile_epifauna": 0.08476285543370825,
+     "planktivorous_fish": 0.08219736387849703,
+     "zooplankton": 0.008948656576039393
+    }
+   ]
+  },
+  "field": {
+   "predatory_fish": [
+    1.6483041666666665,
+    {
+     "benthivorous_fish": 0.060010773006219355,
+     "krill": 0.5215923829792829,
+     "mackerel": 0.00028271443460562,
+     "planktivorous_fish": 0.3915253820741022,
+     "whiting": 0.020148493027204877,
+     "zooplankton": 0.00644025447858503
+    }
+   ],
+   "whiting": [
+    1.6822805555555556,
+    {
+     "benthivorous_fish": 0.006953682268278939,
+     "krill": 0.8832241447069399,
+     "mobile_epifauna": 0.03950750516643019,
+     "planktivorous_fish": 0.06614374777665365,
+     "zooplankton": 0.004170920081697619
+    }
+   ]
+  },
+  "cls": {
+   "benthivorous_fish": [
+    {
+     "benthic_infauna": {
+      "enc": 0.5297460772831123,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.053781018494286174,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.28476799838341704,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.03120560040337791,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.07848664108866205,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.022012664347144408,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.5676444153262233,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.0351516838262791,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.30514046422959107,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.03343806694468922,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.05494918737191444,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.003676182301302875,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.6068233572996921,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.0054834333829478455,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.3262013259575054,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.03574596965483576,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.02555940578030056,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.00018650792471834173,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.6165174945258958,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.00014148608634269866,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.3314124642223102,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.03631701941906978,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.015603412416311444,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 8.123330070150062e-06,
+      "book": 0.012180391214434332
+     }
+    }
+   ],
+   "mackerel": [
+    {
+     "krill": {
+      "enc": 0.5440571394621885,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.05734002344633208,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.3986028370914794,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.6937379192941676,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.03851595541529163,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2677461252905407,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.66515430245491,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.04211067177472913,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2927350257703608,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.6806649554287109,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.040160029968129535,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2791750146031596,
+      "book": 0.5510653930933137
+     }
+    }
+   ],
+   "planktivorous_fish": [
+    {
+     "krill": {
+      "enc": 0.56287683240717,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.43712316759283,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.4749774604803058,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.5250225395196942,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.16399603557383186,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.8360039644261681,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.09437965582204395,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.9056203441779561,
+      "book": 0.6021473243825909
+     }
+    }
+   ],
+   "predatory_fish": [
+    {
+     "benthivorous_fish": {
+      "enc": 0.0427414494628542,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.4193448529442044,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0001752046451798363,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.44713300806415446,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.08867724249499914,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.0019282423886079498,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.0467860447513314,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.6053644416076762,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.00012931213405442479,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.32697412464194725,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.018179897205590444,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.0025661796594002545,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.07109302741786695,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.505288977118691,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0003844195016760809,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.4106895630161523,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.0030454751541633394,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.009498537791450521,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.17016214826184142,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.06829845712489799,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0016820823149920636,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.7178083602908933,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.00048674622015294604,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.04156220578722226,
+      "book": 0.010027140689210038
+     }
+    }
+   ],
+   "whiting": [
+    {
+     "benthivorous_fish": {
+      "enc": 0.0063797930747604755,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.8885546521168572,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.03513620366718672,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.06621992183522646,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.0037094293059692224,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.009899459244881023,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.8611523700436279,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.06047650629476797,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.06208698703673779,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.006384677379985326,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.0404189500000934,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.3459931183518477,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.35616667724990014,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.2198197217193653,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.03760153267879336,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.0584518740564435,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.0,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.5943121332044133,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.2844927645667626,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.06274322817238069,
+      "book": 0.022538848553798493
+     }
+    }
+   ]
+  },
+  "prey": {
+   "benthic_infauna": {
+    "total": 1.03,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.0396,
+      "ratio": 1.03,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "benthivorous_fish": {
+    "total": 0.51,
+    "pairs": {
+     "whiting": {
+      "booked": 0.1067,
+      "ratio": 0.12,
+      "verdict": "OFF",
+      "field": 0.07
+     },
+     "predatory_fish": {
+      "booked": 0.0833,
+      "ratio": 0.66,
+      "verdict": "ok",
+      "field": 0.78
+     },
+     "seals": {
+      "booked": 0.0373,
+      "ratio": 0.9,
+      "verdict": "ok",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.0068,
+      "ratio": 2.44,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "krill": {
+    "total": 1.04,
+    "pairs": {
+     "planktivorous_fish": {
+      "booked": 2.071,
+      "ratio": 0.95,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.1873,
+      "ratio": 1.46,
+      "verdict": "ok",
+      "field": 1.59
+     },
+     "mackerel": {
+      "booked": 0.125,
+      "ratio": 1.67,
+      "verdict": "ok",
+      "field": null
+     },
+     "predatory_fish": {
+      "booked": 0.119,
+      "ratio": 1.43,
+      "verdict": "ok",
+      "field": 1.44
+     },
+     "benthivorous_fish": {
+      "booked": 0.035,
+      "ratio": 0.91,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "mackerel": {
+    "total": 0.02,
+    "pairs": {
+     "predatory_fish": {
+      "booked": 0.021,
+      "ratio": 0.02,
+      "verdict": "OFF",
+      "field": 0.03
+     }
+    }
+   },
+   "mobile_epifauna": {
+    "total": 0.95,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.54,
+      "ratio": 1.01,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0761,
+      "ratio": 0.5,
+      "verdict": "ok",
+      "field": 0.23
+     }
+    }
+   },
+   "norway_lobster": {
+    "total": 2.19,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.0225,
+      "ratio": 2.19,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "phytoplankton": {
+    "total": 1.0,
+    "pairs": {}
+   },
+   "planktivorous_fish": {
+    "total": 0.7,
+    "pairs": {
+     "predatory_fish": {
+      "booked": 0.174,
+      "ratio": 0.8,
+      "verdict": "ok",
+      "field": 0.79
+     },
+     "benthivorous_fish": {
+      "booked": 0.1023,
+      "ratio": 0.61,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0545,
+      "ratio": 0.54,
+      "verdict": "ok",
+      "field": 0.43
+     },
+     "mackerel": {
+      "booked": 0.0186,
+      "ratio": 0.78,
+      "verdict": "ok",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.00946,
+      "ratio": 0.48,
+      "verdict": "ok",
+      "field": null
+     },
+     "seals": {
+      "booked": 0.00501,
+      "ratio": 1.1,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "predatory_fish": {
+    "total": 0.56,
+    "pairs": {
+     "seals": {
+      "booked": 0.0033,
+      "ratio": 0.26,
+      "verdict": "OFF",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.0021,
+      "ratio": 1.04,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "whiting": {
+    "total": 0.6,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.18,
+      "ratio": 0.31,
+      "verdict": "OFF",
+      "field": null
+     },
+     "predatory_fish": {
+      "booked": 0.157,
+      "ratio": 0.66,
+      "verdict": "ok",
+      "field": 0.47
+     },
+     "porpoises": {
+      "booked": 0.0201,
+      "ratio": 1.92,
+      "verdict": "ok",
+      "field": null
+     },
+     "seals": {
+      "booked": 0.0139,
+      "ratio": 1.81,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "zooplankton": {
+    "total": 1.01,
+    "pairs": {
+     "planktivorous_fish": {
+      "booked": 1.612,
+      "ratio": 1.03,
+      "verdict": "ok",
+      "field": null
+     },
+     "mackerel": {
+      "booked": 0.09,
+      "ratio": 0.54,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0039,
+      "ratio": 0.4,
+      "verdict": "ok",
+      "field": 0.19
+     },
+     "predatory_fish": {
+      "booked": 0.0017,
+      "ratio": 0.39,
+      "verdict": "ok",
+      "field": 0.64
+     }
+    }
+   }
+  },
+  "off": [
+   "Diet gate: OFF pairs - whiting -> benthivorous_fish enc 0.012 vs booked 0.097",
+   "Diet gate at the field spread: OFF pairs - whiting -> benthivorous_fish enc 0.007 vs booked 0.097; whiting -> mobile_epifauna enc 0.040 vs booked 0.171"
+  ]
+ },
+ "final_win_hi": {
+  "equal": {
+   "benthivorous_fish": [
+    6.588458333333334,
+    {
+     "benthic_infauna": 0.5809525378063572,
+     "krill": 0.024185945207249888,
+     "mobile_epifauna": 0.3122943206967221,
+     "norway_lobster": 0.03422200470287733,
+     "planktivorous_fish": 0.04452535543439057,
+     "whiting": 0.0038198361524028127
+    }
+   ],
+   "mackerel": [
+    1.5878333333333332,
+    {
+     "krill": 0.6587342275275211,
+     "planktivorous_fish": 0.04291806954038219,
+     "zooplankton": 0.29834770293209667
+    }
+   ],
+   "planktivorous_fish": [
+    26.02722222222222,
+    {
+     "krill": 0.37781576933287864,
+     "zooplankton": 0.6221842306671214
+    }
+   ],
+   "porpoises": [
+    0.06531736111111111,
+    {
+     "benthivorous_fish": 0.3882894969260996,
+     "planktivorous_fish": 0.32766519593089893,
+     "predatory_fish": 0.020538825480550905,
+     "whiting": 0.2635064816624506
+    }
+   ],
+   "predatory_fish": [
+    1.6483041666666665,
+    {
+     "benthivorous_fish": 0.11182626552681182,
+     "krill": 0.4829930078003348,
+     "mackerel": 0.0001979514621776724,
+     "planktivorous_fish": 0.37513482345445215,
+     "whiting": 0.026153065220926502,
+     "zooplankton": 0.0036948865352970993
+    }
+   ],
+   "seals": [
+    0.08887652777777777,
+    {
+     "benthivorous_fish": 0.576191773099249,
+     "planktivorous_fish": 0.29165206954356976,
+     "predatory_fish": 0.005847371341312049,
+     "whiting": 0.12630878601586915
+    }
+   ],
+   "whiting": [
+    1.6822805555555556,
+    {
+     "benthivorous_fish": 0.011806248684190196,
+     "krill": 0.8122848754275651,
+     "mobile_epifauna": 0.08476285543370825,
+     "planktivorous_fish": 0.08219736387849703,
+     "zooplankton": 0.008948656576039393
+    }
+   ]
+  },
+  "field": {
+   "predatory_fish": [
+    1.6483041666666665,
+    {
+     "benthivorous_fish": 0.12936371424275767,
+     "krill": 0.4831089995027747,
+     "mackerel": 0.0002618556023904563,
+     "planktivorous_fish": 0.3626384161006314,
+     "whiting": 0.018661925721120434,
+     "zooplankton": 0.005965088830325303
+    }
+   ],
+   "whiting": [
+    1.6822805555555556,
+    {
+     "benthivorous_fish": 0.006953682268278939,
+     "krill": 0.8832241447069399,
+     "mobile_epifauna": 0.03950750516643019,
+     "planktivorous_fish": 0.06614374777665365,
+     "zooplankton": 0.004170920081697619
+    }
+   ]
+  },
+  "cls": {
+   "benthivorous_fish": [
+    {
+     "benthic_infauna": {
+      "enc": 0.5297460772831123,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.053781018494286174,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.28476799838341704,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.03120560040337791,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.07848664108866205,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.022012664347144408,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.5676444153262233,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.0351516838262791,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.30514046422959107,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.03343806694468922,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.05494918737191444,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.003676182301302875,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.6068233572996921,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.0054834333829478455,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.3262013259575054,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.03574596965483576,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.02555940578030056,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 0.00018650792471834173,
+      "book": 0.012180391214434332
+     }
+    },
+    {
+     "benthic_infauna": {
+      "enc": 0.6165174945258958,
+      "book": 0.5626505947901317
+     },
+     "krill": {
+      "enc": 0.00014148608634269866,
+      "book": 0.026561600779140288
+     },
+     "mobile_epifauna": {
+      "enc": 0.3314124642223102,
+      "book": 0.3096323747968353
+     },
+     "norway_lobster": {
+      "enc": 0.03631701941906978,
+      "book": 0.015652371887707666
+     },
+     "planktivorous_fish": {
+      "enc": 0.015603412416311444,
+      "book": 0.0733226665317506
+     },
+     "whiting": {
+      "enc": 8.123330070150062e-06,
+      "book": 0.012180391214434332
+     }
+    }
+   ],
+   "mackerel": [
+    {
+     "krill": {
+      "enc": 0.5440571394621885,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.05734002344633208,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.3986028370914794,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.6937379192941676,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.03851595541529163,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2677461252905407,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.66515430245491,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.04211067177472913,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2927350257703608,
+      "book": 0.5510653930933137
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.6806649554287109,
+      "book": 0.3936181379237956
+     },
+     "planktivorous_fish": {
+      "enc": 0.040160029968129535,
+      "book": 0.055316468982890735
+     },
+     "zooplankton": {
+      "enc": 0.2791750146031596,
+      "book": 0.5510653930933137
+     }
+    }
+   ],
+   "planktivorous_fish": [
+    {
+     "krill": {
+      "enc": 0.56287683240717,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.43712316759283,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.4749774604803058,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.5250225395196942,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.16399603557383186,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.8360039644261681,
+      "book": 0.6021473243825909
+     }
+    },
+    {
+     "krill": {
+      "enc": 0.09437965582204395,
+      "book": 0.39785267561740917
+     },
+     "zooplankton": {
+      "enc": 0.9056203441779561,
+      "book": 0.6021473243825909
+     }
+    }
+   ],
+   "predatory_fish": [
+    {
+     "benthivorous_fish": {
+      "enc": 0.09413533637251005,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.3968308080853025,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0001657981502309364,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.42312705561052666,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.08391628405833562,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.0018247177230942139,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.10252243429923573,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.5699675318686734,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.00012175098638422727,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.3078552719617278,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.017116881051649113,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.002416129832329764,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.15119342020385299,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.46171750362104996,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.000351270699925511,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.37527547282017176,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.0027828613906016966,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.008679471264397998,
+      "book": 0.010027140689210038
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.32306305951151154,
+      "book": 0.07720898330691729
+     },
+     "krill": {
+      "enc": 0.05571419586292978,
+      "book": 0.3609770648115614
+     },
+     "mackerel": {
+      "enc": 0.0013721519855662207,
+      "book": 0.010829311944346843
+     },
+     "planktivorous_fish": {
+      "enc": 0.5855493265998873,
+      "book": 0.49849213712072765
+     },
+     "whiting": {
+      "enc": 0.00039706130104154205,
+      "book": 0.04246536212723684
+     },
+     "zooplankton": {
+      "enc": 0.03390420473906354,
+      "book": 0.010027140689210038
+     }
+    }
+   ],
+   "whiting": [
+    {
+     "benthivorous_fish": {
+      "enc": 0.0063797930747604755,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.8885546521168572,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.03513620366718672,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.06621992183522646,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.0037094293059692224,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.009899459244881023,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.8611523700436279,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.06047650629476797,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.06208698703673779,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.006384677379985326,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.0404189500000934,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.3459931183518477,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.35616667724990014,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.2198197217193653,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.03760153267879336,
+      "book": 0.022538848553798493
+     }
+    },
+    {
+     "benthivorous_fish": {
+      "enc": 0.0584518740564435,
+      "book": 0.09690053680437104
+     },
+     "krill": {
+      "enc": 0.0,
+      "book": 0.5566847913133791
+     },
+     "mobile_epifauna": {
+      "enc": 0.5943121332044133,
+      "book": 0.17089235677098386
+     },
+     "planktivorous_fish": {
+      "enc": 0.2844927645667626,
+      "book": 0.15298346655746745
+     },
+     "zooplankton": {
+      "enc": 0.06274322817238069,
+      "book": 0.022538848553798493
+     }
+    }
+   ]
+  },
+  "prey": {
+   "benthic_infauna": {
+    "total": 1.03,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.0396,
+      "ratio": 1.03,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "benthivorous_fish": {
+    "total": 0.78,
+    "pairs": {
+     "whiting": {
+      "booked": 0.1067,
+      "ratio": 0.12,
+      "verdict": "OFF",
+      "field": 0.07
+     },
+     "predatory_fish": {
+      "booked": 0.0833,
+      "ratio": 1.45,
+      "verdict": "ok",
+      "field": 1.68
+     },
+     "seals": {
+      "booked": 0.0373,
+      "ratio": 0.9,
+      "verdict": "ok",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.0068,
+      "ratio": 2.44,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "krill": {
+    "total": 1.04,
+    "pairs": {
+     "planktivorous_fish": {
+      "booked": 2.071,
+      "ratio": 0.95,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.1873,
+      "ratio": 1.46,
+      "verdict": "ok",
+      "field": 1.59
+     },
+     "mackerel": {
+      "booked": 0.125,
+      "ratio": 1.67,
+      "verdict": "ok",
+      "field": null
+     },
+     "predatory_fish": {
+      "booked": 0.119,
+      "ratio": 1.34,
+      "verdict": "ok",
+      "field": 1.34
+     },
+     "benthivorous_fish": {
+      "booked": 0.035,
+      "ratio": 0.91,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "mackerel": {
+    "total": 0.02,
+    "pairs": {
+     "predatory_fish": {
+      "booked": 0.021,
+      "ratio": 0.02,
+      "verdict": "OFF",
+      "field": 0.02
+     }
+    }
+   },
+   "mobile_epifauna": {
+    "total": 0.95,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.54,
+      "ratio": 1.01,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0761,
+      "ratio": 0.5,
+      "verdict": "ok",
+      "field": 0.23
+     }
+    }
+   },
+   "norway_lobster": {
+    "total": 2.19,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.0225,
+      "ratio": 2.19,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "phytoplankton": {
+    "total": 1.0,
+    "pairs": {}
+   },
+   "planktivorous_fish": {
+    "total": 0.68,
+    "pairs": {
+     "predatory_fish": {
+      "booked": 0.174,
+      "ratio": 0.75,
+      "verdict": "ok",
+      "field": 0.73
+     },
+     "benthivorous_fish": {
+      "booked": 0.1023,
+      "ratio": 0.61,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0545,
+      "ratio": 0.54,
+      "verdict": "ok",
+      "field": 0.43
+     },
+     "mackerel": {
+      "booked": 0.0186,
+      "ratio": 0.78,
+      "verdict": "ok",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.00946,
+      "ratio": 0.48,
+      "verdict": "ok",
+      "field": null
+     },
+     "seals": {
+      "booked": 0.00501,
+      "ratio": 1.1,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "predatory_fish": {
+    "total": 0.56,
+    "pairs": {
+     "seals": {
+      "booked": 0.0033,
+      "ratio": 0.26,
+      "verdict": "OFF",
+      "field": null
+     },
+     "porpoises": {
+      "booked": 0.0021,
+      "ratio": 1.04,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "whiting": {
+    "total": 0.58,
+    "pairs": {
+     "benthivorous_fish": {
+      "booked": 0.18,
+      "ratio": 0.31,
+      "verdict": "OFF",
+      "field": null
+     },
+     "predatory_fish": {
+      "booked": 0.157,
+      "ratio": 0.62,
+      "verdict": "ok",
+      "field": 0.44
+     },
+     "porpoises": {
+      "booked": 0.0201,
+      "ratio": 1.92,
+      "verdict": "ok",
+      "field": null
+     },
+     "seals": {
+      "booked": 0.0139,
+      "ratio": 1.81,
+      "verdict": "ok",
+      "field": null
+     }
+    }
+   },
+   "zooplankton": {
+    "total": 1.01,
+    "pairs": {
+     "planktivorous_fish": {
+      "booked": 1.612,
+      "ratio": 1.03,
+      "verdict": "ok",
+      "field": null
+     },
+     "mackerel": {
+      "booked": 0.09,
+      "ratio": 0.54,
+      "verdict": "ok",
+      "field": null
+     },
+     "whiting": {
+      "booked": 0.0039,
+      "ratio": 0.4,
+      "verdict": "ok",
+      "field": 0.19
+     },
+     "predatory_fish": {
+      "booked": 0.0017,
+      "ratio": 0.37,
+      "verdict": "ok",
+      "field": 0.59
+     }
+    }
+   }
+  },
+  "off": [
+   "Diet gate: OFF pairs - whiting -> benthivorous_fish enc 0.012 vs booked 0.097",
+   "Diet gate at the field spread: OFF pairs - whiting -> benthivorous_fish enc 0.007 vs booked 0.097; whiting -> mobile_epifauna enc 0.040 vs booked 0.171"
+  ]
+ }
+}

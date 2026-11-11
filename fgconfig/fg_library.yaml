@@ -1923,8 +1923,9 @@ interaction_definitions:
     # 0.377 instead of the gape share 0.32 (the window is in stage_access) =
     # 0.0074 (0.0054-0.0100); was 0.0062. research_notes/"Bottenfiskens
     # sillbyte" (Swedish letters) reconcile_summary.md.
-    max_intake_rate: 0.0198
-    dark_ratio: 0.06
+    # Section 269 (rule A + band overlap; research_notes/"Bottenfiskens hojdprofil"): rule A at the bed x1.25 x member search profiles x0.87 = x1.08 (cod 0.68 / haddock 0.32; pout 0.85 of a); n/d integral
+    max_intake_rate: 0.0214
+    dark_ratio: 0.141
     light_threshold_deg: 0.0
     # Stage access [juvenile, adult] (stages.py): cod's window (prey <= 0.30
     # x its length, box cod > 20 cm) on the planktivores' stage lengths.
@@ -1935,6 +1936,13 @@ interaction_definitions:
     # box lengths); was [0.49, 0.14]. research_notes/"Fonsterviktning" (Swedish
     # letters: o-umlaut) summary.md.
     stage_access: [0.62, 0.18]
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.0401}
+      - {depth_m: 100.0, factor: 0.0262}
+      - {depth_m: 149.9, factor: 0.0262}
+      - {depth_m: 150.0, factor: 0.0114}
+      - {depth_m: 249.9, factor: 0.0114}
+      - {depth_m: 250.0, factor: 0.00685}
   # Section 223.26 (split G1): a per tonne of the WHOLE group (the engine has
   # no phi since 221; layer convention), h = E_prey / the group's ceiling
   # (Bjornsson-anchored: whiting 31.34, water column 32.71 MJ/t/tick; since
@@ -1960,8 +1968,9 @@ interaction_definitions:
     handling_time: 218.0
     visibility_floor: 0.25
     functional_response: 2
-    max_intake_rate: 0.0060
-    dark_ratio: 0.41
+    # Section 269 (rule A + band overlap; research_notes/"Bottenfiskens hojdprofil"): band x0.49 x rule A x5.93 = x2.90 (saithe 0.92 of a); n/d rule
+    max_intake_rate: 0.0174
+    dark_ratio: 0.0594
     light_threshold_deg: -5.0
     # Section 232.2: window weighted by each predator length's share of a
     # (a ~ L^-2.1..-2.3 for fixed-R encounters, ~L^-0.36 for cod) and normalised
@@ -1969,6 +1978,13 @@ interaction_definitions:
     # box lengths); was [0.69, 0.27]. research_notes/"Fonsterviktning" (Swedish
     # letters: o-umlaut) summary.md.
     stage_access: [0.65, 0.18]
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.0384}
+      - {depth_m: 100.0, factor: 0.0211}
+      - {depth_m: 149.9, factor: 0.0211}
+      - {depth_m: 150.0, factor: 0.00716}
+      - {depth_m: 249.9, factor: 0.00716}
+      - {depth_m: 250.0, factor: 0.00286}
   # Mackerel group: SMS partial M2 horse mackerel 0.008 + mackerel 0.002 at
   # the GOV biomass, scaled to the members' field biomass (223.37 box scaling;
   # Makrillens tathet (Swedish letters: a-umlaut)). Stage access from the gape
@@ -1989,7 +2005,8 @@ interaction_definitions:
     handling_time: 98.08
     visibility_floor: 0.25
     functional_response: 2
-    max_intake_rate: 0.0266
+    # Section 269 (rule A + band overlap; research_notes/"Bottenfiskens hojdprofil"): band x0.61 x rule A x1.53 = x0.93; no table (derived shape flat +-1 %); dark_ratio 0.16 from the stomachs (228)
+    max_intake_rate: 0.0248
     dark_ratio: 0.16
     light_threshold_deg: -5.0
     # Section 232.2: window weighted by each predator length's share of a
@@ -2022,8 +2039,9 @@ interaction_definitions:
     handling_time: 207.2
     visibility_floor: 0.25
     functional_response: 2
-    max_intake_rate: 0.0212
-    dark_ratio: 0.48
+    # Section 269 (rule A + band overlap; research_notes/"Bottenfiskens hojdprofil"): band (whiting 10 m) x0.75 x rule A x2.06 = x1.55; n/d rule
+    max_intake_rate: 0.0329
+    dark_ratio: 0.212
     light_threshold_deg: -5.0
     # Stage access: whiting's window (0.39 x length; box whiting 22-28 cm
     # -> 9-11 cm prey) on the planktivores' stage lengths. Effective 0.05
@@ -2038,6 +2056,13 @@ interaction_definitions:
     # box lengths); was [0.16, 0.010]. research_notes/"Fonsterviktning" (Swedish
     # letters: o-umlaut) summary.md.
     stage_access: [0.18, 0.0073]
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.0626}
+      - {depth_m: 100.0, factor: 0.0341}
+      - {depth_m: 149.9, factor: 0.0341}
+      - {depth_m: 150.0, factor: 0.0205}
+      - {depth_m: 249.9, factor: 0.0205}
+      - {depth_m: 250.0, factor: 0.0159}
   # Section 209: porpoise diet 0.65 planktivores, 0.15 benthivores, 0.20
   # predators (Skagerrak/Kattegat stomachs 1985-96; Ransijn et al. 2021
   # relative attack rates whiting 1.2x, cod 0.6x herring). Q/B 19.5 ->
@@ -2218,7 +2243,8 @@ interaction_definitions:
     # b 0.75 (gadoid gastric evacuation ~E^-b), armour 1.0; was 99.3
     # (pure energy ceiling). research_notes/"Magtomning och energitak" (Swedish letters).
     handling_time: 111.9
-    max_intake_rate: 0.036
+    # Section 269 (rule A + band overlap; research_notes/"Bottenfiskens hojdprofil"): x tau_bed 0.71: members' search-time share in bed contact (0-2 m; flatfish and LRD 1, cod 0.70, haddock 0.56 by size)
+    max_intake_rate: 0.0256
   # Section 221: shrimps, mysids and crabs moved to mobile_epifauna; the
   # predators' infauna is 3.9 % of their diet (M2 0.0016): unchecked.
   predatory_fish_preys_on_benthic_infauna:
@@ -2258,7 +2284,8 @@ interaction_definitions:
     # (pure energy ceiling). research_notes/"Magtomning och energitak" (Swedish letters).
     handling_time: 257.6
     accessible_fraction: 0.62
-    max_intake_rate: 0.15
+    # Section 269 (rule A + band overlap; research_notes/"Bottenfiskens hojdprofil"): x tau_bed 0.74 (epifauna member weights a_enc x e)
+    max_intake_rate: 0.11
   # Section 223.26: the water-column group's epifauna (horse mackerel,
   # mackerel, saithe traces; 1.2 % of its diet, M2 0.007) is UNCHECKED -
   # the point of the split: 63 % of the predator biomass lost a bed food it
@@ -2319,7 +2346,8 @@ interaction_definitions:
     # (pure energy ceiling). research_notes/"Magtomning och energitak" (Swedish letters).
     handling_time: 285.6
     accessible_fraction: 0.02
-    max_intake_rate: 0.44
+    # Section 269 (rule A + band overlap; research_notes/"Bottenfiskens hojdprofil"): x tau_bed 0.70 (cod; with haddock / LRD weights 0.69)
+    max_intake_rate: 0.308
   # E1: no Nephrops in whiting, saithe or hake stomachs in the box or the
   # Skagerrak (whiting elsewhere 0.04 of its benthos): unchecked.
   predatory_fish_preys_on_norway_lobster:
@@ -2393,8 +2421,9 @@ interaction_definitions:
     # benthivore tonne (was 0.0083). Night/day from the same run 0.15 at 0
     # deg (was 0.10, the herring-like pool leaving the band at dusk).
     # research_notes/"Torskfonster och bottenandel" (o-umlaut, a-ring).
-    max_intake_rate: 0.021
-    dark_ratio: 0.15
+    # Section 269 (rule A + band overlap; research_notes/"Bottenfiskens hojdprofil"): rule A at the bed x1.19 x member search profiles x0.90 = x1.07 (cod 0.94 of a); n/d integral
+    max_intake_rate: 0.0226
+    dark_ratio: 0.168
     # Section 230: stage access from cod's window (prey <= 0.30 x its length,
     # box cod > 20 cm) on whiting's stage lengths, as benthivores ->
     # planktivores (the a's 0.10 is the predator side, the capable share):
@@ -2417,6 +2446,13 @@ interaction_definitions:
     # J/B 0.165 (was 0.086). research_notes/"Torskfonster och bottenandel".
     stage_access: [0.68, 0.24]
     light_threshold_deg: 0.0
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.0366}
+      - {depth_m: 100.0, factor: 0.0306}
+      - {depth_m: 149.9, factor: 0.0306}
+      - {depth_m: 150.0, factor: 0.0129}
+      - {depth_m: 249.9, factor: 0.0129}
+      - {depth_m: 250.0, factor: 0.00738}
   # Section 223.26 (split G1): a per tonne of the WHOLE group (the engine has
   # no phi since 221; layer convention), h = E_prey / the group's ceiling
   # (Bjornsson-anchored: whiting 31.34, water column 32.71 MJ/t/tick).
@@ -2451,8 +2487,9 @@ interaction_definitions:
     # 0.0026-0.013. The in-layer 0.0651 was right only for an eat share read
     # as time in the prey's layer (232.1). research_notes/"Vattenpelarens
     # bottenfiskbyte" (Swedish letters: a-umlaut) summary.md, proposal.py.
-    max_intake_rate: 0.0055
-    dark_ratio: 0.48
+    # Section 269 (rule A + band overlap; research_notes/"Bottenfiskens hojdprofil"): band x1.45 x rule A x5.24 = x7.60 (saithe 0.89, hake 0.05; 243 time factors replaced by the profile); window aw on the band a's member shares, a(L) exponent from the band a (kexp +1.7)
+    max_intake_rate: 0.0418
+    dark_ratio: 0.165
     light_threshold_deg: -5.0
     # Section 243: the 232.2 windows (a-weighted over predator lengths,
     # normalised over all prey-group tonnes; research_notes/"Fonsterviktning",
@@ -2460,7 +2497,14 @@ interaction_definitions:
     # a (saithe 0.45, spurdog 0.18, hake 0.21, velvet belly 0.05, anglerfish
     # 0.12): the bed-reaching members carry adult-sized windows. Range [0.36,
     # 0.081] - [0.48, 0.17]. Was [0.30, 0.038] (232.2), [0.43, 0.027] before.
-    stage_access: [0.42, 0.12]
+    stage_access: [0.392, 0.0388]
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.0693}
+      - {depth_m: 100.0, factor: 0.057}
+      - {depth_m: 149.9, factor: 0.057}
+      - {depth_m: 150.0, factor: 0.0234}
+      - {depth_m: 249.9, factor: 0.0234}
+      - {depth_m: 250.0, factor: 0.0128}
   # Whiting on 0-group and small benthivores: was accessible 0.05 (gape ~12
   # cm + 0-group, J). Night/day 0.64. Juvenile compartment: stage access
   # from whiting's window (0.39 x length, box whiting 22-28 cm -> 9-11 cm
@@ -2479,9 +2523,17 @@ interaction_definitions:
     # letters: o-umlaut) summary.md.
     stage_access: [0.038, 0.0064]
     functional_response: 2
-    max_intake_rate: 0.21
-    dark_ratio: 0.64
+    # Section 269 (rule A + band overlap; research_notes/"Bottenfiskens hojdprofil"): band x0.20 x rule A x2.51 = x0.49; FLAGGED OPEN until whiting's height above the bed is measured
+    max_intake_rate: 0.103
+    dark_ratio: 0.565
     light_threshold_deg: -5.0
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.132}
+      - {depth_m: 100.0, factor: 0.119}
+      - {depth_m: 149.9, factor: 0.119}
+      - {depth_m: 150.0, factor: 0.0825}
+      - {depth_m: 249.9, factor: 0.0825}
+      - {depth_m: 250.0, factor: 0.0715}
   # Cannibalism stays out of the budget (section 160).
   predatory_fish_preys_on_predatory_fish:
     preys_on: false
@@ -2509,9 +2561,17 @@ interaction_definitions:
     # letters: o-umlaut) summary.md.
     stage_access: [0.41, 0.080]
     functional_response: 2
-    max_intake_rate: 0.013
-    dark_ratio: 0.48
+    # Section 269 (rule A + band overlap; research_notes/"Bottenfiskens hojdprofil"): band x0.46 x rule A x6.02 = x2.76; n/d rule
+    max_intake_rate: 0.0359
+    dark_ratio: 0.137
     light_threshold_deg: -5.0
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.0599}
+      - {depth_m: 100.0, factor: 0.0495}
+      - {depth_m: 149.9, factor: 0.0495}
+      - {depth_m: 150.0, factor: 0.0199}
+      - {depth_m: 249.9, factor: 0.0199}
+      - {depth_m: 250.0, factor: 0.0097}
   # Section 228: spurdog (0.37 of the a), hake (0.41), velvet belly, ling and
   # anglerfish on mackerel and horse mackerel (split_fields_223 diets: spurdog
   # W 0.22 x 0.50, hake W 0.21 x 0.10): a learnable cross-group pair, booked
@@ -2538,9 +2598,17 @@ interaction_definitions:
     # (research_notes/"Storleksfonster som standard", o-umlaut).
     stage_access: [0.14, 0.14]
     functional_response: 2
-    max_intake_rate: 0.00088
-    dark_ratio: 0.92
+    # Section 269 (rule A + band overlap; research_notes/"Bottenfiskens hojdprofil"): band x0.13 x rule A x1.19 = x0.155 (spurdog summer surface 0.76 of a); OFF in every reading
+    max_intake_rate: 0.000137
+    dark_ratio: 0.923
     light_threshold_deg: -5.0
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.000229}
+      - {depth_m: 100.0, factor: 0.000127}
+      - {depth_m: 149.9, factor: 0.000127}
+      - {depth_m: 150.0, factor: 0.000102}
+      - {depth_m: 249.9, factor: 0.000102}
+      - {depth_m: 250.0, factor: 0.000102}
   # Cannibalism and mackerel on the other fish stay out of the budget.
   mackerel_preys_on_predatory_fish:
     preys_on: false
@@ -2741,17 +2809,18 @@ interaction_definitions:
     # beds lies deeper (centre 140 m over 160-170 m, 120 m over 250 m), and the
     # < 100 m class a is weighted by krill presence (Sep-Apr 0.43, May-Aug 0.05 of
     # beds >= 250 m), which the pool's depth shape carries.
+    # Section 269 (rule A + band overlap; research_notes/"Bottenfiskens hojdprofil"): band + rule A: x1.00 (2 L cap binds); dark_ratio 0.57 from the stomachs (245)
     max_intake_rate: 0.023
     functional_response: 2
     dark_ratio: 0.57
     light_threshold_deg: 0.0
     depth_access_table:
-      - {depth_m: 99.9, factor: 0.069}
-      - {depth_m: 100.0, factor: 0.021}
-      - {depth_m: 149.9, factor: 0.021}
-      - {depth_m: 150.0, factor: 0.0037}
-      - {depth_m: 249.9, factor: 0.0037}
-      - {depth_m: 250.0, factor: 0.0017}
+      - {depth_m: 99.9, factor: 0.0707}
+      - {depth_m: 100.0, factor: 0.0211}
+      - {depth_m: 149.9, factor: 0.0211}
+      - {depth_m: 150.0, factor: 0.00377}
+      - {depth_m: 249.9, factor: 0.00377}
+      - {depth_m: 250.0, factor: 0.00171}
   benthivorous_fish_preys_on_krill:
     # Section 245. a by section 220 encounter theory with the 232.1 band
     # (overlap) convention per cell bed depth; the library a is the
@@ -2780,17 +2849,18 @@ interaction_definitions:
     # beds lies deeper (centre 140 m over 160-170 m, 120 m over 250 m), and the
     # < 100 m class a is weighted by krill presence (Sep-Apr 0.43, May-Aug 0.05 of
     # beds >= 250 m), which the pool's depth shape carries.
-    max_intake_rate: 0.013
+    # Section 269 (rule A + band overlap; research_notes/"Bottenfiskens hojdprofil"): member search profiles (this note) + rule A: x0.52; LRD bed-bound, haddock >= 35 cm rise by day; n/d integral
+    max_intake_rate: 0.00679
     functional_response: 2
-    dark_ratio: 0.03
+    dark_ratio: 0.036
     light_threshold_deg: 0.0
     depth_access_table:
-      - {depth_m: 99.9, factor: 0.046}
-      - {depth_m: 100.0, factor: 0.011}
-      - {depth_m: 149.9, factor: 0.011}
-      - {depth_m: 150.0, factor: 0.00059}
-      - {depth_m: 249.9, factor: 0.00059}
-      - {depth_m: 250.0, factor: 0.0}
+      - {depth_m: 99.9, factor: 0.0225}
+      - {depth_m: 100.0, factor: 0.00583}
+      - {depth_m: 149.9, factor: 0.00583}
+      - {depth_m: 150.0, factor: 0.000701}
+      - {depth_m: 249.9, factor: 0.000701}
+      - {depth_m: 250.0, factor: 1.52e-05}
   predatory_fish_preys_on_krill:
     # Section 245. a by section 220 encounter theory with the 232.1 band
     # (overlap) convention per cell bed depth; the library a is the
@@ -2826,17 +2896,18 @@ interaction_definitions:
     # beds lies deeper (centre 140 m over 160-170 m, 120 m over 250 m), and the
     # < 100 m class a is weighted by krill presence (Sep-Apr 0.43, May-Aug 0.05 of
     # beds >= 250 m), which the pool's depth shape carries.
-    max_intake_rate: 0.026
+    # Section 269 (rule A + band overlap; research_notes/"Bottenfiskens hojdprofil"): band (saithe exp 15 m) + rule A: R_sat on 25 mm krill |C0| 0.4 0.57 m vs 0.87 (x0.45); n/d rule
+    max_intake_rate: 0.0117
     functional_response: 2
-    dark_ratio: 0.02
+    dark_ratio: 0.0245
     light_threshold_deg: 0.0
     depth_access_table:
-      - {depth_m: 99.9, factor: 0.068}
-      - {depth_m: 100.0, factor: 0.031}
-      - {depth_m: 149.9, factor: 0.031}
-      - {depth_m: 150.0, factor: 0.0058}
-      - {depth_m: 249.9, factor: 0.0058}
-      - {depth_m: 250.0, factor: 0.00014}
+      - {depth_m: 99.9, factor: 0.0306}
+      - {depth_m: 100.0, factor: 0.0141}
+      - {depth_m: 149.9, factor: 0.0141}
+      - {depth_m: 150.0, factor: 0.00262}
+      - {depth_m: 249.9, factor: 0.00262}
+      - {depth_m: 250.0, factor: 6.91e-05}
   mackerel_preys_on_krill:
     # Section 245. a by section 220 encounter theory with the 232.1 band
     # (overlap) convention per cell bed depth; the library a is the
@@ -2867,17 +2938,18 @@ interaction_definitions:
     # beds lies deeper (centre 140 m over 160-170 m, 120 m over 250 m), and the
     # < 100 m class a is weighted by krill presence (Sep-Apr 0.43, May-Aug 0.05 of
     # beds >= 250 m), which the pool's depth shape carries.
+    # Section 269 (rule A + band overlap; research_notes/"Bottenfiskens hojdprofil"): band + rule A: x1.00; dark_ratio 0.42 from the stomachs (245)
     max_intake_rate: 0.0039
     functional_response: 2
     dark_ratio: 0.42
     light_threshold_deg: -5.0
     depth_access_table:
-      - {depth_m: 99.9, factor: 0.0053}
-      - {depth_m: 100.0, factor: 0.0043}
-      - {depth_m: 149.9, factor: 0.0043}
+      - {depth_m: 99.9, factor: 0.00532}
+      - {depth_m: 100.0, factor: 0.00429}
+      - {depth_m: 149.9, factor: 0.00429}
       - {depth_m: 150.0, factor: 0.0031}
       - {depth_m: 249.9, factor: 0.0031}
-      - {depth_m: 250.0, factor: 0.0028}
+      - {depth_m: 250.0, factor: 0.00284}
   whiting_preys_on_krill:
     # Section 245. a by section 220 encounter theory with the 232.1 band
     # (overlap) convention per cell bed depth; the library a is the
@@ -2912,14 +2984,15 @@ interaction_definitions:
     # beds lies deeper (centre 140 m over 160-170 m, 120 m over 250 m), and the
     # < 100 m class a is weighted by krill presence (Sep-Apr 0.43, May-Aug 0.05 of
     # beds >= 250 m), which the pool's depth shape carries.
+    # Section 269 (rule A + band overlap; research_notes/"Bottenfiskens hojdprofil"): band 10 m + rule A: x1.00 (2 L cap binds); no dark_ratio (stomachs: no diel difference, Onsrud et al. 2004)
     max_intake_rate: 0.043
     functional_response: 2
     depth_access_table:
       - {depth_m: 99.9, factor: 0.148}
-      - {depth_m: 100.0, factor: 0.035}
-      - {depth_m: 149.9, factor: 0.035}
-      - {depth_m: 150.0, factor: 0.002}
-      - {depth_m: 249.9, factor: 0.002}
+      - {depth_m: 100.0, factor: 0.0354}
+      - {depth_m: 149.9, factor: 0.0354}
+      - {depth_m: 150.0, factor: 0.00199}
+      - {depth_m: 249.9, factor: 0.00199}
       - {depth_m: 250.0, factor: 0.0}
   planktivorous_fish_preys_on_benthic_infauna:
     preys_on: false

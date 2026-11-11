@@ -1,0 +1,382 @@
+# YAML edits for fgconfig/fg_library.yaml interaction_definitions (NOT applied).
+# Rule A + band overlap with every member's search profile f_m(z); one section, every pair at once.
+# Per pair: the keys to set (others unchanged). 'dark_ratio: REMOVE' = delete the key.
+# light_threshold_deg unchanged on every pair (krill pairs 0 / mackerel -5; fish pairs -5; benthivore
+# fish pairs 0). depth_access_table rows as the krill pairs (loader renormalises to an equal-cell mean 1).
+# The three benthic rows are recommendation [J] (section 'Benthic pairs'); final_nobenthic leaves them out.
+
+  predatory_fish_preys_on_krill:
+    # band (saithe exp 15 m) + rule A: R_sat on 25 mm krill |C0| 0.4 0.57 m vs 0.87 (x0.45); n/d rule
+    # was: max_intake_rate 0.026, dark_ratio 0.02, light_threshold_deg 0.0, stage_access None, table yes
+    max_intake_rate: 0.0117
+    dark_ratio: 0.0245
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.0306}
+      - {depth_m: 100.0, factor: 0.0141}
+      - {depth_m: 149.9, factor: 0.0141}
+      - {depth_m: 150.0, factor: 0.00262}
+      - {depth_m: 249.9, factor: 0.00262}
+      - {depth_m: 250.0, factor: 6.91e-05}
+
+  whiting_preys_on_krill:
+    # band 10 m + rule A: x1.00 (2 L cap binds); no dark_ratio (stomachs: no diel difference, Onsrud et al. 2004)
+    # was: max_intake_rate 0.043, dark_ratio None, light_threshold_deg None, stage_access None, table yes
+    max_intake_rate: 0.043
+    # dark_ratio: none today, none proposed
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.148}
+      - {depth_m: 100.0, factor: 0.0354}
+      - {depth_m: 149.9, factor: 0.0354}
+      - {depth_m: 150.0, factor: 0.00199}
+      - {depth_m: 249.9, factor: 0.00199}
+      - {depth_m: 250.0, factor: 0.0}
+
+  planktivorous_fish_preys_on_krill:
+    # band + rule A: x1.00 (2 L cap binds); dark_ratio 0.57 from the stomachs (245)
+    # was: max_intake_rate 0.023, dark_ratio 0.57, light_threshold_deg 0.0, stage_access None, table yes
+    max_intake_rate: 0.023
+    dark_ratio: 0.57
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.0707}
+      - {depth_m: 100.0, factor: 0.0211}
+      - {depth_m: 149.9, factor: 0.0211}
+      - {depth_m: 150.0, factor: 0.00377}
+      - {depth_m: 249.9, factor: 0.00377}
+      - {depth_m: 250.0, factor: 0.00171}
+
+  benthivorous_fish_preys_on_krill:
+    # member search profiles (this note) + rule A: x0.52; LRD bed-bound, haddock >= 35 cm rise by day; n/d integral
+    # was: max_intake_rate 0.013, dark_ratio 0.03, light_threshold_deg 0.0, stage_access None, table yes
+    max_intake_rate: 0.00679
+    dark_ratio: 0.036
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.0225}
+      - {depth_m: 100.0, factor: 0.00583}
+      - {depth_m: 149.9, factor: 0.00583}
+      - {depth_m: 150.0, factor: 0.000701}
+      - {depth_m: 249.9, factor: 0.000701}
+      - {depth_m: 250.0, factor: 1.52e-05}
+
+  mackerel_preys_on_krill:
+    # band + rule A: x1.00; dark_ratio 0.42 from the stomachs (245)
+    # was: max_intake_rate 0.0039, dark_ratio 0.42, light_threshold_deg -5.0, stage_access None, table yes
+    max_intake_rate: 0.0039
+    dark_ratio: 0.42
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.00532}
+      - {depth_m: 100.0, factor: 0.00429}
+      - {depth_m: 149.9, factor: 0.00429}
+      - {depth_m: 150.0, factor: 0.0031}
+      - {depth_m: 249.9, factor: 0.0031}
+      - {depth_m: 250.0, factor: 0.00284}
+
+  predatory_fish_preys_on_planktivorous_fish:
+    # band x0.49 x rule A x5.93 = x2.90 (saithe 0.92 of a); n/d rule
+    # was: max_intake_rate 0.006, dark_ratio 0.41, light_threshold_deg -5.0, stage_access [0.65, 0.18], table no
+    max_intake_rate: 0.0174
+    dark_ratio: 0.0594
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.0384}
+      - {depth_m: 100.0, factor: 0.0211}
+      - {depth_m: 149.9, factor: 0.0211}
+      - {depth_m: 150.0, factor: 0.00716}
+      - {depth_m: 249.9, factor: 0.00716}
+      - {depth_m: 250.0, factor: 0.00286}
+
+  predatory_fish_preys_on_benthivorous_fish:
+    # band x1.45 x rule A x5.24 = x7.60 (saithe 0.89, hake 0.05; 243 time factors replaced by the profile); window aw on the band a's member shares, a(L) exponent from the band a (kexp +1.7)
+    # was: max_intake_rate 0.0055, dark_ratio 0.48, light_threshold_deg -5.0, stage_access [0.42, 0.12], table no
+    max_intake_rate: 0.0418
+    dark_ratio: 0.165
+    stage_access: [0.392, 0.0388]
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.0693}
+      - {depth_m: 100.0, factor: 0.057}
+      - {depth_m: 149.9, factor: 0.057}
+      - {depth_m: 150.0, factor: 0.0234}
+      - {depth_m: 249.9, factor: 0.0234}
+      - {depth_m: 250.0, factor: 0.0128}
+
+  predatory_fish_preys_on_whiting:
+    # band x0.46 x rule A x6.02 = x2.76; n/d rule
+    # was: max_intake_rate 0.013, dark_ratio 0.48, light_threshold_deg -5.0, stage_access [0.41, 0.08], table no
+    max_intake_rate: 0.0359
+    dark_ratio: 0.137
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.0599}
+      - {depth_m: 100.0, factor: 0.0495}
+      - {depth_m: 149.9, factor: 0.0495}
+      - {depth_m: 150.0, factor: 0.0199}
+      - {depth_m: 249.9, factor: 0.0199}
+      - {depth_m: 250.0, factor: 0.0097}
+
+  predatory_fish_preys_on_mackerel:
+    # band x0.13 x rule A x1.19 = x0.155 (spurdog summer surface 0.76 of a); OFF in every reading
+    # was: max_intake_rate 0.00088, dark_ratio 0.92, light_threshold_deg -5.0, stage_access [0.14, 0.14], table no
+    max_intake_rate: 0.000137
+    dark_ratio: 0.923
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.000229}
+      - {depth_m: 100.0, factor: 0.000127}
+      - {depth_m: 149.9, factor: 0.000127}
+      - {depth_m: 150.0, factor: 0.000102}
+      - {depth_m: 249.9, factor: 0.000102}
+      - {depth_m: 250.0, factor: 0.000102}
+
+  whiting_preys_on_planktivorous_fish:
+    # band (whiting 10 m) x0.75 x rule A x2.06 = x1.55; n/d rule
+    # was: max_intake_rate 0.0212, dark_ratio 0.48, light_threshold_deg -5.0, stage_access [0.18, 0.0073], table no
+    max_intake_rate: 0.0329
+    dark_ratio: 0.212
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.0626}
+      - {depth_m: 100.0, factor: 0.0341}
+      - {depth_m: 149.9, factor: 0.0341}
+      - {depth_m: 150.0, factor: 0.0205}
+      - {depth_m: 249.9, factor: 0.0205}
+      - {depth_m: 250.0, factor: 0.0159}
+
+  whiting_preys_on_benthivorous_fish:
+    # band x0.20 x rule A x2.51 = x0.49; FLAGGED OPEN until whiting's height above the bed is measured
+    # was: max_intake_rate 0.21, dark_ratio 0.64, light_threshold_deg -5.0, stage_access [0.038, 0.0064], table no
+    max_intake_rate: 0.103
+    dark_ratio: 0.565
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.132}
+      - {depth_m: 100.0, factor: 0.119}
+      - {depth_m: 149.9, factor: 0.119}
+      - {depth_m: 150.0, factor: 0.0825}
+      - {depth_m: 249.9, factor: 0.0825}
+      - {depth_m: 250.0, factor: 0.0715}
+
+  mackerel_preys_on_planktivorous_fish:
+    # band x0.61 x rule A x1.53 = x0.93; no table (derived shape flat +-1 %); dark_ratio 0.16 from the stomachs (228)
+    # was: max_intake_rate 0.0266, dark_ratio 0.16, light_threshold_deg -5.0, stage_access [0.02, 0.0029], table no
+    max_intake_rate: 0.0248
+    dark_ratio: 0.16
+
+  benthivorous_fish_preys_on_planktivorous_fish:
+    # rule A at the bed x1.25 x member search profiles x0.87 = x1.08 (cod 0.68 / haddock 0.32; pout 0.85 of a); n/d integral
+    # was: max_intake_rate 0.0198, dark_ratio 0.06, light_threshold_deg 0.0, stage_access [0.62, 0.18], table no
+    max_intake_rate: 0.0214
+    dark_ratio: 0.141
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.0401}
+      - {depth_m: 100.0, factor: 0.0262}
+      - {depth_m: 149.9, factor: 0.0262}
+      - {depth_m: 150.0, factor: 0.0114}
+      - {depth_m: 249.9, factor: 0.0114}
+      - {depth_m: 250.0, factor: 0.00685}
+
+  benthivorous_fish_preys_on_whiting:
+    # rule A at the bed x1.19 x member search profiles x0.90 = x1.07 (cod 0.94 of a); n/d integral
+    # was: max_intake_rate 0.021, dark_ratio 0.15, light_threshold_deg 0.0, stage_access [0.68, 0.24], table no
+    max_intake_rate: 0.0226
+    dark_ratio: 0.168
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.0366}
+      - {depth_m: 100.0, factor: 0.0306}
+      - {depth_m: 149.9, factor: 0.0306}
+      - {depth_m: 150.0, factor: 0.0129}
+      - {depth_m: 249.9, factor: 0.0129}
+      - {depth_m: 250.0, factor: 0.00738}
+
+  benthivorous_fish_preys_on_benthic_infauna:
+    # x tau_bed 0.71: members' search-time share in bed contact (0-2 m; flatfish and LRD 1, cod 0.70, haddock 0.56 by size)
+    # was: max_intake_rate 0.036, dark_ratio None, light_threshold_deg None, stage_access None, table no
+    max_intake_rate: 0.0256
+
+  benthivorous_fish_preys_on_mobile_epifauna:
+    # x tau_bed 0.74 (epifauna member weights a_enc x e)
+    # was: max_intake_rate 0.15, dark_ratio None, light_threshold_deg None, stage_access None, table no
+    max_intake_rate: 0.11
+
+  benthivorous_fish_preys_on_norway_lobster:
+    # x tau_bed 0.70 (cod; with haddock / LRD weights 0.69)
+    # was: max_intake_rate 0.44, dark_ratio None, light_threshold_deg None, stage_access None, table no
+    max_intake_rate: 0.308
+
+repro_overlap_A_band_T: done
+final: done
+final_nobenthic: done
+final_win243: done
+final_deep: done
+final_bedbound: done
+final_rest50: done
+final_deep_rest50: done
+final_sw_contact: done
+final_pout_albert: done
+final_win_lo: done
+final_win_hi: done
+
+================================================================================================================
+Predator side, encounter / booked share (equal cells; field spread in brackets for WC and whiting); * = OFF
+================================================================================================================
+  repro_overlap_A_band_T:
+    predatory_fish     krill 0.475/0.361=1.32 (1.31); planktivor 0.369/0.498=0.74 (0.71); benthivoro 0.127/0.077=1.64 (1.89); whiting 0.026/0.042=0.61 (0.43); mackerel 0.000/0.011=0.02 (0.02); zooplankto 0.004/0.010=0.36 (0.58)
+    whiting            krill 0.812/0.557=1.46 (1.59); benthivoro 0.012/0.097=0.12* (0.07*); mobile_epi 0.085/0.171=0.50 (0.23*); planktivor 0.082/0.153=0.54 (0.43); zooplankto 0.009/0.023=0.40 (0.19)
+    benthivorous_fish  benthic_in 0.592/0.563=1.05; mobile_epi 0.309/0.310=1.00; norway_lob 0.035/0.016=2.26; krill 0.024/0.027=0.89; planktivor 0.037/0.073=0.51; whiting 0.003/0.012=0.25
+    mackerel           krill 0.659/0.394=1.67; planktivor 0.043/0.055=0.78; zooplankto 0.298/0.551=0.54
+    planktivorous_fish krill 0.378/0.398=0.95; zooplankto 0.622/0.602=1.03
+    WC krill encounter share per bed class (< 100 / 100-150 / 150-250 / >= 250 m): 0.39 / 0.56 / 0.45 / 0.05 (booked 0.36)
+    benthivores per bed class, encounter shares infauna / epifauna / Nephrops / krill / plk / whiting: 0.548/0.286/0.033/0.057/0.058/0.018 | 0.577/0.301/0.035/0.034/0.051/0.003 | 0.616/0.321/0.037/0.002/0.023/0.000 | 0.624/0.325/0.037/0.000/0.014/0.000
+    prey side (implied / booked M2, equal cells; field): benthic_infauna 1.05 [benth 1.05]; benthivorous_fish 0.85 [whiti 0.12* (0.07), preda 1.64 (1.89), seals 0.90, porpo 2.44]; krill 1.04 [plank 0.95, whiti 1.46 (1.59), macke 1.67, preda 1.32 (1.31), benth 0.89]; mackerel 0.02 [preda 0.02* (0.02)]; mobile_epifauna 0.93 [benth 1.00, whiti 0.50 (0.23)]; norway_lobster 2.26 [benth 2.26]; planktivorous_fish 0.64 [preda 0.74 (0.71), benth 0.51, whiti 0.54 (0.43), macke 0.78, porpo 0.48, seals 1.10]; whiting 0.55 [benth 0.25*, preda 0.61 (0.43), porpo 1.92, seals 1.81]
+    Diet gate: OFF pairs - whiting -> benthivorous_fish enc 0.012 vs booked 0.097
+    Diet gate at the field spread: OFF pairs - whiting -> benthivorous_fish enc 0.007 vs booked 0.097; whiting -> mobile_epifauna enc 0.040 vs booked 0.171
+  final:
+    predatory_fish     krill 0.503/0.361=1.39 (1.40); planktivor 0.391/0.498=0.78 (0.76); benthivoro 0.075/0.077=0.97 (1.13); whiting 0.027/0.042=0.64 (0.46); mackerel 0.000/0.011=0.02 (0.03); zooplankto 0.004/0.010=0.38 (0.62)
+    whiting            krill 0.812/0.557=1.46 (1.59); benthivoro 0.012/0.097=0.12* (0.07*); mobile_epi 0.085/0.171=0.50 (0.23*); planktivor 0.082/0.153=0.54 (0.43); zooplankto 0.009/0.023=0.40 (0.19)
+    benthivorous_fish  benthic_in 0.581/0.563=1.03; mobile_epi 0.312/0.310=1.01; norway_lob 0.034/0.016=2.19; krill 0.024/0.027=0.91; planktivor 0.045/0.073=0.61; whiting 0.004/0.012=0.31
+    mackerel           krill 0.659/0.394=1.67; planktivor 0.043/0.055=0.78; zooplankto 0.298/0.551=0.54
+    planktivorous_fish krill 0.378/0.398=0.95; zooplankto 0.622/0.602=1.03
+    WC krill encounter share per bed class (< 100 / 100-150 / 150-250 / >= 250 m): 0.41 / 0.59 / 0.49 / 0.06 (booked 0.36)
+    benthivores per bed class, encounter shares infauna / epifauna / Nephrops / krill / plk / whiting: 0.530/0.285/0.031/0.054/0.078/0.022 | 0.568/0.305/0.033/0.035/0.055/0.004 | 0.607/0.326/0.036/0.005/0.026/0.000 | 0.617/0.331/0.036/0.000/0.016/0.000
+    prey side (implied / booked M2, equal cells; field): benthic_infauna 1.03 [benth 1.03]; benthivorous_fish 0.62 [whiti 0.12* (0.07), preda 0.97 (1.13), seals 0.90, porpo 2.44]; krill 1.04 [plank 0.95, whiti 1.46 (1.59), macke 1.67, preda 1.39 (1.40), benth 0.91]; mackerel 0.02 [preda 0.02* (0.03)]; mobile_epifauna 0.95 [benth 1.01, whiti 0.50 (0.23)]; norway_lobster 2.19 [benth 2.19]; planktivorous_fish 0.69 [preda 0.78 (0.76), benth 0.61, whiti 0.54 (0.43), macke 0.78, porpo 0.48, seals 1.10]; whiting 0.60 [benth 0.31*, preda 0.64 (0.46), porpo 1.92, seals 1.81]
+    Diet gate: OFF pairs - whiting -> benthivorous_fish enc 0.012 vs booked 0.097
+    Diet gate at the field spread: OFF pairs - whiting -> benthivorous_fish enc 0.007 vs booked 0.097; whiting -> mobile_epifauna enc 0.040 vs booked 0.171
+  final_nobenthic:
+    predatory_fish     krill 0.503/0.361=1.39 (1.40); planktivor 0.391/0.498=0.78 (0.76); benthivoro 0.075/0.077=0.97 (1.13); whiting 0.027/0.042=0.64 (0.46); mackerel 0.000/0.011=0.02 (0.03); zooplankto 0.004/0.010=0.38 (0.62)
+    whiting            krill 0.812/0.557=1.46 (1.59); benthivoro 0.012/0.097=0.12* (0.07*); mobile_epi 0.085/0.171=0.50 (0.23*); planktivor 0.082/0.153=0.54 (0.43); zooplankto 0.009/0.023=0.40 (0.19)
+    benthivorous_fish  benthic_in 0.599/0.563=1.06; mobile_epi 0.312/0.310=1.01; norway_lob 0.036/0.016=2.29; krill 0.018/0.027=0.67; planktivor 0.033/0.073=0.45; whiting 0.003/0.012=0.23
+    mackerel           krill 0.659/0.394=1.67; planktivor 0.043/0.055=0.78; zooplankto 0.298/0.551=0.54
+    planktivorous_fish krill 0.378/0.398=0.95; zooplankto 0.622/0.602=1.03
+    WC krill encounter share per bed class (< 100 / 100-150 / 150-250 / >= 250 m): 0.41 / 0.59 / 0.49 / 0.06 (booked 0.36)
+    benthivores per bed class, encounter shares infauna / epifauna / Nephrops / krill / plk / whiting: 0.559/0.292/0.033/0.040/0.059/0.017 | 0.589/0.307/0.035/0.026/0.041/0.003 | 0.618/0.322/0.037/0.004/0.019/0.000 | 0.625/0.326/0.037/0.000/0.011/0.000
+    prey side (implied / booked M2, equal cells; field): benthic_infauna 1.06 [benth 1.06]; benthivorous_fish 0.62 [whiti 0.12* (0.07), preda 0.97 (1.13), seals 0.90, porpo 2.44]; krill 1.04 [plank 0.95, whiti 1.46 (1.59), macke 1.67, preda 1.39 (1.40), benth 0.67]; mackerel 0.02 [preda 0.02* (0.03)]; mobile_epifauna 0.94 [benth 1.01, whiti 0.50 (0.23)]; norway_lobster 2.29 [benth 2.29]; planktivorous_fish 0.65 [preda 0.78 (0.76), benth 0.45, whiti 0.54 (0.43), macke 0.78, porpo 0.48, seals 1.10]; whiting 0.55 [benth 0.23*, preda 0.64 (0.46), porpo 1.92, seals 1.81]
+    Diet gate: OFF pairs - whiting -> benthivorous_fish enc 0.012 vs booked 0.097
+    Diet gate at the field spread: OFF pairs - whiting -> benthivorous_fish enc 0.007 vs booked 0.097; whiting -> mobile_epifauna enc 0.040 vs booked 0.171
+  final_win243:
+    predatory_fish     krill 0.475/0.361=1.32 (1.31); planktivor 0.369/0.498=0.74 (0.71); benthivoro 0.127/0.077=1.64 (1.89); whiting 0.026/0.042=0.61 (0.43); mackerel 0.000/0.011=0.02 (0.02); zooplankto 0.004/0.010=0.36 (0.58)
+    whiting            krill 0.812/0.557=1.46 (1.59); benthivoro 0.012/0.097=0.12* (0.07*); mobile_epi 0.085/0.171=0.50 (0.23*); planktivor 0.082/0.153=0.54 (0.43); zooplankto 0.009/0.023=0.40 (0.19)
+    benthivorous_fish  benthic_in 0.581/0.563=1.03; mobile_epi 0.312/0.310=1.01; norway_lob 0.034/0.016=2.19; krill 0.024/0.027=0.91; planktivor 0.045/0.073=0.61; whiting 0.004/0.012=0.31
+    mackerel           krill 0.659/0.394=1.67; planktivor 0.043/0.055=0.78; zooplankto 0.298/0.551=0.54
+    planktivorous_fish krill 0.378/0.398=0.95; zooplankto 0.622/0.602=1.03
+    WC krill encounter share per bed class (< 100 / 100-150 / 150-250 / >= 250 m): 0.39 / 0.56 / 0.45 / 0.05 (booked 0.36)
+    benthivores per bed class, encounter shares infauna / epifauna / Nephrops / krill / plk / whiting: 0.530/0.285/0.031/0.054/0.078/0.022 | 0.568/0.305/0.033/0.035/0.055/0.004 | 0.607/0.326/0.036/0.005/0.026/0.000 | 0.617/0.331/0.036/0.000/0.016/0.000
+    prey side (implied / booked M2, equal cells; field): benthic_infauna 1.03 [benth 1.03]; benthivorous_fish 0.85 [whiti 0.12* (0.07), preda 1.64 (1.89), seals 0.90, porpo 2.44]; krill 1.04 [plank 0.95, whiti 1.46 (1.59), macke 1.67, preda 1.32 (1.31), benth 0.91]; mackerel 0.02 [preda 0.02* (0.02)]; mobile_epifauna 0.95 [benth 1.01, whiti 0.50 (0.23)]; norway_lobster 2.19 [benth 2.19]; planktivorous_fish 0.67 [preda 0.74 (0.71), benth 0.61, whiti 0.54 (0.43), macke 0.78, porpo 0.48, seals 1.10]; whiting 0.58 [benth 0.31*, preda 0.61 (0.43), porpo 1.92, seals 1.81]
+    Diet gate: OFF pairs - whiting -> benthivorous_fish enc 0.012 vs booked 0.097
+    Diet gate at the field spread: OFF pairs - whiting -> benthivorous_fish enc 0.007 vs booked 0.097; whiting -> mobile_epifauna enc 0.040 vs booked 0.171
+  final_deep:
+    predatory_fish     krill 0.503/0.361=1.39 (1.40); planktivor 0.391/0.498=0.78 (0.76); benthivoro 0.075/0.077=0.97 (1.13); whiting 0.027/0.042=0.64 (0.46); mackerel 0.000/0.011=0.02 (0.03); zooplankto 0.004/0.010=0.38 (0.62)
+    whiting            krill 0.812/0.557=1.46 (1.59); benthivoro 0.012/0.097=0.12* (0.07*); mobile_epi 0.085/0.171=0.50 (0.23*); planktivor 0.082/0.153=0.54 (0.43); zooplankto 0.009/0.023=0.40 (0.19)
+    benthivorous_fish  benthic_in 0.584/0.563=1.04; mobile_epi 0.317/0.310=1.02; norway_lob 0.018/0.016=1.13; krill 0.038/0.027=1.41; planktivor 0.041/0.073=0.56; whiting 0.003/0.012=0.25
+    mackerel           krill 0.659/0.394=1.67; planktivor 0.043/0.055=0.78; zooplankto 0.298/0.551=0.54
+    planktivorous_fish krill 0.378/0.398=0.95; zooplankto 0.622/0.602=1.03
+    WC krill encounter share per bed class (< 100 / 100-150 / 150-250 / >= 250 m): 0.41 / 0.59 / 0.49 / 0.06 (booked 0.36)
+    benthivores per bed class, encounter shares infauna / epifauna / Nephrops / krill / plk / whiting: 0.538/0.291/0.016/0.066/0.071/0.018 | 0.565/0.306/0.017/0.059/0.051/0.003 | 0.610/0.331/0.018/0.016/0.025/0.000 | 0.626/0.339/0.019/0.001/0.015/0.000
+    prey side (implied / booked M2, equal cells; field): benthic_infauna 1.04 [benth 1.04]; benthivorous_fish 0.62 [whiti 0.12* (0.07), preda 0.97 (1.13), seals 0.90, porpo 2.44]; krill 1.05 [plank 0.95, whiti 1.46 (1.59), macke 1.67, preda 1.39 (1.40), benth 1.41]; mackerel 0.02 [preda 0.02* (0.03)]; mobile_epifauna 0.96 [benth 1.02, whiti 0.50 (0.23)]; norway_lobster 1.13 [benth 1.13]; planktivorous_fish 0.68 [preda 0.78 (0.76), benth 0.56, whiti 0.54 (0.43), macke 0.78, porpo 0.48, seals 1.10]; whiting 0.57 [benth 0.25*, preda 0.64 (0.46), porpo 1.92, seals 1.81]
+    Diet gate: OFF pairs - whiting -> benthivorous_fish enc 0.012 vs booked 0.097
+    Diet gate at the field spread: OFF pairs - whiting -> benthivorous_fish enc 0.007 vs booked 0.097; whiting -> mobile_epifauna enc 0.040 vs booked 0.171
+  final_bedbound:
+    predatory_fish     krill 0.503/0.361=1.39 (1.40); planktivor 0.391/0.498=0.78 (0.76); benthivoro 0.075/0.077=0.97 (1.13); whiting 0.027/0.042=0.64 (0.46); mackerel 0.000/0.011=0.02 (0.03); zooplankto 0.004/0.010=0.38 (0.62)
+    whiting            krill 0.812/0.557=1.46 (1.59); benthivoro 0.012/0.097=0.12* (0.07*); mobile_epi 0.085/0.171=0.50 (0.23*); planktivor 0.082/0.153=0.54 (0.43); zooplankto 0.009/0.023=0.40 (0.19)
+    benthivorous_fish  benthic_in 0.570/0.563=1.01; mobile_epi 0.310/0.310=1.00; norway_lob 0.034/0.016=2.16; krill 0.028/0.027=1.07; planktivor 0.053/0.073=0.72; whiting 0.004/0.012=0.37
+    mackerel           krill 0.659/0.394=1.67; planktivor 0.043/0.055=0.78; zooplankto 0.298/0.551=0.54
+    planktivorous_fish krill 0.378/0.398=0.95; zooplankto 0.622/0.602=1.03
+    WC krill encounter share per bed class (< 100 / 100-150 / 150-250 / >= 250 m): 0.41 / 0.59 / 0.49 / 0.06 (booked 0.36)
+    benthivores per bed class, encounter shares infauna / epifauna / Nephrops / krill / plk / whiting: 0.510/0.278/0.030/0.065/0.091/0.025 | 0.554/0.302/0.033/0.041/0.065/0.004 | 0.602/0.328/0.036/0.004/0.030/0.000 | 0.612/0.333/0.036/0.000/0.018/0.000
+    prey side (implied / booked M2, equal cells; field): benthic_infauna 1.01 [benth 1.01]; benthivorous_fish 0.62 [whiti 0.12* (0.07), preda 0.97 (1.13), seals 0.90, porpo 2.44]; krill 1.05 [plank 0.95, whiti 1.46 (1.59), macke 1.67, preda 1.39 (1.40), benth 1.07]; mackerel 0.02 [preda 0.02* (0.03)]; mobile_epifauna 0.94 [benth 1.00, whiti 0.50 (0.23)]; norway_lobster 2.16 [benth 2.16]; planktivorous_fish 0.72 [preda 0.78 (0.76), benth 0.72, whiti 0.54 (0.43), macke 0.78, porpo 0.48, seals 1.10]; whiting 0.62 [benth 0.37, preda 0.64 (0.46), porpo 1.92, seals 1.81]
+    Diet gate: OFF pairs - whiting -> benthivorous_fish enc 0.012 vs booked 0.097
+    Diet gate at the field spread: OFF pairs - whiting -> benthivorous_fish enc 0.007 vs booked 0.097; whiting -> mobile_epifauna enc 0.040 vs booked 0.171
+  final_rest50:
+    predatory_fish     krill 0.503/0.361=1.39 (1.40); planktivor 0.391/0.498=0.78 (0.76); benthivoro 0.075/0.077=0.97 (1.13); whiting 0.027/0.042=0.64 (0.46); mackerel 0.000/0.011=0.02 (0.03); zooplankto 0.004/0.010=0.38 (0.62)
+    whiting            krill 0.812/0.557=1.46 (1.59); benthivoro 0.012/0.097=0.12* (0.07*); mobile_epi 0.085/0.171=0.50 (0.23*); planktivor 0.082/0.153=0.54 (0.43); zooplankto 0.009/0.023=0.40 (0.19)
+    benthivorous_fish  benthic_in 0.572/0.563=1.02; mobile_epi 0.313/0.310=1.01; norway_lob 0.031/0.016=1.96; krill 0.031/0.027=1.17; planktivor 0.049/0.073=0.67; whiting 0.004/0.012=0.35
+    mackerel           krill 0.659/0.394=1.67; planktivor 0.043/0.055=0.78; zooplankto 0.298/0.551=0.54
+    planktivorous_fish krill 0.378/0.398=0.95; zooplankto 0.622/0.602=1.03
+    WC krill encounter share per bed class (< 100 / 100-150 / 150-250 / >= 250 m): 0.41 / 0.59 / 0.49 / 0.06 (booked 0.36)
+    benthivores per bed class, encounter shares infauna / epifauna / Nephrops / krill / plk / whiting: 0.516/0.283/0.028/0.064/0.086/0.024 | 0.555/0.304/0.030/0.047/0.061/0.004 | 0.601/0.329/0.032/0.009/0.029/0.000 | 0.614/0.336/0.033/0.000/0.017/0.000
+    prey side (implied / booked M2, equal cells; field): benthic_infauna 1.02 [benth 1.02]; benthivorous_fish 0.62 [whiti 0.12* (0.07), preda 0.97 (1.13), seals 0.90, porpo 2.44]; krill 1.05 [plank 0.95, whiti 1.46 (1.59), macke 1.67, preda 1.39 (1.40), benth 1.17]; mackerel 0.02 [preda 0.02* (0.03)]; mobile_epifauna 0.95 [benth 1.01, whiti 0.50 (0.23)]; norway_lobster 1.96 [benth 1.96]; planktivorous_fish 0.71 [preda 0.78 (0.76), benth 0.67, whiti 0.54 (0.43), macke 0.78, porpo 0.48, seals 1.10]; whiting 0.61 [benth 0.35, preda 0.64 (0.46), porpo 1.92, seals 1.81]
+    Diet gate: OFF pairs - whiting -> benthivorous_fish enc 0.012 vs booked 0.097
+    Diet gate at the field spread: OFF pairs - whiting -> benthivorous_fish enc 0.007 vs booked 0.097; whiting -> mobile_epifauna enc 0.040 vs booked 0.171
+  final_deep_rest50:
+    predatory_fish     krill 0.503/0.361=1.39 (1.40); planktivor 0.391/0.498=0.78 (0.76); benthivoro 0.075/0.077=0.97 (1.13); whiting 0.027/0.042=0.64 (0.46); mackerel 0.000/0.011=0.02 (0.03); zooplankto 0.004/0.010=0.38 (0.62)
+    whiting            krill 0.812/0.557=1.46 (1.59); benthivoro 0.012/0.097=0.12* (0.07*); mobile_epi 0.085/0.171=0.50 (0.23*); planktivor 0.082/0.153=0.54 (0.43); zooplankto 0.009/0.023=0.40 (0.19)
+    benthivorous_fish  benthic_in 0.573/0.563=1.02; mobile_epi 0.319/0.310=1.03; norway_lob 0.012/0.016=0.78; krill 0.048/0.027=1.79; planktivor 0.045/0.073=0.62; whiting 0.003/0.012=0.27
+    mackerel           krill 0.659/0.394=1.67; planktivor 0.043/0.055=0.78; zooplankto 0.298/0.551=0.54
+    planktivorous_fish krill 0.378/0.398=0.95; zooplankto 0.622/0.602=1.03
+    WC krill encounter share per bed class (< 100 / 100-150 / 150-250 / >= 250 m): 0.41 / 0.59 / 0.49 / 0.06 (booked 0.36)
+    benthivores per bed class, encounter shares infauna / epifauna / Nephrops / krill / plk / whiting: 0.523/0.291/0.011/0.078/0.077/0.019 | 0.549/0.306/0.012/0.075/0.055/0.003 | 0.602/0.335/0.013/0.022/0.027/0.000 | 0.622/0.346/0.013/0.001/0.016/0.000
+    prey side (implied / booked M2, equal cells; field): benthic_infauna 1.02 [benth 1.02]; benthivorous_fish 0.62 [whiti 0.12* (0.07), preda 0.97 (1.13), seals 0.90, porpo 2.44]; krill 1.06 [plank 0.95, whiti 1.46 (1.59), macke 1.67, preda 1.39 (1.40), benth 1.79]; mackerel 0.02 [preda 0.02* (0.03)]; mobile_epifauna 0.96 [benth 1.03, whiti 0.50 (0.23)]; norway_lobster 0.78 [benth 0.78]; planktivorous_fish 0.70 [preda 0.78 (0.76), benth 0.62, whiti 0.54 (0.43), macke 0.78, porpo 0.48, seals 1.10]; whiting 0.58 [benth 0.27*, preda 0.64 (0.46), porpo 1.92, seals 1.81]
+    Diet gate: OFF pairs - whiting -> benthivorous_fish enc 0.012 vs booked 0.097
+    Diet gate at the field spread: OFF pairs - whiting -> benthivorous_fish enc 0.007 vs booked 0.097; whiting -> mobile_epifauna enc 0.040 vs booked 0.171
+  final_sw_contact:
+    predatory_fish     krill 0.503/0.361=1.39 (1.40); planktivor 0.391/0.498=0.78 (0.76); benthivoro 0.075/0.077=0.97 (1.13); whiting 0.027/0.042=0.64 (0.46); mackerel 0.000/0.011=0.02 (0.03); zooplankto 0.004/0.010=0.38 (0.62)
+    whiting            krill 0.812/0.557=1.46 (1.59); benthivoro 0.012/0.097=0.12* (0.07*); mobile_epi 0.085/0.171=0.50 (0.23*); planktivor 0.082/0.153=0.54 (0.43); zooplankto 0.009/0.023=0.40 (0.19)
+    benthivorous_fish  benthic_in 0.584/0.563=1.04; mobile_epi 0.315/0.310=1.02; norway_lob 0.039/0.016=2.51; krill 0.020/0.027=0.74; planktivor 0.039/0.073=0.53; whiting 0.003/0.012=0.28
+    mackerel           krill 0.659/0.394=1.67; planktivor 0.043/0.055=0.78; zooplankto 0.298/0.551=0.54
+    planktivorous_fish krill 0.378/0.398=0.95; zooplankto 0.622/0.602=1.03
+    WC krill encounter share per bed class (< 100 / 100-150 / 150-250 / >= 250 m): 0.41 / 0.59 / 0.49 / 0.06 (booked 0.36)
+    benthivores per bed class, encounter shares infauna / epifauna / Nephrops / krill / plk / whiting: 0.539/0.291/0.036/0.045/0.070/0.020 | 0.573/0.309/0.038/0.028/0.048/0.003 | 0.606/0.327/0.041/0.004/0.022/0.000 | 0.614/0.331/0.041/0.000/0.014/0.000
+    prey side (implied / booked M2, equal cells; field): benthic_infauna 1.04 [benth 1.04]; benthivorous_fish 0.62 [whiti 0.12* (0.07), preda 0.97 (1.13), seals 0.90, porpo 2.44]; krill 1.04 [plank 0.95, whiti 1.46 (1.59), macke 1.67, preda 1.39 (1.40), benth 0.74]; mackerel 0.02 [preda 0.02* (0.03)]; mobile_epifauna 0.95 [benth 1.02, whiti 0.50 (0.23)]; norway_lobster 2.51 [benth 2.51]; planktivorous_fish 0.67 [preda 0.78 (0.76), benth 0.53, whiti 0.54 (0.43), macke 0.78, porpo 0.48, seals 1.10]; whiting 0.58 [benth 0.28*, preda 0.64 (0.46), porpo 1.92, seals 1.81]
+    Diet gate: OFF pairs - whiting -> benthivorous_fish enc 0.012 vs booked 0.097
+    Diet gate at the field spread: OFF pairs - whiting -> benthivorous_fish enc 0.007 vs booked 0.097; whiting -> mobile_epifauna enc 0.040 vs booked 0.171
+  final_pout_albert:
+    predatory_fish     krill 0.503/0.361=1.39 (1.40); planktivor 0.391/0.498=0.78 (0.76); benthivoro 0.075/0.077=0.97 (1.13); whiting 0.027/0.042=0.64 (0.46); mackerel 0.000/0.011=0.02 (0.03); zooplankto 0.004/0.010=0.38 (0.62)
+    whiting            krill 0.812/0.557=1.46 (1.59); benthivoro 0.012/0.097=0.12* (0.07*); mobile_epi 0.085/0.171=0.50 (0.23*); planktivor 0.082/0.153=0.54 (0.43); zooplankto 0.009/0.023=0.40 (0.19)
+    benthivorous_fish  benthic_in 0.536/0.563=0.95; mobile_epi 0.288/0.310=0.93; norway_lob 0.032/0.016=2.02; krill 0.022/0.027=0.84; planktivor 0.118/0.073=1.62; whiting 0.004/0.012=0.29
+    mackerel           krill 0.659/0.394=1.67; planktivor 0.043/0.055=0.78; zooplankto 0.298/0.551=0.54
+    planktivorous_fish krill 0.378/0.398=0.95; zooplankto 0.622/0.602=1.03
+    WC krill encounter share per bed class (< 100 / 100-150 / 150-250 / >= 250 m): 0.41 / 0.59 / 0.49 / 0.06 (booked 0.36)
+    benthivores per bed class, encounter shares infauna / epifauna / Nephrops / krill / plk / whiting: 0.467/0.251/0.027/0.047/0.188/0.019 | 0.507/0.273/0.030/0.031/0.156/0.003 | 0.580/0.312/0.034/0.005/0.068/0.000 | 0.603/0.324/0.036/0.000/0.037/0.000
+    prey side (implied / booked M2, equal cells; field): benthic_infauna 0.95 [benth 0.95]; benthivorous_fish 0.62 [whiti 0.12* (0.07), preda 0.97 (1.13), seals 0.90, porpo 2.44]; krill 1.04 [plank 0.95, whiti 1.46 (1.59), macke 1.67, preda 1.39 (1.40), benth 0.84]; mackerel 0.02 [preda 0.02* (0.03)]; mobile_epifauna 0.88 [benth 0.93, whiti 0.50 (0.23)]; norway_lobster 2.02 [benth 2.02]; planktivorous_fish 0.98 [preda 0.78 (0.76), benth 1.62, whiti 0.54 (0.43), macke 0.78, porpo 0.48, seals 1.10]; whiting 0.58 [benth 0.29*, preda 0.64 (0.46), porpo 1.92, seals 1.81]
+    Diet gate: OFF pairs - whiting -> benthivorous_fish enc 0.012 vs booked 0.097
+    Diet gate at the field spread: OFF pairs - whiting -> benthivorous_fish enc 0.007 vs booked 0.097; whiting -> mobile_epifauna enc 0.040 vs booked 0.171
+  final_win_lo:
+    predatory_fish     krill 0.516/0.361=1.43 (1.44); planktivor 0.401/0.498=0.80 (0.79); benthivoro 0.051/0.077=0.66 (0.78); whiting 0.028/0.042=0.66 (0.47); mackerel 0.000/0.011=0.02 (0.03); zooplankto 0.004/0.010=0.39 (0.64)
+    whiting            krill 0.812/0.557=1.46 (1.59); benthivoro 0.012/0.097=0.12* (0.07*); mobile_epi 0.085/0.171=0.50 (0.23*); planktivor 0.082/0.153=0.54 (0.43); zooplankto 0.009/0.023=0.40 (0.19)
+    benthivorous_fish  benthic_in 0.581/0.563=1.03; mobile_epi 0.312/0.310=1.01; norway_lob 0.034/0.016=2.19; krill 0.024/0.027=0.91; planktivor 0.045/0.073=0.61; whiting 0.004/0.012=0.31
+    mackerel           krill 0.659/0.394=1.67; planktivor 0.043/0.055=0.78; zooplankto 0.298/0.551=0.54
+    planktivorous_fish krill 0.378/0.398=0.95; zooplankto 0.622/0.602=1.03
+    WC krill encounter share per bed class (< 100 / 100-150 / 150-250 / >= 250 m): 0.42 / 0.61 / 0.51 / 0.07 (booked 0.36)
+    benthivores per bed class, encounter shares infauna / epifauna / Nephrops / krill / plk / whiting: 0.530/0.285/0.031/0.054/0.078/0.022 | 0.568/0.305/0.033/0.035/0.055/0.004 | 0.607/0.326/0.036/0.005/0.026/0.000 | 0.617/0.331/0.036/0.000/0.016/0.000
+    prey side (implied / booked M2, equal cells; field): benthic_infauna 1.03 [benth 1.03]; benthivorous_fish 0.51 [whiti 0.12* (0.07), preda 0.66 (0.78), seals 0.90, porpo 2.44]; krill 1.04 [plank 0.95, whiti 1.46 (1.59), macke 1.67, preda 1.43 (1.44), benth 0.91]; mackerel 0.02 [preda 0.02* (0.03)]; mobile_epifauna 0.95 [benth 1.01, whiti 0.50 (0.23)]; norway_lobster 2.19 [benth 2.19]; planktivorous_fish 0.70 [preda 0.80 (0.79), benth 0.61, whiti 0.54 (0.43), macke 0.78, porpo 0.48, seals 1.10]; whiting 0.60 [benth 0.31*, preda 0.66 (0.47), porpo 1.92, seals 1.81]
+    Diet gate: OFF pairs - whiting -> benthivorous_fish enc 0.012 vs booked 0.097
+    Diet gate at the field spread: OFF pairs - whiting -> benthivorous_fish enc 0.007 vs booked 0.097; whiting -> mobile_epifauna enc 0.040 vs booked 0.171
+  final_win_hi:
+    predatory_fish     krill 0.483/0.361=1.34 (1.34); planktivor 0.375/0.498=0.75 (0.73); benthivoro 0.112/0.077=1.45 (1.68); whiting 0.026/0.042=0.62 (0.44); mackerel 0.000/0.011=0.02 (0.02); zooplankto 0.004/0.010=0.37 (0.59)
+    whiting            krill 0.812/0.557=1.46 (1.59); benthivoro 0.012/0.097=0.12* (0.07*); mobile_epi 0.085/0.171=0.50 (0.23*); planktivor 0.082/0.153=0.54 (0.43); zooplankto 0.009/0.023=0.40 (0.19)
+    benthivorous_fish  benthic_in 0.581/0.563=1.03; mobile_epi 0.312/0.310=1.01; norway_lob 0.034/0.016=2.19; krill 0.024/0.027=0.91; planktivor 0.045/0.073=0.61; whiting 0.004/0.012=0.31
+    mackerel           krill 0.659/0.394=1.67; planktivor 0.043/0.055=0.78; zooplankto 0.298/0.551=0.54
+    planktivorous_fish krill 0.378/0.398=0.95; zooplankto 0.622/0.602=1.03
+    WC krill encounter share per bed class (< 100 / 100-150 / 150-250 / >= 250 m): 0.40 / 0.57 / 0.46 / 0.06 (booked 0.36)
+    benthivores per bed class, encounter shares infauna / epifauna / Nephrops / krill / plk / whiting: 0.530/0.285/0.031/0.054/0.078/0.022 | 0.568/0.305/0.033/0.035/0.055/0.004 | 0.607/0.326/0.036/0.005/0.026/0.000 | 0.617/0.331/0.036/0.000/0.016/0.000
+    prey side (implied / booked M2, equal cells; field): benthic_infauna 1.03 [benth 1.03]; benthivorous_fish 0.78 [whiti 0.12* (0.07), preda 1.45 (1.68), seals 0.90, porpo 2.44]; krill 1.04 [plank 0.95, whiti 1.46 (1.59), macke 1.67, preda 1.34 (1.34), benth 0.91]; mackerel 0.02 [preda 0.02* (0.02)]; mobile_epifauna 0.95 [benth 1.01, whiti 0.50 (0.23)]; norway_lobster 2.19 [benth 2.19]; planktivorous_fish 0.68 [preda 0.75 (0.73), benth 0.61, whiti 0.54 (0.43), macke 0.78, porpo 0.48, seals 1.10]; whiting 0.58 [benth 0.31*, preda 0.62 (0.44), porpo 1.92, seals 1.81]
+    Diet gate: OFF pairs - whiting -> benthivorous_fish enc 0.012 vs booked 0.097
+    Diet gate at the field spread: OFF pairs - whiting -> benthivorous_fish enc 0.007 vs booked 0.097; whiting -> mobile_epifauna enc 0.040 vs booked 0.171
+
+================================================================================================================
+Loader: lib.config.config_loader.load_project_config(mareld2.yaml, library_path=<final copy>)
+================================================================================================================
+  final: loaded 15 groups; warnings 0: 
+    benthivorous_fish          growth_rate 0.0005497281074495587 (live library 0.0005497281074495587)
+    predatory_fish             growth_rate 0.0003093239063190455 (live library 0.0003093239063190455)
+    mackerel                   growth_rate 0.0002849840446007074 (live library 0.0002849840446007074)
+    whiting                    growth_rate 0.00044925614965385185 (live library 0.00044925614965385185)
+    planktivorous_fish         growth_rate 0.0004908303957877828 (live library 0.0004908303957877828)
+    porpoises                  growth_rate 0.0004959049015086094 (live library 0.0004959049015086094)
+    seals                      growth_rate 0.0004889400609057022 (live library 0.0004889400609057022)
+    benthic_infauna            growth_rate 0.000712054794520548 (live library 0.000712054794520548)
+    mobile_epifauna            growth_rate 0.0012028082191780822 (live library 0.0012028082191780822)
+    norway_lobster             growth_rate 0.00024828767123287677 (live library 0.00024828767123287677)
+    phytoplankton              growth_rate 0.167486514426284 (live library 0.167486514426284)
+    subsurface_phytoplankton   growth_rate 0.167486514426284 (live library 0.167486514426284)
+    krill                      growth_rate 0.0014460958904109588 (live library 0.0014460958904109588)
+    microzooplankton           growth_rate 0.0 (live library 0.0)
+    zooplankton                growth_rate 0.11740351387807671 (live library 0.11740351387807671)
+  final_nobenthic: loaded 15 groups; warnings 0: 
+    benthivorous_fish          growth_rate 0.0005497281074495587 (live library 0.0005497281074495587)
+    predatory_fish             growth_rate 0.0003093239063190455 (live library 0.0003093239063190455)
+    mackerel                   growth_rate 0.0002849840446007074 (live library 0.0002849840446007074)
+    whiting                    growth_rate 0.00044925614965385185 (live library 0.00044925614965385185)
+    planktivorous_fish         growth_rate 0.0004908303957877828 (live library 0.0004908303957877828)
+    porpoises                  growth_rate 0.0004959049015086094 (live library 0.0004959049015086094)
+    seals                      growth_rate 0.0004889400609057022 (live library 0.0004889400609057022)
+    benthic_infauna            growth_rate 0.000712054794520548 (live library 0.000712054794520548)
+    mobile_epifauna            growth_rate 0.0012028082191780822 (live library 0.0012028082191780822)
+    norway_lobster             growth_rate 0.00024828767123287677 (live library 0.00024828767123287677)
+    phytoplankton              growth_rate 0.167486514426284 (live library 0.167486514426284)
+    subsurface_phytoplankton   growth_rate 0.167486514426284 (live library 0.167486514426284)
+    krill                      growth_rate 0.0014460958904109588 (live library 0.0014460958904109588)
+    microzooplankton           growth_rate 0.0 (live library 0.0)
+    zooplankton                growth_rate 0.11740351387807671 (live library 0.11740351387807671)

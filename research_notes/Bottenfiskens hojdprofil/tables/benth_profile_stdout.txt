@@ -1,0 +1,158 @@
+================================================================================================================
+0. Reproduction
+================================================================================================================
+  krill (library rule, band 10 m, measured light, 262 layer): eq 0.013208 -> library 0.013; classes 0.0448 / 0.0107 / 0.000583 / 0 (library 0.046 / 0.011 / 0.00059 / 0); n/d 0.030 (library 0.03)
+  krill, rule A on the old band: x0.727 (Overlapp i fiskparen: x0.727)
+  rule A R0 on 15 cm fish (|C0| 0.7): 3.241 m; R_nv 0.3 m; Ke 0.02 lx; measured light (K_deep 0.06)
+  planktivore pair: members cod >= 20 cm W 0.310, haddock >= 20 cm W 0.353 x c_h 0.65 (20-34 cm 0.50, >= 35 cm 0.50); pool shares {'herring': 0.554, 'blue whiting': 0.075, 'Norway pout': 0.35, 'sprat': 0.021}
+  planktivore pair, reference (uniform 10 m band, rule A, light at depth): species shares of a herring 0.12, blue whiting 0.01, Norway pout 0.86, sprat 0.01; cod / haddock 0.65 / 0.35  (243.3 lambda: pout 0.87, herring 0.11; pout_vs_bed cod / haddock 0.67 / 0.33 on pout)
+  whiting pair, reference member shares: cod 0.935, grey gurnard 0.036, starry ray 0.029
+  reference night/day (0 deg): planktivores 0.132 (library 0.06, band A 0.090); whiting 0.163 (library 0.15, band A 0.180)
+  vision factor rule A at the bed (Overlapp i fiskparen A_band): planktivores x1.247, whiting x1.188
+
+================================================================================================================
+1. Member profiles: share of time within 2 m / within 10 m of the bed, mean height (m), day | night; tau_bed
+   = annual search-time share in bed contact (0-2 m), equal cells (16 x 16 bins of maps/depth.npz)
+================================================================================================================
+  central:
+    cod 0.70/0.91/5 | 0.70/0.91/5; tau 0.70
+    had_s 0.60/0.95/4 | 0.30/0.60/12; tau 0.45
+    had_m 0.70/0.91/5 | 0.70/0.91/5; tau 0.70
+    had_l 0.30/0.50/22 | 0.50/0.80/7; tau 0.40
+    lrd 1.00/1.00/1 | 1.00/1.00/1; tau 1.00
+    flat 1.00/1.00/1 | 1.00/1.00/1; tau 1.00
+  deep:
+    cod 0.19/0.46/28 | 0.34/0.57/18; tau 0.27
+    had_s 0.60/0.95/4 | 0.30/0.60/12; tau 0.45
+    had_m 0.40/0.75/10 | 0.40/0.75/10; tau 0.40
+    had_l 0.15/0.30/32 | 0.41/0.75/9; tau 0.28
+    lrd 1.00/1.00/1 | 1.00/1.00/1; tau 1.00
+    flat 1.00/1.00/1 | 1.00/1.00/1; tau 1.00
+  bedbound:
+    cod 0.64/1.00/3 | 0.64/1.00/3; tau 0.64
+    had_s 0.45/0.85/6 | 0.45/0.85/6; tau 0.45
+    had_m 0.45/0.85/6 | 0.45/0.85/6; tau 0.45
+    had_l 0.45/0.85/6 | 0.45/0.85/6; tau 0.45
+    lrd 1.00/1.00/1 | 1.00/1.00/1; tau 1.00
+    flat 1.00/1.00/1 | 1.00/1.00/1; tau 1.00
+  rest50:
+    cod 0.54/0.85/7 | 0.54/0.85/7; tau 0.54
+    had_s 0.43/0.93/5 | 0.18/0.53/14; tau 0.30
+    had_m 0.54/0.85/7 | 0.54/0.85/7; tau 0.54
+    had_l 0.18/0.41/25 | 0.33/0.73/9; tau 0.25
+    lrd 1.00/1.00/1 | 1.00/1.00/1; tau 1.00
+    flat 1.00/1.00/1 | 1.00/1.00/1; tau 1.00
+  deep_rest50:
+    cod 0.10/0.40/31 | 0.20/0.48/21; tau 0.15
+    had_s 0.43/0.93/5 | 0.18/0.53/14; tau 0.30
+    had_m 0.25/0.69/12 | 0.25/0.69/12; tau 0.25
+    had_l 0.08/0.24/34 | 0.26/0.69/11; tau 0.17
+    lrd 1.00/1.00/1 | 1.00/1.00/1; tau 1.00
+    flat 1.00/1.00/1 | 1.00/1.00/1; tau 1.00
+  flat_lrd_off:
+    cod 0.70/0.91/5 | 0.70/0.91/5; tau 0.70
+    had_s 0.60/0.95/4 | 0.30/0.60/12; tau 0.45
+    had_m 0.70/0.91/5 | 0.70/0.91/5; tau 0.70
+    had_l 0.30/0.50/22 | 0.50/0.80/7; tau 0.40
+    lrd 0.70/1.00/2 | 0.70/1.00/2; tau 0.70
+    flat 0.90/1.00/2 | 0.90/1.00/2; tau 0.90
+  had_barents:
+    cod 0.70/0.91/5 | 0.70/0.91/5; tau 0.70
+    had_s 0.60/0.95/4 | 0.30/0.60/12; tau 0.45
+    had_m 0.40/0.75/10 | 0.40/0.75/10; tau 0.40
+    had_l 0.15/0.30/32 | 0.41/0.75/9; tau 0.28
+    lrd 1.00/1.00/1 | 1.00/1.00/1; tau 1.00
+    flat 1.00/1.00/1 | 1.00/1.00/1; tau 1.00
+  cod_barents:
+    cod 0.19/0.46/28 | 0.34/0.57/18; tau 0.27
+    had_s 0.60/0.95/4 | 0.30/0.60/12; tau 0.45
+    had_m 0.70/0.91/5 | 0.70/0.91/5; tau 0.70
+    had_l 0.30/0.50/22 | 0.50/0.80/7; tau 0.40
+    lrd 1.00/1.00/1 | 1.00/1.00/1; tau 1.00
+    flat 1.00/1.00/1 | 1.00/1.00/1; tau 1.00
+  sw_contact:
+    cod 0.91/0.91/4 | 0.91/0.91/4; tau 0.91
+    had_s 0.60/0.95/4 | 0.30/0.60/12; tau 0.45
+    had_m 0.91/0.91/4 | 0.91/0.91/4; tau 0.91
+    had_l 0.30/0.50/22 | 0.50/0.80/7; tau 0.40
+    lrd 1.00/1.00/1 | 1.00/1.00/1; tau 1.00
+    flat 1.00/1.00/1 | 1.00/1.00/1; tau 1.00
+
+================================================================================================================
+2. Pairs: a_new = a_lib x vision (rule A at the bed, band) x profile factor P (fish), krill as one chain;
+   benthic a x tau. Class a's < 100 / 100-150 / 150-250 / >= 250 m; night/day at 0 deg (the pairs' threshold)
+================================================================================================================
+  central:
+    krill        0.013 -> 0.006795 (x0.523; profile alone x0.719 vs A on the band); classes 0.0225 / 0.00583 / 0.000701 / 1.52e-05; n/d 0.036
+    planktivores 0.0198 -> 0.02136 (P x0.865, total x1.079); classes 0.0401 / 0.0262 / 0.0114 / 0.00685; n/d 0.141; species herring 0.13, blue whiting 0.01, Norway pout 0.85, sprat 0.01; cod/had 0.68/0.32
+    whiting      0.021 -> 0.02255 (P x0.904, total x1.074); classes 0.0366 / 0.0306 / 0.0129 / 0.00738; n/d 0.168
+    benthic_infauna  a 0.036 -> 0.0256 (tau x0.711; implied night/day 1.01)
+    mobile_epifauna  a 0.15 -> 0.1104 (tau x0.736; implied night/day 1.01)
+    norway_lobster   a 0.44 -> 0.308 (tau x0.700; implied night/day 1.00); Nephrops weights cod 0.8 / haddock 0.15 / LRD 0.05: x0.694
+  deep:
+    krill        0.013 -> 0.007027 (x0.541; profile alone x0.744 vs A on the band); classes 0.0201 / 0.00727 / 0.00155 / 8.16e-05; n/d 0.041
+    planktivores 0.0198 -> 0.01459 (P x0.591, total x0.737); classes 0.0266 / 0.018 / 0.00811 / 0.00481; n/d 0.174; species herring 0.15, blue whiting 0.01, Norway pout 0.83, sprat 0.02; cod/had 0.62/0.38
+    whiting      0.021 -> 0.01345 (P x0.539, total x0.640); classes 0.0216 / 0.018 / 0.00801 / 0.0046; n/d 0.214
+    benthic_infauna  a 0.036 -> 0.01898 (tau x0.527; implied night/day 1.09)
+    mobile_epifauna  a 0.15 -> 0.08229 (tau x0.549; implied night/day 1.09)
+    norway_lobster   a 0.44 -> 0.1166 (tau x0.265; implied night/day 1.79); Nephrops weights cod 0.8 / haddock 0.15 / LRD 0.05: x0.318
+  bedbound:
+    krill        0.013 -> 0.007562 (x0.582; profile alone x0.801 vs A on the band); classes 0.0257 / 0.00636 / 0.000445 / 1.83e-08; n/d 0.034
+    planktivores 0.0198 -> 0.02336 (P x0.946, total x1.180); classes 0.044 / 0.0287 / 0.0124 / 0.0073; n/d 0.131; species herring 0.12, blue whiting 0.01, Norway pout 0.86, sprat 0.01; cod/had 0.68/0.32
+    whiting      0.021 -> 0.02454 (P x0.984, total x1.169); classes 0.0398 / 0.0334 / 0.0141 / 0.00798; n/d 0.165
+    benthic_infauna  a 0.036 -> 0.02316 (tau x0.643; implied night/day 1.00)
+    mobile_epifauna  a 0.15 -> 0.1012 (tau x0.675; implied night/day 1.00)
+    norway_lobster   a 0.44 -> 0.2812 (tau x0.639; implied night/day 1.00); Nephrops weights cod 0.8 / haddock 0.15 / LRD 0.05: x0.629
+  rest50:
+    krill        0.013 -> 0.007239 (x0.557; profile alone x0.766 vs A on the band); classes 0.023 / 0.00666 / 0.000936 / 1.82e-05; n/d 0.037
+    planktivores 0.0198 -> 0.02034 (P x0.824, total x1.027); classes 0.0381 / 0.025 / 0.0109 / 0.00646; n/d 0.141; species herring 0.13, blue whiting 0.01, Norway pout 0.85, sprat 0.01; cod/had 0.69/0.31
+    whiting      0.021 -> 0.02162 (P x0.867, total x1.029); classes 0.035 / 0.0294 / 0.0125 / 0.00705; n/d 0.169
+    benthic_infauna  a 0.036 -> 0.02158 (tau x0.599; implied night/day 1.00)
+    mobile_epifauna  a 0.15 -> 0.09452 (tau x0.630; implied night/day 1.00)
+    norway_lobster   a 0.44 -> 0.2369 (tau x0.538; implied night/day 1.00); Nephrops weights cod 0.8 / haddock 0.15 / LRD 0.05: x0.541
+  deep_rest50:
+    krill        0.013 -> 0.007303 (x0.562; profile alone x0.773 vs A on the band); classes 0.0202 / 0.00789 / 0.00177 / 8.98e-05; n/d 0.043
+    planktivores 0.0198 -> 0.01343 (P x0.544, total x0.678); classes 0.0245 / 0.0166 / 0.00748 / 0.00435; n/d 0.176; species herring 0.16, blue whiting 0.01, Norway pout 0.82, sprat 0.02; cod/had 0.61/0.39
+    whiting      0.021 -> 0.0122 (P x0.489, total x0.581); classes 0.0196 / 0.0163 / 0.0073 / 0.00413; n/d 0.213
+    benthic_infauna  a 0.036 -> 0.01564 (tau x0.434; implied night/day 1.06)
+    mobile_epifauna  a 0.15 -> 0.06939 (tau x0.463; implied night/day 1.06)
+    norway_lobster   a 0.44 -> 0.06815 (tau x0.155; implied night/day 1.95); Nephrops weights cod 0.8 / haddock 0.15 / LRD 0.05: x0.209
+  flat_lrd_off:
+    krill        0.013 -> 0.006957 (x0.535; profile alone x0.737 vs A on the band); classes 0.0229 / 0.00601 / 0.000721 / 1.52e-05; n/d 0.037
+    planktivores 0.0198 -> 0.02136 (P x0.865, total x1.079); classes 0.0401 / 0.0262 / 0.0114 / 0.00685; n/d 0.141; species herring 0.13, blue whiting 0.01, Norway pout 0.85, sprat 0.01; cod/had 0.68/0.32
+    whiting      0.021 -> 0.02256 (P x0.904, total x1.074); classes 0.0366 / 0.0306 / 0.0129 / 0.00738; n/d 0.168
+    benthic_infauna  a 0.036 -> 0.02374 (tau x0.659; implied night/day 1.01)
+    mobile_epifauna  a 0.15 -> 0.1015 (tau x0.676; implied night/day 1.01)
+    norway_lobster   a 0.44 -> 0.308 (tau x0.700; implied night/day 1.00); Nephrops weights cod 0.8 / haddock 0.15 / LRD 0.05: x0.679
+  had_barents:
+    krill        0.013 -> 0.00703 (x0.541; profile alone x0.744 vs A on the band); classes 0.0218 / 0.00666 / 0.00107 / 3.02e-05; n/d 0.038
+    planktivores 0.0198 -> 0.02019 (P x0.818, total x1.019); classes 0.0382 / 0.0248 / 0.0107 / 0.00632; n/d 0.141; species herring 0.13, blue whiting 0.01, Norway pout 0.85, sprat 0.01; cod/had 0.72/0.28
+    whiting      0.021 -> 0.02255 (P x0.904, total x1.074); classes 0.0366 / 0.0306 / 0.0129 / 0.00738; n/d 0.168
+    benthic_infauna  a 0.036 -> 0.02212 (tau x0.614; implied night/day 1.02)
+    mobile_epifauna  a 0.15 -> 0.09831 (tau x0.655; implied night/day 1.02)
+    norway_lobster   a 0.44 -> 0.308 (tau x0.700; implied night/day 1.00); Nephrops weights cod 0.8 / haddock 0.15 / LRD 0.05: x0.666
+  cod_barents:
+    krill        0.013 -> 0.006792 (x0.522; profile alone x0.719 vs A on the band); classes 0.0208 / 0.00644 / 0.00119 / 6.66e-05; n/d 0.039
+    planktivores 0.0198 -> 0.01576 (P x0.638, total x0.796); classes 0.0286 / 0.0195 / 0.00882 / 0.00534; n/d 0.171; species herring 0.14, blue whiting 0.01, Norway pout 0.84, sprat 0.02; cod/had 0.57/0.43
+    whiting      0.021 -> 0.01345 (P x0.539, total x0.640); classes 0.0216 / 0.018 / 0.00801 / 0.0046; n/d 0.214
+    benthic_infauna  a 0.036 -> 0.02246 (tau x0.624; implied night/day 1.06)
+    mobile_epifauna  a 0.15 -> 0.09437 (tau x0.629; implied night/day 1.07)
+    norway_lobster   a 0.44 -> 0.1166 (tau x0.265; implied night/day 1.79); Nephrops weights cod 0.8 / haddock 0.15 / LRD 0.05: x0.346
+  sw_contact:
+    krill        0.013 -> 0.006227 (x0.479; profile alone x0.659 vs A on the band); classes 0.0208 / 0.00519 / 0.000635 / 1.52e-05; n/d 0.036
+    planktivores 0.0198 -> 0.02123 (P x0.860, total x1.072); classes 0.04 / 0.026 / 0.0112 / 0.00684; n/d 0.141; species herring 0.13, blue whiting 0.01, Norway pout 0.85, sprat 0.01; cod/had 0.68/0.32
+    whiting      0.021 -> 0.02239 (P x0.898, total x1.066); classes 0.0365 / 0.0304 / 0.0127 / 0.00738; n/d 0.169
+    benthic_infauna  a 0.036 -> 0.02897 (tau x0.805; implied night/day 1.01)
+    mobile_epifauna  a 0.15 -> 0.1245 (tau x0.830; implied night/day 1.00)
+    norway_lobster   a 0.44 -> 0.3982 (tau x0.905; implied night/day 1.00); Nephrops weights cod 0.8 / haddock 0.15 / LRD 0.05: x0.873
+  pout_albert:
+    krill        0.013 -> 0.006795 (x0.523; profile alone x0.719 vs A on the band); classes 0.0225 / 0.00583 / 0.000701 / 1.52e-05; n/d 0.036
+    planktivores 0.0198 -> 0.06168 (P x2.498, total x3.115); classes 0.109 / 0.0832 / 0.0319 / 0.0166; n/d 0.014; species herring 0.04, blue whiting 0.00, Norway pout 0.95, sprat 0.01; cod/had 0.70/0.30
+    whiting      0.021 -> 0.02255 (P x0.904, total x1.074); classes 0.0366 / 0.0306 / 0.0129 / 0.00738; n/d 0.168
+    benthic_infauna  a 0.036 -> 0.0256 (tau x0.711; implied night/day 1.01)
+    mobile_epifauna  a 0.15 -> 0.1104 (tau x0.736; implied night/day 1.01)
+    norway_lobster   a 0.44 -> 0.308 (tau x0.700; implied night/day 1.00); Nephrops weights cod 0.8 / haddock 0.15 / LRD 0.05: x0.694
+
+  benthic pair member weights (a_enc x e, pout_vs_bed section D): infauna haddock 0.517, cod 0.183, long rough dab 0.118, dab 0.070, plaice 0.045, witch 0.024, starry ray 0.015, grey gurnard 0.018, lemon sole 0.011; epifauna haddock 0.430, cod 0.229, long rough dab 0.135, dab 0.080, plaice 0.052, witch 0.028, starry ray 0.016, grey gurnard 0.017, lemon sole 0.012
+
+written benth_profile.json

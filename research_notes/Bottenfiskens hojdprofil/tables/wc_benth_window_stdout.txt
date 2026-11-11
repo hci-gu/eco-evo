@@ -1,0 +1,44 @@
+windows available: ['anglerfish', 'cod', 'hake', 'horse mackerel', 'mackerel', 'porpoise', 'saithe', 'seal', 'spurdog', 'velvet belly', 'whiting']
+saithe band-A a per tonne adult/large 1.201 (L 0.430 / 0.700 m): exponent -0.38; 220 form -2.11 (fitted) / -1.92 (per-stage 2.55) -> kexp 1.73 / 1.54; central kexp 1.7
+
+per-member windows [f_J, f_A] (norm + aw), a(L) x L^kexp:
+  saithe        k +0.0: [0.251, 0.0003]  k +1.0: [0.308, 0.0005]  k +1.5: [0.339, 0.0007]  k +1.7: [0.352, 0.0008]  k +2.0: [0.371, 0.0009]
+  hake          k +0.0: [0.386, 0.1330]  k +1.0: [0.553, 0.2153]  k +1.5: [0.630, 0.2617]  k +1.7: [0.660, 0.2808]  k +2.0: [0.702, 0.3099]
+  anglerfish    k +0.0: [0.868, 0.4445]  k +1.0: [0.945, 0.5349]  k +1.5: [0.963, 0.5716]  k +1.7: [0.969, 0.5852]  k +2.0: [0.976, 0.6047]
+  spurdog       k +0.0: [0.715, 0.2392]  k +1.0: [0.744, 0.2517]  k +1.5: [0.755, 0.2566]  k +1.7: [0.758, 0.2584]  k +2.0: [0.763, 0.2610]
+  velvet belly  k +0.0: [0.044, 0.0028]  k +1.0: [0.044, 0.0028]  k +1.5: [0.044, 0.0028]  k +1.7: [0.044, 0.0028]  k +2.0: [0.044, 0.0028]
+  (k 0 reproduces Fonsterviktning's central aw: saithe [0.251, 0.0003], hake [0.386, 0.1330], anglerfish [0.868, 0.4445], spurdog [0.715, 0.2392], velvet belly [0.044, 0.0028])
+
+re-weighted on the band-A member shares (JB 0.15 for f_eff):
+  A_band       ling anglerfish k +0.0: [0.283, 0.0251]  f_eff 0.0638   shares saithe 0.892, hake 0.051, anglerfish 0.015, ling 0.025, pollack 0.007
+  A_band       ling anglerfish k +1.0: [0.346, 0.0332]  f_eff 0.0802   shares saithe 0.892, hake 0.051, anglerfish 0.015, ling 0.025, pollack 0.007
+  A_band       ling anglerfish k +1.5: [0.379, 0.0372]  f_eff 0.0885   shares saithe 0.892, hake 0.051, anglerfish 0.015, ling 0.025, pollack 0.007
+  A_band       ling anglerfish k +1.7: [0.392, 0.0388]  f_eff 0.0919   shares saithe 0.892, hake 0.051, anglerfish 0.015, ling 0.025, pollack 0.007
+  A_band       ling anglerfish k +2.0: [0.413, 0.0412]  f_eff 0.0969   shares saithe 0.892, hake 0.051, anglerfish 0.015, ling 0.025, pollack 0.007
+  A_band       ling excluded   k +0.0: [0.268, 0.0142]  f_eff 0.0523   shares saithe 0.892, hake 0.051, anglerfish 0.015, ling 0.025, pollack 0.007
+  A_band       ling excluded   k +1.0: [0.331, 0.0202]  f_eff 0.0668   shares saithe 0.892, hake 0.051, anglerfish 0.015, ling 0.025, pollack 0.007
+  A_band       ling excluded   k +1.5: [0.364, 0.0234]  f_eff 0.0745   shares saithe 0.892, hake 0.051, anglerfish 0.015, ling 0.025, pollack 0.007
+  A_band       ling excluded   k +1.7: [0.377, 0.0247]  f_eff 0.0776   shares saithe 0.892, hake 0.051, anglerfish 0.015, ling 0.025, pollack 0.007
+  A_band       ling excluded   k +2.0: [0.398, 0.0267]  f_eff 0.0824   shares saithe 0.892, hake 0.051, anglerfish 0.015, ling 0.025, pollack 0.007
+  A_band_Hs5   ling anglerfish k +0.0: [0.264, 0.0105]  f_eff 0.0486   shares saithe 0.951, hake 0.021, anglerfish 0.006, ling 0.010, pollack 0.007
+  A_band_Hs5   ling anglerfish k +1.0: [0.324, 0.0140]  f_eff 0.0605   shares saithe 0.951, hake 0.021, anglerfish 0.006, ling 0.010, pollack 0.007
+  A_band_Hs5   ling anglerfish k +1.5: [0.355, 0.0158]  f_eff 0.0667   shares saithe 0.951, hake 0.021, anglerfish 0.006, ling 0.010, pollack 0.007
+  A_band_Hs5   ling anglerfish k +1.7: [0.368, 0.0165]  f_eff 0.0693   shares saithe 0.951, hake 0.021, anglerfish 0.006, ling 0.010, pollack 0.007
+  A_band_Hs5   ling anglerfish k +2.0: [0.388, 0.0176]  f_eff 0.0732   shares saithe 0.951, hake 0.021, anglerfish 0.006, ling 0.010, pollack 0.007
+  A_band_Hs5   ling excluded   k +0.0: [0.258, 0.0059]  f_eff 0.0438   shares saithe 0.951, hake 0.021, anglerfish 0.006, ling 0.010, pollack 0.007
+  A_band_Hs5   ling excluded   k +1.0: [0.317, 0.0085]  f_eff 0.0549   shares saithe 0.951, hake 0.021, anglerfish 0.006, ling 0.010, pollack 0.007
+  A_band_Hs5   ling excluded   k +1.5: [0.349, 0.0099]  f_eff 0.0608   shares saithe 0.951, hake 0.021, anglerfish 0.006, ling 0.010, pollack 0.007
+  A_band_Hs5   ling excluded   k +1.7: [0.362, 0.0105]  f_eff 0.0633   shares saithe 0.951, hake 0.021, anglerfish 0.006, ling 0.010, pollack 0.007
+  A_band_Hs5   ling excluded   k +2.0: [0.382, 0.0114]  f_eff 0.0670   shares saithe 0.951, hake 0.021, anglerfish 0.006, ling 0.010, pollack 0.007
+  A_band_Hs40  ling anglerfish k +0.0: [0.320, 0.0532]  f_eff 0.0933   shares saithe 0.790, spurdog 0.008, hake 0.111, anglerfish 0.031, ling 0.051, pollack 0.006
+  A_band_Hs40  ling anglerfish k +1.0: [0.391, 0.0701]  f_eff 0.1182   shares saithe 0.790, spurdog 0.008, hake 0.111, anglerfish 0.031, ling 0.051, pollack 0.006
+  A_band_Hs40  ling anglerfish k +1.5: [0.426, 0.0784]  f_eff 0.1305   shares saithe 0.790, spurdog 0.008, hake 0.111, anglerfish 0.031, ling 0.051, pollack 0.006
+  A_band_Hs40  ling anglerfish k +1.7: [0.440, 0.0818]  f_eff 0.1355   shares saithe 0.790, spurdog 0.008, hake 0.111, anglerfish 0.031, ling 0.051, pollack 0.006
+  A_band_Hs40  ling anglerfish k +2.0: [0.461, 0.0868]  f_eff 0.1428   shares saithe 0.790, spurdog 0.008, hake 0.111, anglerfish 0.031, ling 0.051, pollack 0.006
+  A_band_Hs40  ling excluded   k +0.0: [0.291, 0.0322]  f_eff 0.0710   shares saithe 0.790, spurdog 0.008, hake 0.111, anglerfish 0.031, ling 0.051, pollack 0.006
+  A_band_Hs40  ling excluded   k +1.0: [0.361, 0.0452]  f_eff 0.0926   shares saithe 0.790, spurdog 0.008, hake 0.111, anglerfish 0.031, ling 0.051, pollack 0.006
+  A_band_Hs40  ling excluded   k +1.5: [0.397, 0.0521]  f_eff 0.1038   shares saithe 0.790, spurdog 0.008, hake 0.111, anglerfish 0.031, ling 0.051, pollack 0.006
+  A_band_Hs40  ling excluded   k +1.7: [0.411, 0.0548]  f_eff 0.1083   shares saithe 0.790, spurdog 0.008, hake 0.111, anglerfish 0.031, ling 0.051, pollack 0.006
+  A_band_Hs40  ling excluded   k +2.0: [0.433, 0.0591]  f_eff 0.1151   shares saithe 0.790, spurdog 0.008, hake 0.111, anglerfish 0.031, ling 0.051, pollack 0.006
+
+  243 library [0.42, 0.12] (shares saithe 0.45, spurdog 0.18, hake 0.21, velvet belly 0.05, anglerfish 0.12), f_eff 0.165

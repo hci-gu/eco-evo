@@ -25111,3 +25111,50 @@ remain open exactly as described in 71.9 / 71.11.
 268.5 Tests: test_open_pool (booked 2.537, P 2.1113, g pinned; new test of the open-pool P rule),
     test_growth_budget (open pool with somatic_production). Full suite 1885 passed, 12 skipped.
     No training run (the user starts it).
+
+269 ONE VISION RULE AND THE BAND OVERLAP ON EVERY VISUAL FISH PAIR (2026-11-11; user choices)
+---------------------------------------------------------------------------------------------
+
+269.1 Why. The krill excess (realised krill M2 x1.85 the 268 booking in fix96) had a parameter side in the
+    attack rates: the same predator saw krill with a light-driven R (section 253, R_sat 0.87 m for saithe)
+    and fish with a fixed R (0.2 m dark, 0.5 m herring by day), capture p 0.5 vs 0.2. Literature
+    (research_notes/"Synregel i vattenpelaren"): no gadoid R on krill or fish exists; under one visual rule
+    R_fish >= R_krill (salmonid analogues: RD size-free above ~50 mm prey, krill partly transparent and
+    counter-illuminating); the gadoid eye sensitivity Ke 0.02 lx holds (Ryer & Olla 1999 read: pollock
+    visual threshold 1e-7..1e-6 uE). The same two-rule inconsistency was in whiting, mackerel and (two light
+    climates) the benthivores (research_notes/"En synregel for fiskparen").
+269.2 Overlap (research_notes/"Overlapp i fiskparen"). Since 242 every prey is searched at once and since
+    265.1 every prey met is attacked; no action allocates depth. Then the encounter is a_j = int f_m(z)
+    phi_j(z) S_j(z) dz with ONE search-time profile f_m per member shared by all its prey (the band
+    overlap; the Holling form stays exact with the band-averaged lambda). The in-layer O = 1/H of the 220
+    fish pairs is its upper bound and credited a full search budget per prey layer (6 for saithe). The krill
+    pairs, the benthivore fish pairs, whiting -> epifauna and 243's WC -> benthivores were band special cases.
+269.3 Benthivores' profile (research_notes/"Bottenfiskens hojdprofil", o-umlaut). North Sea field occupancy,
+    user's choice over the Barents analogue: cod Hobson et al. 2007 (SB 70 %, SW 20.5 %, midwater 9.5 %),
+    haddock 20-34 cm as cod, >= 35 cm off the bed by day (midpoint judgement), small haddock up at night,
+    flatfish and long rough dab bed-bound. The fish pairs move only x0.87-0.90 (off-bed time still meets
+    herring, pout and krill); krill x0.52; the bed pairs x the bed-contact share of search time tau 0.71 /
+    0.74 / 0.70 (infauna, epifauna, Nephrops; user: with the bed pairs, else each benthivore has 1 + its
+    off-bed share of search time). Intake moves < 1 %; the diet shares move (fixed attack + shared handling).
+269.4 Applied (fg_library.yaml, 17 pairs; scripts/apply_269.py from tables/yaml_edits.txt, every comment
+    kept, a "Section 269" line per pair). max_intake_rate: WC -> krill 0.026 -> 0.0117, -> planktivores
+    0.0060 -> 0.0174, -> benthivores 0.0055 -> 0.0418 (stage_access [0.42, 0.12] -> [0.392, 0.0388],
+    re-weighted on the band a's members, saithe 0.89), -> whiting 0.013 -> 0.0359, -> mackerel 0.00088 ->
+    0.000137; whiting -> planktivores 0.0212 -> 0.0329, -> benthivores 0.21 -> 0.103 (FLAGGED OPEN: 0.12
+    of its booking; whiting's height above the bed unmeasured; the prey's g pays its somatic production,
+    so only the yardstick moves; user decision); mackerel -> planktivores 0.0266 -> 0.0248; benthivores ->
+    krill 0.013 -> 0.00679, -> planktivores 0.0198 -> 0.0214, -> whiting 0.021 -> 0.0226, -> infauna 0.036
+    -> 0.0256, -> epifauna 0.15 -> 0.110, -> Nephrops 0.44 -> 0.308; whiting, planktivores, mackerel ->
+    krill unchanged (2 L cap binds). Each visual pair has its own class depth_access_table (< 100 / 100-150
+    / 150-250 / >= 250 m). dark_ratio = the rule's night/day except the stomach values (planktivores ->
+    krill 0.57, mackerel -> krill 0.42, mackerel -> planktivores 0.16, whiting -> krill none; user).
+    light_threshold_deg, predation_mortality, handling times and every derived g unchanged.
+269.5 Gate (budget_gate, identical to the note's final run). Predator side OFF: whiting -> benthivores
+    (0.12; field 0.07) and whiting -> epifauna at the field spread (0.23, pre-existing). WC: krill 1.39,
+    planktivores 0.78, benthivores 0.97, whiting 0.64. WC krill share over 150-250 m beds 0.74 -> 0.49
+    (field group Q3 0.47, saithe all seasons 0.19; booked 0.36); it hinges on saithe's near-bed scale
+    height (0.12-0.68 over Hs 5-40 m). Prey side (implied / booked M2): krill 1.10 -> 1.04, planktivores
+    0.38 -> 0.69, benthivores 0.37 -> 0.62, whiting 0.27 -> 0.60; OFF: whiting -> benthivores, WC ->
+    mackerel (0.02), benthivores -> whiting (0.31, the 251 residual), seals -> water column (unchanged).
+269.6 Tests: test_half_saturation pins the new a and night/day. Full suite green. No training (the user
+    trains once on 267-269).
