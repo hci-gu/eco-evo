@@ -1,0 +1,17 @@
+SMS 2001-2022 (22 yr): saithe partial M2 on haddock age 0 0.385, age 1 0.519, age 2 0.132 /yr; saithe Q1 biomass density 0.658 t/km2 (0.48-0.99); haddock share of saithe food 4.1 %
+per t/km2 of saithe: age 0 0.585, age 1 0.789, age 2 0.201; at the box's saithe 0.494 t/km2: age 0 0.289, age 1 0.389, age 2 0.099 /yr
+SMS modelled vs observed stomach haddock share 1980-91: 9.1 vs 4.1 % (diet note, evidence_saithe entry 4): x0.45 on the SMS level if the stomachs are right
+
+Per run: implied/booked; window; J share of the encounter flow; M2 on J and on A (booked-equivalent -> implied)
+  library                  ratio 0.97  window [0.392, 0.0388]  J share 0.64  M2_J 0.356 -> 0.345  M2_A 0.0352 -> 0.0342
+  combined_central         ratio 2.00  window [0.392, 0.0388]  J share 0.64  M2_J 0.356 -> 0.712  M2_A 0.0352 -> 0.0704
+  exp_Hs10                 ratio 2.23  window [0.383, 0.0282]  J share 0.71  M2_J 0.392 -> 0.874  M2_A 0.0289 -> 0.0643
+  exp_Hs20                 ratio 1.93  window [0.407, 0.0503]  J share 0.59  M2_J 0.327 -> 0.630  M2_A 0.0404 -> 0.0779
+  exp_Hs40                 ratio 1.85  window [0.444, 0.0828]  J share 0.49  M2_J 0.270 -> 0.500  M2_A 0.0504 -> 0.0932
+  gamma2_s6                ratio 1.47  window [0.451, 0.0865]  J share 0.48  M2_J 0.266 -> 0.391  M2_A 0.0510 -> 0.0750
+  uniform_35               ratio 1.69  window [0.439, 0.079]  J share 0.50  M2_J 0.275 -> 0.465  M2_A 0.0495 -> 0.0836
+  juv_H0.5                 ratio 1.85  window [0.397, 0.0492]  J share 0.59  M2_J 0.326 -> 0.604  M2_A 0.0404 -> 0.0748
+  juv_H0.5_had             ratio 1.75  window [0.358, 0.0489]  J share 0.56  M2_J 0.313 -> 0.548  M2_A 0.0428 -> 0.0748
+  gamma2_s6_juvH0.5_had    ratio 1.30  window [0.508, 0.165]  J share 0.35  M2_J 0.196 -> 0.254  M2_A 0.0635 -> 0.0825
+
+Reading: J holds 0-group (from settlement) and 1-group haddock, cod and flatfish juveniles; saithe take haddock (cod a trace). SMS age 0 / age 1 haddock M2 from saithe at the box density is the like-for-like field-model value for M2_J on the haddock part; x0.45 for the stomach level.

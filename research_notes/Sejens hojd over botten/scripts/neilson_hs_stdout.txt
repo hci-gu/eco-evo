@@ -1,0 +1,20 @@
+Neilson 2003: 1-5 m share of the 1-30 m layer -> Hs (exponential from the bed)
+  Banana day         0.27: Hs  15.38 m; bottom-2-m share of the full profile 0.122
+      share 0.22: Hs 23.71 m
+      share 0.32: Hs 11.47 m
+  Banana night       0.37: Hs   9.14 m; bottom-2-m share of the full profile 0.197
+      share 0.32: Hs 11.47 m
+      share 0.42: Hs 7.56 m
+  Shelf Edge day     0.68: Hs   3.51 m; bottom-2-m share of the full profile 0.434
+      share 0.63: Hs 4.03 m
+      share 0.73: Hs 3.06 m
+  Shelf Edge night   0.80: Hs   2.49 m; bottom-2-m share of the full profile 0.553
+      share 0.75: Hs 2.89 m
+      share 0.85: Hs 2.11 m
+
+DFO CSAS 2003/075: height holding 75 % of the biomass -> Hs = h75 / ln 4
+  h75   3.0 m: Hs  2.16 m; bottom-2-m share 0.603
+  h75  10.0 m: Hs  7.21 m; bottom-2-m share 0.242
+  h75  13.0 m: Hs  9.38 m; bottom-2-m share 0.192
+
+Note: both are deliberately sampled near-bed aggregations (Neilson: only 0-30 m integrated, so any saithe above 30 m is outside the share); they bound Hs from below for a pre-spawning / winter aggregation.

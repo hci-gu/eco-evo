@@ -1,0 +1,87 @@
+library: done
+combined_central: done
+repro_central: done
+exp_Hs7: done
+exp_Hs10: done
+exp_Hs20: done
+exp_Hs30: done
+exp_Hs40: done
+gamma2_s6: done
+gamma2_s10: done
+uniform_35: done
+juv_H0.5: done
+exp_Hs10_juvH0.5: done
+gamma2_s6_juvH0.5: done
+noclip_juv_night_aglen: done
+central_repro_had: done
+juv_H0.5_had: done
+exp_Hs10_juvH0.5_had: done
+gamma2_s6_juvH0.5_had: done
+juv_H0.5_had_noCombined: done
+
+WC pair a after all factors (krill / planktivores / benthivores / whiting) and WC -> benthivores window
+  library                      0.0117 / 0.0174 / 0.0418 / 0.0359;  window [0.392, 0.0388]
+  combined_central             0.0117 / 0.02797 / 0.1238 / 0.105;  window [0.392, 0.0388]
+  repro_central                0.0117 / 0.02797 / 0.1238 / 0.105;  window [0.394, 0.0391]
+  exp_Hs7                      0.01219 / 0.03616 / 0.2296 / 0.1552;  window [0.375, 0.0213]
+  exp_Hs10                     0.01209 / 0.03244 / 0.1723 / 0.132;  window [0.383, 0.0282]
+  exp_Hs20                     0.01126 / 0.02508 / 0.0985 / 0.08772;  window [0.407, 0.0503]
+  exp_Hs30                     0.01051 / 0.0218 / 0.07321 / 0.06801;  window [0.428, 0.0689]
+  exp_Hs40                     0.009956 / 0.02015 / 0.06099 / 0.05754;  window [0.444, 0.0828]
+  gamma2_s6                    0.01259 / 0.02899 / 0.05909 / 0.1104;  window [0.451, 0.0865]
+  gamma2_s10                   0.01142 / 0.02135 / 0.0312 / 0.06403;  window [0.531, 0.163]
+  uniform_35                   0.01166 / 0.02182 / 0.06368 / 0.06593;  window [0.439, 0.079]
+  juv_H0.5                     0.0117 / 0.02797 / 0.1021 / 0.105;  window [0.397, 0.0492]
+  exp_Hs10_juvH0.5             0.01209 / 0.03244 / 0.1436 / 0.132;  window [0.381, 0.035]
+  gamma2_s6_juvH0.5            0.01259 / 0.02899 / 0.03375 / 0.1104;  window [0.538, 0.165]
+  noclip_juv_night_aglen       0.0117 / 0.02797 / 0.1192 / 0.105;  window [0.406, 0.0398]
+  central_repro_had            0.0117 / 0.02797 / 0.1238 / 0.105;  window [0.353, 0.0387]
+  juv_H0.5_had                 0.0117 / 0.02797 / 0.1021 / 0.105;  window [0.358, 0.0489]
+  exp_Hs10_juvH0.5_had         0.01209 / 0.03244 / 0.1436 / 0.132;  window [0.34, 0.0347]
+  gamma2_s6_juvH0.5_had        0.01259 / 0.02899 / 0.03375 / 0.1104;  window [0.508, 0.165]
+  juv_H0.5_had_noCombined      0.0117 / 0.0174 / 0.03449 / 0.0359;  window [0.358, 0.0489]
+
+Gate per run (* = OFF). Prey side: implied / booked M2. Predator side: encounter / booked share (equal cells; field spread)
+  run                              prey plk     prey ben     prey whi   prey krill  WC>ben prey  WC>whi prey  WC>plk prey    WC>ben eq   WC>ben fld  WC>krill eq WC>krill fld    WC>whi eq   WC>whi fld    WC>plk eq   WC>plk fld
+  library                             0.69         0.62         0.60         1.04         0.97         0.64         0.78         0.97         1.13         1.39         1.40         0.64         0.46         0.78         0.76 
+  combined_central                    0.89         1.06         1.03         1.01         2.00         1.31         0.88         2.00         2.33         0.97         0.97         1.31         0.94         0.88         0.85 
+  repro_central                       0.89         1.06         1.03         1.01         2.01         1.30         0.88         2.01         2.34         0.97         0.97         1.30         0.93         0.88         0.85 
+  exp_Hs7                             0.92         1.24         1.15         1.00         2.50         1.60         0.94         2.50         3.13*        0.74         0.59         1.60         1.23         0.94         0.98 
+  exp_Hs10                            0.91         1.14         1.10         1.00         2.23         1.48         0.92         2.23         2.72         0.85         0.75         1.48         1.11         0.92         0.94 
+  exp_Hs20                            0.87         1.03         0.97         1.01         1.93         1.17         0.84         1.93         2.15         1.04         1.12         1.17         0.81         0.84         0.78 
+  exp_Hs30                            0.85         1.01         0.90         1.02         1.87         1.00         0.81         1.87         1.94         1.13         1.29         1.00         0.66         0.81         0.70 
+  exp_Hs40                            0.85         1.00         0.86         1.02         1.85         0.90         0.80         1.85         1.82         1.16         1.37         0.90         0.58         0.80         0.67 
+  gamma2_s6                           0.90         0.87         1.06         1.01         1.47         1.38         0.91         1.47         1.81         1.02         0.96         1.38         1.02         0.91         0.94 
+  gamma2_s10                          0.85         0.85         0.88         1.02         1.42         0.95         0.80         1.42         1.58         1.24         1.34         0.95         0.63         0.80         0.72 
+  uniform_35                          0.84         0.95         0.87         1.02         1.69         0.93         0.78         1.69         1.87         1.22         1.29         0.93         0.62         0.78         0.72 
+  juv_H0.5                            0.89         1.00         1.03         1.01         1.85         1.32         0.89         1.85         2.23         0.98         0.98         1.32         0.94         0.89         0.86 
+  exp_Hs10_juvH0.5                    0.91         1.07         1.11         1.01         2.02         1.51         0.93         2.02         2.56         0.86         0.77         1.51         1.13         0.93         0.95 
+  gamma2_s6_juvH0.5                   0.91         0.82         1.07         1.01         1.33         1.40         0.92         1.33         1.70         1.04         0.97         1.40         1.03         0.92         0.95 
+  noclip_juv_night_aglen              0.89         1.06         1.03         1.01         1.99         1.31         0.88         1.99         2.29         0.97         0.98         1.31         0.94         0.88         0.85 
+  central_repro_had                   0.89         1.02         1.03         1.01         1.89         1.32         0.89         1.89         2.20         0.98         0.99         1.32         0.95         0.89         0.86 
+  juv_H0.5_had                        0.90         0.97         1.04         1.01         1.75         1.34         0.90         1.75         2.11         0.99         0.99         1.34         0.95         0.90         0.87 
+  exp_Hs10_juvH0.5_had                0.92         1.02         1.12         1.01         1.90         1.53         0.95         1.90         2.40         0.87         0.78         1.53         1.15         0.95         0.96 
+  gamma2_s6_juvH0.5_had               0.91         0.81         1.07         1.01         1.30         1.40         0.93         1.30         1.67         1.04         0.97         1.40         1.04         0.93         0.95 
+  juv_H0.5_had_noCombined             0.70         0.57         0.60         1.04         0.84         0.65         0.79         0.84         1.02         1.41         1.42         0.65         0.47         0.79         0.77 
+
+OFF pairs per run (prey side / equal cells / field spread):
+  library                      benthivorous_fish->whiting, predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  combined_central             predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  repro_central                predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  exp_Hs7                      predatory_fish->benthivorous_fish, predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  exp_Hs10                     predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  exp_Hs20                     predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  exp_Hs30                     predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  exp_Hs40                     predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  gamma2_s6                    predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  gamma2_s10                   predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  uniform_35                   predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  juv_H0.5                     predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  exp_Hs10_juvH0.5             predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  gamma2_s6_juvH0.5            predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  noclip_juv_night_aglen       predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  central_repro_had            predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  juv_H0.5_had                 predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  exp_Hs10_juvH0.5_had         predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  gamma2_s6_juvH0.5_had        predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  juv_H0.5_had_noCombined      benthivorous_fish->whiting, predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna

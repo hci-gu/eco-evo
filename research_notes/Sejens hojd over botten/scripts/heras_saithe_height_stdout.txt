@@ -1,0 +1,84 @@
+==============================================================================================================
+region hauls 602; with saithe 76; adult kg total 2242
+gears {'FOT': 239, 'PEL': 220, 'EXP': 135, 'BOT': 8}; median opening {'BOT': 3.55, 'EXP': 7.0, 'FOT': 20.0, 'PEL': 8.0}
+
+  day, bed >= 100 m: hauls by footrope height above the bed (adult saithe, kg/h; per m of opening)
+    footrope     0-3      m: hauls  12, with adults  10, mean    39.38 kg/h, median   6.86, mean per m   7.069; bed median 129 m, opening median 6 m
+    footrope     3-10     m: hauls   4, with adults   4, mean   160.26 kg/h, median  74.53, mean per m  23.823; bed median 167 m, opening median 7 m
+    footrope    10-30     m: hauls   4, with adults   2, mean   457.72 kg/h, median   1.52, mean per m  20.079; bed median 115 m, opening median 22 m
+    footrope    30-60     m: hauls   3, with adults   2, mean     9.11 kg/h, median   3.88, mean per m   0.443; bed median 180 m, opening median 18 m
+    footrope    60-150    m: hauls  15, with adults   0, mean     0.00 kg/h, median   0.00, mean per m   0.000; bed median 130 m, opening median 26 m
+    footrope   150-100000 m: hauls  60, with adults   0, mean     0.00 kg/h, median   0.00, mean per m   0.000; bed median 298 m, opening median 24 m
+  day, bed >= 100 m                            qp: Hs   14.0 m  (95 % profile 10.0-23.0; dispersion 69)   n 98, with adults 18
+  day, bed >= 100 m                            pa: Hs   31.0 m  (95 % profile 13.0-85.0; dispersion 1)   n 98, with adults 18
+  day, bed >= 100 m, EXP only                  qp: Hs   16.0 m  (95 % profile 3.5-200.0; dispersion 160)   n 15, with adults 14
+  day, bed >= 100 m, EXP only                  pa: Hs  200.0 m  (95 % profile 9.0-200.0; dispersion 1)   n 15, with adults 14
+  day, bed >= 100 m, window in bottom 150 m    qp: Hs   14.0 m  (95 % profile 8.0-34.0; dispersion 194)   n 38, with adults 18
+  day, bed >= 100 m, window in bottom 150 m    pa: Hs   32.0 m  (95 % profile 14.0-170.0; dispersion 1)   n 38, with adults 18
+  day, bed >= 100 m, largest haul capped       qp: Hs   16.0 m  (95 % profile 10.0-28.0; dispersion 33)   n 98, with adults 18
+  day, bed >= 100 m, largest haul capped       pa: Hs   31.0 m  (95 % profile 13.0-85.0; dispersion 1)   n 98, with adults 18
+
+  day, bed >= 140 m: hauls by footrope height above the bed (adult saithe, kg/h; per m of opening)
+    footrope     0-3      m: hauls   4, with adults   2, mean    21.55 kg/h, median   1.05, mean per m   4.976; bed median 204 m, opening median 4 m
+    footrope     3-10     m: hauls   3, with adults   3, mean   184.33 kg/h, median  61.00, mean per m  26.789; bed median 176 m, opening median 7 m
+    footrope    10-30     m: hauls   1, with adults   1, mean  1827.82 kg/h, median 1827.82, mean per m  79.818; bed median 166 m, opening median 23 m
+    footrope    30-60     m: hauls   3, with adults   2, mean     9.11 kg/h, median   3.88, mean per m   0.443; bed median 180 m, opening median 18 m
+    footrope    60-150    m: hauls   6, with adults   0, mean     0.00 kg/h, median   0.00, mean per m   0.000; bed median 159 m, opening median 27 m
+    footrope   150-100000 m: hauls  60, with adults   0, mean     0.00 kg/h, median   0.00, mean per m   0.000; bed median 298 m, opening median 24 m
+  day, bed >= 140 m                            qp: Hs    6.5 m  (95 % profile 5.5-8.5; dispersion 14)   n 77, with adults 8
+  day, bed >= 140 m                            pa: Hs   15.0 m  (95 % profile 4.0-55.0; dispersion 1)   n 77, with adults 8
+  day, bed >= 140 m, EXP only                  qp: Hs   11.0 m  (95 % profile 2.5-200.0; dispersion 237)   n 6, with adults 5
+  day, bed >= 140 m, EXP only                  pa: Hs  200.0 m  (95 % profile 3.5-200.0; dispersion 1)   n 6, with adults 5
+  day, bed >= 140 m, window in bottom 150 m    qp: Hs    6.5 m  (95 % profile 4.0-12.0; dispersion 84)   n 17, with adults 8
+  day, bed >= 140 m, window in bottom 150 m    pa: Hs   16.0 m  (95 % profile 4.0-200.0; dispersion 1)   n 17, with adults 8
+  day, bed >= 140 m, largest haul capped       qp: Hs    9.0 m  (95 % profile 7.0-13.0; dispersion 13)   n 77, with adults 8
+  day, bed >= 140 m, largest haul capped       pa: Hs   15.0 m  (95 % profile 4.0-55.0; dispersion 1)   n 77, with adults 8
+
+  night, bed >= 100 m: hauls by footrope height above the bed (adult saithe, kg/h; per m of opening)
+    footrope    60-150    m: hauls  19, with adults   1, mean     0.09 kg/h, median   0.00, mean per m   0.003; bed median 129 m, opening median 22 m
+    footrope   150-100000 m: hauls  77, with adults  11, mean     1.82 kg/h, median   0.00, mean per m   0.085; bed median 319 m, opening median 18 m
+  night, bed >= 100 m                          qp: Hs  200.0 m  (95 % profile 1.0-200.0; dispersion 324640)   n 96, with adults 12
+  night, bed >= 100 m                          pa: Hs  200.0 m  (95 % profile 160.0-200.0; dispersion 1)   n 96, with adults 12
+
+  night, bed >= 140 m: hauls by footrope height above the bed (adult saithe, kg/h; per m of opening)
+    footrope    60-150    m: hauls   5, with adults   0, mean     0.00 kg/h, median   0.00, mean per m   0.000; bed median 162 m, opening median 23 m
+    footrope   150-100000 m: hauls  77, with adults  11, mean     1.82 kg/h, median   0.00, mean per m   0.085; bed median 319 m, opening median 18 m
+  night, bed >= 140 m                          qp: Hs  200.0 m  (95 % profile 1.0-200.0; dispersion 1627966)   n 82, with adults 11
+  night, bed >= 140 m                          pa: Hs  200.0 m  (95 % profile 145.0-200.0; dispersion 1)   n 82, with adults 11
+
+Day profile shapes (best parameter by quasi-Poisson / presence; log-likelihoods comparable within a fit type); share of the profile in the bottom 2 m at the qp parameter
+  --- bed-class density offset: off
+  bed >= 60 m  exp      qp: par  17.0 m, 2 dll/phi vs exp   +0.00, bottom-2-m share 0.111 | pa: par  26.0 m, 2 dll vs exp  +0.00, bottom-2-m share 0.074
+  bed >= 60 m  uniform  qp: par  57.0 m, 2 dll/phi vs exp   -0.16, bottom-2-m share 0.035 | pa: par  63.0 m, 2 dll vs exp  +3.46, bottom-2-m share 0.032
+  bed >= 60 m  gamma2   qp: par   9.0 m, 2 dll/phi vs exp   +3.95, bottom-2-m share 0.021 | pa: par  14.0 m, 2 dll vs exp  -5.44, bottom-2-m share 0.009
+    (exp dispersion phi 200; hauls 167, with adults 29)
+  bed >= 100 m  exp      qp: par  14.0 m, 2 dll/phi vs exp   +0.00, bottom-2-m share 0.133 | pa: par  30.0 m, 2 dll vs exp  +0.00, bottom-2-m share 0.064
+  bed >= 100 m  uniform  qp: par  57.0 m, 2 dll/phi vs exp  -10.80, bottom-2-m share 0.035 | pa: par  77.0 m, 2 dll vs exp  +2.28, bottom-2-m share 0.026
+  bed >= 100 m  gamma2   qp: par   6.0 m, 2 dll/phi vs exp  +10.83, bottom-2-m share 0.045 | pa: par  18.0 m, 2 dll vs exp  -2.94, bottom-2-m share 0.006
+    (exp dispersion phi 69; hauls 98, with adults 18)
+  bed >= 140 m  exp      qp: par   7.0 m, 2 dll/phi vs exp   +0.00, bottom-2-m share 0.249 | pa: par  15.0 m, 2 dll vs exp  +0.00, bottom-2-m share 0.125
+  bed >= 140 m  uniform  qp: par  57.0 m, 2 dll/phi vs exp -156.97, bottom-2-m share 0.035 | pa: par  95.0 m, 2 dll vs exp  +0.24, bottom-2-m share 0.021
+  bed >= 140 m  gamma2   qp: par   4.0 m, 2 dll/phi vs exp  +10.98, bottom-2-m share 0.090 | pa: par   9.5 m, 2 dll vs exp  +0.99, bottom-2-m share 0.019
+    (exp dispersion phi 14; hauls 77, with adults 8)
+  --- bed-class density offset: ON
+  bed >= 60 m  exp      qp: par  15.0 m, 2 dll/phi vs exp   +0.00, bottom-2-m share 0.125 | pa: par  30.0 m, 2 dll vs exp  +0.00, bottom-2-m share 0.064
+  bed >= 60 m  uniform  qp: par  57.0 m, 2 dll/phi vs exp   -7.32, bottom-2-m share 0.035 | pa: par  65.0 m, 2 dll vs exp  +1.43, bottom-2-m share 0.031
+  bed >= 60 m  gamma2   qp: par   7.0 m, 2 dll/phi vs exp  +12.27, bottom-2-m share 0.034 | pa: par  14.5 m, 2 dll vs exp  -5.68, bottom-2-m share 0.009
+    (exp dispersion phi 34; hauls 167, with adults 29)
+  bed >= 100 m  exp      qp: par  14.0 m, 2 dll/phi vs exp   +0.00, bottom-2-m share 0.133 | pa: par  31.0 m, 2 dll vs exp  +0.00, bottom-2-m share 0.062
+  bed >= 100 m  uniform  qp: par  57.0 m, 2 dll/phi vs exp   -8.98, bottom-2-m share 0.035 | pa: par  76.0 m, 2 dll vs exp  +2.35, bottom-2-m share 0.026
+  bed >= 100 m  gamma2   qp: par   6.0 m, 2 dll/phi vs exp  +14.12, bottom-2-m share 0.045 | pa: par  17.5 m, 2 dll vs exp  -1.93, bottom-2-m share 0.006
+    (exp dispersion phi 35; hauls 98, with adults 18)
+  bed >= 140 m  exp      qp: par   9.0 m, 2 dll/phi vs exp   +0.00, bottom-2-m share 0.199 | pa: par  14.0 m, 2 dll vs exp  +0.00, bottom-2-m share 0.133
+  bed >= 140 m  uniform  qp: par  57.0 m, 2 dll/phi vs exp  -44.31, bottom-2-m share 0.035 | pa: par 102.0 m, 2 dll vs exp  +0.24, bottom-2-m share 0.020
+  bed >= 140 m  gamma2   qp: par   4.5 m, 2 dll/phi vs exp   +5.18, bottom-2-m share 0.074 | pa: par   9.5 m, 2 dll vs exp  +1.00, bottom-2-m share 0.019
+    (exp dispersion phi 13; hauls 77, with adults 8)
+
+Interpretation aid: share of an exp(Hs) profile within 2 m / 10 m / 35 m of the bed
+  Hs   5 m: 0.330 / 0.865 / 0.999; density at the bed 0.200 /m
+  Hs  10 m: 0.181 / 0.632 / 0.970; density at the bed 0.100 /m
+  Hs  15 m: 0.125 / 0.487 / 0.903; density at the bed 0.067 /m
+  Hs  20 m: 0.095 / 0.393 / 0.826; density at the bed 0.050 /m
+  Hs  30 m: 0.064 / 0.283 / 0.689; density at the bed 0.033 /m
+  Hs  40 m: 0.049 / 0.221 / 0.583; density at the bed 0.025 /m
+  Hs  60 m: 0.033 / 0.154 / 0.442; density at the bed 0.017 /m

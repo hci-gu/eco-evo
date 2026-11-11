@@ -1,0 +1,53 @@
+windows available: ['anglerfish', 'cod', 'hake', 'horse mackerel', 'mackerel', 'porpoise', 'saithe', 'seal', 'spurdog', 'velvet belly', 'whiting']
+saithe band-A a per tonne adult/large 1.201 (L 0.430 / 0.700 m): exponent -0.38; 220 form -2.11 (fitted) / -1.92 (per-stage 2.55) -> kexp 1.73 / 1.54; central kexp 1.7
+
+per-member windows [f_J, f_A] (norm + aw), a(L) x L^kexp:
+  saithe        k +0.0: [0.251, 0.0003]  k +1.0: [0.308, 0.0005]  k +1.5: [0.339, 0.0007]  k +1.7: [0.352, 0.0008]  k +2.0: [0.371, 0.0009]
+  hake          k +0.0: [0.386, 0.1330]  k +1.0: [0.553, 0.2153]  k +1.5: [0.630, 0.2617]  k +1.7: [0.660, 0.2808]  k +2.0: [0.702, 0.3099]
+  anglerfish    k +0.0: [0.868, 0.4445]  k +1.0: [0.945, 0.5349]  k +1.5: [0.963, 0.5716]  k +1.7: [0.969, 0.5852]  k +2.0: [0.976, 0.6047]
+  spurdog       k +0.0: [0.715, 0.2392]  k +1.0: [0.744, 0.2517]  k +1.5: [0.755, 0.2566]  k +1.7: [0.758, 0.2584]  k +2.0: [0.763, 0.2610]
+  velvet belly  k +0.0: [0.044, 0.0028]  k +1.0: [0.044, 0.0028]  k +1.5: [0.044, 0.0028]  k +1.7: [0.044, 0.0028]  k +2.0: [0.044, 0.0028]
+  (k 0 reproduces Fonsterviktning's central aw: saithe [0.251, 0.0003], hake [0.386, 0.1330], anglerfish [0.868, 0.4445], spurdog [0.715, 0.2392], velvet belly [0.044, 0.0028])
+
+re-weighted on each variant's band-A member shares (ling as anglerfish; JB 0.15 for f_eff); 'had' = saithe identity haddock only
+  central_repro            gad kexp +1.73: [0.394, 0.0391]  f_eff 0.0924   saithe share 0.899
+  central_repro            had kexp +1.73: [0.353, 0.0387]  f_eff 0.0858   saithe share 0.899
+  exp_Hs5                  gad kexp +1.72: [0.370, 0.0166]  f_eff 0.0696   saithe share 0.958
+  exp_Hs5                  had kexp +1.72: [0.326, 0.0162]  f_eff 0.0627   saithe share 0.958
+  exp_Hs7                  gad kexp +1.72: [0.375, 0.0213]  f_eff 0.0743   saithe share 0.946
+  exp_Hs7                  had kexp +1.72: [0.332, 0.0209]  f_eff 0.0675   saithe share 0.946
+  exp_Hs10                 gad kexp +1.73: [0.383, 0.0282]  f_eff 0.0814   saithe share 0.928
+  exp_Hs10                 had kexp +1.73: [0.340, 0.0278]  f_eff 0.0747   saithe share 0.928
+  exp_Hs20                 gad kexp +1.74: [0.407, 0.0503]  f_eff 0.1038   saithe share 0.873
+  exp_Hs20                 had kexp +1.74: [0.367, 0.0500]  f_eff 0.0975   saithe share 0.873
+  exp_Hs30                 gad kexp +1.75: [0.428, 0.0689]  f_eff 0.1228   saithe share 0.830
+  exp_Hs30                 had kexp +1.75: [0.390, 0.0686]  f_eff 0.1168   saithe share 0.830
+  exp_Hs40                 gad kexp +1.76: [0.444, 0.0828]  f_eff 0.1369   saithe share 0.796
+  exp_Hs40                 had kexp +1.76: [0.407, 0.0825]  f_eff 0.1312   saithe share 0.796
+  exp_Hs15_night_same      gad kexp +1.78: [0.399, 0.0408]  f_eff 0.0946   saithe share 0.896
+  exp_Hs15_night_same      had kexp +1.78: [0.358, 0.0405]  f_eff 0.0880   saithe share 0.896
+  exp_Hs15_night_up25      gad kexp +1.77: [0.398, 0.0403]  f_eff 0.0940   saithe share 0.897
+  exp_Hs15_night_up25      had kexp +1.77: [0.356, 0.0400]  f_eff 0.0874   saithe share 0.897
+  gamma2_s6                gad kexp +1.82: [0.451, 0.0865]  f_eff 0.1411   saithe share 0.789
+  gamma2_s6                had kexp +1.82: [0.414, 0.0862]  f_eff 0.1353   saithe share 0.789
+  gamma2_s10               gad kexp +1.83: [0.531, 0.1635]  f_eff 0.2186   saithe share 0.596
+  gamma2_s10               had kexp +1.83: [0.503, 0.1632]  f_eff 0.2142   saithe share 0.596
+  uniform_35               gad kexp +1.74: [0.439, 0.0790]  f_eff 0.1329   saithe share 0.804
+  uniform_35               had kexp +1.74: [0.402, 0.0787]  f_eff 0.1271   saithe share 0.804
+  uniform_57               gad kexp +1.75: [0.474, 0.1127]  f_eff 0.1669   saithe share 0.719
+  uniform_57               had kexp +1.75: [0.441, 0.1125]  f_eff 0.1617   saithe share 0.719
+  juv_H0.5                 gad kexp +1.59: [0.397, 0.0492]  f_eff 0.1014   saithe share 0.878
+  juv_H0.5                 had kexp +1.59: [0.358, 0.0489]  f_eff 0.0952   saithe share 0.878
+  exp_Hs10_juvH0.5         gad kexp +1.58: [0.381, 0.0350]  f_eff 0.0869   saithe share 0.913
+  exp_Hs10_juvH0.5         had kexp +1.58: [0.340, 0.0347]  f_eff 0.0806   saithe share 0.913
+  gamma2_s6_juvH0.5        gad kexp +1.99: [0.538, 0.1652]  f_eff 0.2211   saithe share 0.626
+  gamma2_s6_juvH0.5        had kexp +1.99: [0.508, 0.1649]  f_eff 0.2164   saithe share 0.626
+  noclip                   gad kexp +1.86: [0.403, 0.0403]  f_eff 0.0947   saithe share 0.900
+  noclip                   had kexp +1.86: [0.361, 0.0399]  f_eff 0.0880   saithe share 0.900
+  noclip_juv_night_3_5m    gad kexp +1.88: [0.403, 0.0393]  f_eff 0.0939   saithe share 0.902
+  noclip_juv_night_3_5m    had kexp +1.88: [0.361, 0.0389]  f_eff 0.0872   saithe share 0.902
+  noclip_juv_night_aglen   gad kexp +1.92: [0.406, 0.0398]  f_eff 0.0948   saithe share 0.901
+  noclip_juv_night_aglen   had kexp +1.92: [0.363, 0.0394]  f_eff 0.0880   saithe share 0.901
+  saithe alone at kexp 1.73: gadoids [0.3535, 0.0008], haddock only [0.3079, 0.0004]
+
+  library [0.392, 0.0388] = central_repro|gad (check above)

@@ -1,0 +1,66 @@
+central_repro: done
+exp_Hs5: done
+exp_Hs7: done
+exp_Hs10: done
+exp_Hs20: done
+exp_Hs30: done
+exp_Hs40: done
+exp_Hs15_night_same: done
+exp_Hs15_night_up25: done
+gamma2_s6: done
+gamma2_s10: done
+uniform_35: done
+uniform_57: done
+juv_H0.5: done
+exp_Hs10_juvH0.5: done
+gamma2_s6_juvH0.5: done
+noclip: done
+noclip_juv_night_3_5m: done
+noclip_juv_night_aglen: done
+
+Reproduction check vs band_pairs.json A_band (ratio new a / library a):
+  predatory_fish->planktivorous_fish       here 2.9040  band_pairs.json 2.9040
+  predatory_fish->benthivorous_fish        here 7.6039  band_pairs.json 7.6039
+  predatory_fish->whiting                  here 2.7636  band_pairs.json 2.7636
+  predatory_fish->mackerel                 here 0.1552  band_pairs.json 0.1552
+  predatory_fish->krill: here a 0.01169  band_pairs.json 0.01169 (library 0.0117)
+
+Ratio to the central (exp 15 m) A_band, equal-cell annual mean a; night/day of the pair
+  variant                            krill  planktivorou  benthivorous       whiting      mackerel   ben n/d   saithe share of ben a
+  central_repro                      1.000         1.000         1.000         1.000         1.000   0.165     0.899
+  exp_Hs5                            1.027         1.394         2.406         1.648         1.000   0.159     0.958
+  exp_Hs7                            1.041         1.293         1.856         1.479         1.000   0.161     0.946
+  exp_Hs10                           1.034         1.160         1.392         1.258         1.000   0.163     0.928
+  exp_Hs20                           0.962         0.896         0.796         0.836         1.000   0.165     0.873
+  exp_Hs30                           0.898         0.779         0.592         0.648         1.000   0.162     0.830
+  exp_Hs40                           0.851         0.720         0.493         0.548         1.000   0.159     0.796
+  exp_Hs15_night_same                1.001         0.997         0.966         0.978         1.000   0.125     0.896
+  exp_Hs15_night_up25                1.009         1.020         0.976         0.979         1.000   0.137     0.897
+  gamma2_s6                          1.076         1.036         0.477         1.051         1.000   0.197     0.789
+  gamma2_s10                         0.976         0.763         0.252         0.610         1.000   0.196     0.596
+  uniform_35                         0.997         0.780         0.515         0.628         1.000   0.168     0.804
+  uniform_57                         0.854         0.606         0.359         0.420         1.000   0.170     0.719
+  juv_H0.5                           1.000         1.000         0.825         1.000         1.000   0.205     0.878
+  exp_Hs10_juvH0.5                   1.034         1.160         1.161         1.258         1.000   0.203     0.913
+  gamma2_s6_juvH0.5                  1.076         1.036         0.273         1.051         1.000   0.248     0.626
+  noclip                             1.000         1.000         1.107         1.025         1.000   0.154     0.900
+  noclip_juv_night_3_5m              1.000         1.000         0.990         1.000         1.000   0.142     0.902
+  noclip_juv_night_aglen             1.000         1.000         0.963         1.000         1.000   0.110     0.901
+  (noclip_* variants are relative to 'noclip'; noclip itself relative to the central)
+
+Saithe day profile: share within 2 m / 10 m / 35 m of the bed and density at the bed (/m), equal-cell mean over beds
+  central_repro              0.125 / 0.488 / 0.906;  f(bed) ~ 0.0626 /m
+  exp_Hs5                    0.330 / 0.865 / 0.999;  f(bed) ~ 0.1648 /m
+  exp_Hs7                    0.249 / 0.760 / 0.993;  f(bed) ~ 0.1243 /m
+  exp_Hs10                   0.181 / 0.632 / 0.970;  f(bed) ~ 0.0907 /m
+  exp_Hs20                   0.096 / 0.398 / 0.835;  f(bed) ~ 0.0481 /m
+  exp_Hs30                   0.067 / 0.294 / 0.714;  f(bed) ~ 0.0334 /m
+  exp_Hs40                   0.053 / 0.238 / 0.628;  f(bed) ~ 0.0263 /m
+  exp_Hs15_night_same        0.125 / 0.488 / 0.906;  f(bed) ~ 0.0626 /m
+  exp_Hs15_night_up25        0.125 / 0.488 / 0.906;  f(bed) ~ 0.0626 /m
+  gamma2_s6                  0.045 / 0.497 / 0.980;  f(bed) ~ 0.0226 /m
+  gamma2_s10                 0.018 / 0.265 / 0.867;  f(bed) ~ 0.0089 /m
+  uniform_35                 0.057 / 0.286 / 1.000;  f(bed) ~ 0.0286 /m
+  uniform_57                 0.035 / 0.177 / 0.619;  f(bed) ~ 0.0177 /m
+
+written band_hs.json

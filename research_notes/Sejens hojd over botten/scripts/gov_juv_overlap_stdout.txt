@@ -1,0 +1,26 @@
+==============================================================================================================
+box (57.7-58.4 N, 9.9-11.3 E): hauls Q1 256, Q3 180
+  Q1: hauls by class [127, 103, 26, 0]
+      kg/h  saithe >= 35 cm [0.29, 2.35, 25.8, 25.8]; haddock < 19 cm [11.022, 2.726, 2.266, 2.266]; haddock + cod [87.15, 108.36, 53.64, 53.64]
+      saithe class shares [0.005, 0.055, 0.646, 0.294]; in-gape haddock class shares [0.545, 0.199, 0.176, 0.08]; J:B by class [0.1265, 0.0252, 0.0422, 0.0422]
+      F_gate 0.549   F_engine 0.750   F_haul 0.151
+  Q3: hauls by class [83, 40, 54, 3]
+      kg/h  saithe >= 35 cm [1.71, 38.03, 172.31, 13.47]; haddock < 19 cm [40.612, 4.603, 1.232, 0.0]; haddock + cod [200.71, 292.44, 86.81, 12.53]
+      saithe class shares [0.005, 0.166, 0.801, 0.028]; in-gape haddock class shares [0.823, 0.138, 0.039, 0.0]; J:B by class [0.2023, 0.0157, 0.0142, 0.0]
+      F_gate 0.189   F_engine 0.258   F_haul 0.079
+  presence-weighted (Q3 0.9): F_gate 0.225, F_engine 0.307, F_haul 0.086
+  equal quarters:             F_gate 0.369, F_engine 0.504, F_haul 0.115
+==============================================================================================================
+Skagerrak / Trench (57.3-59.2 N, 8-12 E): hauls Q1 773, Q3 760
+  Q1: hauls by class [542, 138, 69, 24]
+      kg/h  saithe >= 35 cm [0.25, 2.83, 31.16, 21.12]; haddock < 19 cm [7.368, 4.477, 1.929, 0.818]; haddock + cod [53.74, 129.22, 76.4, 54.63]
+      saithe class shares [0.004, 0.061, 0.715, 0.22]; in-gape haddock class shares [0.419, 0.376, 0.172, 0.033]; J:B by class [0.1371, 0.0346, 0.0253, 0.015]
+      F_gate 0.503   F_engine 0.571   F_haul 0.242
+  Q3: hauls by class [561, 74, 112, 13]
+      kg/h  saithe >= 35 cm [3.47, 75.92, 169.38, 35.38]; haddock < 19 cm [16.612, 8.974, 0.913, 0.0]; haddock + cod [118.16, 331.01, 100.47, 21.79]
+      saithe class shares [0.009, 0.275, 0.654, 0.062]; in-gape haddock class shares [0.531, 0.423, 0.046, 0.0]; J:B by class [0.1406, 0.0271, 0.0091, 0.0]
+      F_gate 0.488   F_engine 0.503   F_haul 0.302
+  presence-weighted (Q3 0.9): F_gate 0.490, F_engine 0.509, F_haul 0.296
+  equal quarters:             F_gate 0.496, F_engine 0.537, F_haul 0.272
+
+Reading: F < 1 = adult saithe stand where the in-gape juveniles are scarcer than the box mean. The J part of the gate's WC -> benthivores flow (0.5-0.7 of it) scales with F_gate; the A part (bed members on adult tonnes) does not.
