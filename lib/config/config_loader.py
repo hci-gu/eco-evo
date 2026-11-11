@@ -427,6 +427,7 @@ def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60
         env_fields[sid] = np.asarray(initial_b, dtype=np.float64)
         fg.equilibrium_map = habitat_maps.get(sid, {}).get('equilibrium')
         fg.outside_weight_map = habitat_maps.get(sid, {}).get('outside_weight')
+        fg.recruit_weight_map = habitat_maps.get(sid, {}).get('recruit_weight')
         fg.initialize_state(grid_size, initial_biomass=initial_b)
         fgs[sid] = fg
         
@@ -1005,6 +1006,7 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
             fg.capacity_map = capacity.astype(np.float32)
         fg.equilibrium_map = habitat_maps.get(sid, {}).get('equilibrium')
         fg.outside_weight_map = habitat_maps.get(sid, {}).get('outside_weight')
+        fg.recruit_weight_map = habitat_maps.get(sid, {}).get('recruit_weight')
         # Training draws the start fill per cell around a centre (section 43:
         # u +- 0.3; section 247: the group's field ``start_fill`` on the
         # start day, +- 0.3); inference starts at the centre (0.7 without a

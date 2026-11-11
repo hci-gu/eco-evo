@@ -965,6 +965,19 @@
       # research_notes/"Oppen population" (O-umlaut) summary.md.
       recruitment: [0, 0, 0, 0, 0, 0.2, 0.5, 0.5, 0.2, 0, 0, 0]
       recruit_import: 0.183
+      # Section 270: bed-depth shape of the recruit import (equal-cell mean 1 on the depth
+      # map; ones without one): NS-IBTS GOV 2000-25 in the box, haddock age 0 in Q3 (0.39 of
+      # the import tonnes) and cod age 1 in Q1 (0.61), Walker q; 95 % year-bootstrap
+      # 2.42-2.93 / 0.85-1.17 / 0.12-0.32 / 0.03-0.09; >= 250 m from the wider window (GOV
+      # standard stations stop at 250 m). Only the arrival: J then moves with B.
+      # research_notes/"Rekryternas bottendjup" summary.md.
+      recruit_depth_table:
+        - {depth_m: 99.9, weight: 2.71}
+        - {depth_m: 100.0, weight: 1.00}
+        - {depth_m: 149.9, weight: 1.00}
+        - {depth_m: 150.0, weight: 0.21}
+        - {depth_m: 249.9, weight: 0.21}
+        - {depth_m: 250.0, weight: 0.05}
       emigration: [1.1, 0.17]
       start_share: [0.155, 0.150, 0.147, 0.143, 0.139, 0.139, 0.148, 0.161, 0.169, 0.168, 0.163, 0.159]
       fishing_selectivity:
@@ -1019,8 +1032,11 @@
     # fill 0.7 to 95 % loss (210 d; was 0.01 at u 0.5), drain at an
     # empty reserve ~6.7 RM. model/fasting_time.py in research_notes/"Svaltgrans och startreserv" (Swedish letters).
     starve_rate: 0.0791
+    # Section 270: no refuge state of the gadoid juveniles outside a on the box's mud; flatfish
+    # burial unmeasured for the flatfish the windows take, dropped. research_notes/"Bottenfiskens
+    # och vattenpelarens golv"
     # Judgement: gadoids 0.6, flatfish and rays bury and are cryptic (0.4).
-    visibility_floor: 0.55
+    visibility_floor: 1.0
     # Section 223.28: 0. The old 0.45 was the section 86 band fix (w 1.0 at
     # 0.69 t/km2) rescaled, with no fish measurement. Haul-scale tests find
     # none (Barents cod on capelin, Baltic small cod on benthos) or m ~0.2
@@ -1192,8 +1208,11 @@
     # fill 0.7 to 95 % loss (258 d; was 0.0079 at u 0.5), drain at an
     # empty reserve ~6.1 RM. model/fasting_time.py in research_notes/"Svaltgrans och startreserv" (Swedish letters).
     starve_rate: 0.0681
+    # Section 270: acts only on what its prey observe; a resting member stays within their cue range
+    # and a floor below 1 leaked its activity state. research_notes/"Bottenfiskens och
+    # vattenpelarens golv"
     # Judgement: midwater saithe schools hide badly.
-    visibility_floor: 0.7
+    visibility_floor: 1.0
     # No field evidence of interference for saithe (Rindorf et al. 2006:
     # predator density did not affect intake).
     interference: 0.1
@@ -1339,8 +1358,10 @@
     # fill 0.7 to 95 % loss (209 d; was 0.0099 at u 0.5), drain at an
     # empty reserve ~6.1 RM. model/fasting_time.py in research_notes/"Svaltgrans och startreserv" (Swedish letters).
     starve_rate: 0.0866
+    # Section 270: no feeding-exclusive refuge (Cyanea shelter ~3 % of the biomass for three months;
+    # "on the bed" is the band profile). research_notes/"Vitlingens golv"
     # Judgement: whiting on the bed hide better than midwater schools.
-    visibility_floor: 0.5
+    visibility_floor: 1.0
     # Rindorf et al. 2006: predator density not significant for whiting.
     interference: 0.1
     extinction_threshold_factor: 0.5
@@ -1513,9 +1534,11 @@
     # fill 0.7 to 95 % loss (394 d; was 0.0067 at u 0.5), drain at an
     # empty reserve ~5.4 RM. model/fasting_time.py in research_notes/"Svaltgrans och startreserv" (Swedish letters).
     starve_rate: 0.0942
+    # Section 270: no refuge state left once schooling and vigilance are in a; rest is a feeding
+    # pause at the swimming floor. research_notes/"Makrillens antipredatorbeteende" addendum
     # Judgement: midwater schools hide badly (as the water column); since
     # 228.3 it acts only on the water column's pair (no mammal pairs).
-    visibility_floor: 0.7
+    visibility_floor: 1.0
     # Section 228.3: no measurement for mackerel; the closest measured
     # analogue is herring (a schooling pelagic copepod feeder): no
     # behavioural interference, intake 0-5 % lower per doubling of fish
@@ -1595,7 +1618,9 @@
           weight: 1.0
           transform: linear
     starve_rate: 0.5
-    visibility_floor: 0.0
+    # Section 270: a resting porpoise stays in the top metres and its clicks are inaudible to fish
+    # whether it rests or forages; observation only. research_notes/"Sal och tumlare golv"
+    visibility_floor: 0.55
     # Left at 0: porpoises never reach densities where interference
     # matters (they occupy a handful of cells at <1 ton each) and are
     # already the group most at risk of extinction. Section 86.
@@ -1674,7 +1699,10 @@
     # 1.5 % of biomass per tick at an empty reserve: blubber lets a seal
     # fast for weeks (30-60 day target, section 147).
     starve_rate: 0.03
-    visibility_floor: 0.0
+    # Section 270: a resting seal in the water does not vanish from every sense (0 ruled out); rest
+    # cuts the vertical overlap with bed prey; observation only (nobody eats seals).
+    # research_notes/"Sal och tumlare golv"
+    visibility_floor: 0.4
     # Sweep at 0.1 * 55 kg = 5.5 kg per cell, as for porpoises (section
     # 152); the default 0.5 cleared cells below 40 kg.
     extinction_threshold_factor: 0.1
@@ -1906,7 +1934,9 @@ interaction_definitions:
     # b 0.75 (gadoid gastric evacuation ~E^-b), armour 1.0; was 272.1
     # (pure energy ceiling). research_notes/"Magtomning och energitak" (Swedish letters).
     handling_time: 222.3
-    visibility_floor: 0.25
+    # Section 270: capture p 0.30 -> 0.634 (x2.11) x schooling F 0.643 at the new p (pout 0.85 /
+    # herring 0.15); floor 1.0. research_notes/"Fangst och stim i fiskparen", "Planktivorernas golv"
+    visibility_floor: 1.0
     functional_response: 2
     # Section 220: encounter theory, pi R^2 v_rel p with R by the light at
     # the bottom (Kd 0.25 in the top 20 m), in a 10 m near-bottom search
@@ -1924,8 +1954,8 @@ interaction_definitions:
     # 0.0074 (0.0054-0.0100); was 0.0062. research_notes/"Bottenfiskens
     # sillbyte" (Swedish letters) reconcile_summary.md.
     # Section 269 (rule A + band overlap; research_notes/"Bottenfiskens hojdprofil"): rule A at the bed x1.25 x member search profiles x0.87 = x1.08 (cod 0.68 / haddock 0.32; pout 0.85 of a); n/d integral
-    max_intake_rate: 0.0214
-    dark_ratio: 0.141
+    max_intake_rate: 0.02905
+    dark_ratio: 0.238
     light_threshold_deg: 0.0
     # Stage access [juvenile, adult] (stages.py): cod's window (prey <= 0.30
     # x its length, box cod > 20 cm) on the planktivores' stage lengths.
@@ -1966,18 +1996,23 @@ interaction_definitions:
     predation_mortality: 0.174
     assimilation_factor: 0.8
     handling_time: 218.0
-    visibility_floor: 0.25
+    # Section 270: capture p per encounter of a hungry predator 0.20 -> 0.592 (x2.96) x schooling F
+    # 0.543 at the new p (herring and sprat schooled by day, sigma 0.9; Norway pout 0.4); ling's own
+    # window; night/day from the rule with F by period; floor 1.0 (no refuge left once F and q are
+    # in a). research_notes/"Fangst och stim i fiskparen", "Fangstsannolikhet for fiskbyten",
+    # "Stimskydd i motes-a", "Vitlinglojans stim", "Langans indata", "Planktivorernas golv"
+    visibility_floor: 1.0
     functional_response: 2
     # Section 269 (rule A + band overlap; research_notes/"Bottenfiskens hojdprofil"): band x0.49 x rule A x5.93 = x2.90 (saithe 0.92 of a); n/d rule
-    max_intake_rate: 0.0174
-    dark_ratio: 0.0594
+    max_intake_rate: 0.0279
+    dark_ratio: 0.116
     light_threshold_deg: -5.0
     # Section 232.2: window weighted by each predator length's share of a
     # (a ~ L^-2.1..-2.3 for fixed-R encounters, ~L^-0.36 for cod) and normalised
     # over all prey-group tonnes (unkeyed flatfish / blue whiting by their
     # box lengths); was [0.69, 0.27]. research_notes/"Fonsterviktning" (Swedish
     # letters: o-umlaut) summary.md.
-    stage_access: [0.65, 0.18]
+    stage_access: [0.6483, 0.1732]
     depth_access_table:
       - {depth_m: 99.9, factor: 0.0384}
       - {depth_m: 100.0, factor: 0.0211}
@@ -2003,10 +2038,13 @@ interaction_definitions:
     predation_mortality: 0.0186
     assimilation_factor: 0.8
     handling_time: 98.08
-    visibility_floor: 0.25
+    # Section 270: capture p 0.20 -> 0.617 (x3.09) x schooling F 0.598 at the new p (herring and
+    # sprat only); night/day 0.16 from the stomachs kept; floor 1.0. research_notes/"Fangst och stim
+    # i fiskparen", "Planktivorernas golv"
+    visibility_floor: 1.0
     functional_response: 2
     # Section 269 (rule A + band overlap; research_notes/"Bottenfiskens hojdprofil"): band x0.61 x rule A x1.53 = x0.93; no table (derived shape flat +-1 %); dark_ratio 0.16 from the stomachs (228)
-    max_intake_rate: 0.0248
+    max_intake_rate: 0.04579
     dark_ratio: 0.16
     light_threshold_deg: -5.0
     # Section 232.2: window weighted by each predator length's share of a
@@ -2037,11 +2075,13 @@ interaction_definitions:
     predation_mortality: 0.0545
     assimilation_factor: 0.8
     handling_time: 207.2
-    visibility_floor: 0.25
+    # Section 270: capture p 0.20 -> 0.566 (x2.83) x schooling F 0.682 at the new p; floor 1.0.
+    # research_notes/"Fangst och stim i fiskparen", "Planktivorernas golv"
+    visibility_floor: 1.0
     functional_response: 2
     # Section 269 (rule A + band overlap; research_notes/"Bottenfiskens hojdprofil"): band (whiting 10 m) x0.75 x rule A x2.06 = x1.55; n/d rule
-    max_intake_rate: 0.0329
-    dark_ratio: 0.212
+    max_intake_rate: 0.06357
+    dark_ratio: 0.342
     light_threshold_deg: -5.0
     # Stage access: whiting's window (0.39 x length; box whiting 22-28 cm
     # -> 9-11 cm prey) on the planktivores' stage lengths. Effective 0.05
@@ -2080,7 +2120,9 @@ interaction_definitions:
     max_intake_rate: 0.0225
     assimilation_factor: 0.9
     handling_time: 28.6
-    visibility_floor: 0.95
+    # Section 270: floor 0.95 -> 1.0: biosonar sees through a school and depth (> 90 % capture on
+    # small fish); the 0.05 was a tuning. research_notes/"Planktivorernas golv"
+    visibility_floor: 1.0
   # Section 209: harbour seal diet by mass in the pools 0.60 benthivores
   # (cod, flatfish, haddock), 0.15 predators, 0.25 planktivores
   # (Koster 1977-89, Kappa 2026, Sorlie 2020). Ration 320 t/yr at 15 t:
@@ -2098,7 +2140,9 @@ interaction_definitions:
     max_intake_rate: 0.1
     assimilation_factor: 0.85
     handling_time: 21.2
-    visibility_floor: 0.85
+    # Section 270: floor 0.85 -> 0.9: buried flatfish are no refuge from seals (79.9 % capture,
+    # Bowen 2002). research_notes/"Sal och tumlare golv"
+    visibility_floor: 0.9
     # Stage access: harbour seals swallow fish of ~7-35 cm (Sorlie 2020,
     # Kappa 2026): every juvenile, the adults below 35 cm. Kappa et al.'s
     # juvenile share of the take (0.74-0.86) is a validation target, not
@@ -2127,7 +2171,10 @@ interaction_definitions:
     predation_mortality: 0.0033
     assimilation_factor: 0.85
     handling_time: 23.9
-    visibility_floor: 0.75
+    # Section 270: floor 0.75 -> 0.7: schooling (juvenile saithe) is the one refuge measured against
+    # seals; an explicit key, since the water column's species floor is now 1.0. research_notes/"Sal
+    # och tumlare golv"
+    visibility_floor: 0.7
     max_intake_rate: 0.05
     # Section 244.9: stage_access on a prey without a juvenile compartment
     # is one share of the whole group (f_J = f_A; the same as an
@@ -2395,6 +2442,8 @@ interaction_definitions:
     # (pure energy ceiling). research_notes/"Magtomning och energitak" (Swedish letters).
     handling_time: 177.2
     functional_response: 2
+    # Section 270: capture p 0.30 -> 0.617 (x2.06) x schooling F 0.985. research_notes/"Fangst och
+    # stim i fiskparen"
     # Section 249: membership instead of the gape phi. The 0.10 above is a
     # gape share (the benthivores that can swallow whiting), and since 230
     # the prey window (stage_access) carries the gape on the same axis: the
@@ -2422,8 +2471,8 @@ interaction_definitions:
     # deg (was 0.10, the herring-like pool leaving the band at dusk).
     # research_notes/"Torskfonster och bottenandel" (o-umlaut, a-ring).
     # Section 269 (rule A + band overlap; research_notes/"Bottenfiskens hojdprofil"): rule A at the bed x1.19 x member search profiles x0.90 = x1.07 (cod 0.94 of a); n/d integral
-    max_intake_rate: 0.0226
-    dark_ratio: 0.168
+    max_intake_rate: 0.04581
+    dark_ratio: 0.171
     # Section 230: stage access from cod's window (prey <= 0.30 x its length,
     # box cod > 20 cm) on whiting's stage lengths, as benthivores ->
     # planktivores (the a's 0.10 is the predator side, the capable share):
@@ -2476,7 +2525,16 @@ interaction_definitions:
   # not members of this pair: capability 0.01 / 0.05); a per rest tonne.
   predatory_fish_preys_on_benthivorous_fish:
     preys_on: true
-    predation_mortality: 0.0833
+    # Section 270: capture p 0.20 -> 0.592 (x2.96); hake out of this pair (its benth_fish score
+    # counted whiting; 0-0.03 benthivores and no adult in its field diet); f_A now also carries the
+    # members' capture p per stage (adult PPR 0.4-0.5) and the adults' bottom-2-m share (0.71 /
+    # 0.76), not only the gape window; ling a mixed searcher (0.35 cruising, 0.65 sit-and-wait) with
+    # its own window (p95 PPR 0.30); booking from the members' field diets and rations (saithe
+    # 0.074, spurdog 0.007, anglerfish 0.006, ling 0.002 t/km2/yr; J 0.80) and SMS 2023
+    # (0.047-0.065), was 0.0833 (the 223 broad pool incl. mackerel and prey outside the
+    # benthivores). research_notes/"Vattenpelarens vuxna bottenfisk", "Langans indata", "Sej och
+    # ungfisk i samma hal", "Fangst och stim i fiskparen"
+    predation_mortality: 0.058
     assimilation_factor: 0.8
     handling_time: 151.1
     functional_response: 2
@@ -2488,7 +2546,7 @@ interaction_definitions:
     # as time in the prey's layer (232.1). research_notes/"Vattenpelarens
     # bottenfiskbyte" (Swedish letters: a-umlaut) summary.md, proposal.py.
     # Section 269 (rule A + band overlap; research_notes/"Bottenfiskens hojdprofil"): band x1.45 x rule A x5.24 = x7.60 (saithe 0.89, hake 0.05; 243 time factors replaced by the profile); window aw on the band a's member shares, a(L) exponent from the band a (kexp +1.7)
-    max_intake_rate: 0.0418
+    max_intake_rate: 0.1162
     dark_ratio: 0.165
     light_threshold_deg: -5.0
     # Section 243: the 232.2 windows (a-weighted over predator lengths,
@@ -2497,7 +2555,7 @@ interaction_definitions:
     # a (saithe 0.45, spurdog 0.18, hake 0.21, velvet belly 0.05, anglerfish
     # 0.12): the bed-reaching members carry adult-sized windows. Range [0.36,
     # 0.081] - [0.48, 0.17]. Was [0.30, 0.038] (232.2), [0.43, 0.027] before.
-    stage_access: [0.392, 0.0388]
+    stage_access: [0.3745, 0.01112]
     depth_access_table:
       - {depth_m: 99.9, factor: 0.0693}
       - {depth_m: 100.0, factor: 0.057}
@@ -2523,8 +2581,10 @@ interaction_definitions:
     # letters: o-umlaut) summary.md.
     stage_access: [0.038, 0.0064]
     functional_response: 2
+    # Section 270: capture p 0.20 -> 0.522 (x2.61; PPR 0.33); still flagged open (whiting's height
+    # above the bed). research_notes/"Fangst och stim i fiskparen"
     # Section 269 (rule A + band overlap; research_notes/"Bottenfiskens hojdprofil"): band x0.20 x rule A x2.51 = x0.49; FLAGGED OPEN until whiting's height above the bed is measured
-    max_intake_rate: 0.103
+    max_intake_rate: 0.2687
     dark_ratio: 0.565
     light_threshold_deg: -5.0
     depth_access_table:
@@ -2554,16 +2614,18 @@ interaction_definitions:
     predation_mortality: 0.157
     assimilation_factor: 0.8
     handling_time: 161.1
+    # Section 270: capture p 0.20 -> 0.592 (x2.96) x schooling F 0.988 x ling's activity and window.
+    # research_notes/ "Fangst och stim i fiskparen", "Langans indata"
     # Section 232.2: window weighted by each predator length's share of a
     # (a ~ L^-2.1..-2.3 for fixed-R encounters, ~L^-0.36 for cod) and normalised
     # over all prey-group tonnes (unkeyed flatfish / blue whiting by their
     # box lengths); was [0.57, 0.15]. research_notes/"Fonsterviktning" (Swedish
     # letters: o-umlaut) summary.md.
-    stage_access: [0.41, 0.080]
+    stage_access: [0.4067, 0.07186]
     functional_response: 2
     # Section 269 (rule A + band overlap; research_notes/"Bottenfiskens hojdprofil"): band x0.46 x rule A x6.02 = x2.76; n/d rule
-    max_intake_rate: 0.0359
-    dark_ratio: 0.137
+    max_intake_rate: 0.1045
+    dark_ratio: 0.139
     light_threshold_deg: -5.0
     depth_access_table:
       - {depth_m: 99.9, factor: 0.0599}
@@ -2598,9 +2660,11 @@ interaction_definitions:
     # (research_notes/"Storleksfonster som standard", o-umlaut).
     stage_access: [0.14, 0.14]
     functional_response: 2
+    # Section 270: capture p 0.20 -> 0.549 (x2.74) x schooling F 0.089 at the new p (mackerel always
+    # schooled). research_notes/"Fangst och stim i fiskparen", "Makrillens antipredatorbeteende"
     # Section 269 (rule A + band overlap; research_notes/"Bottenfiskens hojdprofil"): band x0.13 x rule A x1.19 = x0.155 (spurdog summer surface 0.76 of a); OFF in every reading
-    max_intake_rate: 0.000137
-    dark_ratio: 0.923
+    max_intake_rate: 3.346e-05
+    dark_ratio: 0.916
     light_threshold_deg: -5.0
     depth_access_table:
       - {depth_m: 99.9, factor: 0.000229}
@@ -3148,7 +3212,9 @@ interaction_definitions:
     predation_mortality: 0.0201
     assimilation_factor: 0.84
     handling_time: 28.6
-    visibility_floor: 0.75
+    # Section 270: floor 0.75 -> 0.9: whiting neither bury nor leave the sonar's reach on the bed.
+    # research_notes/"Sal och tumlare golv"
+    visibility_floor: 0.9
     max_intake_rate: 0.2
     # Section 230: porpoise prey window 0-40 cm on whiting's stage lengths:
     # every juvenile, 0.95 of the adults. {NOTE}.

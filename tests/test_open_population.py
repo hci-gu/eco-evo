@@ -18,6 +18,10 @@ Contracts asserted:
 5. ``somatic_production`` P: g = P / ((s* - u) ticks per year), refused with
    r_max or a feeding season, and the loader refuses a broken budget.
 6. The reward ledger covers the open-population groups; mareld2 pins.
+7. Section 270: ``recruit_depth_table`` (rows {depth_m, weight}) needs a
+   ``recruit_import``; the loader's map (equal-cell mean 1) spreads the
+   import over the cells, the booked import total is unchanged, the GPU
+   mirrors it, and without a map the import stays uniform.
 """
 import copy
 import math
@@ -206,3 +210,107 @@ def test_ledger_covers_the_open_population_groups():
         open_dm_ids = ["m"]
         stage_exchange_ids = ["w"]
     assert migrating(Env(), ["m", "w", "x"]) == ["m", "w"]
+
+
+ROWS = [{"depth_m": 99.9, "weight": 2.71}, {"depth_m": 100.0, "weight": 1.0},
+        {"depth_m": 149.9, "weight": 1.0}, {"depth_m": 150.0, "weight": 0.21},
+        {"depth_m": 249.9, "weight": 0.21}, {"depth_m": 250.0, "weight": 0.05}]
+
+
+def test_recruit_depth_table_is_checked():
+    def spec(b):
+        return stages.settings(FunctionalGroup("a", {"is_decision_maker": True,
+                                                     "juvenile_stage": b}))
+    depths, weights = spec(dict(block(recruit=0.5), recruit_depth_table=ROWS))["depth_table"]
+    assert list(depths) == [r["depth_m"] for r in ROWS]
+    assert list(weights) == [r["weight"] for r in ROWS]
+    assert spec(block(recruit=0.5))["depth_table"] is None
+    for bad in (dict(block(), recruit_depth_table=ROWS),               # no import
+                dict(block(recruit=0.5), recruit_depth_table=[{"depth_m": 1.0}]),
+                dict(block(recruit=0.5), recruit_depth_table=[{"depth_m": 1.0, "weight": -1.0}])):
+        with pytest.raises(ValueError):
+            spec(bad)
+
+
+def _shaped_env(weight, **kw):
+    env = env_with({"a": block(rho=[1.0] * 12, recruit=3.0, emigration=[2.0, 0.5])}, **kw)
+    if weight is not None:
+        env.fgs["a"].recruit_weight_map = weight
+        env.build_static_caches()
+    return env
+
+
+def test_the_import_follows_the_recruit_map_and_keeps_its_total():
+    rng = np.random.default_rng(1)
+    flat = _shaped_env(None)
+    weight = rng.uniform(0.1, 3.0, flat.fgs["a"].biomass.shape)
+    env = _shaped_env(weight)
+    ja = env.global_fg_order.index("a")
+    np.testing.assert_allclose(flat.stage_import_map[ja], 1.0)
+    np.testing.assert_allclose(env.stage_import_map[ja], weight / weight.mean(), rtol=1e-6)
+    for e in (flat, env):
+        a = e.fgs["a"]
+        a.biomass = np.full(a.biomass.shape, 2.0, dtype=np.float32)
+        a.juvenile = np.full(a.biomass.shape, 0.5, dtype=np.float32)
+        a.energy_reserve = (a.biomass * np.float32(300.0)).astype(np.float32)
+        e.loss_exchange, e.gain_exchange = {}, {}
+        stages.exchange(e)
+    per_cell = 3.0 / PER_YEAR
+    kj = math.exp(-2.0 / PER_YEAR)
+    np.testing.assert_allclose(env.fgs["a"].juvenile, 0.5 * kj + per_cell * weight / weight.mean(),
+                               rtol=1e-5)
+    np.testing.assert_allclose(flat.fgs["a"].juvenile, 0.5 * kj + per_cell, rtol=1e-5)
+    assert env.gain_exchange["a"] == pytest.approx(flat.gain_exchange["a"], rel=1e-6)
+    assert env.tick_exchange_biomass["a"] == pytest.approx(flat.tick_exchange_biomass["a"], rel=1e-5)
+    assert env.tick_exchange_energy["a"] == pytest.approx(flat.tick_exchange_energy["a"], rel=1e-5)
+
+
+def test_a_wrong_sized_recruit_map_is_refused():
+    with pytest.raises(ValueError):
+        _shaped_env(np.ones((2, 2)))
+
+
+def test_gpu_matches_reference_with_a_recruit_map(device):
+    rng = np.random.default_rng(2)
+    weight = rng.uniform(0.1, 3.0, (4, 5))
+    env = env_with({"a": block(recruit=4.0, emigration=[1.5, 0.3]),
+                    "b": block(emigration=[0.8, 0.4])}, mortality=True, handling=0.3)
+    env.fgs["a"].recruit_weight_map = weight
+    env.build_static_caches()
+    model = _assert_parity(env, device, ticks=8, base_tol=1e-5)
+    assert model.stage_exchange_on
+    assert float(model.stage_import_map.min()) < 0.5 < 1.5 < float(model.stage_import_map.max())
+
+
+def test_habitat_builds_the_recruit_weight():
+    from lib.world import habitat
+    lib = {"species_definitions": {
+        "a": {"is_decision_maker": True,
+              "juvenile_stage": dict(block(recruit=0.5), recruit_depth_table=ROWS)},
+        "b": {"is_decision_maker": True, "juvenile_stage": block(recruit=0.5)}}}
+    _depth, maps = habitat.build(None, None, lib, (3, 4), ["a", "b"])
+    np.testing.assert_allclose(maps["a"]["recruit_weight"], 1.0)    # no depth map: uniform
+    assert "b" not in maps
+    depth = np.array([[50.0, 120.0], [200.0, 300.0]])
+    table = stages.settings(FunctionalGroup("a", lib["species_definitions"]["a"]))["depth_table"]
+    weight = open_pool.depth_weight_map(table, depth, depth.shape)
+    assert weight.mean() == pytest.approx(1.0)
+    raw = np.array([[2.71, 1.0], [0.21, 0.05]])
+    np.testing.assert_allclose(weight, raw / raw.mean())
+
+
+def test_mareld2_benthivores_import_on_shallow_beds():
+    from lib.world import habitat
+    project_path = ROOT / "mareld2.yaml"
+    project = yaml.safe_load(open(project_path, encoding="utf-8-sig"))
+    if habitat.depth_map_path(project, str(project_path)) is None or not Path(
+            habitat.depth_map_path(project, str(project_path))).exists():
+        pytest.skip("maps/ is untracked")
+    library = yaml.safe_load(open(ROOT / "fgconfig" / "fg_library.yaml", encoding="utf-8-sig"))
+    ids = [g["group_id"] for key in ("decision_makers", "non_decision_makers")
+           for g in project[key] if not g.get("muted")]
+    depth, maps = habitat.build(project, str(project_path), library, (60, 60), ids)
+    weight = maps["benthivorous_fish"]["recruit_weight"]
+    assert weight.mean() == pytest.approx(1.0)
+    assert weight[depth < 99.9].mean() > 2.5 and weight[depth >= 250.0].mean() < 0.1
+    assert "recruit_weight" not in maps.get("planktivorous_fish", {})

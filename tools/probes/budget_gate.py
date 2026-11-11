@@ -340,7 +340,7 @@ else:
 # Skagerrak" a_revisit/.
 # ---------------------------------------------------------------------------
 from lib.diagnostics.field_diet import (  # noqa: E402
-    FIELD_BED_SHARES, field_cell_weights, field_prey_shape)
+    FIELD_BED_SHARES, field_cell_weights, field_prey_shape, field_stage_shapes)
 from lib.world import habitat  # noqa: E402
 
 with open(PROJECT, encoding='utf-8-sig') as fh:
@@ -351,12 +351,30 @@ print("=== diet gate at the field spread (section 248) ===")
 print("The predator over the bed-depth classes < 100 / 100-150 / 150-250 / > 250 m as in")
 print("NS-IBTS GOV hauls inside the box; encounters averaged over its cells, prey at")
 print("their manifest density x a field shape (open pool depth shape, GOV bed shares,")
-print("else uniform; section 252).")
+print("else uniform; section 252; the benthivores by stage, J on their recruit shape,")
+print("adults on their GOV shares; section 270).")
 if _depth is not None:
     from lib.diagnostics.field_diet import bed_class  # noqa: E402
     _cls = bed_class(_depth)
     print(f"cells per class at this {H}x{W} grid: "
           + " / ".join(f"{(_cls == k).mean():.3f}" for k in range(4)))
+
+
+def _field_prey_cells(i, j, prey_id):
+    """The prey's visible share per cell at the field spread: a staged prey
+    with field stage shares by stage (section 270: J on its recruit shape,
+    adults on their GOV bed shares, each at the pair's stage access), every
+    other prey its field shape x the pair's visible share."""
+    stage = field_stage_shapes(prey_id, env.fgs[prey_id], _depth)
+    if (stage is not None and getattr(env, '_has_stages', False)
+            and j in set(env.stage_rows.tolist())):
+        js = float(env.stage_start[:, j].mean())
+        juv, adult = stage
+        return (js * float(env.stage_f_j[i, j]) * juv
+                + (1.0 - js) * float(env.stage_f_a[i, j]) * adult)
+    return field_prey_shape(prey_id, env.fgs[prey_id], _depth) * _visible_share(i, j, prey_id)
+
+
 field_failures = []
 field_rows = {}
 for i, pid in enumerate(env.dm_ids):
@@ -374,8 +392,7 @@ for i, pid in enumerate(env.dm_ids):
             continue
         mult = (np.asarray(env.pair_depth_mult[i, j], dtype=np.float64)
                 if getattr(env, '_has_pair_depth', False) else 1.0)
-        bv = (density[prey_id] * field_prey_shape(prey_id, env.fgs[prey_id], _depth)
-              * _visible_share(i, j, prey_id))
+        bv = density[prey_id] * _field_prey_cells(i, j, prey_id)
         type3 = float(env._type3_pred_mask[i, j, 0, 0]) > 0.0
         enc = float((w * float(env.max_intake_mat[i, j]) * mult * bv
                      * (bv if type3 else 1.0)).sum())

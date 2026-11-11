@@ -43,6 +43,7 @@ from lib.world.tick_time import LIBRARY_TICK_HOURS, ticks_per_year
 
 CAPACITY_TABLE_KEY = "capacity_depth_table"
 SPAWN_MODE = "equilibrium"
+RECRUIT_DEPTH_KEY = "recruit_depth_table"   # in a DM's juvenile_stage (section 270)
 
 
 def depth_map_path(project, project_path=None):
@@ -152,7 +153,10 @@ def build(project, project_path, library, grid_size, active_ids,
 
     Returns ``(depth, {fg_id: {"capacity": K map or None,
     "equilibrium": B* map or None}})`` for every active group with a
-    capacity table or the equilibrium spawn mode. ``capacity`` is None
+    capacity table or the equilibrium spawn mode; an open pool's entry
+    also has "outside_weight", and a staged decision maker with a
+    ``juvenile_stage.recruit_depth_table`` has "recruit_weight" (section
+    270; both at equal-cell mean 1). ``capacity`` is None
     when the group keeps its scalar K (no table or no depth map).
     """
     H, W = int(grid_size[0]), int(grid_size[1])
@@ -176,6 +180,16 @@ def build(project, project_path, library, grid_size, active_ids,
                         "equilibrium": (float(spec[open_pool.DENSITY_KEY]) * weight
                                         if equilibrium else None)}
             continue
+        recruit_rows = ((spec.get("juvenile_stage") or {}).get(RECRUIT_DEPTH_KEY)
+                        if spec.get("is_decision_maker") else None)
+        if recruit_rows not in (None, "", []):
+            # Section 270: a staged DM's recruit import by bed depth, at
+            # equal-cell mean 1 (ones without a depth map); stages.exchange
+            # spreads the import with it.
+            rows = open_pool._parse_rows(recruit_rows, "weight",
+                                         f"{fid}: juvenile_stage.{RECRUIT_DEPTH_KEY}")
+            out.setdefault(fid, {"capacity": None, "equilibrium": None})["recruit_weight"] = (
+                open_pool.depth_weight_map(rows, depth, (H, W)))
         table = parse_capacity_table(spec)
         equilibrium = _spawn_mode(spec, overrides.get(fid)) == SPAWN_MODE
         if table is None and not equilibrium:

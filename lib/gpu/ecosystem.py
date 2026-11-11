@@ -366,13 +366,16 @@ class TensorEcosystem:
             self.stage_f_a = tensor(env.stage_f_a)[None, :, :, None]
         # Section 250: open-population groups, mirror of ``stages.exchange``:
         # emigration per stage and the recruit import into J (per cell and
-        # tick, uniform over the cells) at the month's fill.
+        # tick) at the month's fill; since section 270 shaped over the cells
+        # by ``env.stage_import_map`` (equal-cell mean 1; ones = uniform).
         exchange_ids = tuple(getattr(env, "stage_exchange_ids", ()) or ()) if self.stages_on else ()
         self.stage_exchange_on = bool(exchange_ids)
         if self.stage_exchange_on:
             self.stage_exchange_mask = tensor([fid in exchange_ids for fid in self.ids],
                                               torch.bool)[None, :, None]
             self.stage_import = tensor(env.stage_import)[:, :, None]
+            self.stage_import_map = tensor(np.asarray(env.stage_import_map, dtype=np.float32)
+                                           .reshape(len(self.ids), self.C))[None]
             self.stage_fill = tensor(env.stage_fill)[:, :, None]
             self.stage_emig_keep_j = tensor(env.stage_emig_keep[0])[None, :, None]
             self.stage_emig_keep_a = tensor(env.stage_emig_keep[1])[None, :, None]
@@ -1706,14 +1709,14 @@ class TensorEcosystem:
         new_j = torch.where(mask, j * self.stage_emig_keep_j, juvenile)
         new_b = torch.where(mask, new_j + a * self.stage_emig_keep_a, b)
         kept = torch.where(mask & (b > 0), r * (new_b / b.clamp_min(1e-30)), r)
-        imported = torch.where(mask, per_cell, 0.0)
+        imported = torch.where(mask, per_cell * self.stage_import_map, 0.0)
         arriving = imported * fill * self.max_reserve
         if record is not None:
             ec = self.energy_content
             out = (b - new_b).sum(-1)
             leaving = (r - kept).sum(-1)
-            inn = (imported * self.C)[..., 0]
-            energy_in = (arriving * self.C)[..., 0]
+            inn = imported.sum(-1)
+            energy_in = arriving.sum(-1)
             zero = torch.zeros_like(out)
             record["exchange"] = record.get("exchange", zero) + out
             record["import"] = record.get("import", zero) + inn

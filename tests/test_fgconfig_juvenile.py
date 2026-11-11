@@ -41,6 +41,24 @@ def test_open_population_rows_round_trip():
     assert block is None and error
 
 
+def test_recruit_depth_rows_round_trip():
+    # Section 270: "depth: weight, ..." rows of the recruit import's shape.
+    rows = dict(ROWS, juvenile_recruit_import="0.183",
+                juvenile_recruit_depth_table="99.9: 2.71, 100: 1, 150: 0.21")
+    block, error = App._collect_juvenile_block(rows, "benthivorous_fish")
+    assert error is None
+    assert block["recruit_depth_table"] == [{"depth_m": 99.9, "weight": 2.71},
+                                            {"depth_m": 100.0, "weight": 1.0},
+                                            {"depth_m": 150.0, "weight": 0.21}]
+    for bad in ("99.9 2.71", "a: 1", "100: -1"):
+        block, error = App._collect_juvenile_block(
+            dict(rows, juvenile_recruit_depth_table=bad), "x")
+        assert block is None and error
+    block, error = App._collect_juvenile_block(       # a shape needs an import
+        dict(ROWS, juvenile_recruit_depth_table="100: 1"), "x")
+    assert block is None and error
+
+
 def test_empty_growth_ratio_means_no_stage():
     assert App._collect_juvenile_block(dict(ROWS, juvenile_growth_ratio=""), "x") == (None, None)
 

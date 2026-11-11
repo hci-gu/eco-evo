@@ -1,0 +1,132 @@
+# Section 270 edits for fgconfig/fg_library.yaml (user decisions 2026-11-11). Applied as text by
+# scripts/apply_270.py (comments kept). The pair values are the "Langans indata" central library copy
+# (gate_ling.py: combined capture p x schooling F, hake out, stage p, adult profile, ling's activity and
+# window), which reproduces the gate chain; the re-booking, floors and recruit table are added here.
+pairs:
+  predatory_fish_preys_on_planktivorous_fish:
+    why: >-
+      capture p per encounter of a hungry predator 0.20 -> 0.592 (x2.96) x schooling F 0.543 at the new p
+      (herring and sprat schooled by day, sigma 0.9; Norway pout 0.4); ling's own window; night/day from the
+      rule with F by period; floor 1.0 (no refuge left once F and q are in a). research_notes/"Fangst och
+      stim i fiskparen", "Fangstsannolikhet for fiskbyten", "Stimskydd i motes-a", "Vitlinglojans stim",
+      "Langans indata", "Planktivorernas golv"
+    max_intake_rate: 0.0279
+    dark_ratio: 0.116
+    stage_access: [0.6483, 0.1732]
+    visibility_floor: 1.0
+  whiting_preys_on_planktivorous_fish:
+    why: >-
+      capture p 0.20 -> 0.566 (x2.83) x schooling F 0.682 at the new p; floor 1.0. research_notes/"Fangst
+      och stim i fiskparen", "Planktivorernas golv"
+    max_intake_rate: 0.06357
+    dark_ratio: 0.342
+    visibility_floor: 1.0
+  mackerel_preys_on_planktivorous_fish:
+    why: >-
+      capture p 0.20 -> 0.617 (x3.09) x schooling F 0.598 at the new p (herring and sprat only); night/day
+      0.16 from the stomachs kept; floor 1.0. research_notes/"Fangst och stim i fiskparen", "Planktivorernas
+      golv"
+    max_intake_rate: 0.04579
+    visibility_floor: 1.0
+  benthivorous_fish_preys_on_planktivorous_fish:
+    why: >-
+      capture p 0.30 -> 0.634 (x2.11) x schooling F 0.643 at the new p (pout 0.85 / herring 0.15); floor
+      1.0. research_notes/"Fangst och stim i fiskparen", "Planktivorernas golv"
+    max_intake_rate: 0.02905
+    dark_ratio: 0.238
+    visibility_floor: 1.0
+  predatory_fish_preys_on_benthivorous_fish:
+    why: >-
+      capture p 0.20 -> 0.592 (x2.96); hake out of this pair (its benth_fish score counted whiting; 0-0.03
+      benthivores and no adult in its field diet); f_A now also carries the members' capture p per stage
+      (adult PPR 0.4-0.5) and the adults' bottom-2-m share (0.71 / 0.76), not only the gape window; ling a
+      mixed searcher (0.35 cruising, 0.65 sit-and-wait) with its own window (p95 PPR 0.30); booking from the
+      members' field diets and rations (saithe 0.074, spurdog 0.007, anglerfish 0.006, ling 0.002 t/km2/yr;
+      J 0.80) and SMS 2023 (0.047-0.065), was 0.0833 (the 223 broad pool incl. mackerel and prey outside the
+      benthivores). research_notes/"Vattenpelarens vuxna bottenfisk", "Langans indata", "Sej och ungfisk i
+      samma hal", "Fangst och stim i fiskparen"
+    max_intake_rate: 0.1162
+    stage_access: [0.3745, 0.01112]
+    predation_mortality: 0.058
+  predatory_fish_preys_on_whiting:
+    why: >-
+      capture p 0.20 -> 0.592 (x2.96) x schooling F 0.988 x ling's activity and window. research_notes/
+      "Fangst och stim i fiskparen", "Langans indata"
+    max_intake_rate: 0.1045
+    dark_ratio: 0.139
+    stage_access: [0.4067, 0.07186]
+  predatory_fish_preys_on_mackerel:
+    why: >-
+      capture p 0.20 -> 0.549 (x2.74) x schooling F 0.089 at the new p (mackerel always schooled).
+      research_notes/"Fangst och stim i fiskparen", "Makrillens antipredatorbeteende"
+    max_intake_rate: 3.346e-05
+    dark_ratio: 0.916
+  whiting_preys_on_benthivorous_fish:
+    why: >-
+      capture p 0.20 -> 0.522 (x2.61; PPR 0.33); still flagged open (whiting's height above the bed).
+      research_notes/"Fangst och stim i fiskparen"
+    max_intake_rate: 0.2687
+  benthivorous_fish_preys_on_whiting:
+    why: >-
+      capture p 0.30 -> 0.617 (x2.06) x schooling F 0.985. research_notes/"Fangst och stim i fiskparen"
+    max_intake_rate: 0.04581
+    dark_ratio: 0.171
+  porpoises_preys_on_planktivorous_fish:
+    why: >-
+      floor 0.95 -> 1.0: biosonar sees through a school and depth (> 90 % capture on small fish); the 0.05
+      was a tuning. research_notes/"Planktivorernas golv"
+    visibility_floor: 1.0
+  seals_preys_on_benthivorous_fish:
+    why: >-
+      floor 0.85 -> 0.9: buried flatfish are no refuge from seals (79.9 % capture, Bowen 2002).
+      research_notes/"Sal och tumlare golv"
+    visibility_floor: 0.9
+  porpoises_preys_on_whiting:
+    why: >-
+      floor 0.75 -> 0.9: whiting neither bury nor leave the sonar's reach on the bed. research_notes/"Sal
+      och tumlare golv"
+    visibility_floor: 0.9
+  seals_preys_on_predatory_fish:
+    why: >-
+      floor 0.75 -> 0.7: schooling (juvenile saithe) is the one refuge measured against seals; an explicit
+      key, since the water column's species floor is now 1.0. research_notes/"Sal och tumlare golv"
+    visibility_floor: 0.7
+species:
+  mackerel:
+    why: >-
+      no refuge state left once schooling and vigilance are in a; rest is a feeding pause at the swimming
+      floor. research_notes/"Makrillens antipredatorbeteende" addendum
+    visibility_floor: 1.0
+  whiting:
+    why: >-
+      no feeding-exclusive refuge (Cyanea shelter ~3 % of the biomass for three months; "on the bed" is the
+      band profile). research_notes/"Vitlingens golv"
+    visibility_floor: 1.0
+  benthivorous_fish:
+    why: >-
+      no refuge state of the gadoid juveniles outside a on the box's mud; flatfish burial unmeasured for the
+      flatfish the windows take, dropped. research_notes/"Bottenfiskens och vattenpelarens golv"
+    visibility_floor: 1.0
+  predatory_fish:
+    why: >-
+      acts only on what its prey observe; a resting member stays within their cue range and a floor below 1
+      leaked its activity state. research_notes/"Bottenfiskens och vattenpelarens golv"
+    visibility_floor: 1.0
+  seals:
+    why: >-
+      a resting seal in the water does not vanish from every sense (0 ruled out); rest cuts the vertical
+      overlap with bed prey; observation only (nobody eats seals). research_notes/"Sal och tumlare golv"
+    visibility_floor: 0.4
+  porpoises:
+    why: >-
+      a resting porpoise stays in the top metres and its clicks are inaudible to fish whether it rests or
+      forages; observation only. research_notes/"Sal och tumlare golv"
+    visibility_floor: 0.55
+recruit_depth_table:
+  benthivorous_fish:
+    - {depth_m: 99.9, weight: 2.71}
+    - {depth_m: 100.0, weight: 1.00}
+    - {depth_m: 149.9, weight: 1.00}
+    - {depth_m: 150.0, weight: 0.21}
+    - {depth_m: 249.9, weight: 0.21}
+    - {depth_m: 250.0, weight: 0.05}

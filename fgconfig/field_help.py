@@ -926,6 +926,19 @@ FIELD_HELP = {
         "benthivores 1.1 / 0.17, whiting 0.2 / 0.3, planktivores 0.1 / 0 "
         "(their adults migrate)."
     ),
+    "juvenile_recruit_depth_table": (
+        "Recruit depth shape (section 270): where the Recruit Import "
+        "arrives, by the cell's bed depth, written depth: weight, ... (m; "
+        "e.g. 99.9: 2.71, 100: 1, 149.9: 1, 150: 0.21, 249.9: 0.21, 250: "
+        "0.05); empty = uniform over the cells.\n\n"
+        "The loader reads the table at each cell's depth (linear between "
+        "rows, the end values beyond them) and renormalises it to an "
+        "equal-cell mean of 1, so the import total stays I. It needs a "
+        "Recruit Import and the manifest's depth map (without one the "
+        "import is uniform). It only places the arrivals: J then moves "
+        "with B. Library: benthivores from NS-IBTS GOV (haddock age 0 in "
+        "Q3, cod age 1 in Q1: the recruits settle over < 100 m beds)."
+    ),
     "juvenile_start_share": (
         "Start share J/B (one value or 12 monthly values in [0, 1)): the "
         "juvenile share every world starts with, read on its start day "

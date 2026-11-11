@@ -25158,3 +25158,84 @@ remain open exactly as described in 71.9 / 71.11.
     mackerel (0.02), benthivores -> whiting (0.31, the 251 residual), seals -> water column (unchanged).
 269.6 Tests: test_half_saturation pins the new a and night/day. Full suite green. No training (the user
     trains once on 267-269).
+
+270 CAPTURE PER ENCOUNTER, SCHOOLING IN a, RECRUIT BED DEPTH, HIDE FLOORS (2026-11-11; user choices)
+---------------------------------------------------------------------------------------------------
+
+270.1 Capture probability (research_notes/"Fangstsannolikhet for fiskbyten"). The encounter a needs
+    P(capture | detected) of a HUNGRY predator: per encounter, repeated strikes and pre-strike escape q
+    included, light (in R) and schooling excluded; satiation stays in Holling h and the reserve-room cap
+    (user: hungry convention for every pair). p = q p_s / (1 - r (1 - p_s)), q 0.8, r 0.3, p_s from the
+    bluefish prey:predator length line (only size-resolved set, between gadoid tanks ~0.8 and percids
+    0.1-0.36): 0.52-0.63 at the box pairs' PPR 0.20-0.33. The 220 value 0.2 (perch per STRIKE) and the
+    benthivores' 0.3 were per-strike figures used per encounter; the circulated "review 0.45" is per
+    strike too.
+270.2 Schooling in a (research_notes/"Stimskydd i motes-a", "Vitlinglojans stim", "Makrillens
+    antipredatorbeteende"). Dilution, confusion and one meal per school met are always on, eating or not:
+    the hide action (protects only the share that stops eating) was the wrong carrier. Per term (prey x
+    period) S = min(1, (R_s/R_i)^2 v_rel,s/(scan v_rel,i) k/(N p)) against rule A's own radius, F = 1 -
+    sigma (1 - S): herring and sprat sigma 0.9 by day, 0 at night; Norway pout 0.4 by day (unobserved in
+    the box's dead zone, [J]), 0 at night (dispersed near-bed layer, Albert 1994); blue whiting 0.2 / 0;
+    mackerel 1. Herring school size is set by place and time, not local density, so F is a constant on a.
+270.3 Combined (research_notes/"Fangst och stim i fiskparen"): factor (p_new/p_lib) x F(p_new) - F falls as
+    p rises (the schooled share keeps its absolute rate); night/day x F_night/F_day (stomach ratios kept).
+270.4 Water column -> benthivores (research_notes/"Sejens hojd over botten", "Rekryternas bottendjup",
+    "Vattenpelarens vuxna bottenfisk", "Langans indata", "Sej och ungfisk i samma hal"). Saithe Hs 15 m
+    stands (HERAS hauls, 9-31 m) and does not control the pair. The adult part was ~6x the members' field
+    adult take, 0.74 on hake and ling: hake out of the pair (its benth_fish score 0.55 counted whiting;
+    0-0.03 benthivores, never an adult, in 284 in-area stomachs; pred_scores.csv itself not edited, the
+    269 notes exec it), capture p per member and stage (adult PPR 0.4-0.5, x0.83 on A), adults' bottom-2-m
+    share 0.71 / 0.76 (x0.74-0.89 on A), ling a mixed searcher (0.35 cruising, 0.65 sit-and-wait,
+    Lokkeborg et al. 2000) with its own window (p95 PPR 0.30). f_A now carries stage p and the adult
+    profile on top of the gape window. Booking 0.0833 -> 0.058 (0.04-0.09): members' field diets x Q/B x B
+    (hake out) and SMS 2023 at the box's saithe density 0.047-0.065; the old value was the 223 broad pool
+    incl. mackerel (now another group) and prey outside the benthivores' B; no derived g moves (section
+    250). Within-class co-occurrence of saithe and J (0.76, 0.57-1.02; random in Q3; mostly between years)
+    is no parameter. The encounter on J at the bed stays ~2x the field flow: for the long-run probe.
+270.5 Recruit bed depth (research_notes/"Rekryternas bottendjup"). The benthivores' juveniles and recruits sit
+    over < 100 m beds in every quarter (0.55-0.78 of J on 0.23 of the cells). New juvenile_stage key
+    recruit_depth_table (rows {depth_m, weight}; needs recruit_import): habitat.build -> fg.recruit_weight_map
+    (equal-cell mean 1, ones without a depth map) -> stages.exchange / GPU _stage_exchange spread the import
+    over the cells, total unchanged (books sum the cells). Benthivores 2.71 / 1.00 / 0.21 / 0.05 (GOV haddock
+    age 0 Q3, cod age 1 Q1, import-weighted). FG editor Juvenile Stage field "Recruit depth shape (depth m:
+    weight, ...)" (the block is rebuilt on save). budget_gate's field spread places a staged prey with
+    field_diet.FIELD_STAGE_BED_SHARES by stage: J on recruit_weight_map, adults on GOV annual shares 0.308 /
+    0.441 / 0.191 / 0.060 (field_diet.field_stage_shapes).
+270.6 Hide floors (research_notes/"Gom och sinnen", "Planktivorernas golv", "Vitlingens golv", "Bottenfiskens
+    och vattenpelarens golv", "Sal och tumlare golv"). One floor still sets predation and observation (user
+    kept the coupling); observations are a diffuse blend of all senses, not smell alone (user). With F and q
+    in a no fish refuge state is left: species floors mackerel, whiting, benthivores, water column 1.0;
+    pair keys water column / whiting / mackerel / benthivores -> planktivores 1.0 (explicit: the
+    planktivores' species 0.35 stays for seals). Mammals: species seals 0.4, porpoises 0.55 (observation
+    only; 0 ruled out); seals -> benthivores 0.9, -> water column 0.7 (explicit key), porpoises ->
+    planktivores 1.0, -> whiting 0.9; the others unchanged. Seal haul-out as absence from the box: flagged
+    option (a seasonal at-sea fraction), not built.
+270.7 Applied (fg_library.yaml; research_notes/"Fangst och stim i fiskparen" scripts/apply_270.py from
+    tables/yaml_edits_270.txt, comments kept, a "Section 270" line per edit; pre-270 copy in the session
+    scratchpad). a: WC -> planktivores 0.0174 -> 0.0279 ([0.6483, 0.1732]), -> benthivores 0.0418 -> 0.1162
+    ([0.3745, 0.01112]), -> whiting 0.0359 -> 0.1045 ([0.4067, 0.07186]), -> mackerel 0.000137 -> 3.346e-05;
+    whiting -> planktivores 0.0329 -> 0.06357, -> benthivores 0.103 -> 0.2687; mackerel -> planktivores
+    0.0248 -> 0.04579; benthivores -> planktivores 0.0214 -> 0.02905, -> whiting 0.0226 -> 0.04581.
+    dark_ratio: WC -> planktivores 0.0594 -> 0.116, -> whiting 0.137 -> 0.139, -> mackerel 0.923 -> 0.916;
+    whiting -> planktivores 0.212 -> 0.342; benthivores -> planktivores 0.141 -> 0.238, -> whiting 0.168 ->
+    0.171. The pair values are the "Langans indata" central library copy (the gate chain), not retyped.
+270.8 Gate (budget_gate on the edited library; reproduces the chain): planktivores 0.90 of booked M2 (0.69
+    before), krill 1.01, whiting 1.01, benthivores 0.95; WC krill 1.01 prey side, 1.06 diet share at the
+    field spread (1.39 before: the krill excess of 267-269 closed from the fish pairs, no krill value
+    moved); WC -> benthivores 2.02 / 1.81 (equal / field) of the re-booked 0.058; OFF: whiting ->
+    benthivores (equal cells, prey side; flagged open), whiting -> epifauna (field), WC -> mackerel and
+    seals -> WC (prey side); none added; benthivores -> whiting passes. Total ration: WC 2.61 vs field 2.83.
+270.9 Checked, left as is: herring winter profile (research_notes/"Sillens vinterprofil": near-bed share x2
+    by day in winter, a moves -5..+3 %, the July profile kept; flagged: the planktivores' winter presence
+    0.6 may be ~0.3); January light (research_notes/"Januaris ljusunderskott": the January dip was a
+    one-visit Secchi artefact; a winter-wide intensity amplitude remains, a timing error of <= 3 % of a
+    pair's flow; the 269 chain's Jan/Dec Secchi entries to be fixed when it is next run).
+270.10 Open: ling's profile and speed [J]; anglerfish / spurdog profiles; Norway pout's day schooling in the
+    box; whiting -> benthivores; the start J shape (left uniform); seal haul-out; the long-run probe's
+    realised diets and fills after training (WC -> benthivores, the planktivores' winter intake with no
+    hide protection against fish).
+270.11 Tests: test_half_saturation repinned (a, night/day); test_open_population: recruit_depth_table
+    checked, per-cell import with the total kept, wrong-sized map refused, CPU == GPU (CUDA) with a
+    non-uniform map, habitat builds the weight, mareld2's benthivores import on shallow beds;
+    test_fgconfig_juvenile: the editor rows. Checkpoints before 270 are invalid (payoffs and the meaning of
+    observations change; shapes unchanged): retrain. No training run (the user starts it).

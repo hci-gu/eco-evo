@@ -42,6 +42,17 @@ FIELD_BED_SHARES = {
 }
 
 
+# Section 270: a staged prey placed by stage at the field spread. The
+# benthivores' adults (>= length at age 1) by bed class in NS-IBTS GOV
+# 2000-25 in the box, Q1 and Q3 mean, Walker q (class shares); their J sit on
+# the group's recruit_depth_table (``recruit_weight_map``, the recruits'
+# arrival shape), uniform without one. research_notes/"Rekryternas
+# bottendjup" summary.md.
+FIELD_STAGE_BED_SHARES = {
+    'benthivorous_fish': ((0.308, 0.441, 0.191, 0.060), 'adults, GOV in the box, annual'),
+}
+
+
 def bed_class(depth):
     """Class index 0-3 of every cell's bed depth (m)."""
     return np.digitize(np.asarray(depth, dtype=np.float64), BED_CLASS_EDGES_M)
@@ -75,3 +86,22 @@ def field_prey_shape(prey_id, fg, depth):
     if prey_id in FIELD_BED_SHARES:
         return field_cell_weights(depth, FIELD_BED_SHARES[prey_id][0]) * depth.size
     return np.ones(depth.shape, dtype=np.float64)
+
+
+def field_stage_shapes(prey_id, fg, depth):
+    """Section 270: ``(J shape, adult shape)`` of a staged prey for the
+    field-spread gate, each mean 1 over the cells, or None when the prey has
+    no field stage shares. J follows the group's recruit import shape
+    (``recruit_weight_map``; uniform without one), the adults their GOV bed
+    shares."""
+    if prey_id not in FIELD_STAGE_BED_SHARES:
+        return None
+    depth = np.asarray(depth, dtype=np.float64)
+    adult = field_cell_weights(depth, FIELD_STAGE_BED_SHARES[prey_id][0]) * depth.size
+    juv = getattr(fg, 'recruit_weight_map', None)
+    if juv is None:
+        juv = np.ones(depth.shape, dtype=np.float64)
+    else:
+        juv = np.asarray(juv, dtype=np.float64)
+        juv = juv / juv.mean()
+    return juv, adult

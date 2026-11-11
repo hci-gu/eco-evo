@@ -53,8 +53,12 @@ the group's own growth:
 - Per tick, after the migration (``open_pool.migrate``) and before the
   extinction sweep (``exchange``): J <- J exp(-e_J dt), A <- A exp(-e_A dt)
   (the emigrants leave with their own fill, as in M1), then I dt shape(t)
-  per cell into J, uniformly over the cells, at the month's fill
-  (``start_fill``, else 0.7).
+  per cell into J at the month's fill (``start_fill``, else 0.7):
+  uniformly over the cells, or since section 270 by an optional
+  ``recruit_depth_table`` (rows {depth_m, weight}; the loader puts the
+  table at each cell's bed depth, renormalised to an equal-cell mean of
+  1, on ``fg.recruit_weight_map``), so the import total stays I. It only
+  places the arrivals: J then moves with B.
 - The flows are booked as the exchange (``loss_exchange`` /
   ``gain_exchange``) and in the tick's net exchange that the reward ledger
   takes out (``lib/runners/energy_ledger.py``), as a migration.
@@ -72,6 +76,7 @@ from lib.world import daylight, tick_time
 
 KEY = "juvenile_stage"
 PAIR_KEY = "stage_access"
+RECRUIT_DEPTH_KEY = "recruit_depth_table"
 
 
 def settings(fg):
@@ -130,6 +135,17 @@ def settings(fg):
             recruit_import = float("nan")
         if not (math.isfinite(recruit_import) and recruit_import >= 0.0):
             raise ValueError(f"'{gid}': {KEY}.recruit_import must be >= 0 (t/km2/yr)")
+    depth_table = block.get(RECRUIT_DEPTH_KEY)
+    if depth_table in (None, "", []):
+        depth_table = None
+    else:
+        # Section 270: bed-depth shape of the recruit import (rows {depth_m,
+        # weight}; the loader renormalises it to an equal-cell mean of 1).
+        if recruit_import is None:
+            raise ValueError(f"'{gid}': {KEY}.{RECRUIT_DEPTH_KEY} needs recruit_import")
+        from lib.environments.ecosystem_env import open_pool
+        depth_table = open_pool._parse_rows(depth_table, "weight",
+                                            f"'{gid}': {KEY}.{RECRUIT_DEPTH_KEY}")
     emigration = block.get("emigration")
     if emigration in (None, "", []):
         emigration = None
@@ -142,6 +158,7 @@ def settings(fg):
             raise ValueError(f"'{gid}': {KEY}.emigration must be [e_J, e_A], each >= 0 (/yr)")
     return {
         "import": recruit_import,
+        "depth_table": depth_table,
         "emigration": emigration,
         "kappa": number("growth_ratio", 0.0, math.inf),
         "gamma": number("graduation_rate", 0.0, math.inf),
@@ -214,6 +231,7 @@ def build_tables(env):
     env.stage_rows = []
     env.stage_exchange_ids = []
     env.stage_import = None
+    env.stage_import_map = None
     env.stage_fill = None
     env.stage_emig_keep = np.ones((2, env.N_all), dtype=env.dtype)
     env.stage_kappa = np.zeros(env.N_all, dtype=env.dtype)
@@ -256,6 +274,9 @@ def build_tables(env):
     env.stage_rho = np.zeros((rows, env.N_all), dtype=env.dtype)
     env.stage_start = np.zeros((rows, env.N_all), dtype=env.dtype)
     env.stage_import = np.zeros((rows, env.N_all), dtype=env.dtype)
+    # Section 270: the import's per-cell shape (equal-cell mean 1; ones
+    # without a recruit_depth_table or without a depth map).
+    env.stage_import_map = np.ones((env.N_all, env.H, env.W), dtype=env.dtype)
     env.stage_fill = np.zeros((rows, env.N_all), dtype=env.dtype)
     for j, spec in found.items():
         fid = env.global_fg_order[j]
@@ -293,6 +314,13 @@ def _open_population_tables(env, j, spec, per_year, months, hours):
         env.stage_import[:, j] = imported * per_tick / per_tick.mean()
     else:
         env.stage_import[0, j] = imported
+    weight = getattr(env.fgs[fid], "recruit_weight_map", None)
+    if spec["import"] is not None and weight is not None:
+        weight = np.asarray(weight, dtype=np.float64)
+        if weight.shape != (env.H, env.W):
+            raise ValueError(f"'{fid}': recruit weight map {weight.shape} does not match the "
+                             f"grid {(env.H, env.W)}")
+        env.stage_import_map[j] = (weight / weight.mean()).astype(env.dtype)
     e_j, e_a = spec["emigration"] or (0.0, 0.0)
     env.stage_emig_keep[0, j] = math.exp(-e_j / per_year)
     env.stage_emig_keep[1, j] = math.exp(-e_a / per_year)
@@ -326,14 +354,15 @@ def exchange(env):
         export = float((fg.biomass - new_b).astype(np.float64).sum())
         fg.energy_reserve = (fg.energy_reserve * ratio).astype(env.dtype, copy=False)
         leaving = reserve_before - float(fg.energy_reserve.astype(np.float64).sum())
-        per_cell = np.float32(env.stage_import[t, j])
+        # Section 270: the per-cell shape of the import (ones = uniform).
+        per_cell = np.float32(env.stage_import[t, j]) * env.stage_import_map[j]
         fill = float(env.stage_fill[t, j])
         me = float(fg.max_energy_reserve)
         fg.biomass = (new_b + per_cell).astype(env.dtype, copy=False)
         fg.juvenile = (new_j + per_cell).astype(env.dtype, copy=False)
         fg.energy_reserve = (fg.energy_reserve + per_cell * np.float32(fill * me)).astype(
             env.dtype, copy=False)
-        imported = float(per_cell) * fg.biomass.size
+        imported = float(per_cell.astype(np.float64).sum())
         arriving = imported * fill * me
         for book, amount in (("loss_exchange", export), ("gain_exchange", imported)):
             books = getattr(env, book, None)

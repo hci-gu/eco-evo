@@ -917,6 +917,8 @@ class FGConfigApp:
             # Section 250: the open population (stages.exchange).
             ("  Recruit import (t/km2/yr into J; empty = own recruitment)", "juvenile_recruit_import", "entry", 0.0, 1000.0),
             ("  Emigration e_J, e_A (1/yr; empty = none)", "juvenile_emigration", "entry", 0.0, 100.0),
+            # Section 270: the recruit import's shape by bed depth.
+            ("  Recruit depth shape (depth m: weight, ...; empty = uniform)", "juvenile_recruit_depth_table", "entry", 0.0, 1000.0),
         ]
         self.juvenile_vars = {}
         for (label, key, _type, _lo, _hi) in juvenile_rows:
@@ -4976,6 +4978,10 @@ class FGConfigApp:
             ", ".join(f"{k} = {float(v):g}" for k, v in sel.items()))
         self.juvenile_vars["juvenile_recruit_import"].set(fmt(block.get("recruit_import")))
         self.juvenile_vars["juvenile_emigration"].set(fmt(block.get("emigration")))
+        rows = block.get("recruit_depth_table") or []
+        self.juvenile_vars["juvenile_recruit_depth_table"].set(", ".join(
+            f"{float(r['depth_m']):g}: {float(r['weight']):g}" for r in rows
+            if isinstance(r, dict)))
 
     @staticmethod
     def _collect_juvenile_block(values, group_id="?"):
@@ -5009,6 +5015,16 @@ class FGConfigApp:
             emigration = numbers(values.get("juvenile_emigration"))
             if emigration:
                 block["emigration"] = emigration
+            depth_rows = []
+            for part in str(values.get("juvenile_recruit_depth_table", "") or "").split(","):
+                if not part.strip():
+                    continue
+                depth, _, weight = part.partition(":")
+                if not depth.strip() or not weight.strip():
+                    raise ValueError(f"recruit depth shape '{part.strip()}': write depth: weight")
+                depth_rows.append({"depth_m": float(depth), "weight": float(weight)})
+            if depth_rows:
+                block["recruit_depth_table"] = depth_rows
         except ValueError as exc:
             return None, f"Juvenile Stage: {exc}"
         if selectivity:

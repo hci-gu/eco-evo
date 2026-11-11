@@ -81,6 +81,10 @@ def test_fish_pairs_carry_the_encounter_theory_rates():
     # Section 269: one vision rule (rule A) and the band overlap (one search
     # profile per member, shared by all its prey) on every visual fish pair;
     # the benthivores' bed pairs x their bed-contact share of search time.
+    # Section 270: every fish -> fish pair x the per-encounter capture p of a
+    # hungry predator / the old per-strike 0.2 (0.3) and the schooling factor
+    # at the new p; water column -> benthivores also hake out, stage p, the
+    # adults' bed share and ling's activity and window.
     env = _env()
     expected = {
         ('planktivorous_fish', 'zooplankton'): 0.0122,
@@ -88,11 +92,11 @@ def test_fish_pairs_carry_the_encounter_theory_rates():
         ('benthivorous_fish', 'mobile_epifauna'): 0.11,
         ('whiting', 'mobile_epifauna'): 0.0116,
         ('benthivorous_fish', 'norway_lobster'): 0.308,
-        ('benthivorous_fish', 'planktivorous_fish'): 0.0214,
-        ('benthivorous_fish', 'whiting'): 0.0226,  # 251: whiting's own band share
-        ('predatory_fish', 'planktivorous_fish'): 0.0174,
-        ('mackerel', 'planktivorous_fish'): 0.0248,
-        ('whiting', 'planktivorous_fish'): 0.0329,
+        ('benthivorous_fish', 'planktivorous_fish'): 0.02905,
+        ('benthivorous_fish', 'whiting'): 0.04581,  # 251: whiting's own band share
+        ('predatory_fish', 'planktivorous_fish'): 0.0279,
+        ('mackerel', 'planktivorous_fish'): 0.04579,
+        ('whiting', 'planktivorous_fish'): 0.06357,
         # Section 245: krill is its own group; the zooplankton pairs keep
         # their copepod part (water column x 0.13, whiting x 0.06) and
         # mackerel's is the measured clearance (biting + filtering).
@@ -104,10 +108,10 @@ def test_fish_pairs_carry_the_encounter_theory_rates():
         ('predatory_fish', 'krill'): 0.0117,
         ('mackerel', 'krill'): 0.0039,
         ('whiting', 'krill'): 0.043,
-        ('predatory_fish', 'benthivorous_fish'): 0.0418,
-        ('whiting', 'benthivorous_fish'): 0.103,
-        ('predatory_fish', 'whiting'): 0.0359,
-        ('predatory_fish', 'mackerel'): 0.000137,
+        ('predatory_fish', 'benthivorous_fish'): 0.1162,
+        ('whiting', 'benthivorous_fish'): 0.2687,
+        ('predatory_fish', 'whiting'): 0.1045,
+        ('predatory_fish', 'mackerel'): 3.346e-05,
     }
     for (pred, prey), a in expected.items():
         i = env.dm_ids.index(pred)
@@ -118,17 +122,19 @@ def test_fish_pairs_carry_the_encounter_theory_rates():
 def test_fish_pair_light_settings_keep_a_zero_threshold():
     # Section 220: 0 deg is a real threshold, not "unset" (falsy 0.0).
     # Section 269: the rule's night/day except where stomachs give it.
+    # Section 270: the planktivore pairs' night/day x F_night / F_day of the
+    # schooling factor (clupeids school by day).
     from lib.config.config_loader import load_config
     from lib.world import daylight
     inter = load_config(os.path.join(_ROOT, 'fgconfig', 'fg_library.yaml'))[
         'interaction_definitions']
     expected = {
         'planktivorous_fish_preys_on_zooplankton': (0.03, 0.0),  # 243.3
-        'benthivorous_fish_preys_on_planktivorous_fish': (0.141, 0.0),
-        'benthivorous_fish_preys_on_whiting': (0.168, 0.0),  # 251
-        'predatory_fish_preys_on_planktivorous_fish': (0.0594, -5.0),  # 243.3
+        'benthivorous_fish_preys_on_planktivorous_fish': (0.238, 0.0),
+        'benthivorous_fish_preys_on_whiting': (0.171, 0.0),  # 251
+        'predatory_fish_preys_on_planktivorous_fish': (0.116, -5.0),  # 270
         'mackerel_preys_on_planktivorous_fish': (0.16, -5.0),  # stomachs (228.4)
-        'whiting_preys_on_planktivorous_fish': (0.212, -5.0),  # 243.3
+        'whiting_preys_on_planktivorous_fish': (0.342, -5.0),  # 270
         'predatory_fish_preys_on_zooplankton': (0.51, -5.0),
         'mackerel_preys_on_zooplankton': (0.24, -5.0),  # night filtering (245)
         'planktivorous_fish_preys_on_krill': (0.57, 0.0),  # stomachs (245)
@@ -138,8 +144,8 @@ def test_fish_pair_light_settings_keep_a_zero_threshold():
         'whiting_preys_on_zooplankton': (0.78, -5.0),
         'predatory_fish_preys_on_benthivorous_fish': (0.165, -5.0),
         'whiting_preys_on_benthivorous_fish': (0.565, -5.0),
-        'predatory_fish_preys_on_whiting': (0.137, -5.0),
-        'predatory_fish_preys_on_mackerel': (0.923, -5.0),
+        'predatory_fish_preys_on_whiting': (0.139, -5.0),
+        'predatory_fish_preys_on_mackerel': (0.916, -5.0),
     }
     for key, (rho, theta) in expected.items():
         assert daylight.pair_settings(inter[key]) == pytest.approx((rho, theta))

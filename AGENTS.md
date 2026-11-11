@@ -53,7 +53,7 @@ fabricates mass.
 | `lib/world/temperature.py` | Water temperature on the daylight calendar (section 143): Q10 multiplier on each DM's `resting_metabolism` (`metabolism_q10`, `metabolism_t_ref` in the library; monthly layer temperatures and `group_layers` in `simulation_settings.temperature`). Needs daylight on; adds no observation channel. `ingestion_q10` (section 181) scales a DM's whole functional response (a and 1/h together, annual mean 1); set on zooplankton (2.8) and, since section 244, every fish group (planktivores 2.2, benthivores 1.6, whiting 2.25, water column 2.25, mackerel 2.2; research_notes/"Bioenergetik för alla fiskgrupper", o-umlaut). `growth_q10` (section 183) scales a DM's growth branch (reserve -> biomass, annual mean 1; starvation unscaled); set on zooplankton (3.0, Huntley & Lopez 1992). Zooplankton is calibrated against A17's resident stock in Dec-Mar (the totals are Calanus risen from the Norwegian Trench). |
 | `lib/world/nutrients.py` | Nutrient pool of light-limited producers (section 172): growth `r L(t) B N/(N + k_N Y M)` paid out of a per-cell pool, supplied from below the mixed layer (Evans & Parslow) and by a share of the grazing. Off unless `simulation_settings.nutrients.enabled` (on in `mareld2.yaml` since section 174, with seasonal pycnocline exchange; 1.0 m/d Nov-Feb since section 203); the pool rides in the producer's unused `energy_reserve` slot on both engines. No observation channel. With `nutrients.subsurface_layer` (section 180, on in `mareld2.yaml`) the column has two layers, each with a producer (`water_layer: mixed|subsurface`) and pool, chained reservoir (50 m) -> subsurface -> mixed layer, entrainment/detrainment moving water and algae (`layer_tables`, `population_change.apply_layer_exchange`, GPU `layer_exchange`). |
 | `lib/environments/ecosystem_env/open_pool.py` | Section 246: a DM with `outside_density` MIGRATES on its group total (keys `outside_exchange_rate`, `outside_season`, `outside_fill` 12 arrival fills, `outside_entry` edge segments; export pro rata with the reserve, import on the entry cells), and every reward form (log energy, legacy, population stability; not `--local_reward`) reads local indices without the exchange (`lib/runners/energy_ledger.py`, the rollout's `ledger_index`). Open pools (section 245): an NDM with `outside_density` (t/km2 box mean), `outside_exchange_rate` k per tick, `outside_season` (12 monthly factors) and `outside_depth_table` (shape by cell depth, equal-cell mean 1) does `B <- T + (B (1 + g) - T) exp(-k)` after M1, no logistic and no K; g derived with r_max 0, the exchange outside it; the loader refuses g >= exp(k) - 1; the exchange is booked per direction (245.1: `loss_exchange` export, a loss cause in `loss_accounting.LOSS_CAUSES`; `gain_exchange` import; GPU `record` and the rollout's `loss_book` / `import_book`). Also the pairs' `depth_access_table` (per-cell multiplier on a, `interactions.build_pair_depth_maps`). Both engines; tests/test_open_pool.py. `budget_gate` prints a total-ration row (booked flow vs field Q/B). The FG editor edits all four keys and the pairs' Depth Access matrix (245.2); the viewer's NDM line of an open pool is `pr/im/ex`. |
-| `lib/environments/ecosystem_env/stages.py` | Juvenile compartments (section 223.32): a DM with `juvenile_stage` carries its juveniles J inside B (reserve pro rata), new tonnes to J in the share (kappa J + rho(t) A)/(kappa J + rho(t) A + A) (rho 0 with a `recruit_import`; section 250 adds the recruit import and per-stage `emigration`, `exchange`), graduation exp(-gamma) per tick, losses with B, fishing at `fishing_selectivity`, pair `stage_access: [f_J, f_A]`, one observation channel per staged group observed. Both engines (GPU: a `juvenile` [E, G, C] state through `step`, rollout and trainer); tests/test_juvenile_stage.py. |
+| `lib/environments/ecosystem_env/stages.py` | Juvenile compartments (section 223.32): a DM with `juvenile_stage` carries its juveniles J inside B (reserve pro rata), new tonnes to J in the share (kappa J + rho(t) A)/(kappa J + rho(t) A + A) (rho 0 with a `recruit_import`; section 250 adds the recruit import and per-stage `emigration`, `exchange`; section 270 the import's bed-depth shape `recruit_depth_table`), graduation exp(-gamma) per tick, losses with B, fishing at `fishing_selectivity`, pair `stage_access: [f_J, f_A]`, one observation channel per staged group observed. Both engines (GPU: a `juvenile` [E, G, C] state through `step`, rollout and trainer); tests/test_juvenile_stage.py. |
 | `lib/world/impact_maps.py` | Impact fields: the training sampler (baseline maps, spawned observable impacts), the shared .npz reader (section 161). |
 | `lib/world/habitat.py` | Depth habitat (section 207): the manifest's `simulation_settings.depth_map` (maps/depth.npz, tools/make_depth_map.py; also the spawn ref field `depth`), K per cell from a species' `capacity_depth_table`, and the `spawn: {mode: equilibrium}` start pattern B*(c) = K(c)(1 - (F(c) + M2)/r) from today's active baseline impact maps. Both engines (`FunctionalGroup.capacity_map` / `equilibrium_map`). |
 | `lib/world/tick_time.py` | Tick length: bounds (1-6 h), the `--tick-length` flag, tick<->real-time conversion, label rendering, and the per-parameter rescale rules the LOADER applies at runtime. `fg_library.yaml` is always calibrated at `LIBRARY_TICK_HOURS` (6) and is never rewritten for a run (sections 97, 103, 106). |
@@ -218,18 +218,33 @@ fabricates mass.
   stomachs give it (planktivores -> krill 0.57, mackerel -> krill 0.42, ->
   planktivores 0.16, whiting -> krill none). research_notes/"Synregel i
   vattenpelaren", "En synregel for fiskparen", "Overlapp i fiskparen",
-  "Bottenfiskens hojdprofil" (o-umlaut). Values:
+  "Bottenfiskens hojdprofil" (o-umlaut). Since section 270 every fish ->
+  fish pair's capture p is the per-ENCOUNTER capture of a HUNGRY predator
+  (repeated strikes and pre-strike escape q 0.8 included; satiation stays in
+  Holling h and the reserve-room cap): 0.52-0.63 by the prey:predator length
+  (bluefish line), was the per-strike 0.2 (benthivores 0.3); and the prey's
+  schooling (dilution, confusion, one meal per school met) is a factor F on a
+  in the periods the prey school, computed against rule A's own radius at the
+  new p (herring and sprat 0.9 of the biomass schooled by day, Norway pout 0.4,
+  none at night; mackerel always): research_notes/"Fangstsannolikhet for
+  fiskbyten", "Stimskydd i motes-a", "Vitlinglojans stim", "Fangst och stim i
+  fiskparen" (the combined derivation and gate). Values (before 270 in
+  parentheses):
   planktivores -> zoo 0.0122 (243.3); benthivores -> infauna 0.0256 (269; was 0.036), -> epifauna
-  0.110 (0.15), -> Nephrops 0.308 (0.44), -> planktivores 0.0214 (0.0198), -> whiting 0.0226 (0.021);
+  0.110 (0.15), -> Nephrops 0.308 (0.44), -> planktivores 0.02905 (0.0214), -> whiting 0.04581 (0.0226);
   whiting -> epifauna 0.0116 (232: a_enc e x the vertical overlap
-  H_bed/H_whiting; was 0.27), -> planktivores 0.0329 (0.0212), -> zoo 0.000138
+  H_bed/H_whiting; was 0.27), -> planktivores 0.06357 (0.0329), -> zoo 0.000138
   (copepods only since 245; was 0.0023), -> krill 0.043, ->
-  benthivores 0.103 (0.21; flagged open: 0.12 of its booking, whiting's
-  height above the bed unmeasured); water column -> planktivores 0.0174 (0.0060), -> zoo
-  3.13e-05 (245; was 0.000241), -> krill 0.0117 (0.026), -> benthivores 0.0418 (0.0055;
-  stage_access [0.392, 0.0388] re-weighted on the band a's members), -> whiting
-  0.0359 (0.013), -> mackerel 0.000137 (0.00088; OFF in every reading); mackerel -> planktivores
-  0.0248 (0.0266; herring and sprat only), -> zoo 0.00084 (245: measured clearance,
+  benthivores 0.2687 (0.103; flagged open, OFF on the prey side, whiting's
+  height above the bed unmeasured); water column -> planktivores 0.0279 (0.0174), -> zoo
+  3.13e-05 (245; was 0.000241), -> krill 0.0117 (0.026), -> benthivores 0.1162 (0.0418;
+  stage_access [0.3745, 0.01112] (0.392, 0.0388): hake out of this pair (its
+  score counted whiting), f_A also carries the members' capture p per stage and
+  the adults' bottom-2-m share, ling a mixed searcher with its own window;
+  booked M2 0.058 (was 0.0833, the 223 broad pool); research_notes/"Vattenpelarens
+  vuxna bottenfisk", "Langans indata", "Sej och ungfisk i samma hal"), -> whiting
+  0.1045 (0.0359), -> mackerel 3.346e-05 (0.000137; OFF in every reading); mackerel -> planktivores
+  0.04579 (0.0248; herring and sprat only), -> zoo 0.00084 (245: measured clearance,
   daytime biting on Calanus; was 0.0023), -> krill 0.0039; planktivores
   -> krill 0.023, benthivores -> krill 0.00679 (0.013; before 269: section 253: the measured box
   light, 44 SMHI CTD PAR casts, ~x6 the old central profile at 80-150 m;
@@ -262,11 +277,15 @@ fabricates mass.
   `a(t) = a * m(t)`, m from the sun's elevation vs `light_threshold_deg`,
   normalised so the library `a` is the annual mean; every DM then also
   observes the light level (last input slot). Since section 269 the visual
-  fish pairs take the vision rule's night/day (water column -> planktivores
-  0.0594, -> benthivores 0.165, -> whiting 0.137, -> mackerel 0.923, -> krill
-  0.0245; whiting -> planktivores 0.212, -> benthivores 0.565; benthivores
-  -> krill 0.036, -> planktivores 0.141, -> whiting 0.168), stomach values
-  where they exist; the list below is the pre-269 history. Since section 220 (derived
+  fish pairs take the vision rule's night/day, since 270 x F_night / F_day of
+  the schooling factor (water column -> planktivores 0.116, -> benthivores
+  0.165, -> whiting 0.139, -> mackerel 0.916, -> krill 0.0245; whiting ->
+  planktivores 0.342, -> benthivores 0.565; benthivores -> krill 0.036, ->
+  planktivores 0.238, -> whiting 0.171), stomach values where they exist; the
+  list below is the pre-269 history. The lever knows day length, not light
+  intensity: rule A swings ~10-15 % more over the year (0.80-0.92 of m(t) in
+  Nov-Feb, 1.08-1.15 in Jul-Aug), a timing error of at most ~3 % of a pair's
+  flow, left as is (270; research_notes/"Januaris ljusunderskott"). Since section 220 (derived
   night/day ratios): planktivores -> zoo 0.02 (0.03 since 243.3) at 0 deg; benthivores ->
   planktivores 0.06 and -> whiting 0.15 (251) at 0 deg (140 m is too dim
   for -5); at -5 deg (223.26): whiting -> planktivores 0.33 (0.48 since 243.3), -> zoo
@@ -279,7 +298,23 @@ fabricates mass.
   0.02 and benthivores 0.03 at 0 deg (encounter, measured light 253; flagged);
   benthic pairs none.
 - Predation: vectorised, Holling type II with Beddington-DeAngelis crowding,
-  hidden (rested) fraction protected, energy gain buffered. Since section
+  hidden (rested) fraction protected, energy gain buffered. Hide floors
+  (`visibility_floor`, species or pair; one floor sets both what a predator
+  can eat of a resting prey and what every observer sees of it next tick,
+  kept by the user, research_notes/"Gom och sinnen"): since section 270 every
+  fish group's floor against fish is 1.0 - with schooling and vigilance in a
+  no refuge state is left, so a fish's rest is a feeding pause (mackerel,
+  whiting, benthivores, water column species floors; the four fish ->
+  planktivore pair keys 1.0, explicit since the planktivores' species floor
+  0.35 stays for seals). The mammals: seals 0.4 and porpoises 0.55 species
+  floors (observation only; 0 had no sense behind it); pairs seals ->
+  benthivores 0.9, -> whiting 0.85, -> water column 0.7, -> planktivores
+  0.35 (species); porpoises -> planktivores 1.0, -> whiting 0.9, ->
+  benthivores 0.75, -> water column 0.9. research_notes/"Makrillens
+  antipredatorbeteende", "Planktivorernas golv", "Vitlingens golv",
+  "Bottenfiskens och vattenpelarens golv", "Sal och tumlare golv".
+  Section 270 changes payoffs and what the observations mean (shapes
+  unchanged): checkpoints before 270 are invalid, retrain. Since section
   242 it is a multi-prey response with SHARED handling: the eat shares are
   a foraging time T = sum_j eat_j and attack probabilities p_j = eat_j /
   max_k eat_k, every prey searched for at once, demand_j = B_pred T p_j
@@ -294,9 +329,14 @@ fabricates mass.
   (`a B / (1 + a h B + w B_pred)`); `shared_handling=False` on the env
   reverts. With equal E/h (every predator but the benthivores) attacking
   every prey pays, so the diet becomes the encounter shares of the
-  budget_gate diet gate (every pair passed at 243.3; today 5 pairs are
-  OFF at equal cells and 4 at the field spread, the water column's krill
-  among them); the per-pair form made one prey per cell the
+  budget_gate diet gate (every pair passed at 243.3; since section 270 the
+  OFF pairs are whiting -> benthivores (equal cells and prey side, flagged
+  open), whiting -> epifauna at the field spread, water column -> mackerel
+  and seals -> water column on the prey side; the water column's krill sits
+  on its booking, 1.01 prey side, 1.06 at the field spread, and water column
+  -> benthivores at 2.0 / 1.8 (equal / field) of its re-booked M2, the
+  encounter on J at the bed ~2x the field flow, judged by the long-run probe
+  after training; planktivores 0.90 of their booked M2); the per-pair form made one prey per cell the
   optimum (239.1). Checkpoints keep their shapes but the eat action means
   something new: retrain. `w` is the per-FG `interference` parameter
   (`interference: 0` = pure Holling; the old gadoid 1.0 of section 86
@@ -375,10 +415,16 @@ fabricates mass.
   the booked M2 out of it. The box is an open nursery / window (0.1-6 %
   of the stocks, recruitment flat in SSB), so its level is I/(L - P) with
   the REALISED losses L, and no K is needed. Recruits are imported
-  (`juvenile_stage.recruit_import` t/km2/yr into J, uniformly over the
-  cells at the month's start_fill, shaped by the `recruitment` months,
+  (`juvenile_stage.recruit_import` t/km2/yr into J at the month's
+  start_fill, shaped by the `recruitment` months,
   which then no longer allocate own growth to J: planktivores 0.527,
-  benthivores 0.183, whiting 0.172), emigration is a per-capita boundary
+  benthivores 0.183, whiting 0.172; uniformly over the cells, or since
+  section 270 by an optional `recruit_depth_table` (rows {depth_m, weight},
+  the loader's `recruit_weight_map` at equal-cell mean 1, so the total stays
+  I; both engines, FG editor field): benthivores 2.71 / 1.00 / 0.21 / 0.05
+  for beds < 100 / 100-150 / 150-250 / >= 250 m, GOV haddock age 0 and cod
+  age 1 - the recruits settle over shallow beds; it places arrivals only, J
+  then moves with B; research_notes/"Rekryternas bottendjup"), emigration is a per-capita boundary
   loss (`juvenile_stage.emigration` [e_J, e_A]: 0.1/0, 1.1/0.17,
   0.2/0.3), and the windows migrate (open_pool.migrate, now on a staged
   DM's ADULTS: planktivore adults 2.111 t/km2 x the WP2 presence at k

@@ -133,6 +133,9 @@ class FunctionalGroup:
         if self.open_pool is not None and self.exposed_share is not None:
             raise ValueError(f"{group_id}: an open pool cannot also be a refuge")
         self.outside_weight_map = None
+        # Section 270: a staged DM's recruit import shape by bed depth
+        # (equal-cell mean 1), set by the loader; None = uniform.
+        self.recruit_weight_map = None
         # Section 247: the field reserve fill by month (12 values), the
         # centre of the start reserve; a migrating DM falls back to its
         # arrival fill (the box composite's fat by month).
