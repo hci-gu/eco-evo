@@ -190,3 +190,46 @@ Grade of the verdict: [J] resting on [L] (E1, E3), [F/A] analogs (E8-E11) and
   protection (dilution, confusion) belongs in the encounter a of the fish-prey
   pairs instead of the prey's hide action (research only, no change).
 - 2026-11-11 (research_notes/"Gom och sinnen"): keep the hide-observation coupling.
+
+## Addendum (2026-11-11): the floor after the combined derivation
+
+User: investigate mackerel's floor while the recruit shape is derived. Analysis
+only, nothing applied.
+
+What the floor 0.7 acts on (code: `interactions.py:785-800`, `observations.py:39-78`;
+mackerel has no pair floor, so the species floor applies everywhere):
+- predation by its only predator, water column -> mackerel (stage_access 0.14,
+  OFF): implied M2 0.0004 /yr today, 0.00007 /yr under the combined capture-p x
+  schooling derivation (research_notes/"Fangst och stim i fiskparen", factor
+  x0.244: p 0.20 -> 0.549, schooling F 0.089 at the new p). Full hiding would
+  remove at most 0.3 of that, ~0.00002 /yr, against a booked 0.021 /yr;
+- what six observers see of mackerel the next tick (benthivores, water column,
+  whiting, planktivores, porpoises, seals): at fix97's rest share 0.028 the cut
+  is 0.3 x 0.028 = 0.008 of the biomass.
+
+What a floor below 1 would stand for, once the combined derivation is in a:
+1. Schooling (dilution, confusion, collective escape): now in a through F
+   (research_notes/"Stimskydd i motes-a"); mackerel is always schooled (sigma 1
+   day and night), so the whole pair carries it. A floor < 1 counts it twice.
+2. Individual vigilance / pre-strike escape: in the capture p as q 0.8
+   (research_notes/"Fangstsannolikhet for fiskbyten"); for a schooled prey k
+   replaces p, and collective escape is in k. A floor < 1 counts it again.
+3. A real refuge that costs feeding: none found. Mackerel school and feed day
+   and night in the open 0-50 m layer; no cover; darkness is in rule A and the
+   night/day ratio; a depth refuge works only against surface predators
+   (gannets, tuna) that the model does not have, and a downward shift moves
+   mackerel toward the water column, not away (findings 1, 2, 5 above).
+4. Observation: under the blend-of-senses reading (research_notes/"Gom och
+   sinnen") a non-feeding mackerel school still smells, sounds and moves; the
+   coupling itself is kept (user), but the 0.3 cut has no sense behind it.
+
+Verdict [J on F/L, D]: with schooling and vigilance in a, nothing is left for
+mackerel's floor to represent; the evidence supports 1.0 (no hide protection; rest
+= a pure feeding pause at the swimming cost). The effect is negligible either way
+(< 0.0001 /yr of M2, < 1 % of observed biomass), so the choice is about
+consistency, not about the dynamics. A floor of 1 is consistent only together with
+the schooling factor in a; with today's a (no F) the 0.7 is the only schooling
+protection mackerel has.
+
+User decision (2026-11-11): mackerel's visibility_floor 1.0 goes into the
+combined section, together with the schooling factor in a, never before it.
