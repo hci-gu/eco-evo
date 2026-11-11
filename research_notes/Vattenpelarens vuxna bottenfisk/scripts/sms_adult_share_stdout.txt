@@ -1,0 +1,26 @@
+Mean length at sea (mm) by age and quarter, 2001-22 mean:
+  Cod      age 0: nan / nan / 84 / 136
+  Cod      age 1: 153 / 194 / 251 / 302
+  Cod      age 2: 329 / 357 / 417 / 444
+  Cod      age 3: 496 / 552 / 590 / 603
+  Haddock  age 0: nan / nan / 109 / 136
+  Haddock  age 1: 158 / 182 / 225 / 239
+  Haddock  age 2: 253 / 255 / 291 / 299
+  Haddock  age 3: 305 / 308 / 330 / 337
+
+Flow to cod and haddock by predator, t/yr 2001-22 mean, J (< 27 cm) / A (>= 27 cm); A share
+  Fulmar       J      1238  A         0  A share 0.000   [Cod A 0 J 1238, Haddock A 0 J 0]
+  Guillemot    J      1692  A         0  A share 0.000   [Cod A 0 J 0, Haddock A 0 J 1692]
+  Her.Gull     J       464  A         0  A share 0.000   [Cod A 0 J 205, Haddock A 0 J 260]
+  Kittiwake    J       424  A         0  A share 0.000   [Cod A 0 J 238, Haddock A 0 J 186]
+  GBB.Gull     J       379  A         0  A share 0.000   [Cod A 0 J 174, Haddock A 0 J 205]
+  Gannet       J       916  A      1312  A share 0.589   [Cod A 1312 J 916, Haddock A 0 J 0]
+  A.radiata    J       658  A         0  A share 0.000   [Cod A 0 J 658, Haddock A 0 J 0]
+  G.gurnards   J     10539  A         0  A share 0.000   [Cod A 0 J 9702, Haddock A 0 J 837]
+  Grey.seal    J      6391  A     18607  A share 0.744   [Cod A 12858 J 3123, Haddock A 5749 J 3267]
+  H.porpoise   J      7891  A     16494  A share 0.676   [Cod A 16494 J 7891, Haddock A 0 J 0]
+  Cod          J     14355  A      8542  A share 0.373   [Cod A 2464 J 2547, Haddock A 6078 J 11808]
+  Whiting      J     21657  A       149  A share 0.007   [Cod A 0 J 2623, Haddock A 149 J 19034]
+  Saithe       J     35359  A      7046  A share 0.166   [Cod A 0 J 0, Haddock A 7046 J 35359]
+
+Hake as a predator in SMS: prey species none among cod/haddock

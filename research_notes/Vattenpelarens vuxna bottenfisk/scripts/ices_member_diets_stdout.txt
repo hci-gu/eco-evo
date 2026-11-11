@@ -1,0 +1,128 @@
+
+== anglerfish | Skagerrak/Trench (>=57 N, >=6 E): stomachs 12 (non-empty 11), prey mass 503.4 g (identified to a taxon 479.1 g)
+   model benthivores 60.8 g = 0.121 of all prey mass (0.127 of identified); whiting 0.000
+     ben:flatfish n.i.:J                57.1 g  0.113
+     ben:cod:J                           3.7 g  0.007
+   largest other items: hake 0.382; herring 0.307; Cephalopoda 0.114; unidentified 0.048; eel 0.026; fish n.i. 0.002; whiting 0.000
+   benthivore items (species, prey L cm, [w = from weight] stage, g, predator L cm, year, month, haul depth m):
+     flatfish n.i., 14.8, J, 57.1, 50.0, 2022, 8, 30.0
+     cod, 8.0, J, 3.7, 29.0, 2022, 8, 71.0
+
+== anglerfish | rest of North Sea: stomachs 31 (non-empty 23), prey mass 1726.2 g (identified to a taxon 1718.4 g)
+   model benthivores 570.9 g = 0.331 of all prey mass (0.332 of identified); whiting 0.091
+     ben:haddock:A                     308.7 g  0.179
+     ben:flatfish n.i.:A               120.6 g  0.070
+     ben:plaice:A                       99.2 g  0.057
+     ben:flatfish n.i.:J                42.4 g  0.025
+   largest other items: hake 0.265; horse mackerel 0.182; whiting 0.091; Cephalopoda 0.085; Norway pout 0.016; Trisopterus 0.011; Norway pout 0.006; unidentified 0.005
+   benthivore items (species, prey L cm, [w = from weight] stage, g, predator L cm, year, month, haul depth m):
+     haddock, 32.3, wA, 308.7, 62.0, 2024, 2, 102.0
+     plaice, 22.0, wA, 99.2, 49.0, 2022, 8, 54.0
+     flatfish n.i., 19.8, wA, 72.3, 43.4, 2022, 2, None
+     flatfish n.i., 17.0, A, 48.3, 43.0, 2022, 8, 75.0
+     flatfish n.i., 12.5, J, 25.3, 41.0, 2022, 8, 69.0
+     flatfish n.i., 12.2, wJ, 17.1, 35.0, 2024, 2, 83.0
+
+== hake | Skagerrak/Trench (>=57 N, >=6 E): stomachs 185 (non-empty 176), prey mass 1139.5 g (identified to a taxon 1139.4 g)
+   model benthivores 19.6 g = 0.017 of all prey mass (0.017 of identified); whiting 0.213
+     ben:plaice:J                       16.8 g  0.015
+     ben:flatfish n.i.:J                 2.9 g  0.003
+   largest other items: herring 0.583; whiting 0.213; Clupeidae 0.078; sprat 0.060; fish n.i. 0.032; Norway pout 0.007; Crangon 0.005; aphia:138139 0.003
+   benthivore items (species, prey L cm, [w = from weight] stage, g, predator L cm, year, month, haul depth m):
+     plaice, 13.0, J, 16.8, 76.0, 2024, 8, 73.0
+     flatfish n.i., 6.6, wJ, 2.9, 81.0, 2024, 8, 54.0
+
+== hake | rest of North Sea: stomachs 169 (non-empty 108), prey mass 772.8 g (identified to a taxon 772.7 g)
+   model benthivores 288.2 g = 0.373 of all prey mass (0.373 of identified); whiting 0.017
+     ben:haddock:J                     273.5 g  0.354
+     ben:cod:J                          14.7 g  0.019
+   largest other items: fish n.i. 0.257; herring 0.195; Norway pout 0.082; Cephalopoda 0.027; Norway pout 0.026; whiting 0.017; aphia:126716 0.009; Clupeidae 0.007
+   benthivore items (species, prey L cm, [w = from weight] stage, g, predator L cm, year, month, haul depth m):
+     haddock, 25.2, J, 158.7, 72.0, 2024, 8, 54.0
+     haddock, 24.0, J, 114.8, 72.0, 2024, 8, 54.0
+     cod, 12.4, J, 14.7, 40.0, 2024, 8, 31.0
+
+== ling | Skagerrak/Trench (>=57 N, >=6 E): stomachs 19 (non-empty 19), prey mass 106.5 g (identified to a taxon 106.5 g)
+   model benthivores 0.0 g = 0.000 of all prey mass (0.000 of identified); whiting 0.000
+   largest other items: herring 0.808; Trisopterus 0.192
+
+== ling | rest of North Sea: stomachs 65 (non-empty 31), prey mass 128.3 g (identified to a taxon 128.3 g)
+   model benthivores 91.3 g = 0.712 of all prey mass (0.712 of identified); whiting 0.000
+     ben:flatfish n.i.:A                89.5 g  0.698
+     ben:cod:J                           1.8 g  0.014
+   largest other items: Norway pout 0.230; Norway pout 0.051; Crustacea n.i. 0.003; Pontophilus 0.002; fish n.i. 0.002; unidentified 0.000
+   benthivore items (species, prey L cm, [w = from weight] stage, g, predator L cm, year, month, haul depth m):
+     flatfish n.i., 16.6, A, 89.5, 64.0, 2024, 8, 31.0
+     cod, 6.2, wJ, 1.8, 88.0, 2024, 2, 114.0
+
+== pollack | Skagerrak/Trench (>=57 N, >=6 E): stomachs 12 (non-empty 12), prey mass 12.7 g (identified to a taxon 12.7 g)
+   model benthivores 0.0 g = 0.000 of all prey mass (0.000 of identified); whiting 0.000
+   largest other items: Polybius 0.624; Trisopterus 0.327; fish n.i. 0.050
+
+== pollack | rest of North Sea: stomachs 21 (non-empty 18), prey mass 373.1 g (identified to a taxon 362.7 g)
+   model benthivores 0.0 g = 0.000 of all prey mass (0.000 of identified); whiting 0.392
+   largest other items: whiting 0.392; Cephalopoda 0.201; herring 0.146; sprat 0.117; Norway pout 0.064; fish n.i. 0.050; unidentified 0.028; aphia:799 0.001
+
+== saithe | rest of North Sea: stomachs 665 (non-empty 573), prey mass 21.0 g (identified to a taxon 21.0 g)
+   model benthivores 0.0 g = 0.000 of all prey mass (0.000 of identified); whiting 0.000
+     ben:cod:?                           0.0 g  0.000
+     ben:haddock:?                       0.0 g  0.000
+     ben:long rough dab:A                0.0 g  0.000
+     ben:flatfish n.i.:?                 0.0 g  0.000
+     ben:dab:A                           0.0 g  0.000
+     ben:witch:?                         0.0 g  0.000
+   largest other items: aphia:106782 0.709; Norway pout 0.291; whiting 0.000; fish n.i. 0.000; aphia:22496 0.000; aphia:1828 0.000; aphia:146420 0.000; aphia:138878 0.000
+   benthivore items (species, prey L cm, [w = from weight] stage, g, predator L cm, year, month, haul depth m):
+     cod, None, ?, 0.0, 30.0, 1981, 6, None
+     cod, None, ?, 0.0, 50.0, 1981, 6, None
+     cod, None, ?, 0.0, 50.0, 1981, 6, None
+     cod, None, ?, 0.0, 50.0, 1981, 6, None
+     haddock, None, ?, 0.0, 50.0, 1981, 6, None
+     cod, None, ?, 0.0, 70.0, 1981, 6, None
+     cod, None, ?, 0.0, 70.0, 1981, 6, None
+     cod, None, ?, 0.0, 70.0, 1981, 6, None
+     haddock, None, ?, 0.0, 50.0, 1981, 6, None
+     haddock, None, ?, 0.0, 70.0, 1981, 6, None
+     haddock, None, ?, 0.0, 70.0, 1981, 6, None
+     haddock, None, ?, 0.0, 70.0, 1981, 6, None
+     haddock, None, ?, 0.0, 70.0, 1981, 6, None
+     long rough dab, None, A, 0.0, 70.0, 1981, 6, None
+     haddock, None, ?, 0.0, 50.0, 1981, 6, None
+     haddock, None, ?, 0.0, 70.0, 1981, 6, None
+     haddock, None, ?, 0.0, 70.0, 1981, 6, None
+     haddock, None, ?, 0.0, 70.0, 1981, 6, None
+     haddock, None, ?, 0.0, 70.0, 1981, 6, None
+     long rough dab, None, A, 0.0, 70.0, 1981, 6, None
+     haddock, None, ?, 0.0, 100.0, 1981, 6, None
+     flatfish n.i., None, ?, 0.0, 70.0, 1981, 10, None
+     flatfish n.i., None, ?, 0.0, 70.0, 1981, 10, None
+     flatfish n.i., None, ?, 0.0, 70.0, 1981, 10, None
+     flatfish n.i., None, ?, 0.0, 70.0, 1981, 10, None
+
+== spurdog | Skagerrak/Trench (>=57 N, >=6 E): stomachs 91 (non-empty 91), prey mass 1.8 g (identified to a taxon 1.8 g)
+   model benthivores 0.0 g = 0.000 of all prey mass (0.000 of identified); whiting 0.000
+   largest other items: fish n.i. 0.742; Crangon 0.126; Crustacea n.i. 0.077; Hyperiidae 0.049; aphia:105 0.005
+
+== spurdog | rest of North Sea: stomachs 91 (non-empty 69), prey mass 631.3 g (identified to a taxon 631.3 g)
+   model benthivores 61.8 g = 0.098 of all prey mass (0.098 of identified); whiting 0.200
+     ben:dab:A                          61.8 g  0.098
+   largest other items: herring 0.227; whiting 0.200; argentine 0.132; sandeels 0.116; lesser weever 0.066; Norway pout 0.047; sandeels 0.036; fish n.i. 0.026
+   benthivore items (species, prey L cm, [w = from weight] stage, g, predator L cm, year, month, haul depth m):
+     dab, 15.0, A, 36.7, 80.0, 1991, 5, None
+     dab, 10.0, A, 25.1, 80.0, 1991, 5, None
+
+== stomach-equal weighting (mean over non-empty stomachs of the prey-mass proportions)
+  anglerfish    stomachs with prey mass   20: benthivores 0.338 (of it length-known adults 0.175); fish n.i. 0.012
+  hake          stomachs with prey mass  113: benthivores 0.031 (of it length-known adults 0.000); fish n.i. 0.296
+  ling          stomachs with prey mass    8: benthivores 0.250 (of it length-known adults 0.125); fish n.i. 0.125
+  pollack       stomachs with prey mass   11: benthivores 0.000 (of it length-known adults 0.000); fish n.i. 0.252
+  saithe        stomachs with prey mass    1: benthivores 0.000 (of it length-known adults 0.000); fish n.i. 0.000
+  spurdog       stomachs with prey mass   17: benthivores 0.065 (of it length-known adults 0.065); fish n.i. 0.176
+
+== pooled North Sea + Skagerrak
+  anglerfish    non-empty   34, prey    2229.6 g: benthivores 0.283 (A 0.237, J 0.046, no length 0.000)
+  hake          non-empty  284, prey    1912.3 g: benthivores 0.161 (A 0.000, J 0.161, no length 0.000)
+  ling          non-empty   50, prey     234.9 g: benthivores 0.389 (A 0.381, J 0.008, no length -0.000)
+  pollack       non-empty   30, prey     385.8 g: benthivores 0.000 (A 0.000, J 0.000, no length 0.000)
+  saithe        non-empty  573, prey      21.0 g: benthivores 0.000 (A 0.000, J 0.000, no length 0.000)
+  spurdog       non-empty  160, prey     633.1 g: benthivores 0.098 (A 0.098, J 0.000, no length 0.000)

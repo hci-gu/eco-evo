@@ -1,0 +1,127 @@
+Groups 1-62:
+    1 Baleen whales  B 0.067  QB 9.90
+    2 Toothed whales  B 0.017  QB 17.63
+    3 Seals  B 0.008  QB 26.84
+    4 Seabirds  B 0.003  QB 216.00
+    5 Juvenile sharks  B 0.001  QB 2.50
+    6 Spurdog  B 0.017  QB 2.00
+    7 Large piscivorous sharks  B 0.002  QB 1.60
+    8 Small sharks  B 0.002  QB 2.96
+    9 Juvenile rays  B 0.268  QB 1.70
+   10 Starry ray + others  B 0.109  QB 1.70
+   11 Thornback & Spotted ray  B 0.066  QB 2.30
+   12 Skate + cuckoo ray  B 0.050  QB 1.80
+   13 Juvenile Cod(0-2, 0-40cm)  B 0.124  QB 8.01
+   14 Cod (adult)  B 0.161  QB 3.50
+   15 Juvenile Whiting (0-1, 0-20cm)  B 0.022  QB 17.40
+   16 Whiting (adult)  B 0.352  QB 5.46
+   17 Juvenile Haddock (0-1, 0-20cm)  B 0.007  QB 14.39
+   18 Haddock (adult)  B 0.104  QB 4.40
+   19 Juvenile Saithe (0-3, 0-40cm)  B 0.140  QB 8.29
+   20 Saithe (adult)  B 0.220  QB 3.60
+   21 Hake  B 0.014  QB 2.20
+   22 Blue whiting  B 0.080  QB 9.06
+   23 Norway pout  B 1.394  QB 5.05
+   24 Other gadoids (large)  B 0.051  QB 3.20
+   25 Other gadoids (small)  B 0.202  QB 6.00
+   26 Monkfish  B 0.042  QB 1.90
+   27 Gurnards  B 0.077  QB 3.20
+   28 Herring (juvenile 0, 1)  B 0.085  QB 12.51
+   29 Herring (adult)  B 1.966  QB 4.34
+   30 Sprat  B 0.579  QB 6.00
+   31 Mackerel  B 1.720  QB 1.73
+   32 Horse mackerel  B 0.579  QB 3.51
+   33 Sandeels  B 3.122  QB 10.10
+   34 Plaice  B 0.703  QB 3.42
+   35 Dab  B 3.000  QB 3.36
+   36 Long-rough dab  B 0.350  QB 3.40
+   37 Flounder  B 0.250  QB 3.20
+   38 Sole  B 0.158  QB 3.10
+   39 Lemon sole  B 0.305  QB 4.32
+   40 Witch  B 0.082  QB 3.00
+   41 Turbot and brill  B 0.054  QB 2.30
+   42 Megrim  B 0.034  QB 3.10
+   43 Halibut  B 0.033  QB 3.14
+   44 Dragonets  B 0.045  QB 6.00
+   45 Catfish (Wolf-fish)  B 0.014  QB 1.70
+   46 Large demersal fish  B 0.017  QB 2.54
+   47 Small demersal fish  B 0.366  QB 3.70
+   48 Miscellaneous filterfeeding pelagic fish  B 0.030  QB 10.19
+   49 Squid & cuttlefish  B 0.080  QB 20.00
+   50 Fish larvae  B 0.332  QB 20.00
+   51 Carnivorous zooplankton  B 3.141  QB 12.50
+   52 Herbivorous & Omnivorous zooplankton (copepods)  B 16.000  QB 30.00
+   53 Gelatinous zooplankton  B 0.066  QB 6.35
+   54 Large crabs  B 1.354  QB 2.77
+   55 Nephrops  B 1.100  QB 1.85
+   56 Epifaunal macrobenthos (mobile grazers)  B 78.000  QB 1.94
+   57 Infaunal macrobenthos  B 136.000  QB 3.33
+   58 Shrimp  B 0.500  QB 10.00
+   59 Small mobile epifauna (swarming crustaceans)  B 30.000  QB 5.43
+   60 Small infauna (polychaetes)  B 150.000  QB 3.00
+   61 Sessile epifauna  B 105.000  QB 1.30
+   62 Meiofauna  B 4.115  QB 125.00
+
+Model benthivore members (Ecopath groups): [(13, 'Juvenile Cod(0-2, 0-40cm)'), (14, 'Cod (adult)'), (17, 'Juvenile Haddock (0-1, 0-20cm)'), (18, 'Haddock (adult)'), (34, 'Plaice'), (35, 'Dab'), (36, 'Long-rough dab'), (37, 'Flounder'), (38, 'Sole'), (39, 'Lemon sole'), (40, 'Witch')]
+
+6 Spurdog: B 0.017 QB 2.00; model-benthivore items total 0.068
+    Juvenile Haddock (0-1, 0-20cm)           0.0003
+    Haddock (adult)                          0.0061
+    Plaice                                   0.0475
+    Dab                                      0.0068
+    Witch                                    0.0068
+
+9 Juvenile rays: B 0.268 QB 1.70; model-benthivore items total 0.006
+    Juvenile Cod(0-2, 0-40cm)                0.0020
+    Dab                                      0.0029
+    Long-rough dab                           0.0012
+
+10 Starry ray + others: B 0.109 QB 1.70; model-benthivore items total 0.077
+    Juvenile Cod(0-2, 0-40cm)                0.0281
+    Juvenile Haddock (0-1, 0-20cm)           0.0006
+    Dab                                      0.0277
+    Long-rough dab                           0.0195
+    Sole                                     0.0013
+    Witch                                    0.0001
+
+11 Thornback & Spotted ray: B 0.066 QB 2.30; model-benthivore items total 0.014
+    Juvenile Haddock (0-1, 0-20cm)           0.0001
+    Plaice                                   0.0092
+    Sole                                     0.0045
+
+12 Skate + cuckoo ray: B 0.050 QB 1.80; model-benthivore items total 0.034
+    Juvenile Haddock (0-1, 0-20cm)           0.0003
+    Dab                                      0.0029
+    Long-rough dab                           0.0019
+    Sole                                     0.0279
+    Witch                                    0.0009
+
+19 Juvenile Saithe (0-3, 0-40cm): B 0.140 QB 8.29; model-benthivore items total 0.000
+    Juvenile Haddock (0-1, 0-20cm)           0.0001
+
+20 Saithe (adult): B 0.220 QB 3.60; model-benthivore items total 0.004
+    Juvenile Haddock (0-1, 0-20cm)           0.0007
+    Haddock (adult)                          0.0021
+    Dab                                      0.0006
+    Long-rough dab                           0.0004
+
+21 Hake: B 0.014 QB 2.20; model-benthivore items total 0.000
+
+26 Monkfish: B 0.042 QB 1.90; model-benthivore items total 0.186
+    Juvenile Cod(0-2, 0-40cm)                0.0115
+    Cod (adult)                              0.0115
+    Juvenile Haddock (0-1, 0-20cm)           0.0028
+    Haddock (adult)                          0.0659
+    Plaice                                   0.0037
+    Dab                                      0.0302
+    Long-rough dab                           0.0452
+    Lemon sole                               0.0113
+    Witch                                    0.0037
+
+27 Gurnards: B 0.077 QB 3.20; model-benthivore items total 0.055
+    Juvenile Cod(0-2, 0-40cm)                0.0286
+    Juvenile Haddock (0-1, 0-20cm)           0.0003
+    Plaice                                   0.0000
+    Dab                                      0.0094
+    Long-rough dab                           0.0166
+    Witch                                    0.0001

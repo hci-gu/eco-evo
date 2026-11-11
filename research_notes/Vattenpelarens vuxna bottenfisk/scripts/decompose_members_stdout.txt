@@ -1,0 +1,141 @@
+adult benthivores in the bottom 2 m: day 0.714, night 0.757 (off-bed part uniform 2-20 m [J])
+
+predatory_fish->benthivorous_fish: eq here 0.0432824, band_fish_pair 0.0432824 (must agree); a_new = a_lib x ratio 0.04182
+  biomass weights in the group (renormalised): {'saithe': 0.797, 'spurdog': 0.097, 'hake': 0.048, 'anglerfish': 0.027, 'ling': 0.014, 'velvet belly': 0.009, 'pollack': 0.008}
+  member|stage              W score   L m      N/t  share a  a/t rel day/ngt  terms: period, eye, R_sat (m), k per fish, time share within the slab
+  saithe|adult          0.504  0.20  0.43   1241.4   0.6012     1.19    0.84  d gadoid 0.86 946 0.125; n gadoid 0.86 585 0.161
+  saithe|large          0.293  0.30  0.70    304.1   0.2912     0.99    0.92  d gadoid 1.40 1.52e+03 0.125; n gadoid 1.40 925 0.161
+  hake|adult            0.048  0.55  0.36   2099.9   0.0508     1.07    0.96  d gadoid 0.73 432 0.221; n gadoid 0.73 432 0.029
+  ling|all              0.014  0.60  0.63    550.2   0.0249     1.84    0.88  d gadoid 1.26 702 0.330; n gadoid 1.26 702 0.330
+  anglerfish|all        0.027  0.90  0.58    247.3   0.0152     0.57    0.50  d fixed 0.40 432 1.000; n fixed 0.40 432 1.000
+  pollack|all           0.008  0.30  0.56    471.3   0.0069     0.86    0.89  d gadoid 1.11 1.22e+03 0.125; n gadoid 1.11 744 0.161
+  hake|juvenile         0.001  0.15  0.14  52920.3   0.0041     5.20    0.88  d gadoid 0.30 249 0.221; n gadoid 0.30 249 0.029
+  spurdog|all           0.097  0.56  0.70    627.7   0.0037     0.04    0.86  d none 0.30 775 0.074; d(s) none 0.30 775 0.000; n none 0.30 775 0.009; n(s) none 0.30 775 0.000
+  velvet belly|all      0.009  0.10  0.38   4824.8   0.0020     0.22    0.50  d none 0.30 448 0.032; n none 0.30 448 0.032
+  per species: share of the a / biomass share / a per tonne relative to the group mean
+    saithe        0.8924 / 0.797 / 1.12
+    hake          0.0549 / 0.048 / 1.13
+    ling          0.0249 / 0.014 / 1.84
+    anglerfish    0.0152 / 0.027 / 0.57
+    pollack       0.0069 / 0.008 / 0.86
+    spurdog       0.0037 / 0.097 / 0.04
+    velvet belly  0.0020 / 0.009 / 0.22
+  adult-prey vertical profile: member a on A relative to the J slab a (x factor on the member's A flow)
+    saithe|adult         x0.890
+    saithe|large         x0.905
+    hake|adult           x0.835
+    ling|all             x0.794
+    anglerfish|all       x0.735
+    pollack|all          x0.898
+    hake|juvenile        x0.840
+    spurdog|all          x1.020
+    velvet belly|all     x1.009
+
+predatory_fish->whiting: eq here 0.0359662, band_fish_pair 0.0359662 (must agree); a_new = a_lib x ratio 0.03593
+  biomass weights in the group (renormalised): {'saithe': 0.797, 'spurdog': 0.097, 'hake': 0.048, 'anglerfish': 0.027, 'ling': 0.014, 'velvet belly': 0.009, 'pollack': 0.008}
+  member|stage              W score   L m      N/t  share a  a/t rel day/ngt  terms: period, eye, R_sat (m), k per fish, time share within the slab
+  saithe|adult          0.504  0.20  0.43   1241.4   0.6051     1.20    0.86  d gadoid 0.86 946 0.488; n gadoid 0.86 585 0.572
+  saithe|large          0.293  0.30  0.70    304.1   0.3122     1.07    0.93  d gadoid 1.40 1.52e+03 0.488; n gadoid 1.40 925 0.572
+  hake|adult            0.048  0.55  0.36   2099.9   0.0435     0.91    0.94  d gadoid 0.73 432 0.714; n gadoid 0.73 432 0.147
+  ling|all              0.014  0.60  0.63    550.2   0.0177     1.31    0.89  d gadoid 1.26 702 0.865; n gadoid 1.26 702 0.865
+  pollack|all           0.008  0.30  0.56    471.3   0.0072     0.89    0.90  d gadoid 1.11 1.22e+03 0.488; n gadoid 1.11 744 0.572
+  spurdog|all           0.097  0.56  0.70    627.7   0.0047     0.05    0.84  d none 0.30 775 0.373; d(s) none 0.30 775 0.000; n none 0.30 775 0.053; n(s) none 0.30 775 0.000
+  anglerfish|all        0.027  0.90  0.58    247.3   0.0036     0.14    0.50  d fixed 0.40 432 1.000; n fixed 0.40 432 1.000
+  hake|juvenile         0.001  0.15  0.14  52920.3   0.0035     4.42    0.83  d gadoid 0.30 249 0.714; n gadoid 0.30 249 0.147
+  velvet belly|all      0.009  0.10  0.38   4824.8   0.0025     0.27    0.50  d none 0.30 448 0.161; n none 0.30 448 0.161
+  per species: share of the a / biomass share / a per tonne relative to the group mean
+    saithe        0.9173 / 0.797 / 1.15
+    hake          0.0470 / 0.048 / 0.97
+    ling          0.0177 / 0.014 / 1.31
+    pollack       0.0072 / 0.008 / 0.89
+    spurdog       0.0047 / 0.097 / 0.05
+    anglerfish    0.0036 / 0.027 / 0.14
+    velvet belly  0.0025 / 0.009 / 0.27
+
+predatory_fish->planktivorous_fish: eq here 0.0172733, band_fish_pair 0.0172733 (must agree); a_new = a_lib x ratio 0.01742
+  biomass weights in the group (renormalised): {'saithe': 0.797, 'spurdog': 0.097, 'hake': 0.048, 'anglerfish': 0.027, 'ling': 0.014, 'velvet belly': 0.009, 'pollack': 0.008}
+  member|stage              W score   L m      N/t  share a  a/t rel day/ngt  terms: period, eye, R_sat (m), k per fish, time share within the slab
+  saithe|adult          0.504  0.70  0.43   1241.4   0.5912     1.17    0.93  d gadoid 0.86 552 0.008; d gadoid 0.86 20.9 0.008; d gadoid 0.86 71 0.031; d gadoid 0.86 331 0.040
+  saithe|large          0.293  1.00  0.70    304.1   0.3288     1.12    0.96  d gadoid 1.40 861 0.008; d gadoid 1.40 32.6 0.008; d gadoid 1.40 114 0.031; d gadoid 1.40 533 0.040
+  hake|adult            0.048  0.72  0.36   2099.9   0.0427     0.90    0.93  d gadoid 0.73 305 0.010; d gadoid 0.73 11.6 0.010; d gadoid 0.73 32.4 0.037; d gadoid 0.73 151 0.054
+  ling|all              0.014  0.60  0.63    550.2   0.0152     1.12    0.96  d gadoid 1.26 427 0.011; d gadoid 1.26 16.2 0.011; d gadoid 1.26 52.6 0.039; d gadoid 1.26 246 0.063
+  spurdog|all           0.097  0.64  0.70    627.7   0.0081     0.08    0.59  d none 0.30 464 0.007; d(s) none 0.30 464 0.006; d none 0.30 17.6 0.007; d(s) none 0.30 17.6 0.006
+  pollack|all           0.008  0.70  0.56    471.3   0.0073     0.91    0.95  d gadoid 1.11 696 0.008; d gadoid 1.11 26.4 0.008; d gadoid 1.11 91.2 0.031; d gadoid 1.11 426 0.040
+  hake|juvenile         0.001  0.24  0.14  52920.3   0.0034     4.25    0.82  d gadoid 0.30 249 0.010; d gadoid 0.30 9.42 0.010; d gadoid 0.30 18.7 0.037; d gadoid 0.30 87.3 0.054
+  anglerfish|all        0.027  0.40  0.58    247.3   0.0017     0.06    0.66  d fixed 0.40 151 0.070; n fixed 0.40 151 0.040; d fixed 0.40 32.4 0.040; n fixed 0.40 32.4 0.004
+  velvet belly|all      0.009  0.30  0.38   4824.8   0.0016     0.17    0.73  d none 0.30 311 0.001; d none 0.30 11.8 0.001; d none 0.30 33.6 0.012; d none 0.30 157 0.016
+  per species: share of the a / biomass share / a per tonne relative to the group mean
+    saithe        0.9200 / 0.797 / 1.15
+    hake          0.0461 / 0.048 / 0.95
+    ling          0.0152 / 0.014 / 1.12
+    spurdog       0.0081 / 0.097 / 0.08
+    pollack       0.0073 / 0.008 / 0.91
+    anglerfish    0.0017 / 0.027 / 0.06
+    velvet belly  0.0016 / 0.009 / 0.17
+
+predatory_fish->mackerel: eq here 0.000181788, band_fish_pair 0.000181788 (must agree); a_new = a_lib x ratio 0.0001366
+  biomass weights in the group (renormalised): {'spurdog': 0.499, 'hake': 0.248, 'anglerfish': 0.137, 'ling': 0.07, 'velvet belly': 0.047}
+  member|stage              W score   L m      N/t  share a  a/t rel day/ngt  terms: period, eye, R_sat (m), k per fish, time share within the slab
+  spurdog|all           0.499  0.64  0.70    627.7   0.7642     1.53    0.55  d none 0.30 464 0.000; d(s) none 0.30 464 0.025; d none 0.30 17.6 0.000; d(s) none 0.30 17.6 0.025
+  hake|adult            0.244  0.72  0.36   2099.9   0.1932     0.79    0.20  d gadoid 0.73 305 0.000; d gadoid 0.73 11.6 0.000; d gadoid 0.73 32.4 0.000; d gadoid 0.73 151 0.000
+  hake|juvenile         0.004  0.24  0.14  52920.3   0.0340     8.36    0.06  d gadoid 0.30 249 0.000; d gadoid 0.30 9.42 0.000; d gadoid 0.30 18.7 0.000; d gadoid 0.30 87.3 0.000
+  ling|all              0.070  0.60  0.63    550.2   0.0082     0.12    0.61  d gadoid 1.26 427 0.000; d gadoid 1.26 16.2 0.000; d gadoid 1.26 52.6 0.000; d gadoid 1.26 246 0.000
+  anglerfish|all        0.137  0.40  0.58    247.3   0.0004     0.00    0.00  d fixed 0.40 151 0.000; n fixed 0.40 151 0.000; d fixed 0.40 32.4 0.000; n fixed 0.40 32.4 0.000
+  velvet belly|all      0.047  0.30  0.38   4824.8   0.0000     0.00    0.00  d none 0.30 311 0.000; d none 0.30 11.8 0.000; d none 0.30 33.6 0.000; d none 0.30 157 0.000
+  per species: share of the a / biomass share / a per tonne relative to the group mean
+    spurdog       0.7642 / 0.499 / 1.53
+    hake          0.2272 / 0.248 / 0.92
+    ling          0.0082 / 0.070 / 0.12
+    anglerfish    0.0004 / 0.137 / 0.00
+    velvet belly  0.0000 / 0.047 / 0.00
+
+Windows per member (norm + aw, kexp +1.73) and the mean capture p of the encountered tonnes inside the window
+  (p at PPR 0.25 = 0.592 is the combined derivation's pair value)
+  saithe        window ('ratio', 0.3)  [f_J, f_A] [0.354, 0.0008] (check 0.354, 0.0008); mean p inside: J 0.605, A 0.558
+  hake          window ('ratio', 0.5)  [f_J, f_A] [0.664, 0.2837] (check 0.664, 0.2837); mean p inside: J 0.532, A 0.496
+  anglerfish    window ('ratio', 0.57)  [f_J, f_A] [0.970, 0.5872] (check 0.970, 0.5872); mean p inside: J 0.563, A 0.483
+  spurdog       window ('ratio', 0.34)  [f_J, f_A] [0.759, 0.2587] (check 0.759, 0.2587); mean p inside: J 0.601, A 0.594
+  velvet belly  window ('range', 0.0)  [f_J, f_A] [0.044, 0.0028] (check 0.044, 0.0028); mean p inside: J 0.592, A 0.592
+  ling own length mix, ratio 0.30: [0.683, 0.2599]; mean p inside: J 0.632, A 0.619
+  ling own length mix, ratio 0.40: [0.907, 0.4204]; mean p inside: J 0.601, A 0.575
+  ling own length mix, ratio 0.50: [0.981, 0.5691]; mean p inside: J 0.588, A 0.531
+  ling own length mix, ratio 0.57: [0.995, 0.6581]; mean p inside: J 0.584, A 0.502
+
+Pair window from the member shares: [0.396, 0.0408] (library [0.392, 0.0388]); J share of the encounter flow 0.640
+  member        a share    f_J     f_A  J flow  A flow    p J    p A   (flows as shares of the pair's J and A encounter flows, library p)
+  saithe         0.8924  0.354  0.0008   0.796   0.018  0.605  0.558
+  hake           0.0549  0.664  0.2837   0.092   0.382  0.532  0.496
+  ling           0.0249  0.970  0.5872   0.061   0.359  0.563  0.483
+  anglerfish     0.0152  0.970  0.5872   0.037   0.218  0.563  0.483
+  pollack        0.0069  0.354  0.0008   0.006   0.000  0.605  0.558
+  spurdog        0.0037  0.759  0.2587   0.007   0.024  0.601  0.594
+  velvet belly   0.0020  0.044  0.0028   0.000   0.000  0.592  0.592
+
+With p per member and stage (relative to the combined pair p 0.592): J flow x1.003, A flow x0.831, pair x0.941; J share 0.682
+
+Member windows on planktivores and whiting (norm + aw, kexp 1.73; ling = anglerfish [J], pollack = saithe [J]):
+  anglerfish    plk: [0.993, 0.9298]
+  anglerfish    wht: [0.990, 0.8339]
+  hake          plk: [0.825, 0.4833]
+  hake          wht: [0.780, 0.3881]
+  ling          plk: [0.993, 0.9298]
+  ling          wht: [0.990, 0.8339]
+  pollack       plk: [0.651, 0.1675]
+  pollack       wht: [0.486, 0.0647]
+  saithe        plk: [0.651, 0.1675]
+  saithe        wht: [0.486, 0.0647]
+  spurdog       plk: [0.983, 0.7017]
+  spurdog       wht: [0.974, 0.4588]
+  velvet belly  plk: [0.108, 0.0000]
+  velvet belly  wht: [0.068, 0.0000]
+
+Encounter-implied FISH diet per member (shares over planktivores, whiting, benthivores J / A, mackerel), and the
+member's benthivore-A encounter rate per tonne relative to saithe's planktivore rate:
+  saithe        ben J 0.163, ben A 0.002, wht 0.099, plk 0.736
+  hake          ben J 0.124, ben A 0.268, wht 0.128, plk 0.480, mackerel 0.000
+  ling          ben J 0.129, ben A 0.366, wht 0.137, plk 0.368, mackerel 0.000
+  anglerfish    ben J 0.212, ben A 0.600, wht 0.076, plk 0.113, mackerel 0.000
+  spurdog       ben J 0.069, ben A 0.126, wht 0.098, plk 0.707, mackerel 0.000
+  pollack       ben J 0.159, ben A 0.002, wht 0.098, plk 0.741
+  velvet belly  ben J 0.197, ben A 0.067, wht 0.097, plk 0.639
+written decompose_members.json

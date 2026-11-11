@@ -1,0 +1,23 @@
+Model pair flow at the field spread: implied/booked 1.90 x booked 0.1274 = 0.2427 t/km2/yr; J share 0.57 (uniform prey 0.64)
+  J 0.1382, A 0.1045 t/km2/yr (M2 on J 0.583, on A 0.0808 /yr)
+
+member         B t/km2  Q t/km2/yr |  model J  model A    A/Q |         field J         field A | A model/field
+saithe          0.4917      1.4752 |   0.1100   0.0019   0.00 | 0.0679 (0.0234-0.1593) 0.0059 (0.0000-0.0271) |           0.3
+spurdog         0.0598      0.1197 |   0.0010   0.0025   0.02 | 0.0011 (0.0000-0.0090) 0.0061 (0.0011-0.0224) |           0.4
+hake            0.0296      0.1037 |   0.0127   0.0399   0.38 | 0.0010 (0.0000-0.0052) 0.0000 (0.0000-0.0005) |      inf
+anglerfish      0.0167      0.0300 |   0.0051   0.0228   0.76 | 0.0009 (0.0001-0.0062) 0.0048 (0.0010-0.0118) |           4.7
+ling            0.0086      0.0173 |   0.0084   0.0375   2.17 | 0.0009 (0.0000-0.0041) 0.0009 (0.0001-0.0047) |          43.4
+velvet belly    0.0056      0.0111 |   0.0000   0.0000   0.00 | 0.0000 (0.0000-0.0003) 0.0000 (0.0000-0.0002) |      inf
+pollack         0.0049      0.0148 |   0.0009   0.0000   0.00 | 0.0000 (0.0000-0.0004) 0.0000 (0.0000-0.0002) |      inf
+total                              |   0.1382   0.1045        | 0.0717 (0.0236-0.1845) 0.0177 (0.0022-0.0669) |           5.9
+
+Field J + A 0.0894 t/km2/yr (0.0257-0.2514) vs booked 0.1274 and model 0.2427
+Field A share of the field flow 0.20; model A share 0.43
+Model A as a multiple of the field A: 5.9 (range 1.6-48.5)
+
+Per-member A flow in the corrected gate runs (same split; the corrections' own windows):
+  stage_p+Aprof                  field-spread ratio 1.68: J 0.1444, A 0.0701 t/km2/yr (A / field A 4.0); J / field J 2.0
+  pA+Aprof+hake_out              field-spread ratio 1.41: J 0.1362, A 0.0433 t/km2/yr (A / field A 2.4); J / field J 1.9
+  pA+Aprof+hake_out+ling0.40     field-spread ratio 1.38: J 0.1366, A 0.0397 t/km2/yr (A / field A 2.2); J / field J 1.9
+  pA+Aprof+hake_out+ling_out     field-spread ratio 1.17: J 0.1308, A 0.0187 t/km2/yr (A / field A 1.1); J / field J 1.8
+  bracket_no_bed_A               field-spread ratio 1.21: J 0.1519, A 0.0020 t/km2/yr (A / field A 0.1); J / field J 2.1
