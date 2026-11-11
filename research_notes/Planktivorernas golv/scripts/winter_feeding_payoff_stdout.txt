@@ -1,0 +1,18 @@
+cells 3600; bed depth p10/p50/p90 [ 81. 143. 282.] m; share < 100 m 0.232
+day fraction Jan 0.285, Jul 0.715
+
+== month 1: T 6.3 C, resting cost 5.85, eat premium 3.81 MJ/t/tick; ingestion factor 0.766; light mult zoo 0.595, krill 0.882
+   zooplankton 1.5 t/km2 (alone: 16.5 MJ/t/tick)
+   < 100 m    cells 0.232: net gain mean   40.1 (zoo part   3.2), gain / premium 10.54; cells where eating pays 1.00
+   100-150 m  cells 0.299: net gain mean   38.9 (zoo part   3.9), gain / premium 10.22; cells where eating pays 1.00
+   150-250 m  cells 0.324: net gain mean   28.7 (zoo part   9.6), gain / premium  7.54; cells where eating pays 1.00
+   >= 250 m   cells 0.146: net gain mean   24.5 (zoo part  12.0), gain / premium  6.45; cells where eating pays 1.00
+   all cells: gain mean 33.8, median 38.4; share of cells where eating pays 1.00
+
+== month 7: T 12.1 C, resting cost 7.41, eat premium 4.81 MJ/t/tick; ingestion factor 1.210; light mult zoo 1.405, krill 1.118
+   zooplankton 10.6 t/km2 (alone: 65.3 MJ/t/tick)
+   < 100 m    cells 0.232: net gain mean   68.7 (zoo part  33.8), gain / premium 14.26; cells where eating pays 1.00
+   100-150 m  cells 0.299: net gain mean   68.1 (zoo part  38.8), gain / premium 14.15; cells where eating pays 1.00
+   150-250 m  cells 0.324: net gain mean   66.2 (zoo part  56.9), gain / premium 13.76; cells where eating pays 1.00
+   >= 250 m   cells 0.146: net gain mean   65.8 (zoo part  60.6), gain / premium 13.68; cells where eating pays 1.00
+   all cells: gain mean 67.3, median 68.0; share of cells where eating pays 1.00

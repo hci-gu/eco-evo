@@ -1,0 +1,26 @@
+Part 1: activity-schooling floor (sigma_rest = 1 on the day terms named), combined p
+pair                            F avg  floor A (clupeids)  floor B (+pout)
+WC -> planktivores              0.533               0.948            0.394
+whiting -> planktivores         0.657               0.969            0.629
+mackerel -> planktivores        0.598               0.925            0.925
+benthivores -> planktivores     0.655               0.983            0.426
+
+Part 2: visible share v = 1 - r (1 - floor)
+v at 0.25  rest r   0.25   0.35   0.50   0.75   0.90   0.95   1.00
+     0.28   0.960  0.280  0.376  0.520  0.760  0.904  0.952  1.000
+     0.40   0.800  0.400  0.480  0.600  0.800  0.920  0.960  1.000
+     0.50   0.667  0.500  0.567  0.667  0.833  0.933  0.967  1.000
+
+ratio of v (floor 1 / floor 0.25) = per-capita fish-predation factor on the planktivores in a cell, below saturation:
+   v 0.28 -> x3.57
+   v 0.40 -> x2.50
+   v 0.50 -> x2.00
+
+annual-mean rest share 0.043 (fix97, research_notes/"Gom och sinnen" section 4):
+   floor 0.25: v 0.968
+   floor 0.35: v 0.972
+   floor 0.50: v 0.979
+   floor 0.75: v 0.989
+   floor 0.90: v 0.996
+   floor 0.95: v 0.998
+   floor 1.00: v 1.000
