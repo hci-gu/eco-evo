@@ -1,0 +1,10 @@
+Band reading (V_one convention) for the water column; krill share and other prey / booked
+variant              | equal  | saithe spread | 150-250 m | plk  ben  whi (saithe spread, ratio to booked)
+V_one (sibling)            | 0.687 | 0.705 | 0.693 | 0.40 1.08 0.25
+V_one_p (sibling)          | 0.540 | 0.562 | 0.548 | 0.59 1.62 0.37
+band, rule A               | 0.478 | 0.481 | 0.446 | 0.69 2.04 0.40
+band, rule A, rev p        | 0.328 | 0.331 | 0.301 | 0.89 2.63 0.52
+band, rule A, Ke 2e-4      | 0.443 | 0.400 | 0.346 | 0.79 2.50 0.31
+band, rule A, Ke 0.1       | 0.477 | 0.469 | 0.403 | 0.69 2.08 0.48
+band, rule A, Ke 2e-4 rev  | 0.299 | 0.263 | 0.220 | 0.97 3.08 0.38
+band, rule A, Ke 0.1 rev   | 0.328 | 0.321 | 0.266 | 0.89 2.67 0.62

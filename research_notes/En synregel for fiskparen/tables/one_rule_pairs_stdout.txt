@@ -1,0 +1,157 @@
+================================================================================================================
+0. Reproduction of the library derivations (library rule, measured light, 262 layer)
+================================================================================================================
+  krill whiting            eq 0.043033 (library 0.043); classes 0.1483 / 0.03541 / 0.001993 / 0   library 0.148 / 0.035 / 0.002 / 0.0; night/day 0.041 (library None)
+  krill planktivorous_fish eq 0.022608 (library 0.023); classes 0.06945 / 0.02077 / 0.003708 / 0.00168   library 0.069 / 0.021 / 0.0037 / 0.0017; night/day 0.099 (library 0.57)
+  krill predatory_fish     eq 0.025964 (library 0.026); classes 0.06774 / 0.03144 / 0.005791 / 0.0001364   library 0.068 / 0.031 / 0.0058 / 0.00014; night/day 0.018 (library 0.02)
+  krill benthivorous_fish  eq 0.013208 (library 0.013); classes 0.04551 / 0.01089 / 0.0005924 / 0   library 0.046 / 0.011 / 0.00059 / 0.0; night/day 0.030 (library 0.03)
+  krill mackerel           eq 0.0038757 (library 0.0039); classes 0.005289 / 0.004267 / 0.003085 / 0.002822   library 0.0053 / 0.0043 / 0.0031 / 0.0028; night/day 0.264 (library 0.42)
+  predatory_fish->planktivorous_fish     220 encounter a 0.0059481 (library a 0.006); equal-cell series check 0.0059481
+  predatory_fish->benthivorous_fish      220 encounter a 0.0056921 (library a 0.0055); equal-cell series check 0.0056921
+  predatory_fish->whiting                220 encounter a 0.013014 (library a 0.013); equal-cell series check 0.013014
+  predatory_fish->mackerel               220 encounter a 0.001171 (library a 0.00088); equal-cell series check 0.001171
+  whiting->planktivorous_fish            220 encounter a 0.021275 (library a 0.0212); equal-cell series check 0.021275
+  whiting->benthivorous_fish             220 encounter a 0.2091 (library a 0.21); equal-cell series check 0.2091
+  mackerel->planktivorous_fish           220 encounter a 0.02653 (library a 0.0266); equal-cell series check 0.02653
+  benthivore fish pairs: library a 0.0198 (243.3) / 0.021 (251) are re-derivations of benth_encounter.py; only
+  the ratio of its vision term is used (R_sat 2 L, R_nv 0.6 L, Ke 0.02, central light Kd_top 0.25 at the bed).
+
+================================================================================================================
+1. R_sat per member (m): library / rule A / rule B (RD 1.2); krill L 25 mm; fish prey 15 cm
+================================================================================================================
+  whiting            whiting juvenile             L 0.118 m (gadoid    ): krill 0.24 / 0.24 / 0.12;  fish (lib fixed dark 0.2-0.5) -> A 0.30 / B 0.30  [2L < R_nv fish 0.3: floor used]
+  whiting            whiting adult                L 0.252 m (gadoid    ): krill 0.50 / 0.50 / 0.26;  fish (lib fixed dark 0.2-0.5) -> A 0.50 / B 0.50
+  planktivorous_fish herring                      L 0.159 m (clupeid   ): krill 0.32 / 0.32 / 0.16;  fish (lib fixed dark 0.2-0.5) -> A 0.32 / B 0.32
+  planktivorous_fish Norway pout                  L 0.118 m (gadoid    ): krill 0.24 / 0.24 / 0.12;  fish (lib fixed dark 0.2-0.5) -> A 0.30 / B 0.30  [2L < R_nv fish 0.3: floor used]
+  planktivorous_fish blue whiting < 29 cm         L 0.243 m (gadoid    ): krill 0.49 / 0.49 / 0.25;  fish (lib fixed dark 0.2-0.5) -> A 0.49 / B 0.49
+  planktivorous_fish blue whiting >= 29 cm        L 0.251 m (gadoid    ): krill 0.50 / 0.50 / 0.26;  fish (lib fixed dark 0.2-0.5) -> A 0.50 / B 0.50
+  predatory_fish     saithe < 60 cm               L 0.430 m (gadoid    ): krill 0.86 / 0.57 / 0.44;  fish (lib fixed dark 0.2-0.5) -> A 0.86 / B 0.86
+  predatory_fish     saithe >= 60 cm              L 0.701 m (gadoid    ): krill 0.87 / 0.57 / 0.61;  fish (lib fixed dark 0.2-0.5) -> A 1.40 / B 1.20
+  predatory_fish     spurdog                      L 0.699 m (non-visual): krill 0.87 / 0.57 / 0.61;  fish (lib fixed dark 0.2-0.5) -> A 1.40 / B 1.20
+  predatory_fish     hake juvenile                L 0.136 m (gadoid    ): krill 0.27 / 0.27 / 0.14;  fish (lib fixed dark 0.2-0.5) -> A 0.30 / B 0.30  [2L < R_nv fish 0.3: floor used]
+  predatory_fish     hake adult                   L 0.363 m (gadoid    ): krill 0.73 / 0.57 / 0.37;  fish (lib fixed dark 0.2-0.5) -> A 0.73 / B 0.73
+  predatory_fish     velvet belly                 L 0.380 m (non-visual): krill 0.76 / 0.57 / 0.39;  fish (lib fixed dark 0.2-0.5) -> A 0.76 / B 0.76
+  predatory_fish     pollack                      L 0.557 m (gadoid    ): krill 0.87 / 0.57 / 0.57;  fish (lib fixed dark 0.2-0.5) -> A 1.11 / B 1.11
+  benthivorous_fish  haddock                      L 0.222 m (gadoid    ): krill 0.44 / 0.44 / 0.23;  fish (lib fixed dark 0.2-0.5) -> A 0.44 / B 0.44
+  benthivorous_fish  cod                          L 0.279 m (gadoid    ): krill 0.56 / 0.56 / 0.29;  fish (lib fixed dark 0.2-0.5) -> A 0.56 / B 0.56
+  benthivorous_fish  long rough dab               L 0.154 m (gadoid    ): krill 0.31 / 0.31 / 0.16;  fish (lib fixed dark 0.2-0.5) -> A 0.31 / B 0.31
+  benthivorous_fish  grey gurnard                 L 0.206 m (gadoid    ): krill 0.41 / 0.41 / 0.21;  fish (lib fixed dark 0.2-0.5) -> A 0.41 / B 0.41
+  mackerel           mackerel                     L 0.266 m (clupeid   ): krill 0.53 / 0.53 / 0.27;  fish (lib fixed dark 0.2-0.5) -> A 0.53 / B 0.53
+  mackerel           horse mackerel               L 0.122 m (gadoid    ): krill 0.24 / 0.24 / 0.13;  fish (lib fixed dark 0.2-0.5) -> A 0.30 / B 0.30  [2L < R_nv fish 0.3: floor used]
+  rule A R0 on krill 25 mm |C0| 0.4: 0.570 m (30 mm 0.675); library |C0| 1: 0.869; fish 15 cm |C0| 0.7: 3.24 m
+  rule B krill factor (L/50 mm)^0.562 sqrt(0.4/0.7): 25 mm 0.512, 30 mm 0.567
+
+================================================================================================================
+2. a_new / a_library (equal-cell annual mean; library p). Krill: class ratios < 100 / 100-150 / 150-250 / > 250 m
+================================================================================================================
+  pair                                               A    A_Ke2e-4     A_Ke0.1 A_kdeep0.05 A_kdeep0.09      A_Lk30           B    B_Ke2e-4     B_Ke0.1     B_RD1.0     B_RD1.9    A_Rnv0.2    A_Rnv0.5
+  predatory_fish->krill                          0.450       0.517       0.384       0.461       0.413       0.627       0.312       0.358       0.268       0.284       0.345       0.450       0.450
+  whiting->krill                                 1.000       1.125       0.883       1.014       0.953       1.000       0.289       0.316       0.264       0.289       0.289       1.000       1.000
+  planktivorous_fish->krill                      1.000       1.064       0.947       1.025       0.928       1.000       0.318       0.327       0.311       0.318       0.318       1.000       1.000
+  benthivorous_fish->krill                       0.727       0.819       0.640       0.737       0.692       0.858       0.306       0.340       0.273       0.292       0.318       0.727       0.727
+  mackerel->krill                                1.000       1.053       0.960       1.006       0.980       1.000       0.390       0.396       0.385       0.390       0.390       1.000       1.000
+  predatory_fish->planktivorous_fish             5.427       7.255       4.645       5.712       4.841       5.427       4.988       6.625       4.289       4.601       5.427       5.044       6.662
+  predatory_fish->benthivorous_fish              3.980       5.551       3.297       4.318       3.291       3.980       3.812       5.300       3.166       3.604       3.980       3.542       5.400
+  predatory_fish->whiting                        5.732       8.222       4.637       6.255       4.668       5.732       5.287       7.512       4.309       4.895       5.732       5.191       7.470
+  predatory_fish->mackerel                       2.704       3.005       2.627       2.704       2.704       2.704       2.664       2.957       2.589       2.539       2.704       2.547       3.281
+  whiting->planktivorous_fish                    2.165       2.562       2.008       2.216       2.060       2.165       2.165       2.562       2.008       2.165       2.165       1.676       3.728
+  whiting->benthivorous_fish                     2.547       3.076       2.327       2.654       2.331       2.547       2.547       3.076       2.327       2.547       2.547       1.814       4.894
+  mackerel->planktivorous_fish                   1.292       1.292       1.292       1.299       1.273       1.292       1.292       1.292       1.292       1.292       1.292       0.973       2.333
+  benthivorous_fish->planktivorous_fish          1.247       1.754       1.018       1.359       1.018       1.247       1.156       1.607       0.953       1.059       1.244       1.088       1.812
+  benthivorous_fish->whiting                     1.188       1.706       0.967       1.296       0.968       1.188       1.097       1.555       0.901       1.001       1.185       1.027       1.715
+
+  krill class ratios (new / library class a), rule A and B central:
+    predatory_fish     A: 0.451 / 0.447 / 0.452 / 0.506  night/day 0.025 (repro 0.018)
+    predatory_fish     B: 0.312 / 0.311 / 0.321 / 0.392  night/day 0.029 (repro 0.018)
+    whiting            A: 1.000 / 1.000 / 1.000 / nan  night/day 0.041 (repro 0.041)
+    whiting            B: 0.289 / 0.286 / 0.346 / nan  night/day 0.111 (repro 0.041)
+    planktivorous_fish A: 1.000 / 1.000 / 1.000 / 1.000  night/day 0.099 (repro 0.099)
+    planktivorous_fish B: 0.299 / 0.323 / 0.473 / 0.569  night/day 0.240 (repro 0.099)
+    benthivorous_fish  A: 0.727 / 0.726 / 0.740 / nan  night/day 0.036 (repro 0.030)
+    benthivorous_fish  B: 0.306 / 0.303 / 0.340 / nan  night/day 0.067 (repro 0.030)
+    mackerel           A: 1.000 / 1.000 / 1.000 / 1.000  night/day 0.264 (repro 0.264)
+    mackerel           B: 0.376 / 0.372 / 0.415 / 0.421  night/day 0.832 (repro 0.264)
+
+  fish pairs: class a relative to the new equal-cell a (rule A / B central), new night/day vs library dark_ratio:
+    predatory_fish->planktivorous_fish     A: classes/eq 1.37 / 1.23 / 0.75 / 0.55; night/day 0.163 (library 0.41)
+    predatory_fish->planktivorous_fish     B: classes/eq 1.36 / 1.22 / 0.76 / 0.57; night/day 0.175 (library 0.41)
+    predatory_fish->benthivorous_fish      A: classes/eq 1.58 / 1.34 / 0.60 / 0.37; night/day 0.211 (library 0.48)
+    predatory_fish->benthivorous_fish      B: classes/eq 1.57 / 1.33 / 0.60 / 0.38; night/day 0.222 (library 0.48)
+    predatory_fish->whiting                A: classes/eq 1.65 / 1.39 / 0.56 / 0.28; night/day 0.139 (library 0.48)
+    predatory_fish->whiting                B: classes/eq 1.62 / 1.37 / 0.57 / 0.30; night/day 0.152 (library 0.48)
+    predatory_fish->mackerel               A: classes/eq 1.00 / 1.00 / 1.00 / 1.00; night/day 0.417 (library 0.92)
+    predatory_fish->mackerel               B: classes/eq 1.00 / 1.00 / 1.00 / 1.00; night/day 0.423 (library 0.92)
+    whiting->planktivorous_fish            A: classes/eq 1.17 / 1.10 / 0.89 / 0.80; night/day 0.583 (library 0.48)
+    whiting->planktivorous_fish            B: classes/eq 1.17 / 1.10 / 0.89 / 0.80; night/day 0.583 (library 0.48)
+    whiting->benthivorous_fish             A: classes/eq 1.29 / 1.17 / 0.80 / 0.69; night/day 0.557 (library 0.64)
+    whiting->benthivorous_fish             B: classes/eq 1.29 / 1.17 / 0.80 / 0.69; night/day 0.557 (library 0.64)
+    mackerel->planktivorous_fish           A: classes/eq 1.02 / 1.00 / 0.99 / 0.99; night/day 0.705 (library 0.16)
+    mackerel->planktivorous_fish           B: classes/eq 1.02 / 1.00 / 0.99 / 0.99; night/day 0.705 (library 0.16)
+    benthivorous_fish->planktivorous_fish  A: classes/eq 1.62 / 1.36 / 0.57 / 0.34; night/day 0.090 (library 0.06)
+    benthivorous_fish->planktivorous_fish  B: classes/eq 1.60 / 1.34 / 0.59 / 0.37; night/day 0.098 (library 0.06)
+    benthivorous_fish->whiting             A: classes/eq 1.63 / 1.35 / 0.57 / 0.34; night/day 0.180 (library 0.15)
+    benthivorous_fish->whiting             B: classes/eq 1.61 / 1.34 / 0.58 / 0.37; night/day 0.197 (library 0.15)
+
+  member shares of the new a (rule A central):
+    predatory_fish->planktivorous_fish     saithe|adult 0.59, saithe|large 0.32, hake|adult 0.04, spurdog|all 0.02, ling|all 0.01, pollack|all 0.01, velvet belly|all 0.01
+    predatory_fish->benthivorous_fish      saithe|adult 0.48, saithe|large 0.22, hake|adult 0.15, spurdog|all 0.04, ling|all 0.04, anglerfish|all 0.03, hake|juvenile 0.02, velvet belly|all 0.01, pollack|all 0.01
+    predatory_fish->whiting                saithe|adult 0.60, saithe|large 0.32, hake|adult 0.04, spurdog|all 0.02, ling|all 0.01, velvet belly|all 0.01, pollack|all 0.01
+    predatory_fish->mackerel               hake|adult 0.55, ling|all 0.17, spurdog|all 0.16, velvet belly|all 0.07, hake|juvenile 0.04, anglerfish|all 0.01
+    whiting->planktivorous_fish            whiting|adult 1.00
+    whiting->benthivorous_fish             whiting|adult 1.00
+    mackerel->planktivorous_fish           mackerel|all 0.95, horse mackerel|all 0.05
+    benthivorous_fish->planktivorous_fish  R_eff day lib 0.51 -> A 0.56 m; night 0.23 -> 0.30 m (weighted over length classes)
+    benthivorous_fish->whiting             R_eff day lib 0.59 -> A 0.63 m; night 0.26 -> 0.31 m (weighted over length classes)
+
+  decomposition of the in-layer fish pairs by prey sub-type and period (rule A central): share of the library a -> share of the new a (equal cells); x = new / library for that term; class 150-250 m term ratio
+    predatory_fish->planktivorous_fish
+      pout|day                     lib 0.235 -> new 0.491  x11.34  (150-250 m x6.14)
+      herring|day                  lib 0.441 -> new 0.289  x3.55  (150-250 m x3.50)
+      herring|night                lib 0.111 -> new 0.092  x4.48  (150-250 m x4.48)
+      pout|night                   lib 0.166 -> new 0.074  x2.41  (150-250 m x2.21)
+      blue whiting|day             lib 0.015 -> new 0.032  x11.66  (150-250 m x6.99)
+      sprat|day                    lib 0.017 -> new 0.011  x3.55  (150-250 m x3.50)
+      blue whiting|night           lib 0.011 -> new 0.007  x3.79  (150-250 m x3.76)
+    predatory_fish->benthivorous_fish
+      juvenile benthivores|day     lib 0.618 -> new 0.834  x5.37  (150-250 m x2.82)
+      juvenile benthivores|night   lib 0.382 -> new 0.166  x1.73  (150-250 m x1.68)
+    predatory_fish->whiting
+      whiting|day                  lib 0.675 -> new 0.883  x7.50  (150-250 m x3.80)
+      whiting|night                lib 0.325 -> new 0.117  x2.07  (150-250 m x1.95)
+    predatory_fish->mackerel
+      pout|day                     lib 0.277 -> new 0.445  x4.34  (150-250 m x4.34)
+      pout|night                   lib 0.277 -> new 0.187  x1.82  (150-250 m x1.82)
+      herring|day                  lib 0.208 -> new 0.183  x2.38  (150-250 m x2.38)
+      herring|night                lib 0.186 -> new 0.133  x1.92  (150-250 m x1.92)
+      blue whiting|day             lib 0.018 -> new 0.029  x4.34  (150-250 m x4.34)
+      blue whiting|night           lib 0.018 -> new 0.012  x1.82  (150-250 m x1.82)
+      sprat|day                    lib 0.008 -> new 0.007  x2.38  (150-250 m x2.38)
+      sprat|night                  lib 0.007 -> new 0.005  x1.92  (150-250 m x1.92)
+    whiting->planktivorous_fish
+      pout|day                     lib 0.179 -> new 0.365  x4.41  (150-250 m x3.20)
+      herring|day                  lib 0.466 -> new 0.211  x0.98  (150-250 m x0.97)
+      pout|night                   lib 0.179 -> new 0.196  x2.37  (150-250 m x2.32)
+      herring|night                lib 0.130 -> new 0.175  x2.91  (150-250 m x2.91)
+      blue whiting|day             lib 0.012 -> new 0.024  x4.48  (150-250 m x3.40)
+      blue whiting|night           lib 0.012 -> new 0.015  x2.73  (150-250 m x2.72)
+      sprat|day                    lib 0.018 -> new 0.008  x0.98  (150-250 m x0.97)
+      sprat|night                  lib 0.005 -> new 0.007  x2.91  (150-250 m x2.91)
+    whiting->benthivorous_fish
+      juvenile benthivores|day     lib 0.610 -> new 0.651  x2.72  (150-250 m x1.90)
+      juvenile benthivores|night   lib 0.390 -> new 0.349  x2.28  (150-250 m x2.25)
+    mackerel->planktivorous_fish
+      herring|day                  lib 0.743 -> new 0.537  x0.93  (150-250 m x0.92)
+      herring|night                lib 0.221 -> new 0.427  x2.50  (150-250 m x2.50)
+      sprat|day                    lib 0.028 -> new 0.020  x0.93  (150-250 m x0.92)
+      sprat|night                  lib 0.008 -> new 0.016  x2.50  (150-250 m x2.50)
+
+3. Daytime-median light (lx) at each prey's layer centre, by class median bed (measured light, K_deep 0.06)
+  herring                < 100 m 147; 100-150 m 150; 150-250 m 149; > 250 m 149
+  sprat                  < 100 m 147; 100-150 m 150; 150-250 m 149; > 250 m 149
+  pout                   < 100 m 2.29; 100-150 m 0.195; 150-250 m 0.00395; > 250 m 1.2e-06
+  blue whiting           < 100 m 2.06; 100-150 m 0.187; 150-250 m 0.00818; > 250 m 3.78e-06
+  juvenile benthivores   < 100 m 1.13; 100-150 m 0.103; 150-250 m 0.00208; > 250 m 6.32e-07
+  whiting                < 100 m 1.46; 100-150 m 0.133; 150-250 m 0.00268; > 250 m 8.15e-07
+  mackerel               < 100 m 2.32e+03; 100-150 m 2.32e+03; 150-250 m 2.32e+03; > 250 m 2.32e+03
+
+written one_rule_pairs.json

@@ -1,0 +1,717 @@
+1. Predator side: encounter share (ratio to booked) at equal cells | field spread; * = OFF
+
+  predatory_fish: booked ben 0.077, krill 0.361, mac 0.011, plk 0.498, whi 0.042, zoo 0.010
+    lib              eq: ben 0.014(0.18)* krill 0.870(2.41) mac 0.001(0.10) plk 0.105(0.21)* whi 0.008(0.18) zoo 0.003(0.30) | field: ben 0.021(0.27)* krill 0.811(2.25) mac 0.002(0.14) plk 0.158(0.32)* whi 0.004(0.09) zoo 0.005(0.45)
+    lib_rev          eq: ben 0.023(0.30)* krill 0.783(2.17) mac 0.002(0.16) plk 0.177(0.36) whi 0.013(0.31) zoo 0.002(0.22) | field: ben 0.033(0.43) krill 0.699(1.94) mac 0.003(0.23) plk 0.256(0.51) whi 0.006(0.14) zoo 0.003(0.32)
+    A                eq: ben 0.051(0.66) krill 0.367(1.02) mac 0.003(0.24) plk 0.534(1.07) whi 0.041(0.97) zoo 0.003(0.28) | field: ben 0.062(0.80) krill 0.274(0.76) mac 0.003(0.29) plk 0.642(1.29) whi 0.016(0.37) zoo 0.003(0.34)
+    A_rev            eq: ben 0.062(0.80) krill 0.237(0.66) mac 0.003(0.29) plk 0.646(1.30) whi 0.050(1.18) zoo 0.002(0.15) | field: ben 0.071(0.92) krill 0.168(0.46) mac 0.004(0.33) plk 0.738(1.48) whi 0.018(0.42) zoo 0.002(0.17)
+    A_Ke2e-4         eq: ben 0.056(0.72) krill 0.340(0.94) mac 0.002(0.21) plk 0.554(1.11) whi 0.046(1.08) zoo 0.002(0.22) | field: ben 0.063(0.82) krill 0.284(0.79) mac 0.003(0.24) plk 0.632(1.27) whi 0.016(0.39) zoo 0.002(0.25)
+    A_Ke2e-4_rev     eq: ben 0.066(0.86) krill 0.216(0.60) mac 0.003(0.25) plk 0.659(1.32) whi 0.055(1.29) zoo 0.001(0.12) | field: ben 0.073(0.95) krill 0.175(0.48) mac 0.003(0.27) plk 0.729(1.46) whi 0.019(0.45) zoo 0.001(0.13)
+    A_Ke0.1          eq: ben 0.051(0.66) krill 0.359(0.99) mac 0.003(0.28) plk 0.544(1.09) whi 0.040(0.94) zoo 0.003(0.33) | field: ben 0.063(0.82) krill 0.235(0.65) mac 0.004(0.35) plk 0.679(1.36) whi 0.016(0.37) zoo 0.004(0.42)
+    A_Ke0.1_rev      eq: ben 0.061(0.79) krill 0.231(0.64) mac 0.004(0.34) plk 0.655(1.31) whi 0.048(1.13) zoo 0.002(0.18) | field: ben 0.071(0.92) krill 0.141(0.39) mac 0.004(0.39) plk 0.764(1.53) whi 0.018(0.41) zoo 0.002(0.21)
+    A_kdeep0.05      eq: ben 0.053(0.69) krill 0.364(1.01) mac 0.002(0.23) plk 0.535(1.07) whi 0.043(1.01) zoo 0.003(0.27) | field: ben 0.062(0.81) krill 0.284(0.79) mac 0.003(0.27) plk 0.631(1.27) whi 0.016(0.37) zoo 0.003(0.31)
+    A_kdeep0.05_rev  eq: ben 0.064(0.83) krill 0.234(0.65) mac 0.003(0.28) plk 0.646(1.30) whi 0.052(1.22) zoo 0.001(0.14) | field: ben 0.072(0.93) krill 0.175(0.49) mac 0.003(0.31) plk 0.729(1.46) whi 0.018(0.43) zoo 0.002(0.16)
+    A_kdeep0.09      eq: ben 0.048(0.63) krill 0.365(1.01) mac 0.003(0.28) plk 0.542(1.09) whi 0.038(0.90) zoo 0.003(0.32) | field: ben 0.062(0.80) krill 0.222(0.61) mac 0.004(0.35) plk 0.693(1.39) whi 0.015(0.36) zoo 0.004(0.41)
+    A_kdeep0.09_rev  eq: ben 0.058(0.76) krill 0.235(0.65) mac 0.004(0.33) plk 0.655(1.31) whi 0.046(1.09) zoo 0.002(0.17) | field: ben 0.069(0.89) krill 0.132(0.37) mac 0.004(0.39) plk 0.775(1.56) whi 0.017(0.41) zoo 0.002(0.20)
+    A_Lk30           eq: ben 0.045(0.58) krill 0.447(1.24) mac 0.002(0.21) plk 0.467(0.94) whi 0.036(0.85) zoo 0.002(0.25) | field: ben 0.056(0.72) krill 0.344(0.95) mac 0.003(0.26) plk 0.580(1.16) whi 0.014(0.33) zoo 0.003(0.30)
+    A_Lk30_rev       eq: ben 0.057(0.74) krill 0.302(0.84) mac 0.003(0.27) plk 0.591(1.19) whi 0.046(1.08) zoo 0.001(0.14) | field: ben 0.067(0.86) krill 0.219(0.61) mac 0.003(0.31) plk 0.693(1.39) whi 0.017(0.40) zoo 0.002(0.16)
+    B                eq: ben 0.059(0.76) krill 0.305(0.84) mac 0.003(0.28) plk 0.585(1.17) whi 0.045(1.07) zoo 0.003(0.33) | field: ben 0.068(0.89) krill 0.223(0.62) mac 0.004(0.33) plk 0.684(1.37) whi 0.017(0.39) zoo 0.004(0.39)
+    B_rev            eq: ben 0.068(0.89) krill 0.190(0.53) mac 0.004(0.33) plk 0.683(1.37) whi 0.053(1.25) zoo 0.002(0.17) | field: ben 0.077(0.99) krill 0.133(0.37) mac 0.004(0.37) plk 0.766(1.54) whi 0.019(0.44) zoo 0.002(0.19)
+    B_Ke2e-4         eq: ben 0.063(0.82) krill 0.280(0.78) mac 0.003(0.24) plk 0.601(1.21) whi 0.050(1.18) zoo 0.003(0.26) | field: ben 0.071(0.92) krill 0.231(0.64) mac 0.003(0.27) plk 0.675(1.35) whi 0.018(0.41) zoo 0.003(0.29)
+    B_Ke2e-4_rev     eq: ben 0.073(0.94) krill 0.172(0.48) mac 0.003(0.28) plk 0.693(1.39) whi 0.058(1.36) zoo 0.001(0.13) | field: ben 0.079(1.03) krill 0.138(0.38) mac 0.003(0.31) plk 0.758(1.52) whi 0.020(0.47) zoo 0.001(0.14)
+    B_Ke0.1          eq: ben 0.057(0.74) krill 0.297(0.82) mac 0.004(0.33) plk 0.594(1.19) whi 0.044(1.03) zoo 0.004(0.39) | field: ben 0.069(0.90) krill 0.190(0.53) mac 0.004(0.39) plk 0.715(1.43) whi 0.017(0.39) zoo 0.005(0.48)
+    B_Ke0.1_rev      eq: ben 0.067(0.87) krill 0.184(0.51) mac 0.004(0.38) plk 0.692(1.39) whi 0.051(1.20) zoo 0.002(0.20) | field: ben 0.076(0.99) krill 0.112(0.31)* mac 0.005(0.43) plk 0.787(1.58) whi 0.018(0.43) zoo 0.002(0.23)
+    B_RD1.0          eq: ben 0.060(0.78) krill 0.301(0.83) mac 0.003(0.29) plk 0.586(1.18) whi 0.046(1.08) zoo 0.004(0.36) | field: ben 0.070(0.91) krill 0.220(0.61) mac 0.004(0.34) plk 0.685(1.37) whi 0.017(0.40) zoo 0.004(0.42)
+    B_RD1.0_rev      eq: ben 0.070(0.91) krill 0.187(0.52) mac 0.004(0.34) plk 0.684(1.37) whi 0.053(1.25) zoo 0.002(0.19) | field: ben 0.079(1.02) krill 0.131(0.36) mac 0.004(0.38) plk 0.765(1.54) whi 0.019(0.44) zoo 0.002(0.21)
+    B_RD1.9          eq: ben 0.056(0.73) krill 0.309(0.86) mac 0.003(0.26) plk 0.584(1.17) whi 0.045(1.06) zoo 0.003(0.31) | field: ben 0.066(0.85) krill 0.226(0.63) mac 0.003(0.31) plk 0.684(1.37) whi 0.017(0.39) zoo 0.004(0.36)
+    B_RD1.9_rev      eq: ben 0.066(0.85) krill 0.193(0.53) mac 0.003(0.31) plk 0.684(1.37) whi 0.053(1.24) zoo 0.002(0.16) | field: ben 0.074(0.95) krill 0.135(0.37) mac 0.004(0.35) plk 0.767(1.54) whi 0.019(0.44) zoo 0.002(0.18)
+    A_Rnv0.2         eq: ben 0.048(0.62) krill 0.386(1.07) mac 0.003(0.24) plk 0.521(1.05) whi 0.039(0.93) zoo 0.003(0.29) | field: ben 0.058(0.75) krill 0.289(0.80) mac 0.003(0.29) plk 0.631(1.27) whi 0.015(0.35) zoo 0.004(0.36)
+    A_Rnv0.2_rev     eq: ben 0.059(0.76) krill 0.251(0.70) mac 0.003(0.29) plk 0.637(1.28) whi 0.048(1.13) zoo 0.002(0.16) | field: ben 0.067(0.87) krill 0.179(0.50) mac 0.004(0.34) plk 0.731(1.47) whi 0.017(0.41) zoo 0.002(0.18)
+    A_Rnv0.5         eq: ben 0.060(0.78) krill 0.319(0.88) mac 0.003(0.25) plk 0.569(1.14) whi 0.047(1.10) zoo 0.002(0.24) | field: ben 0.071(0.92) krill 0.233(0.65) mac 0.003(0.30) plk 0.672(1.35) whi 0.017(0.41) zoo 0.003(0.29)
+    A_Rnv0.5_rev     eq: ben 0.071(0.92) krill 0.200(0.55) mac 0.003(0.30) plk 0.669(1.34) whi 0.055(1.29) zoo 0.001(0.13) | field: ben 0.080(1.04) krill 0.140(0.39) mac 0.004(0.34) plk 0.755(1.52) whi 0.020(0.46) zoo 0.001(0.14)
+    A_T              eq: ben 0.051(0.66) krill 0.367(1.02) mac 0.003(0.24) plk 0.534(1.07) whi 0.041(0.97) zoo 0.003(0.28) | field: ben 0.052(0.67) krill 0.308(0.85) mac 0.004(0.33) plk 0.609(1.22) whi 0.025(0.58) zoo 0.004(0.38)
+    A_rev_T          eq: ben 0.062(0.80) krill 0.237(0.66) mac 0.003(0.29) plk 0.646(1.30) whi 0.050(1.18) zoo 0.002(0.15) | field: ben 0.060(0.78) krill 0.192(0.53) mac 0.004(0.38) plk 0.713(1.43) whi 0.029(0.68) zoo 0.002(0.20)
+    B_T              eq: ben 0.059(0.76) krill 0.305(0.84) mac 0.003(0.28) plk 0.585(1.17) whi 0.045(1.07) zoo 0.003(0.33) | field: ben 0.058(0.75) krill 0.252(0.70) mac 0.004(0.37) plk 0.656(1.32) whi 0.026(0.61) zoo 0.004(0.44)
+    B_rev_T          eq: ben 0.068(0.89) krill 0.190(0.53) mac 0.004(0.33) plk 0.683(1.37) whi 0.053(1.25) zoo 0.002(0.17) | field: ben 0.066(0.85) krill 0.153(0.42) mac 0.005(0.43) plk 0.745(1.50) whi 0.030(0.70) zoo 0.002(0.22)
+    A_Ke2e-4_T       eq: ben 0.056(0.72) krill 0.340(0.94) mac 0.002(0.21) plk 0.554(1.11) whi 0.046(1.08) zoo 0.002(0.22) | field: ben 0.062(0.81) krill 0.281(0.78) mac 0.003(0.24) plk 0.632(1.27) whi 0.020(0.47) zoo 0.002(0.25)
+    A_Ke2e-4_rev_T   eq: ben 0.066(0.86) krill 0.216(0.60) mac 0.003(0.25) plk 0.659(1.32) whi 0.055(1.29) zoo 0.001(0.12) | field: ben 0.072(0.93) krill 0.173(0.48) mac 0.003(0.27) plk 0.728(1.46) whi 0.023(0.54) zoo 0.001(0.13)
+    A_Ke0.1_T        eq: ben 0.051(0.66) krill 0.359(0.99) mac 0.003(0.28) plk 0.544(1.09) whi 0.040(0.94) zoo 0.003(0.33) | field: ben 0.051(0.66) krill 0.275(0.76) mac 0.004(0.41) plk 0.638(1.28) whi 0.027(0.63) zoo 0.005(0.49)
+    A_Ke0.1_rev_T    eq: ben 0.061(0.79) krill 0.231(0.64) mac 0.004(0.34) plk 0.655(1.31) whi 0.048(1.13) zoo 0.002(0.18) | field: ben 0.059(0.76) krill 0.169(0.47) mac 0.005(0.47) plk 0.734(1.47) whi 0.031(0.73) zoo 0.003(0.25)
+    B_Ke2e-4_T       eq: ben 0.063(0.82) krill 0.280(0.78) mac 0.003(0.24) plk 0.601(1.21) whi 0.050(1.18) zoo 0.003(0.26) | field: ben 0.070(0.90) krill 0.229(0.63) mac 0.003(0.27) plk 0.674(1.35) whi 0.021(0.50) zoo 0.003(0.29)
+    B_Ke2e-4_rev_T   eq: ben 0.073(0.94) krill 0.172(0.48) mac 0.003(0.28) plk 0.693(1.39) whi 0.058(1.36) zoo 0.001(0.13) | field: ben 0.078(1.01) krill 0.137(0.38) mac 0.003(0.30) plk 0.756(1.52) whi 0.024(0.56) zoo 0.001(0.14)
+    B_Ke0.1_T        eq: ben 0.057(0.74) krill 0.297(0.82) mac 0.004(0.33) plk 0.594(1.19) whi 0.044(1.03) zoo 0.004(0.39) | field: ben 0.057(0.74) krill 0.224(0.62) mac 0.005(0.46) plk 0.680(1.36) whi 0.028(0.67) zoo 0.006(0.56)
+    B_Ke0.1_rev_T    eq: ben 0.067(0.87) krill 0.184(0.51) mac 0.004(0.38) plk 0.692(1.39) whi 0.051(1.20) zoo 0.002(0.20) | field: ben 0.064(0.83) krill 0.134(0.37) mac 0.006(0.52) plk 0.762(1.53) whi 0.032(0.75) zoo 0.003(0.28)
+
+  whiting: booked ben 0.097, krill 0.557, epi 0.171, plk 0.153, zoo 0.023
+    lib              eq: ben 0.025(0.25)* krill 0.826(1.48) epi 0.086(0.51) plk 0.054(0.35) zoo 0.009(0.40) | field: ben 0.012(0.12)* krill 0.917(1.65) epi 0.041(0.24)* plk 0.026(0.17)* zoo 0.004(0.19)
+    lib_rev          eq: ben 0.044(0.45) krill 0.785(1.41) epi 0.068(0.40) plk 0.096(0.63) zoo 0.007(0.32) | field: ben 0.021(0.22)* krill 0.895(1.61) epi 0.033(0.19)* plk 0.047(0.31)* zoo 0.004(0.16)
+    A                eq: ben 0.057(0.58) krill 0.751(1.35) epi 0.078(0.46) plk 0.106(0.69) zoo 0.008(0.37) | field: ben 0.028(0.29)* krill 0.875(1.57) epi 0.039(0.23)* plk 0.053(0.35) zoo 0.004(0.18)
+    A_rev            eq: ben 0.094(0.97) krill 0.666(1.20) epi 0.058(0.34) plk 0.176(1.15) zoo 0.006(0.27) | field: ben 0.050(0.52) krill 0.823(1.48) epi 0.031(0.18)* plk 0.093(0.61) zoo 0.003(0.14)
+    A_Ke2e-4         eq: ben 0.060(0.62) krill 0.755(1.36) epi 0.068(0.40) plk 0.110(0.72) zoo 0.007(0.32) | field: ben 0.031(0.32)* krill 0.873(1.57) epi 0.035(0.21)* plk 0.057(0.37) zoo 0.004(0.17)
+    A_Ke2e-4_rev     eq: ben 0.099(1.02) krill 0.665(1.19) epi 0.050(0.29)* plk 0.181(1.18) zoo 0.005(0.24) | field: ben 0.054(0.56) krill 0.816(1.47) epi 0.028(0.16)* plk 0.099(0.65) zoo 0.003(0.13)
+    A_Ke0.1          eq: ben 0.059(0.61) krill 0.732(1.31) epi 0.089(0.52) plk 0.111(0.73) zoo 0.009(0.42) | field: ben 0.029(0.29)* krill 0.869(1.56) epi 0.043(0.25)* plk 0.054(0.35) zoo 0.005(0.20)
+    A_Ke0.1_rev      eq: ben 0.097(1.00) krill 0.646(1.16) epi 0.065(0.38) plk 0.185(1.21) zoo 0.007(0.31) | field: ben 0.050(0.52) krill 0.817(1.47) epi 0.034(0.20)* plk 0.096(0.62) zoo 0.004(0.16)
+    A_kdeep0.05      eq: ben 0.058(0.60) krill 0.751(1.35) epi 0.077(0.45) plk 0.106(0.69) zoo 0.008(0.36) | field: ben 0.029(0.30)* krill 0.874(1.57) epi 0.039(0.23)* plk 0.054(0.35) zoo 0.004(0.18)
+    A_kdeep0.05_rev  eq: ben 0.096(0.99) krill 0.665(1.20) epi 0.057(0.33)* plk 0.176(1.15) zoo 0.006(0.26) | field: ben 0.052(0.53) krill 0.820(1.47) epi 0.030(0.18)* plk 0.095(0.62) zoo 0.003(0.14)
+    A_kdeep0.09      eq: ben 0.056(0.57) krill 0.744(1.34) epi 0.084(0.49) plk 0.108(0.71) zoo 0.009(0.39) | field: ben 0.027(0.27)* krill 0.877(1.58) epi 0.040(0.24)* plk 0.052(0.34) zoo 0.004(0.19)
+    A_kdeep0.09_rev  eq: ben 0.092(0.95) krill 0.659(1.18) epi 0.062(0.36) plk 0.180(1.17) zoo 0.007(0.29) | field: ben 0.047(0.49) krill 0.827(1.48) epi 0.032(0.18)* plk 0.092(0.60) zoo 0.003(0.15)
+    A_Lk30           eq: ben 0.057(0.58) krill 0.751(1.35) epi 0.078(0.46) plk 0.106(0.69) zoo 0.008(0.37) | field: ben 0.028(0.29)* krill 0.875(1.57) epi 0.039(0.23)* plk 0.053(0.35) zoo 0.004(0.18)
+    A_Lk30_rev       eq: ben 0.094(0.97) krill 0.666(1.20) epi 0.058(0.34) plk 0.176(1.15) zoo 0.006(0.27) | field: ben 0.050(0.52) krill 0.823(1.48) epi 0.031(0.18)* plk 0.093(0.61) zoo 0.003(0.14)
+    B                eq: ben 0.121(1.25) krill 0.466(0.84) epi 0.168(0.98) plk 0.227(1.48) zoo 0.018(0.79) | field: ben 0.075(0.77) krill 0.670(1.20) epi 0.104(0.61) plk 0.140(0.92) zoo 0.011(0.49)
+    B_rev            eq: ben 0.179(1.84) krill 0.366(0.66) epi 0.110(0.64) plk 0.334(2.18) zoo 0.012(0.51) | field: ben 0.120(1.24) krill 0.573(1.03) epi 0.074(0.43) plk 0.225(1.47) zoo 0.008(0.35)
+    B_Ke2e-4         eq: ben 0.131(1.35) krill 0.463(0.83) epi 0.150(0.88) plk 0.240(1.57) zoo 0.016(0.70) | field: ben 0.083(0.86) krill 0.660(1.19) epi 0.095(0.56) plk 0.152(0.99) zoo 0.010(0.44)
+    B_Ke2e-4_rev     eq: ben 0.189(1.95) krill 0.357(0.64) epi 0.096(0.56) plk 0.347(2.27) zoo 0.010(0.45) | field: ben 0.131(1.35) krill 0.556(1.00) epi 0.067(0.39) plk 0.240(1.57) zoo 0.007(0.31)
+    B_Ke0.1          eq: ben 0.120(1.24) krill 0.451(0.81) epi 0.182(1.06) plk 0.228(1.49) zoo 0.019(0.85) | field: ben 0.073(0.76) krill 0.664(1.19) epi 0.111(0.65) plk 0.139(0.91) zoo 0.012(0.52)
+    B_Ke0.1_rev      eq: ben 0.177(1.83) krill 0.355(0.64) epi 0.119(0.70) plk 0.336(2.20) zoo 0.013(0.56) | field: ben 0.118(1.22) krill 0.570(1.02) epi 0.079(0.46) plk 0.224(1.47) zoo 0.008(0.37)
+    B_RD1.0          eq: ben 0.121(1.25) krill 0.466(0.84) epi 0.168(0.98) plk 0.227(1.48) zoo 0.018(0.79) | field: ben 0.075(0.77) krill 0.670(1.20) epi 0.104(0.61) plk 0.140(0.92) zoo 0.011(0.49)
+    B_RD1.0_rev      eq: ben 0.179(1.84) krill 0.366(0.66) epi 0.110(0.64) plk 0.334(2.18) zoo 0.012(0.51) | field: ben 0.120(1.24) krill 0.573(1.03) epi 0.074(0.43) plk 0.225(1.47) zoo 0.008(0.35)
+    B_RD1.9          eq: ben 0.121(1.25) krill 0.466(0.84) epi 0.168(0.98) plk 0.227(1.48) zoo 0.018(0.79) | field: ben 0.075(0.77) krill 0.670(1.20) epi 0.104(0.61) plk 0.140(0.92) zoo 0.011(0.49)
+    B_RD1.9_rev      eq: ben 0.179(1.84) krill 0.366(0.66) epi 0.110(0.64) plk 0.334(2.18) zoo 0.012(0.51) | field: ben 0.120(1.24) krill 0.573(1.03) epi 0.074(0.43) plk 0.225(1.47) zoo 0.008(0.35)
+    A_Rnv0.2         eq: ben 0.042(0.43) krill 0.782(1.41) epi 0.082(0.48) plk 0.086(0.56) zoo 0.009(0.38) | field: ben 0.021(0.21)* krill 0.893(1.60) epi 0.040(0.23)* plk 0.042(0.27)* zoo 0.004(0.19)
+    A_Rnv0.2_rev     eq: ben 0.072(0.74) krill 0.713(1.28) epi 0.062(0.36) plk 0.146(0.96) zoo 0.007(0.29) | field: ben 0.037(0.38) krill 0.853(1.53) epi 0.032(0.19)* plk 0.075(0.49) zoo 0.003(0.15)
+    A_Rnv0.5         eq: ben 0.096(1.00) krill 0.665(1.19) epi 0.069(0.41) plk 0.162(1.06) zoo 0.007(0.33) | field: ben 0.051(0.53) krill 0.823(1.48) epi 0.037(0.22)* plk 0.086(0.56) zoo 0.004(0.17)
+    A_Rnv0.5_rev     eq: ben 0.149(1.54) krill 0.548(0.98) epi 0.048(0.28)* plk 0.250(1.63) zoo 0.005(0.22) | field: ben 0.086(0.89) krill 0.739(1.33) epi 0.028(0.16)* plk 0.144(0.94) zoo 0.003(0.13)
+    A_T              eq: ben 0.057(0.58) krill 0.751(1.35) epi 0.078(0.46) plk 0.106(0.69) zoo 0.008(0.37) | field: ben 0.035(0.37) krill 0.862(1.55) epi 0.039(0.23)* plk 0.060(0.39) zoo 0.004(0.18)
+    A_rev_T          eq: ben 0.094(0.97) krill 0.666(1.20) epi 0.058(0.34) plk 0.176(1.15) zoo 0.006(0.27) | field: ben 0.062(0.64) krill 0.800(1.44) epi 0.030(0.17)* plk 0.105(0.69) zoo 0.003(0.14)
+    B_T              eq: ben 0.121(1.25) krill 0.466(0.84) epi 0.168(0.98) plk 0.227(1.48) zoo 0.018(0.79) | field: ben 0.091(0.94) krill 0.643(1.15) epi 0.100(0.58) plk 0.156(1.02) zoo 0.011(0.47)
+    B_rev_T          eq: ben 0.179(1.84) krill 0.366(0.66) epi 0.110(0.64) plk 0.334(2.18) zoo 0.012(0.51) | field: ben 0.143(1.48) krill 0.537(0.96) epi 0.069(0.41) plk 0.244(1.59) zoo 0.007(0.32)
+    A_Ke2e-4_T       eq: ben 0.060(0.62) krill 0.755(1.36) epi 0.068(0.40) plk 0.110(0.72) zoo 0.007(0.32) | field: ben 0.035(0.37) krill 0.865(1.55) epi 0.035(0.20)* plk 0.061(0.40) zoo 0.004(0.16)
+    A_Ke2e-4_rev_T   eq: ben 0.099(1.02) krill 0.665(1.19) epi 0.050(0.29)* plk 0.181(1.18) zoo 0.005(0.24) | field: ben 0.062(0.64) krill 0.802(1.44) epi 0.027(0.16)* plk 0.106(0.69) zoo 0.003(0.13)
+    A_Ke0.1_T        eq: ben 0.059(0.61) krill 0.732(1.31) epi 0.089(0.52) plk 0.111(0.73) zoo 0.009(0.42) | field: ben 0.036(0.37) krill 0.854(1.53) epi 0.042(0.25)* plk 0.063(0.41) zoo 0.004(0.20)
+    A_Ke0.1_rev_T    eq: ben 0.097(1.00) krill 0.646(1.16) epi 0.065(0.38) plk 0.185(1.21) zoo 0.007(0.31) | field: ben 0.063(0.65) krill 0.792(1.42) epi 0.033(0.19)* plk 0.109(0.71) zoo 0.003(0.15)
+    B_Ke2e-4_T       eq: ben 0.131(1.35) krill 0.463(0.83) epi 0.150(0.88) plk 0.240(1.57) zoo 0.016(0.70) | field: ben 0.094(0.97) krill 0.643(1.16) epi 0.092(0.54) plk 0.161(1.05) zoo 0.010(0.43)
+    B_Ke2e-4_rev_T   eq: ben 0.189(1.95) krill 0.357(0.64) epi 0.096(0.56) plk 0.347(2.27) zoo 0.010(0.45) | field: ben 0.146(1.50) krill 0.534(0.96) epi 0.064(0.37) plk 0.250(1.63) zoo 0.007(0.30)
+    B_Ke0.1_T        eq: ben 0.120(1.24) krill 0.451(0.81) epi 0.182(1.06) plk 0.228(1.49) zoo 0.019(0.85) | field: ben 0.091(0.94) krill 0.635(1.14) epi 0.106(0.62) plk 0.157(1.02) zoo 0.011(0.50)
+    B_Ke0.1_rev_T    eq: ben 0.177(1.83) krill 0.355(0.64) epi 0.119(0.70) plk 0.336(2.20) zoo 0.013(0.56) | field: ben 0.142(1.47) krill 0.531(0.95) epi 0.074(0.43) plk 0.245(1.60) zoo 0.008(0.35)
+
+  benthivorous_fish: booked inf 0.563, krill 0.027, epi 0.310, neph 0.016, plk 0.073, whi 0.012
+    lib              eq: inf 0.592(1.05) krill 0.032(1.22) epi 0.308(1.00) neph 0.035(2.26) plk 0.030(0.41) whi 0.003(0.21)
+    lib_rev          eq: inf 0.578(1.03) krill 0.038(1.43) epi 0.302(0.97) neph 0.035(2.21) plk 0.044(0.60) whi 0.004(0.31)
+    A                eq: inf 0.592(1.05) krill 0.023(0.88) epi 0.309(1.00) neph 0.035(2.26) plk 0.037(0.51) whi 0.003(0.25)
+    A_rev            eq: inf 0.578(1.03) krill 0.028(1.04) epi 0.301(0.97) neph 0.035(2.21) plk 0.054(0.74) whi 0.004(0.37)
+    A_Ke2e-4         eq: inf 0.580(1.03) krill 0.027(1.00) epi 0.303(0.98) neph 0.035(2.22) plk 0.051(0.70) whi 0.004(0.35)
+    A_Ke2e-4_rev     eq: inf 0.562(1.00) krill 0.031(1.16) epi 0.293(0.95) neph 0.034(2.15) plk 0.075(1.02) whi 0.006(0.51)
+    A_Ke0.1          eq: inf 0.599(1.06) krill 0.020(0.77) epi 0.312(1.01) neph 0.036(2.29) plk 0.031(0.42) whi 0.003(0.21)
+    A_Ke0.1_rev      eq: inf 0.586(1.04) krill 0.024(0.90) epi 0.306(0.99) neph 0.035(2.24) plk 0.045(0.62) whi 0.004(0.30)
+    A_kdeep0.05      eq: inf 0.590(1.05) krill 0.024(0.90) epi 0.307(0.99) neph 0.035(2.25) plk 0.040(0.55) whi 0.003(0.27)
+    A_kdeep0.05_rev  eq: inf 0.574(1.02) krill 0.028(1.05) epi 0.299(0.97) neph 0.034(2.20) plk 0.059(0.81) whi 0.005(0.40)
+    A_kdeep0.09      eq: inf 0.598(1.06) krill 0.022(0.82) epi 0.312(1.01) neph 0.036(2.28) plk 0.031(0.42) whi 0.003(0.21)
+    A_kdeep0.09_rev  eq: inf 0.585(1.04) krill 0.026(0.97) epi 0.305(0.99) neph 0.035(2.24) plk 0.045(0.61) whi 0.004(0.30)
+    A_Lk30           eq: inf 0.590(1.05) krill 0.028(1.04) epi 0.307(0.99) neph 0.035(2.25) plk 0.037(0.51) whi 0.003(0.25)
+    A_Lk30_rev       eq: inf 0.575(1.02) krill 0.032(1.22) epi 0.300(0.97) neph 0.034(2.20) plk 0.054(0.74) whi 0.004(0.37)
+    B                eq: inf 0.602(1.07) krill 0.010(0.38) epi 0.314(1.01) neph 0.036(2.30) plk 0.035(0.48) whi 0.003(0.24)
+    B_rev            eq: inf 0.590(1.05) krill 0.012(0.44) epi 0.307(0.99) neph 0.035(2.25) plk 0.052(0.70) whi 0.004(0.35)
+    B_Ke2e-4         eq: inf 0.592(1.05) krill 0.011(0.42) epi 0.309(1.00) neph 0.035(2.27) plk 0.048(0.65) whi 0.004(0.33)
+    B_Ke2e-4_rev     eq: inf 0.576(1.02) krill 0.013(0.49) epi 0.300(0.97) neph 0.034(2.20) plk 0.070(0.96) whi 0.006(0.48)
+    B_Ke0.1          eq: inf 0.607(1.08) krill 0.009(0.33) epi 0.316(1.02) neph 0.036(2.32) plk 0.029(0.40) whi 0.002(0.20)
+    B_Ke0.1_rev      eq: inf 0.596(1.06) krill 0.010(0.39) epi 0.311(1.00) neph 0.036(2.28) plk 0.043(0.59) whi 0.004(0.29)
+    B_RD1.0          eq: inf 0.604(1.07) krill 0.010(0.36) epi 0.315(1.02) neph 0.036(2.31) plk 0.032(0.44) whi 0.003(0.22)
+    B_RD1.0_rev      eq: inf 0.593(1.05) krill 0.011(0.43) epi 0.309(1.00) neph 0.035(2.27) plk 0.047(0.65) whi 0.004(0.32)
+    B_RD1.9          eq: inf 0.600(1.07) krill 0.010(0.39) epi 0.313(1.01) neph 0.036(2.29) plk 0.038(0.51) whi 0.003(0.25)
+    B_RD1.9_rev      eq: inf 0.587(1.04) krill 0.012(0.46) epi 0.306(0.99) neph 0.035(2.24) plk 0.055(0.75) whi 0.005(0.37)
+    A_Rnv0.2         eq: inf 0.595(1.06) krill 0.024(0.89) epi 0.310(1.00) neph 0.036(2.28) plk 0.033(0.45) whi 0.003(0.22)
+    A_Rnv0.2_rev     eq: inf 0.582(1.03) krill 0.028(1.04) epi 0.303(0.98) neph 0.035(2.23) plk 0.048(0.65) whi 0.004(0.32)
+    A_Rnv0.5         eq: inf 0.582(1.03) krill 0.023(0.87) epi 0.303(0.98) neph 0.035(2.22) plk 0.053(0.72) whi 0.004(0.36)
+    A_Rnv0.5_rev     eq: inf 0.563(1.00) krill 0.027(1.01) epi 0.293(0.95) neph 0.034(2.15) plk 0.077(1.05) whi 0.006(0.52)
+    A_T              eq: inf 0.592(1.05) krill 0.023(0.88) epi 0.309(1.00) neph 0.035(2.26) plk 0.037(0.51) whi 0.003(0.25)
+    A_rev_T          eq: inf 0.578(1.03) krill 0.028(1.04) epi 0.301(0.97) neph 0.035(2.21) plk 0.054(0.74) whi 0.004(0.37)
+    B_T              eq: inf 0.602(1.07) krill 0.010(0.38) epi 0.314(1.01) neph 0.036(2.30) plk 0.035(0.48) whi 0.003(0.24)
+    B_rev_T          eq: inf 0.590(1.05) krill 0.012(0.44) epi 0.307(0.99) neph 0.035(2.25) plk 0.052(0.70) whi 0.004(0.35)
+    A_Ke2e-4_T       eq: inf 0.580(1.03) krill 0.027(1.00) epi 0.303(0.98) neph 0.035(2.22) plk 0.051(0.70) whi 0.004(0.35)
+    A_Ke2e-4_rev_T   eq: inf 0.562(1.00) krill 0.031(1.16) epi 0.293(0.95) neph 0.034(2.15) plk 0.075(1.02) whi 0.006(0.51)
+    A_Ke0.1_T        eq: inf 0.599(1.06) krill 0.020(0.77) epi 0.312(1.01) neph 0.036(2.29) plk 0.031(0.42) whi 0.003(0.21)
+    A_Ke0.1_rev_T    eq: inf 0.586(1.04) krill 0.024(0.90) epi 0.306(0.99) neph 0.035(2.24) plk 0.045(0.62) whi 0.004(0.30)
+    B_Ke2e-4_T       eq: inf 0.592(1.05) krill 0.011(0.42) epi 0.309(1.00) neph 0.035(2.27) plk 0.048(0.65) whi 0.004(0.33)
+    B_Ke2e-4_rev_T   eq: inf 0.576(1.02) krill 0.013(0.49) epi 0.300(0.97) neph 0.034(2.20) plk 0.070(0.96) whi 0.006(0.48)
+    B_Ke0.1_T        eq: inf 0.607(1.08) krill 0.009(0.33) epi 0.316(1.02) neph 0.036(2.32) plk 0.029(0.40) whi 0.002(0.20)
+    B_Ke0.1_rev_T    eq: inf 0.596(1.06) krill 0.010(0.39) epi 0.311(1.00) neph 0.036(2.28) plk 0.043(0.59) whi 0.004(0.29)
+
+  mackerel: booked krill 0.394, plk 0.055, zoo 0.551
+    lib              eq: krill 0.657(1.67) plk 0.046(0.83) zoo 0.297(0.54)
+    lib_rev          eq: krill 0.663(1.68) plk 0.087(1.57) zoo 0.250(0.45)
+    A                eq: krill 0.648(1.65) plk 0.059(1.06) zoo 0.293(0.53)
+    A_rev            eq: krill 0.647(1.64) plk 0.109(1.98) zoo 0.244(0.44)
+    A_Ke2e-4         eq: krill 0.661(1.68) plk 0.056(1.02) zoo 0.283(0.51)
+    A_Ke2e-4_rev     eq: krill 0.659(1.67) plk 0.106(1.91) zoo 0.235(0.43)
+    A_Ke0.1          eq: krill 0.639(1.62) plk 0.060(1.09) zoo 0.301(0.55)
+    A_Ke0.1_rev      eq: krill 0.637(1.62) plk 0.112(2.03) zoo 0.250(0.45)
+    A_kdeep0.05      eq: krill 0.649(1.65) plk 0.059(1.06) zoo 0.292(0.53)
+    A_kdeep0.05_rev  eq: krill 0.648(1.65) plk 0.109(1.98) zoo 0.243(0.44)
+    A_kdeep0.09      eq: krill 0.643(1.63) plk 0.059(1.06) zoo 0.298(0.54)
+    A_kdeep0.09_rev  eq: krill 0.642(1.63) plk 0.110(1.98) zoo 0.248(0.45)
+    A_Lk30           eq: krill 0.648(1.65) plk 0.059(1.06) zoo 0.293(0.53)
+    A_Lk30_rev       eq: krill 0.647(1.64) plk 0.109(1.98) zoo 0.244(0.44)
+    B                eq: krill 0.421(1.07) plk 0.096(1.74) zoo 0.483(0.88)
+    B_rev            eq: krill 0.420(1.07) plk 0.180(3.25)* zoo 0.401(0.73)
+    B_Ke2e-4         eq: krill 0.425(1.08) plk 0.096(1.73) zoo 0.479(0.87)
+    B_Ke2e-4_rev     eq: krill 0.424(1.08) plk 0.178(3.23)* zoo 0.398(0.72)
+    B_Ke0.1          eq: krill 0.419(1.06) plk 0.097(1.75) zoo 0.485(0.88)
+    B_Ke0.1_rev      eq: krill 0.417(1.06) plk 0.181(3.26)* zoo 0.402(0.73)
+    B_RD1.0          eq: krill 0.421(1.07) plk 0.096(1.74) zoo 0.483(0.88)
+    B_RD1.0_rev      eq: krill 0.420(1.07) plk 0.180(3.25)* zoo 0.401(0.73)
+    B_RD1.9          eq: krill 0.421(1.07) plk 0.096(1.74) zoo 0.483(0.88)
+    B_RD1.9_rev      eq: krill 0.420(1.07) plk 0.180(3.25)* zoo 0.401(0.73)
+    A_Rnv0.2         eq: krill 0.658(1.67) plk 0.045(0.81) zoo 0.298(0.54)
+    A_Rnv0.2_rev     eq: krill 0.665(1.69) plk 0.085(1.53) zoo 0.251(0.46)
+    A_Rnv0.5         eq: krill 0.619(1.57) plk 0.101(1.82) zoo 0.280(0.51)
+    A_Rnv0.5_rev     eq: krill 0.594(1.51) plk 0.182(3.28)* zoo 0.224(0.41)
+    A_T              eq: krill 0.648(1.65) plk 0.059(1.06) zoo 0.293(0.53)
+    A_rev_T          eq: krill 0.647(1.64) plk 0.109(1.98) zoo 0.244(0.44)
+    B_T              eq: krill 0.421(1.07) plk 0.096(1.74) zoo 0.483(0.88)
+    B_rev_T          eq: krill 0.420(1.07) plk 0.180(3.25)* zoo 0.401(0.73)
+    A_Ke2e-4_T       eq: krill 0.661(1.68) plk 0.056(1.02) zoo 0.283(0.51)
+    A_Ke2e-4_rev_T   eq: krill 0.659(1.67) plk 0.106(1.91) zoo 0.235(0.43)
+    A_Ke0.1_T        eq: krill 0.639(1.62) plk 0.060(1.09) zoo 0.301(0.55)
+    A_Ke0.1_rev_T    eq: krill 0.637(1.62) plk 0.112(2.03) zoo 0.250(0.45)
+    B_Ke2e-4_T       eq: krill 0.425(1.08) plk 0.096(1.73) zoo 0.479(0.87)
+    B_Ke2e-4_rev_T   eq: krill 0.424(1.08) plk 0.178(3.23)* zoo 0.398(0.72)
+    B_Ke0.1_T        eq: krill 0.419(1.06) plk 0.097(1.75) zoo 0.485(0.88)
+    B_Ke0.1_rev_T    eq: krill 0.417(1.06) plk 0.181(3.26)* zoo 0.402(0.73)
+
+  planktivorous_fish: booked krill 0.398, zoo 0.602
+    lib              eq: krill 0.379(0.95) zoo 0.621(1.03)
+    lib_rev          eq: krill 0.422(1.06) zoo 0.578(0.96)
+    A                eq: krill 0.378(0.95) zoo 0.622(1.03)
+    A_rev            eq: krill 0.422(1.06) zoo 0.578(0.96)
+    A_Ke2e-4         eq: krill 0.398(1.00) zoo 0.602(1.00)
+    A_Ke2e-4_rev     eq: krill 0.442(1.11) zoo 0.558(0.93)
+    A_Ke0.1          eq: krill 0.361(0.91) zoo 0.639(1.06)
+    A_Ke0.1_rev      eq: krill 0.405(1.02) zoo 0.595(0.99)
+    A_kdeep0.05      eq: krill 0.386(0.97) zoo 0.614(1.02)
+    A_kdeep0.05_rev  eq: krill 0.430(1.08) zoo 0.570(0.95)
+    A_kdeep0.09      eq: krill 0.353(0.89) zoo 0.647(1.07)
+    A_kdeep0.09_rev  eq: krill 0.395(0.99) zoo 0.605(1.00)
+    A_Lk30           eq: krill 0.378(0.95) zoo 0.622(1.03)
+    A_Lk30_rev       eq: krill 0.422(1.06) zoo 0.578(0.96)
+    B                eq: krill 0.169(0.43) zoo 0.831(1.38)
+    B_rev            eq: krill 0.196(0.49) zoo 0.804(1.33)
+    B_Ke2e-4         eq: krill 0.174(0.44) zoo 0.826(1.37)
+    B_Ke2e-4_rev     eq: krill 0.202(0.51) zoo 0.798(1.32)
+    B_Ke0.1          eq: krill 0.165(0.42) zoo 0.835(1.39)
+    B_Ke0.1_rev      eq: krill 0.192(0.48) zoo 0.808(1.34)
+    B_RD1.0          eq: krill 0.169(0.43) zoo 0.831(1.38)
+    B_RD1.0_rev      eq: krill 0.196(0.49) zoo 0.804(1.33)
+    B_RD1.9          eq: krill 0.169(0.43) zoo 0.831(1.38)
+    B_RD1.9_rev      eq: krill 0.196(0.49) zoo 0.804(1.33)
+    A_Rnv0.2         eq: krill 0.378(0.95) zoo 0.622(1.03)
+    A_Rnv0.2_rev     eq: krill 0.422(1.06) zoo 0.578(0.96)
+    A_Rnv0.5         eq: krill 0.378(0.95) zoo 0.622(1.03)
+    A_Rnv0.5_rev     eq: krill 0.422(1.06) zoo 0.578(0.96)
+    A_T              eq: krill 0.378(0.95) zoo 0.622(1.03)
+    A_rev_T          eq: krill 0.422(1.06) zoo 0.578(0.96)
+    B_T              eq: krill 0.169(0.43) zoo 0.831(1.38)
+    B_rev_T          eq: krill 0.196(0.49) zoo 0.804(1.33)
+    A_Ke2e-4_T       eq: krill 0.398(1.00) zoo 0.602(1.00)
+    A_Ke2e-4_rev_T   eq: krill 0.442(1.11) zoo 0.558(0.93)
+    A_Ke0.1_T        eq: krill 0.361(0.91) zoo 0.639(1.06)
+    A_Ke0.1_rev_T    eq: krill 0.405(1.02) zoo 0.595(0.99)
+    B_Ke2e-4_T       eq: krill 0.174(0.44) zoo 0.826(1.37)
+    B_Ke2e-4_rev_T   eq: krill 0.202(0.51) zoo 0.798(1.32)
+    B_Ke0.1_T        eq: krill 0.165(0.42) zoo 0.835(1.39)
+    B_Ke0.1_rev_T    eq: krill 0.192(0.48) zoo 0.808(1.34)
+
+2. Prey side: implied M2 / booked M2 per pair (equal cells; field spread in brackets where the predator has one); * = OFF (pair carries >= 0.10 of the prey's booked M2). Mammal and seabird pairs (out of scope, unchanged) enter the total at their booked M2, not at budget_gate's implied value.
+
+  krill: booked M2 total 2.537; pairs plk 2.071 (0.82), whi 0.1873 (0.07), mac 0.125 (0.05), WC 0.119 (0.05), ben 0.035 (0.01)
+    lib              total 1.10: plk 0.95, whi 1.48(1.65), mac 1.67, WC 2.41(2.25), ben 1.22
+    lib_rev          total 1.17: plk 1.06, whi 1.41(1.61), mac 1.68, WC 2.17(1.94), ben 1.43
+    A                total 1.02: plk 0.95, whi 1.35(1.57), mac 1.65, WC 1.02(0.76), ben 0.88
+    A_rev            total 1.08: plk 1.06, whi 1.20(1.48), mac 1.64, WC 0.66(0.46), ben 1.04
+    A_Ke2e-4         total 1.06: plk 1.00, whi 1.36(1.57), mac 1.68, WC 0.94(0.79), ben 1.00
+    A_Ke2e-4_rev     total 1.12: plk 1.11, whi 1.19(1.47), mac 1.67, WC 0.60(0.48), ben 1.16
+    A_Ke0.1          total 0.98: plk 0.91, whi 1.31(1.56), mac 1.62, WC 0.99(0.65), ben 0.77
+    A_Ke0.1_rev      total 1.04: plk 1.02, whi 1.16(1.47), mac 1.62, WC 0.64(0.39), ben 0.90
+    A_kdeep0.05      total 1.03: plk 0.97, whi 1.35(1.57), mac 1.65, WC 1.01(0.79), ben 0.90
+    A_kdeep0.05_rev  total 1.10: plk 1.08, whi 1.20(1.47), mac 1.65, WC 0.65(0.49), ben 1.05
+    A_kdeep0.09      total 0.96: plk 0.89, whi 1.34(1.58), mac 1.63, WC 1.01(0.61), ben 0.82
+    A_kdeep0.09_rev  total 1.02: plk 0.99, whi 1.18(1.48), mac 1.63, WC 0.65(0.37), ben 0.97
+    A_Lk30           total 1.03: plk 0.95, whi 1.35(1.57), mac 1.65, WC 1.24(0.95), ben 1.04
+    A_Lk30_rev       total 1.09: plk 1.06, whi 1.20(1.48), mac 1.64, WC 0.84(0.61), ben 1.22
+    B                total 0.51: plk 0.43, whi 0.84(1.20), mac 1.07, WC 0.84(0.62), ben 0.38
+    B_rev            total 0.53: plk 0.49, whi 0.66(1.03), mac 1.07, WC 0.53(0.37), ben 0.44
+    B_Ke2e-4         total 0.51: plk 0.44, whi 0.83(1.19), mac 1.08, WC 0.78(0.64), ben 0.42
+    B_Ke2e-4_rev     total 0.54: plk 0.51, whi 0.64(1.00), mac 1.08, WC 0.48(0.38), ben 0.49
+    B_Ke0.1          total 0.49: plk 0.42, whi 0.81(1.19), mac 1.06, WC 0.82(0.53), ben 0.33
+    B_Ke0.1_rev      total 0.52: plk 0.48, whi 0.64(1.02), mac 1.06, WC 0.51(0.31), ben 0.39
+    B_RD1.0          total 0.51: plk 0.43, whi 0.84(1.20), mac 1.07, WC 0.83(0.61), ben 0.36
+    B_RD1.0_rev      total 0.53: plk 0.49, whi 0.66(1.03), mac 1.07, WC 0.52(0.36), ben 0.43
+    B_RD1.9          total 0.51: plk 0.43, whi 0.84(1.20), mac 1.07, WC 0.86(0.63), ben 0.39
+    B_RD1.9_rev      total 0.54: plk 0.49, whi 0.66(1.03), mac 1.07, WC 0.53(0.37), ben 0.46
+    A_Rnv0.2         total 1.02: plk 0.95, whi 1.41(1.60), mac 1.67, WC 1.07(0.80), ben 0.89
+    A_Rnv0.2_rev     total 1.09: plk 1.06, whi 1.28(1.53), mac 1.69, WC 0.70(0.50), ben 1.04
+    A_Rnv0.5         total 0.99: plk 0.95, whi 1.19(1.48), mac 1.57, WC 0.88(0.65), ben 0.87
+    A_Rnv0.5_rev     total 1.05: plk 1.06, whi 0.98(1.33), mac 1.51, WC 0.55(0.39), ben 1.01
+    A_T              total 1.02: plk 0.95, whi 1.35(1.55), mac 1.65, WC 1.02(0.85), ben 0.88
+    A_rev_T          total 1.08: plk 1.06, whi 1.20(1.44), mac 1.64, WC 0.66(0.53), ben 1.04
+    B_T              total 0.51: plk 0.43, whi 0.84(1.15), mac 1.07, WC 0.84(0.70), ben 0.38
+    B_rev_T          total 0.53: plk 0.49, whi 0.66(0.96), mac 1.07, WC 0.53(0.42), ben 0.44
+    A_Ke2e-4_T       total 1.06: plk 1.00, whi 1.36(1.55), mac 1.68, WC 0.94(0.78), ben 1.00
+    A_Ke2e-4_rev_T   total 1.12: plk 1.11, whi 1.19(1.44), mac 1.67, WC 0.60(0.48), ben 1.16
+    A_Ke0.1_T        total 0.98: plk 0.91, whi 1.31(1.53), mac 1.62, WC 0.99(0.76), ben 0.77
+    A_Ke0.1_rev_T    total 1.04: plk 1.02, whi 1.16(1.42), mac 1.62, WC 0.64(0.47), ben 0.90
+    B_Ke2e-4_T       total 0.51: plk 0.44, whi 0.83(1.16), mac 1.08, WC 0.78(0.63), ben 0.42
+    B_Ke2e-4_rev_T   total 0.54: plk 0.51, whi 0.64(0.96), mac 1.08, WC 0.48(0.38), ben 0.49
+    B_Ke0.1_T        total 0.49: plk 0.42, whi 0.81(1.14), mac 1.06, WC 0.82(0.62), ben 0.33
+    B_Ke0.1_rev_T    total 0.52: plk 0.48, whi 0.64(0.95), mac 1.06, WC 0.51(0.37), ben 0.39
+
+  planktivorous_fish: booked M2 total 0.3806; pairs WC 0.174 (0.46), ben 0.1023 (0.27), whi 0.0545 (0.14), mac 0.0186 (0.05), seabirds 0.0167 (0.04), por 0.00946 (0.02), seal 0.00501 (0.01)
+    lib              total 0.38: WC 0.21*(0.32*), ben 0.41, whi 0.35(0.17*), mac 0.83
+    lib_rev          total 0.57: WC 0.36(0.51), ben 0.60, whi 0.63(0.31*), mac 1.57
+    A                total 0.86: WC 1.07(1.29), ben 0.51, whi 0.69(0.35), mac 1.06
+    A_rev            total 1.14: WC 1.30(1.48), ben 0.74, whi 1.15(0.61), mac 1.98
+    A_Ke2e-4         total 0.93: WC 1.11(1.27), ben 0.70, whi 0.72(0.37), mac 1.02
+    A_Ke2e-4_rev     total 1.22: WC 1.32(1.46), ben 1.02, whi 1.18(0.65), mac 1.91
+    A_Ke0.1          total 0.85: WC 1.09(1.36), ben 0.42, whi 0.73(0.35), mac 1.09
+    A_Ke0.1_rev      total 1.12: WC 1.31(1.53), ben 0.62, whi 1.21(0.62), mac 2.03
+    A_kdeep0.05      total 0.87: WC 1.07(1.27), ben 0.55, whi 0.69(0.35), mac 1.06
+    A_kdeep0.05_rev  total 1.15: WC 1.30(1.46), ben 0.81, whi 1.15(0.62), mac 1.98
+    A_kdeep0.09      total 0.84: WC 1.09(1.39), ben 0.42, whi 0.71(0.34), mac 1.06
+    A_kdeep0.09_rev  total 1.11: WC 1.31(1.56), ben 0.61, whi 1.17(0.60), mac 1.98
+    A_Lk30           total 0.80: WC 0.94(1.16), ben 0.51, whi 0.69(0.35), mac 1.06
+    A_Lk30_rev       total 1.08: WC 1.19(1.39), ben 0.74, whi 1.15(0.61), mac 1.98
+    B                total 1.04: WC 1.17(1.37), ben 0.48, whi 1.48(0.92), mac 1.74
+    B_rev            total 1.37: WC 1.37(1.54), ben 0.70, whi 2.18(1.47), mac 3.25
+    B_Ke2e-4         total 1.12: WC 1.21(1.35), ben 0.65, whi 1.57(0.99), mac 1.73
+    B_Ke2e-4_rev     total 1.46: WC 1.39(1.52), ben 0.96, whi 2.27(1.57), mac 3.23
+    B_Ke0.1          total 1.03: WC 1.19(1.43), ben 0.40, whi 1.49(0.91), mac 1.75
+    B_Ke0.1_rev      total 1.35: WC 1.39(1.58), ben 0.59, whi 2.20(1.47), mac 3.26
+    B_RD1.0          total 1.04: WC 1.18(1.37), ben 0.44, whi 1.48(0.92), mac 1.74
+    B_RD1.0_rev      total 1.35: WC 1.37(1.54), ben 0.65, whi 2.18(1.47), mac 3.25
+    B_RD1.9          total 1.05: WC 1.17(1.37), ben 0.51, whi 1.48(0.92), mac 1.74
+    B_RD1.9_rev      total 1.38: WC 1.37(1.54), ben 0.75, whi 2.18(1.47), mac 3.25
+    A_Rnv0.2         total 0.80: WC 1.05(1.27), ben 0.45, whi 0.56(0.27*), mac 0.81
+    A_Rnv0.2_rev     total 1.05: WC 1.28(1.47), ben 0.65, whi 0.96(0.49), mac 1.53
+    A_Rnv0.5         total 1.04: WC 1.14(1.35), ben 0.72, whi 1.06(0.56), mac 1.82
+    A_Rnv0.5_rev     total 1.37: WC 1.34(1.52), ben 1.05, whi 1.63(0.94), mac 3.28
+    A_T              total 0.86: WC 1.07(1.22), ben 0.51, whi 0.69(0.39), mac 1.06
+    A_rev_T          total 1.14: WC 1.30(1.43), ben 0.74, whi 1.15(0.69), mac 1.98
+    B_T              total 1.04: WC 1.17(1.32), ben 0.48, whi 1.48(1.02), mac 1.74
+    B_rev_T          total 1.37: WC 1.37(1.50), ben 0.70, whi 2.18(1.59), mac 3.25
+    A_Ke2e-4_T       total 0.93: WC 1.11(1.27), ben 0.70, whi 0.72(0.40), mac 1.02
+    A_Ke2e-4_rev_T   total 1.22: WC 1.32(1.46), ben 1.02, whi 1.18(0.69), mac 1.91
+    A_Ke0.1_T        total 0.85: WC 1.09(1.28), ben 0.42, whi 0.73(0.41), mac 1.09
+    A_Ke0.1_rev_T    total 1.12: WC 1.31(1.47), ben 0.62, whi 1.21(0.71), mac 2.03
+    B_Ke2e-4_T       total 1.12: WC 1.21(1.35), ben 0.65, whi 1.57(1.05), mac 1.73
+    B_Ke2e-4_rev_T   total 1.46: WC 1.39(1.52), ben 0.96, whi 2.27(1.63), mac 3.23
+    B_Ke0.1_T        total 1.03: WC 1.19(1.36), ben 0.40, whi 1.49(1.02), mac 1.75
+    B_Ke0.1_rev_T    total 1.35: WC 1.39(1.53), ben 0.59, whi 2.20(1.60), mac 3.26
+
+  benthivorous_fish: booked M2 total 0.2341; pairs whi 0.1067 (0.46), WC 0.0833 (0.36), seal 0.0373 (0.16), por 0.0068 (0.03)
+    lib              total 0.37: whi 0.25*(0.12*), WC 0.18*(0.27*)
+    lib_rev          total 0.50: whi 0.45(0.22*), WC 0.30*(0.43)
+    A                total 0.69: whi 0.58(0.29*), WC 0.66(0.80)
+    A_rev            total 0.92: whi 0.97(0.52), WC 0.80(0.92)
+    A_Ke2e-4         total 0.73: whi 0.62(0.32*), WC 0.72(0.82)
+    A_Ke2e-4_rev     total 0.96: whi 1.02(0.56), WC 0.86(0.95)
+    A_Ke0.1          total 0.70: whi 0.61(0.29*), WC 0.66(0.82)
+    A_Ke0.1_rev      total 0.93: whi 1.00(0.52), WC 0.79(0.92)
+    A_kdeep0.05      total 0.70: whi 0.60(0.30*), WC 0.69(0.81)
+    A_kdeep0.05_rev  total 0.93: whi 0.99(0.53), WC 0.83(0.93)
+    A_kdeep0.09      total 0.67: whi 0.57(0.27*), WC 0.63(0.80)
+    A_kdeep0.09_rev  total 0.89: whi 0.95(0.49), WC 0.76(0.89)
+    A_Lk30           total 0.66: whi 0.58(0.29*), WC 0.58(0.72)
+    A_Lk30_rev       total 0.89: whi 0.97(0.52), WC 0.74(0.86)
+    B                total 1.03: whi 1.25(0.77), WC 0.76(0.89)
+    B_rev            total 1.34: whi 1.84(1.24), WC 0.89(0.99)
+    B_Ke2e-4         total 1.10: whi 1.35(0.86), WC 0.82(0.92)
+    B_Ke2e-4_rev     total 1.41: whi 1.95(1.35), WC 0.94(1.03)
+    B_Ke0.1          total 1.02: whi 1.24(0.76), WC 0.74(0.90)
+    B_Ke0.1_rev      total 1.33: whi 1.83(1.22), WC 0.87(0.99)
+    B_RD1.0          total 1.04: whi 1.25(0.77), WC 0.78(0.91)
+    B_RD1.0_rev      total 1.35: whi 1.84(1.24), WC 0.91(1.02)
+    B_RD1.9          total 1.02: whi 1.25(0.77), WC 0.73(0.85)
+    B_RD1.9_rev      total 1.33: whi 1.84(1.24), WC 0.85(0.95)
+    A_Rnv0.2         total 0.61: whi 0.43(0.21*), WC 0.62(0.75)
+    A_Rnv0.2_rev     total 0.80: whi 0.74(0.38), WC 0.76(0.87)
+    A_Rnv0.5         total 0.92: whi 1.00(0.53), WC 0.78(0.92)
+    A_Rnv0.5_rev     total 1.22: whi 1.54(0.89), WC 0.92(1.04)
+    A_T              total 0.69: whi 0.58(0.37), WC 0.66(0.67)
+    A_rev_T          total 0.92: whi 0.97(0.64), WC 0.80(0.78)
+    B_T              total 1.03: whi 1.25(0.94), WC 0.76(0.75)
+    B_rev_T          total 1.34: whi 1.84(1.48), WC 0.89(0.85)
+    A_Ke2e-4_T       total 0.73: whi 0.62(0.37), WC 0.72(0.81)
+    A_Ke2e-4_rev_T   total 0.96: whi 1.02(0.64), WC 0.86(0.93)
+    A_Ke0.1_T        total 0.70: whi 0.61(0.37), WC 0.66(0.66)
+    A_Ke0.1_rev_T    total 0.93: whi 1.00(0.65), WC 0.79(0.76)
+    B_Ke2e-4_T       total 1.10: whi 1.35(0.97), WC 0.82(0.90)
+    B_Ke2e-4_rev_T   total 1.41: whi 1.95(1.50), WC 0.94(1.01)
+    B_Ke0.1_T        total 1.02: whi 1.24(0.94), WC 0.74(0.74)
+    B_Ke0.1_rev_T    total 1.33: whi 1.83(1.47), WC 0.87(0.83)
+
+  whiting: booked M2 total 0.371; pairs ben 0.18 (0.49), WC 0.157 (0.42), por 0.0201 (0.05), seal 0.0139 (0.04)
+    lib              total 0.27: ben 0.21*, WC 0.18*(0.09*)
+    lib_rev          total 0.37: ben 0.31*, WC 0.31*(0.14*)
+    A                total 0.63: ben 0.25*, WC 0.97(0.37)
+    A_rev            total 0.77: ben 0.37, WC 1.18(0.42)
+    A_Ke2e-4         total 0.72: ben 0.35, WC 1.08(0.39)
+    A_Ke2e-4_rev     total 0.89: ben 0.51, WC 1.29(0.45)
+    A_Ke0.1          total 0.59: ben 0.21*, WC 0.94(0.37)
+    A_Ke0.1_rev      total 0.72: ben 0.30*, WC 1.13(0.41)
+    A_kdeep0.05      total 0.65: ben 0.27*, WC 1.01(0.37)
+    A_kdeep0.05_rev  total 0.80: ben 0.40, WC 1.22(0.43)
+    A_kdeep0.09      total 0.57: ben 0.21*, WC 0.90(0.36)
+    A_kdeep0.09_rev  total 0.70: ben 0.30*, WC 1.09(0.41)
+    A_Lk30           total 0.57: ben 0.25*, WC 0.85(0.33*)
+    A_Lk30_rev       total 0.72: ben 0.37, WC 1.08(0.40)
+    B                total 0.66: ben 0.24*, WC 1.07(0.39)
+    B_rev            total 0.79: ben 0.35, WC 1.25(0.44)
+    B_Ke2e-4         total 0.75: ben 0.33*, WC 1.18(0.41)
+    B_Ke2e-4_rev     total 0.90: ben 0.48, WC 1.36(0.47)
+    B_Ke0.1          total 0.62: ben 0.20*, WC 1.03(0.39)
+    B_Ke0.1_rev      total 0.74: ben 0.29*, WC 1.20(0.43)
+    B_RD1.0          total 0.65: ben 0.22*, WC 1.08(0.40)
+    B_RD1.0_rev      total 0.78: ben 0.32*, WC 1.25(0.44)
+    B_RD1.9          total 0.66: ben 0.25*, WC 1.06(0.39)
+    B_RD1.9_rev      total 0.80: ben 0.37, WC 1.24(0.44)
+    A_Rnv0.2         total 0.59: ben 0.22*, WC 0.93(0.35)
+    A_Rnv0.2_rev     total 0.73: ben 0.32*, WC 1.13(0.41)
+    A_Rnv0.5         total 0.73: ben 0.36, WC 1.10(0.41)
+    A_Rnv0.5_rev     total 0.89: ben 0.52, WC 1.29(0.46)
+    A_T              total 0.63: ben 0.25*, WC 0.97(0.58)
+    A_rev_T          total 0.77: ben 0.37, WC 1.18(0.68)
+    B_T              total 0.66: ben 0.24*, WC 1.07(0.61)
+    B_rev_T          total 0.79: ben 0.35, WC 1.25(0.70)
+    A_Ke2e-4_T       total 0.72: ben 0.35, WC 1.08(0.47)
+    A_Ke2e-4_rev_T   total 0.89: ben 0.51, WC 1.29(0.54)
+    A_Ke0.1_T        total 0.59: ben 0.21*, WC 0.94(0.63)
+    A_Ke0.1_rev_T    total 0.72: ben 0.30*, WC 1.13(0.73)
+    B_Ke2e-4_T       total 0.75: ben 0.33*, WC 1.18(0.50)
+    B_Ke2e-4_rev_T   total 0.90: ben 0.48, WC 1.36(0.56)
+    B_Ke0.1_T        total 0.62: ben 0.20*, WC 1.03(0.67)
+    B_Ke0.1_rev_T    total 0.74: ben 0.29*, WC 1.20(0.75)
+
+  mackerel: booked M2 total 0.021; pairs WC 0.021 (1.00)
+    lib              total 0.10: WC 0.10*(0.14*)
+    lib_rev          total 0.16: WC 0.16*(0.23*)
+    A                total 0.24: WC 0.24*(0.29*)
+    A_rev            total 0.29: WC 0.29*(0.33)
+    A_Ke2e-4         total 0.21: WC 0.21*(0.24*)
+    A_Ke2e-4_rev     total 0.25: WC 0.25*(0.27*)
+    A_Ke0.1          total 0.28: WC 0.28*(0.35)
+    A_Ke0.1_rev      total 0.34: WC 0.34(0.39)
+    A_kdeep0.05      total 0.23: WC 0.23*(0.27*)
+    A_kdeep0.05_rev  total 0.28: WC 0.28*(0.31*)
+    A_kdeep0.09      total 0.28: WC 0.28*(0.35)
+    A_kdeep0.09_rev  total 0.33: WC 0.33*(0.39)
+    A_Lk30           total 0.21: WC 0.21*(0.26*)
+    A_Lk30_rev       total 0.27: WC 0.27*(0.31*)
+    B                total 0.28: WC 0.28*(0.33*)
+    B_rev            total 0.33: WC 0.33*(0.37)
+    B_Ke2e-4         total 0.24: WC 0.24*(0.27*)
+    B_Ke2e-4_rev     total 0.28: WC 0.28*(0.31*)
+    B_Ke0.1          total 0.33: WC 0.33*(0.39)
+    B_Ke0.1_rev      total 0.38: WC 0.38(0.43)
+    B_RD1.0          total 0.29: WC 0.29*(0.34)
+    B_RD1.0_rev      total 0.34: WC 0.34(0.38)
+    B_RD1.9          total 0.26: WC 0.26*(0.31*)
+    B_RD1.9_rev      total 0.31: WC 0.31*(0.35)
+    A_Rnv0.2         total 0.24: WC 0.24*(0.29*)
+    A_Rnv0.2_rev     total 0.29: WC 0.29*(0.34)
+    A_Rnv0.5         total 0.25: WC 0.25*(0.30*)
+    A_Rnv0.5_rev     total 0.30: WC 0.30*(0.34)
+    A_T              total 0.24: WC 0.24*(0.33*)
+    A_rev_T          total 0.29: WC 0.29*(0.38)
+    B_T              total 0.28: WC 0.28*(0.37)
+    B_rev_T          total 0.33: WC 0.33*(0.43)
+    A_Ke2e-4_T       total 0.21: WC 0.21*(0.24*)
+    A_Ke2e-4_rev_T   total 0.25: WC 0.25*(0.27*)
+    A_Ke0.1_T        total 0.28: WC 0.28*(0.41)
+    A_Ke0.1_rev_T    total 0.34: WC 0.34(0.47)
+    B_Ke2e-4_T       total 0.24: WC 0.24*(0.27*)
+    B_Ke2e-4_rev_T   total 0.28: WC 0.28*(0.30*)
+    B_Ke0.1_T        total 0.33: WC 0.33*(0.46)
+    B_Ke0.1_rev_T    total 0.38: WC 0.38(0.52)
+
+3. Per bed class (16 x 16 probe grid, predator uniform within the class): krill share of each predator's encounter; class < 100 / 100-150 / 150-250 / > 250 m. 'flat' = fish a's as the engine has them (no table); 'cls' = fish a's class-resolved by the rule
+
+  predatory_fish (booked krill share 0.361)
+    lib              flat 0.906 / 0.924 / 0.742 / 0.075   cls 0.906 / 0.924 / 0.742 / 0.075
+    lib_rev          flat 0.838 / 0.868 / 0.608 / 0.042   cls 0.838 / 0.868 / 0.608 / 0.042
+    A                flat 0.450 / 0.517 / 0.201 / 0.008   cls 0.357 / 0.457 / 0.251 / 0.014
+    A_rev            flat 0.304 / 0.364 / 0.119 / 0.004   cls 0.229 / 0.310 / 0.152 / 0.008
+    A_Ke2e-4         flat 0.395 / 0.474 / 0.240 / 0.010   cls 0.352 / 0.439 / 0.239 / 0.019
+    A_Ke2e-4_rev     flat 0.259 / 0.325 / 0.144 / 0.005   cls 0.225 / 0.294 / 0.144 / 0.010
+    A_Ke0.1          flat 0.469 / 0.512 / 0.138 / 0.007   cls 0.354 / 0.463 / 0.187 / 0.012
+    A_Ke0.1_rev      flat 0.320 / 0.360 / 0.079 / 0.004   cls 0.227 / 0.315 / 0.110 / 0.006
+    A_kdeep0.05      flat 0.436 / 0.508 / 0.223 / 0.007   cls 0.358 / 0.454 / 0.258 / 0.014
+    A_kdeep0.05_rev  flat 0.292 / 0.356 / 0.133 / 0.004   cls 0.229 / 0.307 / 0.157 / 0.007
+    A_kdeep0.09      flat 0.482 / 0.525 / 0.107 / 0.009   cls 0.358 / 0.475 / 0.153 / 0.014
+    A_kdeep0.09_rev  flat 0.332 / 0.372 / 0.060 / 0.005   cls 0.229 / 0.326 / 0.088 / 0.008
+    A_Lk30           flat 0.533 / 0.599 / 0.259 / 0.010   cls 0.437 / 0.540 / 0.317 / 0.018
+    A_Lk30_rev       flat 0.379 / 0.444 / 0.157 / 0.005   cls 0.293 / 0.386 / 0.199 / 0.010
+    B                flat 0.380 / 0.446 / 0.162 / 0.007   cls 0.296 / 0.390 / 0.203 / 0.012
+    B_rev            flat 0.247 / 0.301 / 0.094 / 0.003   cls 0.183 / 0.254 / 0.120 / 0.006
+    B_Ke2e-4         flat 0.329 / 0.405 / 0.194 / 0.008   cls 0.290 / 0.372 / 0.193 / 0.015
+    B_Ke2e-4_rev     flat 0.208 / 0.267 / 0.114 / 0.004   cls 0.179 / 0.240 / 0.113 / 0.008
+    B_Ke0.1          flat 0.397 / 0.442 / 0.112 / 0.006   cls 0.293 / 0.395 / 0.151 / 0.010
+    B_Ke0.1_rev      flat 0.260 / 0.297 / 0.063 / 0.003   cls 0.181 / 0.259 / 0.087 / 0.005
+    B_RD1.0          flat 0.376 / 0.442 / 0.160 / 0.007   cls 0.294 / 0.387 / 0.199 / 0.011
+    B_RD1.0_rev      flat 0.244 / 0.297 / 0.093 / 0.004   cls 0.182 / 0.252 / 0.118 / 0.006
+    B_RD1.9          flat 0.384 / 0.451 / 0.165 / 0.006   cls 0.298 / 0.393 / 0.208 / 0.012
+    B_RD1.9_rev      flat 0.250 / 0.305 / 0.095 / 0.003   cls 0.185 / 0.257 / 0.123 / 0.006
+    A_Rnv0.2         flat 0.470 / 0.536 / 0.214 / 0.008   cls 0.365 / 0.469 / 0.275 / 0.017
+    A_Rnv0.2_rev     flat 0.322 / 0.382 / 0.127 / 0.004   cls 0.235 / 0.320 / 0.169 / 0.009
+    A_Rnv0.5         flat 0.395 / 0.463 / 0.169 / 0.006   cls 0.334 / 0.423 / 0.195 / 0.009
+    A_Rnv0.5_rev     flat 0.259 / 0.315 / 0.098 / 0.003   cls 0.211 / 0.281 / 0.115 / 0.005
+    A_T              flat 0.357 / 0.457 / 0.251 / 0.014   cls 0.357 / 0.457 / 0.251 / 0.014
+    A_rev_T          flat 0.229 / 0.310 / 0.152 / 0.008   cls 0.229 / 0.310 / 0.152 / 0.008
+    B_T              flat 0.296 / 0.390 / 0.203 / 0.012   cls 0.296 / 0.390 / 0.203 / 0.012
+    B_rev_T          flat 0.183 / 0.254 / 0.120 / 0.006   cls 0.183 / 0.254 / 0.120 / 0.006
+    A_Ke2e-4_T       flat 0.352 / 0.439 / 0.239 / 0.019   cls 0.352 / 0.439 / 0.239 / 0.019
+    A_Ke2e-4_rev_T   flat 0.225 / 0.294 / 0.144 / 0.010   cls 0.225 / 0.294 / 0.144 / 0.010
+    A_Ke0.1_T        flat 0.354 / 0.463 / 0.187 / 0.012   cls 0.354 / 0.463 / 0.187 / 0.012
+    A_Ke0.1_rev_T    flat 0.227 / 0.315 / 0.110 / 0.006   cls 0.227 / 0.315 / 0.110 / 0.006
+    B_Ke2e-4_T       flat 0.290 / 0.372 / 0.193 / 0.015   cls 0.290 / 0.372 / 0.193 / 0.015
+    B_Ke2e-4_rev_T   flat 0.179 / 0.240 / 0.113 / 0.008   cls 0.179 / 0.240 / 0.113 / 0.008
+    B_Ke0.1_T        flat 0.293 / 0.395 / 0.151 / 0.010   cls 0.293 / 0.395 / 0.151 / 0.010
+    B_Ke0.1_rev_T    flat 0.181 / 0.259 / 0.087 / 0.005   cls 0.181 / 0.259 / 0.087 / 0.005
+
+  whiting (booked krill share 0.557)
+    lib              flat 0.926 / 0.875 / 0.327 / 0.000   cls 0.926 / 0.875 / 0.327 / 0.000
+    lib_rev          flat 0.906 / 0.843 / 0.272 / 0.000   cls 0.906 / 0.843 / 0.272 / 0.000
+    A                flat 0.888 / 0.817 / 0.234 / 0.000   cls 0.874 / 0.804 / 0.251 / 0.000
+    A_rev            flat 0.840 / 0.747 / 0.168 / 0.000   cls 0.816 / 0.727 / 0.185 / 0.000
+    A_Ke2e-4         flat 0.886 / 0.821 / 0.352 / 0.000   cls 0.877 / 0.811 / 0.353 / 0.000
+    A_Ke2e-4_rev     flat 0.833 / 0.747 / 0.259 / 0.000   cls 0.819 / 0.732 / 0.260 / 0.000
+    A_Ke0.1          flat 0.884 / 0.795 / 0.134 / 0.000   cls 0.868 / 0.785 / 0.146 / 0.000
+    A_Ke0.1_rev      flat 0.836 / 0.722 / 0.094 / 0.000   cls 0.809 / 0.707 / 0.105 / 0.000
+    A_kdeep0.05      flat 0.887 / 0.818 / 0.283 / 0.000   cls 0.874 / 0.806 / 0.297 / 0.000
+    A_kdeep0.05_rev  flat 0.837 / 0.747 / 0.206 / 0.000   cls 0.817 / 0.728 / 0.220 / 0.000
+    A_kdeep0.09      flat 0.891 / 0.807 / 0.087 / 0.000   cls 0.873 / 0.797 / 0.097 / 0.000
+    A_kdeep0.09_rev  flat 0.845 / 0.736 / 0.060 / 0.000   cls 0.816 / 0.721 / 0.069 / 0.000
+    A_Lk30           flat 0.888 / 0.817 / 0.234 / 0.000   cls 0.874 / 0.804 / 0.251 / 0.000
+    A_Lk30_rev       flat 0.840 / 0.747 / 0.168 / 0.000   cls 0.816 / 0.727 / 0.185 / 0.000
+    B                flat 0.697 / 0.561 / 0.095 / 0.000   cls 0.667 / 0.540 / 0.104 / 0.000
+    B_rev            flat 0.603 / 0.458 / 0.065 / 0.000   cls 0.563 / 0.432 / 0.073 / 0.000
+    B_Ke2e-4         flat 0.687 / 0.559 / 0.132 / 0.000   cls 0.669 / 0.543 / 0.133 / 0.000
+    B_Ke2e-4_rev     flat 0.585 / 0.449 / 0.089 / 0.000   cls 0.561 / 0.430 / 0.090 / 0.000
+    B_Ke0.1          flat 0.694 / 0.539 / 0.070 / 0.000   cls 0.660 / 0.524 / 0.077 / 0.000
+    B_Ke0.1_rev      flat 0.602 / 0.439 / 0.048 / 0.000   cls 0.557 / 0.420 / 0.054 / 0.000
+    B_RD1.0          flat 0.697 / 0.561 / 0.095 / 0.000   cls 0.667 / 0.540 / 0.104 / 0.000
+    B_RD1.0_rev      flat 0.603 / 0.458 / 0.065 / 0.000   cls 0.563 / 0.432 / 0.073 / 0.000
+    B_RD1.9          flat 0.697 / 0.561 / 0.095 / 0.000   cls 0.667 / 0.540 / 0.104 / 0.000
+    B_RD1.9_rev      flat 0.603 / 0.458 / 0.065 / 0.000   cls 0.563 / 0.432 / 0.073 / 0.000
+    A_Rnv0.2         flat 0.905 / 0.842 / 0.267 / 0.000   cls 0.885 / 0.824 / 0.297 / 0.000
+    A_Rnv0.2_rev     flat 0.868 / 0.787 / 0.201 / 0.000   cls 0.835 / 0.758 / 0.235 / 0.000
+    A_Rnv0.5         flat 0.840 / 0.747 / 0.168 / 0.000   cls 0.840 / 0.746 / 0.168 / 0.000
+    A_Rnv0.5_rev     flat 0.762 / 0.643 / 0.110 / 0.000   cls 0.762 / 0.643 / 0.110 / 0.000
+    A_T              flat 0.874 / 0.804 / 0.251 / 0.000   cls 0.874 / 0.804 / 0.251 / 0.000
+    A_rev_T          flat 0.816 / 0.727 / 0.185 / 0.000   cls 0.816 / 0.727 / 0.185 / 0.000
+    B_T              flat 0.667 / 0.540 / 0.104 / 0.000   cls 0.667 / 0.540 / 0.104 / 0.000
+    B_rev_T          flat 0.563 / 0.432 / 0.073 / 0.000   cls 0.563 / 0.432 / 0.073 / 0.000
+    A_Ke2e-4_T       flat 0.877 / 0.811 / 0.353 / 0.000   cls 0.877 / 0.811 / 0.353 / 0.000
+    A_Ke2e-4_rev_T   flat 0.819 / 0.732 / 0.260 / 0.000   cls 0.819 / 0.732 / 0.260 / 0.000
+    A_Ke0.1_T        flat 0.868 / 0.785 / 0.146 / 0.000   cls 0.868 / 0.785 / 0.146 / 0.000
+    A_Ke0.1_rev_T    flat 0.809 / 0.707 / 0.105 / 0.000   cls 0.809 / 0.707 / 0.105 / 0.000
+    B_Ke2e-4_T       flat 0.669 / 0.543 / 0.133 / 0.000   cls 0.669 / 0.543 / 0.133 / 0.000
+    B_Ke2e-4_rev_T   flat 0.561 / 0.430 / 0.090 / 0.000   cls 0.561 / 0.430 / 0.090 / 0.000
+    B_Ke0.1_T        flat 0.660 / 0.524 / 0.077 / 0.000   cls 0.660 / 0.524 / 0.077 / 0.000
+    B_Ke0.1_rev_T    flat 0.557 / 0.420 / 0.054 / 0.000   cls 0.557 / 0.420 / 0.054 / 0.000
+
+  benthivorous_fish (booked krill share 0.027)
+    lib              flat 0.081 / 0.047 / 0.003 / 0.000   cls 0.081 / 0.047 / 0.003 / 0.000
+    lib_rev          flat 0.093 / 0.055 / 0.004 / 0.000   cls 0.093 / 0.055 / 0.004 / 0.000
+    A                flat 0.059 / 0.035 / 0.002 / 0.000   cls 0.057 / 0.034 / 0.002 / 0.000
+    A_rev            flat 0.069 / 0.040 / 0.003 / 0.000   cls 0.066 / 0.040 / 0.003 / 0.000
+    A_Ke2e-4         flat 0.063 / 0.039 / 0.005 / 0.000   cls 0.062 / 0.039 / 0.005 / 0.000
+    A_Ke2e-4_rev     flat 0.073 / 0.045 / 0.006 / 0.000   cls 0.071 / 0.045 / 0.006 / 0.000
+    A_Ke0.1          flat 0.055 / 0.029 / 0.001 / 0.000   cls 0.053 / 0.029 / 0.001 / 0.000
+    A_Ke0.1_rev      flat 0.064 / 0.034 / 0.001 / 0.000   cls 0.061 / 0.033 / 0.001 / 0.000
+    A_kdeep0.05      flat 0.059 / 0.035 / 0.003 / 0.000   cls 0.058 / 0.035 / 0.003 / 0.000
+    A_kdeep0.05_rev  flat 0.068 / 0.041 / 0.004 / 0.000   cls 0.066 / 0.040 / 0.004 / 0.000
+    A_kdeep0.09      flat 0.059 / 0.031 / 0.001 / 0.000   cls 0.057 / 0.031 / 0.001 / 0.000
+    A_kdeep0.09_rev  flat 0.069 / 0.037 / 0.001 / 0.000   cls 0.065 / 0.036 / 0.001 / 0.000
+    A_Lk30           flat 0.069 / 0.041 / 0.003 / 0.000   cls 0.067 / 0.040 / 0.003 / 0.000
+    A_Lk30_rev       flat 0.080 / 0.047 / 0.003 / 0.000   cls 0.077 / 0.046 / 0.003 / 0.000
+    B                flat 0.026 / 0.015 / 0.001 / 0.000   cls 0.025 / 0.015 / 0.001 / 0.000
+    B_rev            flat 0.030 / 0.017 / 0.001 / 0.000   cls 0.029 / 0.017 / 0.001 / 0.000
+    B_Ke2e-4         flat 0.028 / 0.017 / 0.002 / 0.000   cls 0.027 / 0.016 / 0.002 / 0.000
+    B_Ke2e-4_rev     flat 0.032 / 0.019 / 0.002 / 0.000   cls 0.031 / 0.019 / 0.002 / 0.000
+    B_Ke0.1          flat 0.024 / 0.013 / 0.001 / 0.000   cls 0.023 / 0.012 / 0.001 / 0.000
+    B_Ke0.1_rev      flat 0.028 / 0.015 / 0.001 / 0.000   cls 0.027 / 0.015 / 0.001 / 0.000
+    B_RD1.0          flat 0.025 / 0.014 / 0.001 / 0.000   cls 0.024 / 0.014 / 0.001 / 0.000
+    B_RD1.0_rev      flat 0.029 / 0.017 / 0.001 / 0.000   cls 0.028 / 0.016 / 0.001 / 0.000
+    B_RD1.9          flat 0.027 / 0.015 / 0.001 / 0.000   cls 0.026 / 0.015 / 0.001 / 0.000
+    B_RD1.9_rev      flat 0.031 / 0.018 / 0.001 / 0.000   cls 0.030 / 0.018 / 0.001 / 0.000
+    A_Rnv0.2         flat 0.060 / 0.035 / 0.002 / 0.000   cls 0.058 / 0.034 / 0.002 / 0.000
+    A_Rnv0.2_rev     flat 0.069 / 0.041 / 0.003 / 0.000   cls 0.066 / 0.040 / 0.003 / 0.000
+    A_Rnv0.5         flat 0.058 / 0.034 / 0.002 / 0.000   cls 0.057 / 0.034 / 0.002 / 0.000
+    A_Rnv0.5_rev     flat 0.067 / 0.039 / 0.003 / 0.000   cls 0.065 / 0.039 / 0.003 / 0.000
+    A_T              flat 0.057 / 0.034 / 0.002 / 0.000   cls 0.057 / 0.034 / 0.002 / 0.000
+    A_rev_T          flat 0.066 / 0.040 / 0.003 / 0.000   cls 0.066 / 0.040 / 0.003 / 0.000
+    B_T              flat 0.025 / 0.015 / 0.001 / 0.000   cls 0.025 / 0.015 / 0.001 / 0.000
+    B_rev_T          flat 0.029 / 0.017 / 0.001 / 0.000   cls 0.029 / 0.017 / 0.001 / 0.000
+    A_Ke2e-4_T       flat 0.062 / 0.039 / 0.005 / 0.000   cls 0.062 / 0.039 / 0.005 / 0.000
+    A_Ke2e-4_rev_T   flat 0.071 / 0.045 / 0.006 / 0.000   cls 0.071 / 0.045 / 0.006 / 0.000
+    A_Ke0.1_T        flat 0.053 / 0.029 / 0.001 / 0.000   cls 0.053 / 0.029 / 0.001 / 0.000
+    A_Ke0.1_rev_T    flat 0.061 / 0.033 / 0.001 / 0.000   cls 0.061 / 0.033 / 0.001 / 0.000
+    B_Ke2e-4_T       flat 0.027 / 0.016 / 0.002 / 0.000   cls 0.027 / 0.016 / 0.002 / 0.000
+    B_Ke2e-4_rev_T   flat 0.031 / 0.019 / 0.002 / 0.000   cls 0.031 / 0.019 / 0.002 / 0.000
+    B_Ke0.1_T        flat 0.023 / 0.012 / 0.001 / 0.000   cls 0.023 / 0.012 / 0.001 / 0.000
+    B_Ke0.1_rev_T    flat 0.027 / 0.015 / 0.001 / 0.000   cls 0.027 / 0.015 / 0.001 / 0.000
+
+  mackerel (booked krill share 0.394)
+    lib              flat 0.541 / 0.693 / 0.664 / 0.676   cls 0.541 / 0.693 / 0.664 / 0.676
+    lib_rev          flat 0.548 / 0.699 / 0.670 / 0.682   cls 0.548 / 0.699 / 0.670 / 0.682
+    A                flat 0.532 / 0.684 / 0.655 / 0.670   cls 0.531 / 0.684 / 0.655 / 0.670
+    A_rev            flat 0.531 / 0.682 / 0.653 / 0.669   cls 0.529 / 0.682 / 0.654 / 0.669
+    A_Ke2e-4         flat 0.541 / 0.695 / 0.672 / 0.678   cls 0.540 / 0.695 / 0.672 / 0.678
+    A_Ke2e-4_rev     flat 0.539 / 0.693 / 0.671 / 0.676   cls 0.537 / 0.693 / 0.671 / 0.677
+    A_Ke0.1          flat 0.523 / 0.672 / 0.645 / 0.668   cls 0.522 / 0.672 / 0.645 / 0.668
+    A_Ke0.1_rev      flat 0.522 / 0.671 / 0.643 / 0.666   cls 0.520 / 0.671 / 0.644 / 0.667
+    A_kdeep0.05      flat 0.532 / 0.685 / 0.658 / 0.670   cls 0.531 / 0.685 / 0.658 / 0.670
+    A_kdeep0.05_rev  flat 0.530 / 0.683 / 0.656 / 0.668   cls 0.529 / 0.683 / 0.657 / 0.669
+    A_kdeep0.09      flat 0.532 / 0.679 / 0.645 / 0.671   cls 0.531 / 0.679 / 0.645 / 0.671
+    A_kdeep0.09_rev  flat 0.531 / 0.678 / 0.644 / 0.670   cls 0.529 / 0.679 / 0.645 / 0.670
+    A_Lk30           flat 0.532 / 0.684 / 0.655 / 0.670   cls 0.531 / 0.684 / 0.655 / 0.670
+    A_Lk30_rev       flat 0.531 / 0.682 / 0.653 / 0.669   cls 0.529 / 0.682 / 0.654 / 0.669
+    B                flat 0.299 / 0.445 / 0.440 / 0.460   cls 0.298 / 0.445 / 0.440 / 0.460
+    B_rev            flat 0.298 / 0.443 / 0.438 / 0.458   cls 0.296 / 0.443 / 0.439 / 0.459
+    B_Ke2e-4         flat 0.301 / 0.449 / 0.445 / 0.462   cls 0.301 / 0.449 / 0.446 / 0.463
+    B_Ke2e-4_rev     flat 0.300 / 0.447 / 0.444 / 0.461   cls 0.298 / 0.447 / 0.444 / 0.461
+    B_Ke0.1          flat 0.297 / 0.441 / 0.437 / 0.459   cls 0.296 / 0.441 / 0.437 / 0.460
+    B_Ke0.1_rev      flat 0.296 / 0.439 / 0.435 / 0.458   cls 0.294 / 0.439 / 0.436 / 0.458
+    B_RD1.0          flat 0.299 / 0.445 / 0.440 / 0.460   cls 0.298 / 0.445 / 0.440 / 0.460
+    B_RD1.0_rev      flat 0.298 / 0.443 / 0.438 / 0.458   cls 0.296 / 0.443 / 0.439 / 0.459
+    B_RD1.9          flat 0.299 / 0.445 / 0.440 / 0.460   cls 0.298 / 0.445 / 0.440 / 0.460
+    B_RD1.9_rev      flat 0.298 / 0.443 / 0.438 / 0.458   cls 0.296 / 0.443 / 0.439 / 0.459
+    A_Rnv0.2         flat 0.543 / 0.693 / 0.664 / 0.679   cls 0.541 / 0.693 / 0.664 / 0.680
+    A_Rnv0.2_rev     flat 0.550 / 0.699 / 0.671 / 0.686   cls 0.548 / 0.699 / 0.672 / 0.687
+    A_Rnv0.5         flat 0.501 / 0.656 / 0.626 / 0.642   cls 0.501 / 0.656 / 0.626 / 0.642
+    A_Rnv0.5_rev     flat 0.475 / 0.632 / 0.601 / 0.618   cls 0.475 / 0.632 / 0.601 / 0.618
+    A_T              flat 0.531 / 0.684 / 0.655 / 0.670   cls 0.531 / 0.684 / 0.655 / 0.670
+    A_rev_T          flat 0.529 / 0.682 / 0.654 / 0.669   cls 0.529 / 0.682 / 0.654 / 0.669
+    B_T              flat 0.298 / 0.445 / 0.440 / 0.460   cls 0.298 / 0.445 / 0.440 / 0.460
+    B_rev_T          flat 0.296 / 0.443 / 0.439 / 0.459   cls 0.296 / 0.443 / 0.439 / 0.459
+    A_Ke2e-4_T       flat 0.540 / 0.695 / 0.672 / 0.678   cls 0.540 / 0.695 / 0.672 / 0.678
+    A_Ke2e-4_rev_T   flat 0.537 / 0.693 / 0.671 / 0.677   cls 0.537 / 0.693 / 0.671 / 0.677
+    A_Ke0.1_T        flat 0.522 / 0.672 / 0.645 / 0.668   cls 0.522 / 0.672 / 0.645 / 0.668
+    A_Ke0.1_rev_T    flat 0.520 / 0.671 / 0.644 / 0.667   cls 0.520 / 0.671 / 0.644 / 0.667
+    B_Ke2e-4_T       flat 0.301 / 0.449 / 0.446 / 0.463   cls 0.301 / 0.449 / 0.446 / 0.463
+    B_Ke2e-4_rev_T   flat 0.298 / 0.447 / 0.444 / 0.461   cls 0.298 / 0.447 / 0.444 / 0.461
+    B_Ke0.1_T        flat 0.296 / 0.441 / 0.437 / 0.460   cls 0.296 / 0.441 / 0.437 / 0.460
+    B_Ke0.1_rev_T    flat 0.294 / 0.439 / 0.436 / 0.458   cls 0.294 / 0.439 / 0.436 / 0.458
+
+  planktivorous_fish (booked krill share 0.398)
+    lib              flat 0.561 / 0.478 / 0.164 / 0.095   cls 0.561 / 0.478 / 0.164 / 0.095
+    lib_rev          flat 0.606 / 0.524 / 0.190 / 0.112   cls 0.606 / 0.524 / 0.190 / 0.112
+    A                flat 0.563 / 0.475 / 0.164 / 0.094   cls 0.563 / 0.475 / 0.164 / 0.094
+    A_rev            flat 0.607 / 0.521 / 0.191 / 0.111   cls 0.607 / 0.521 / 0.191 / 0.111
+    A_Ke2e-4         flat 0.570 / 0.494 / 0.208 / 0.106   cls 0.570 / 0.494 / 0.208 / 0.106
+    A_Ke2e-4_rev     flat 0.614 / 0.539 / 0.240 / 0.125   cls 0.614 / 0.539 / 0.240 / 0.125
+    A_Ke0.1          flat 0.555 / 0.455 / 0.139 / 0.091   cls 0.555 / 0.455 / 0.139 / 0.091
+    A_Ke0.1_rev      flat 0.599 / 0.500 / 0.163 / 0.108   cls 0.599 / 0.500 / 0.163 / 0.108
+    A_kdeep0.05      flat 0.565 / 0.487 / 0.178 / 0.095   cls 0.565 / 0.487 / 0.178 / 0.095
+    A_kdeep0.05_rev  flat 0.609 / 0.533 / 0.206 / 0.112   cls 0.609 / 0.533 / 0.206 / 0.112
+    A_kdeep0.09      flat 0.557 / 0.436 / 0.128 / 0.092   cls 0.557 / 0.436 / 0.128 / 0.092
+    A_kdeep0.09_rev  flat 0.601 / 0.481 / 0.149 / 0.108   cls 0.601 / 0.481 / 0.149 / 0.108
+    A_Lk30           flat 0.563 / 0.475 / 0.164 / 0.094   cls 0.563 / 0.475 / 0.164 / 0.094
+    A_Lk30_rev       flat 0.607 / 0.521 / 0.191 / 0.111   cls 0.607 / 0.521 / 0.191 / 0.111
+    B                flat 0.277 / 0.226 / 0.085 / 0.056   cls 0.277 / 0.226 / 0.085 / 0.056
+    B_rev            flat 0.315 / 0.259 / 0.100 / 0.066   cls 0.315 / 0.259 / 0.100 / 0.066
+    B_Ke2e-4         flat 0.280 / 0.231 / 0.093 / 0.058   cls 0.280 / 0.231 / 0.093 / 0.058
+    B_Ke2e-4_rev     flat 0.318 / 0.265 / 0.109 / 0.069   cls 0.318 / 0.265 / 0.109 / 0.069
+    B_Ke0.1          flat 0.274 / 0.220 / 0.081 / 0.055   cls 0.274 / 0.220 / 0.081 / 0.055
+    B_Ke0.1_rev      flat 0.312 / 0.253 / 0.095 / 0.065   cls 0.312 / 0.253 / 0.095 / 0.065
+    B_RD1.0          flat 0.277 / 0.226 / 0.085 / 0.056   cls 0.277 / 0.226 / 0.085 / 0.056
+    B_RD1.0_rev      flat 0.315 / 0.259 / 0.100 / 0.066   cls 0.315 / 0.259 / 0.100 / 0.066
+    B_RD1.9          flat 0.277 / 0.226 / 0.085 / 0.056   cls 0.277 / 0.226 / 0.085 / 0.056
+    B_RD1.9_rev      flat 0.315 / 0.259 / 0.100 / 0.066   cls 0.315 / 0.259 / 0.100 / 0.066
+    A_Rnv0.2         flat 0.563 / 0.475 / 0.164 / 0.094   cls 0.563 / 0.475 / 0.164 / 0.094
+    A_Rnv0.2_rev     flat 0.607 / 0.521 / 0.191 / 0.111   cls 0.607 / 0.521 / 0.191 / 0.111
+    A_Rnv0.5         flat 0.563 / 0.475 / 0.164 / 0.094   cls 0.563 / 0.475 / 0.164 / 0.094
+    A_Rnv0.5_rev     flat 0.607 / 0.521 / 0.191 / 0.111   cls 0.607 / 0.521 / 0.191 / 0.111
+    A_T              flat 0.563 / 0.475 / 0.164 / 0.094   cls 0.563 / 0.475 / 0.164 / 0.094
+    A_rev_T          flat 0.607 / 0.521 / 0.191 / 0.111   cls 0.607 / 0.521 / 0.191 / 0.111
+    B_T              flat 0.277 / 0.226 / 0.085 / 0.056   cls 0.277 / 0.226 / 0.085 / 0.056
+    B_rev_T          flat 0.315 / 0.259 / 0.100 / 0.066   cls 0.315 / 0.259 / 0.100 / 0.066
+    A_Ke2e-4_T       flat 0.570 / 0.494 / 0.208 / 0.106   cls 0.570 / 0.494 / 0.208 / 0.106
+    A_Ke2e-4_rev_T   flat 0.614 / 0.539 / 0.240 / 0.125   cls 0.614 / 0.539 / 0.240 / 0.125
+    A_Ke0.1_T        flat 0.555 / 0.455 / 0.139 / 0.091   cls 0.555 / 0.455 / 0.139 / 0.091
+    A_Ke0.1_rev_T    flat 0.599 / 0.500 / 0.163 / 0.108   cls 0.599 / 0.500 / 0.163 / 0.108
+    B_Ke2e-4_T       flat 0.280 / 0.231 / 0.093 / 0.058   cls 0.280 / 0.231 / 0.093 / 0.058
+    B_Ke2e-4_rev_T   flat 0.318 / 0.265 / 0.109 / 0.069   cls 0.318 / 0.265 / 0.109 / 0.069
+    B_Ke0.1_T        flat 0.274 / 0.220 / 0.081 / 0.055   cls 0.274 / 0.220 / 0.081 / 0.055
+    B_Ke0.1_rev_T    flat 0.312 / 0.253 / 0.095 / 0.065   cls 0.312 / 0.253 / 0.095 / 0.065
+
+4. Water column at 150-250 m (class 2), full diet: share (ratio to booked); flat reading | cls reading
+    lib              flat ben 0.029(0.37), krill 0.742(2.06), mac 0.002(0.20), plk 0.220(0.44), whi 0.001(0.03), zoo 0.006(0.63)
+    lib              cls  ben 0.029(0.37), krill 0.742(2.06), mac 0.002(0.20), plk 0.220(0.44), whi 0.001(0.03), zoo 0.006(0.63)
+    lib_rev          flat ben 0.044(0.57), krill 0.608(1.69), mac 0.003(0.31), plk 0.338(0.68), whi 0.002(0.05), zoo 0.004(0.43)
+    lib_rev          cls  ben 0.044(0.57), krill 0.608(1.69), mac 0.003(0.31), plk 0.338(0.68), whi 0.002(0.05), zoo 0.004(0.43)
+    A                flat ben 0.069(0.89), krill 0.201(0.56), mac 0.004(0.32), plk 0.718(1.44), whi 0.004(0.10), zoo 0.004(0.38)
+    A                cls  ben 0.053(0.69), krill 0.251(0.69), mac 0.004(0.40), plk 0.684(1.37), whi 0.003(0.07), zoo 0.005(0.47)
+    A_rev            flat ben 0.076(0.99), krill 0.119(0.33), mac 0.004(0.36), plk 0.794(1.59), whi 0.005(0.11), zoo 0.002(0.19)
+    A_rev            cls  ben 0.060(0.78), krill 0.152(0.42), mac 0.005(0.46), plk 0.777(1.56), whi 0.004(0.08), zoo 0.002(0.24)
+    A_Ke2e-4         flat ben 0.068(0.88), krill 0.240(0.66), mac 0.003(0.26), plk 0.682(1.37), whi 0.004(0.11), zoo 0.003(0.27)
+    A_Ke2e-4         cls  ben 0.067(0.87), krill 0.239(0.66), mac 0.003(0.26), plk 0.684(1.37), whi 0.004(0.10), zoo 0.003(0.27)
+    A_Ke2e-4_rev     flat ben 0.077(1.00), krill 0.144(0.40), mac 0.003(0.29), plk 0.769(1.54), whi 0.005(0.12), zoo 0.001(0.13)
+    A_Ke2e-4_rev     cls  ben 0.076(0.98), krill 0.144(0.40), mac 0.003(0.29), plk 0.771(1.55), whi 0.005(0.12), zoo 0.001(0.13)
+    A_Ke0.1          flat ben 0.072(0.93), krill 0.138(0.38), mac 0.004(0.40), plk 0.776(1.56), whi 0.005(0.11), zoo 0.005(0.48)
+    A_Ke0.1          cls  ben 0.054(0.69), krill 0.187(0.52), mac 0.006(0.54), plk 0.744(1.49), whi 0.003(0.07), zoo 0.006(0.65)
+    A_Ke0.1_rev      flat ben 0.077(1.00), krill 0.079(0.22), mac 0.005(0.43), plk 0.832(1.67), whi 0.005(0.11), zoo 0.002(0.23)
+    A_Ke0.1_rev      cls  ben 0.059(0.76), krill 0.110(0.30), mac 0.006(0.59), plk 0.819(1.64), whi 0.003(0.07), zoo 0.003(0.32)
+    A_kdeep0.05      flat ben 0.069(0.89), krill 0.223(0.62), mac 0.003(0.30), plk 0.697(1.40), whi 0.004(0.10), zoo 0.003(0.35)
+    A_kdeep0.05      cls  ben 0.058(0.75), krill 0.258(0.71), mac 0.004(0.35), plk 0.673(1.35), whi 0.004(0.09), zoo 0.004(0.40)
+    A_kdeep0.05_rev  flat ben 0.077(1.00), krill 0.133(0.37), mac 0.004(0.33), plk 0.779(1.56), whi 0.005(0.12), zoo 0.002(0.17)
+    A_kdeep0.05_rev  cls  ben 0.066(0.86), krill 0.157(0.43), mac 0.004(0.39), plk 0.767(1.54), whi 0.004(0.10), zoo 0.002(0.20)
+    A_kdeep0.09      flat ben 0.072(0.93), krill 0.107(0.30), mac 0.004(0.41), plk 0.808(1.62), whi 0.005(0.11), zoo 0.005(0.48)
+    A_kdeep0.09      cls  ben 0.050(0.65), krill 0.153(0.42), mac 0.006(0.59), plk 0.781(1.57), whi 0.003(0.06), zoo 0.007(0.68)
+    A_kdeep0.09_rev  flat ben 0.076(0.98), krill 0.060(0.17), mac 0.005(0.43), plk 0.852(1.71), whi 0.005(0.11), zoo 0.002(0.22)
+    A_kdeep0.09_rev  cls  ben 0.054(0.70), krill 0.088(0.25), mac 0.007(0.64), plk 0.844(1.69), whi 0.003(0.07), zoo 0.003(0.33)
+    A_Lk30           flat ben 0.064(0.83), krill 0.259(0.72), mac 0.003(0.30), plk 0.667(1.34), whi 0.004(0.10), zoo 0.004(0.35)
+    A_Lk30           cls  ben 0.048(0.62), krill 0.317(0.88), mac 0.004(0.37), plk 0.624(1.25), whi 0.003(0.07), zoo 0.004(0.43)
+    A_Lk30_rev       flat ben 0.073(0.94), krill 0.157(0.44), mac 0.004(0.34), plk 0.760(1.52), whi 0.005(0.11), zoo 0.002(0.18)
+    A_Lk30_rev       cls  ben 0.057(0.74), krill 0.199(0.55), mac 0.005(0.43), plk 0.734(1.47), whi 0.003(0.08), zoo 0.002(0.22)
+    B                flat ben 0.075(0.97), krill 0.162(0.45), mac 0.004(0.36), plk 0.750(1.50), whi 0.005(0.11), zoo 0.004(0.43)
+    B                cls  ben 0.058(0.75), krill 0.203(0.56), mac 0.005(0.46), plk 0.725(1.45), whi 0.003(0.08), zoo 0.005(0.54)
+    B_rev            flat ben 0.081(1.05), krill 0.094(0.26), mac 0.004(0.39), plk 0.813(1.63), whi 0.005(0.12), zoo 0.002(0.21)
+    B_rev            cls  ben 0.065(0.84), krill 0.120(0.33), mac 0.005(0.51), plk 0.803(1.61), whi 0.004(0.09), zoo 0.003(0.26)
+    B_Ke2e-4         flat ben 0.075(0.98), krill 0.194(0.54), mac 0.003(0.29), plk 0.720(1.44), whi 0.005(0.11), zoo 0.003(0.31)
+    B_Ke2e-4         cls  ben 0.074(0.96), krill 0.193(0.54), mac 0.003(0.29), plk 0.722(1.45), whi 0.005(0.11), zoo 0.003(0.31)
+    B_Ke2e-4_rev     flat ben 0.083(1.08), krill 0.114(0.32), mac 0.003(0.32), plk 0.793(1.59), whi 0.005(0.12), zoo 0.002(0.15)
+    B_Ke2e-4_rev     cls  ben 0.081(1.05), krill 0.113(0.31), mac 0.003(0.32), plk 0.795(1.59), whi 0.005(0.12), zoo 0.002(0.15)
+    B_Ke0.1          flat ben 0.077(1.00), krill 0.112(0.31), mac 0.005(0.44), plk 0.797(1.60), whi 0.005(0.11), zoo 0.005(0.53)
+    B_Ke0.1          cls  ben 0.058(0.76), krill 0.151(0.42), mac 0.006(0.59), plk 0.774(1.55), whi 0.003(0.07), zoo 0.007(0.72)
+    B_Ke0.1_rev      flat ben 0.081(1.06), krill 0.063(0.17), mac 0.005(0.46), plk 0.843(1.69), whi 0.005(0.12), zoo 0.002(0.25)
+    B_Ke0.1_rev      cls  ben 0.063(0.82), krill 0.087(0.24), mac 0.007(0.64), plk 0.836(1.68), whi 0.003(0.08), zoo 0.003(0.34)
+    B_RD1.0          flat ben 0.077(1.00), krill 0.160(0.44), mac 0.004(0.38), plk 0.750(1.50), whi 0.005(0.11), zoo 0.005(0.46)
+    B_RD1.0          cls  ben 0.060(0.78), krill 0.199(0.55), mac 0.005(0.47), plk 0.726(1.46), whi 0.003(0.08), zoo 0.006(0.58)
+    B_RD1.0_rev      flat ben 0.083(1.08), krill 0.093(0.26), mac 0.004(0.41), plk 0.812(1.63), whi 0.005(0.12), zoo 0.002(0.22)
+    B_RD1.0_rev      cls  ben 0.067(0.86), krill 0.118(0.33), mac 0.006(0.52), plk 0.803(1.61), whi 0.004(0.09), zoo 0.003(0.28)
+    B_RD1.9          flat ben 0.072(0.93), krill 0.165(0.46), mac 0.004(0.34), plk 0.751(1.51), whi 0.005(0.11), zoo 0.004(0.39)
+    B_RD1.9          cls  ben 0.056(0.72), krill 0.208(0.58), mac 0.005(0.43), plk 0.723(1.45), whi 0.003(0.08), zoo 0.005(0.50)
+    B_RD1.9_rev      flat ben 0.078(1.01), krill 0.095(0.26), mac 0.004(0.37), plk 0.815(1.64), whi 0.005(0.12), zoo 0.002(0.19)
+    B_RD1.9_rev      cls  ben 0.062(0.80), krill 0.123(0.34), mac 0.005(0.48), plk 0.804(1.61), whi 0.004(0.09), zoo 0.002(0.25)
+    A_Rnv0.2         flat ben 0.065(0.84), krill 0.214(0.59), mac 0.004(0.33), plk 0.709(1.42), whi 0.004(0.10), zoo 0.004(0.40)
+    A_Rnv0.2         cls  ben 0.045(0.58), krill 0.275(0.76), mac 0.005(0.42), plk 0.667(1.34), whi 0.003(0.06), zoo 0.005(0.52)
+    A_Rnv0.2_rev     flat ben 0.073(0.94), krill 0.127(0.35), mac 0.004(0.36), plk 0.790(1.58), whi 0.005(0.11), zoo 0.002(0.20)
+    A_Rnv0.2_rev     cls  ben 0.052(0.67), krill 0.169(0.47), mac 0.005(0.48), plk 0.768(1.54), whi 0.003(0.07), zoo 0.003(0.26)
+    A_Rnv0.5         flat ben 0.079(1.02), krill 0.169(0.47), mac 0.004(0.33), plk 0.741(1.49), whi 0.005(0.11), zoo 0.003(0.32)
+    A_Rnv0.5         cls  ben 0.071(0.92), krill 0.195(0.54), mac 0.004(0.38), plk 0.722(1.45), whi 0.004(0.10), zoo 0.004(0.37)
+    A_Rnv0.5_rev     flat ben 0.086(1.11), krill 0.098(0.27), mac 0.004(0.36), plk 0.806(1.62), whi 0.005(0.12), zoo 0.002(0.15)
+    A_Rnv0.5_rev     cls  ben 0.078(1.01), krill 0.115(0.32), mac 0.005(0.42), plk 0.796(1.60), whi 0.005(0.11), zoo 0.002(0.18)
+    A_T              flat ben 0.053(0.69), krill 0.251(0.69), mac 0.004(0.40), plk 0.684(1.37), whi 0.003(0.07), zoo 0.005(0.47)
+    A_T              cls  ben 0.053(0.69), krill 0.251(0.69), mac 0.004(0.40), plk 0.684(1.37), whi 0.003(0.07), zoo 0.005(0.47)
+    A_rev_T          flat ben 0.060(0.78), krill 0.152(0.42), mac 0.005(0.46), plk 0.777(1.56), whi 0.004(0.08), zoo 0.002(0.24)
+    A_rev_T          cls  ben 0.060(0.78), krill 0.152(0.42), mac 0.005(0.46), plk 0.777(1.56), whi 0.004(0.08), zoo 0.002(0.24)
+    B_T              flat ben 0.058(0.75), krill 0.203(0.56), mac 0.005(0.46), plk 0.725(1.45), whi 0.003(0.08), zoo 0.005(0.54)
+    B_T              cls  ben 0.058(0.75), krill 0.203(0.56), mac 0.005(0.46), plk 0.725(1.45), whi 0.003(0.08), zoo 0.005(0.54)
+    B_rev_T          flat ben 0.065(0.84), krill 0.120(0.33), mac 0.005(0.51), plk 0.803(1.61), whi 0.004(0.09), zoo 0.003(0.26)
+    B_rev_T          cls  ben 0.065(0.84), krill 0.120(0.33), mac 0.005(0.51), plk 0.803(1.61), whi 0.004(0.09), zoo 0.003(0.26)
+    A_Ke2e-4_T       flat ben 0.067(0.87), krill 0.239(0.66), mac 0.003(0.26), plk 0.684(1.37), whi 0.004(0.10), zoo 0.003(0.27)
+    A_Ke2e-4_T       cls  ben 0.067(0.87), krill 0.239(0.66), mac 0.003(0.26), plk 0.684(1.37), whi 0.004(0.10), zoo 0.003(0.27)
+    A_Ke2e-4_rev_T   flat ben 0.076(0.98), krill 0.144(0.40), mac 0.003(0.29), plk 0.771(1.55), whi 0.005(0.12), zoo 0.001(0.13)
+    A_Ke2e-4_rev_T   cls  ben 0.076(0.98), krill 0.144(0.40), mac 0.003(0.29), plk 0.771(1.55), whi 0.005(0.12), zoo 0.001(0.13)
+    A_Ke0.1_T        flat ben 0.054(0.69), krill 0.187(0.52), mac 0.006(0.54), plk 0.744(1.49), whi 0.003(0.07), zoo 0.006(0.65)
+    A_Ke0.1_T        cls  ben 0.054(0.69), krill 0.187(0.52), mac 0.006(0.54), plk 0.744(1.49), whi 0.003(0.07), zoo 0.006(0.65)
+    A_Ke0.1_rev_T    flat ben 0.059(0.76), krill 0.110(0.30), mac 0.006(0.59), plk 0.819(1.64), whi 0.003(0.07), zoo 0.003(0.32)
+    A_Ke0.1_rev_T    cls  ben 0.059(0.76), krill 0.110(0.30), mac 0.006(0.59), plk 0.819(1.64), whi 0.003(0.07), zoo 0.003(0.32)
+    B_Ke2e-4_T       flat ben 0.074(0.96), krill 0.193(0.54), mac 0.003(0.29), plk 0.722(1.45), whi 0.005(0.11), zoo 0.003(0.31)
+    B_Ke2e-4_T       cls  ben 0.074(0.96), krill 0.193(0.54), mac 0.003(0.29), plk 0.722(1.45), whi 0.005(0.11), zoo 0.003(0.31)
+    B_Ke2e-4_rev_T   flat ben 0.081(1.05), krill 0.113(0.31), mac 0.003(0.32), plk 0.795(1.59), whi 0.005(0.12), zoo 0.002(0.15)
+    B_Ke2e-4_rev_T   cls  ben 0.081(1.05), krill 0.113(0.31), mac 0.003(0.32), plk 0.795(1.59), whi 0.005(0.12), zoo 0.002(0.15)
+    B_Ke0.1_T        flat ben 0.058(0.76), krill 0.151(0.42), mac 0.006(0.59), plk 0.774(1.55), whi 0.003(0.07), zoo 0.007(0.72)
+    B_Ke0.1_T        cls  ben 0.058(0.76), krill 0.151(0.42), mac 0.006(0.59), plk 0.774(1.55), whi 0.003(0.07), zoo 0.007(0.72)
+    B_Ke0.1_rev_T    flat ben 0.063(0.82), krill 0.087(0.24), mac 0.007(0.64), plk 0.836(1.68), whi 0.003(0.08), zoo 0.003(0.34)
+    B_Ke0.1_rev_T    cls  ben 0.063(0.82), krill 0.087(0.24), mac 0.007(0.64), plk 0.836(1.68), whi 0.003(0.08), zoo 0.003(0.34)
