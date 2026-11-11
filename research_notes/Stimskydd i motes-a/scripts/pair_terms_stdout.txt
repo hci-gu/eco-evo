@@ -1,0 +1,52 @@
+Term shares of the A_band (library, section 269) equal-cell annual-mean a, by prey species and period
+(period = the sun-threshold day/night switch of the derivation). R_eff = light-weighted detection radius (m).
+
+  predatory_fish->planktivorous_fish: a_eq 0.017273 (band_pairs.json A_band 0.017273; section 220 base 0.006), night/day 0.059
+      pout|day                     share  0.544   R_eff  0.71 m
+      herring|day                  share  0.281   R_eff  0.84 m
+      blue whiting|day             share  0.105   R_eff  0.76 m
+      pout|night                   share  0.041   R_eff  0.31 m
+      herring|night                share  0.015   R_eff  0.39 m
+      sprat|day                    share  0.011   R_eff  0.84 m
+      blue whiting|night           share  0.003   R_eff  0.36 m
+      sprat|night                  share  0.001   R_eff  0.39 m
+
+  predatory_fish->benthivorous_fish: a_eq 0.043282 (band_pairs.json A_band 0.043282; section 220 base 0.0055), night/day 0.165
+      juvenile benthivores|day     share  0.864   (bed slab term)
+      juvenile benthivores|night   share  0.136   (bed slab term)
+
+  predatory_fish->whiting: a_eq 0.035966 (band_pairs.json A_band 0.035966; section 220 base 0.013), night/day 0.137
+      whiting|day                  share  0.883   (bed slab term)
+      whiting|night                share  0.117   (bed slab term)
+
+  predatory_fish->mackerel: a_eq 0.00018179 (band_pairs.json A_band 0.00018179; section 220 base 0.00088), night/day 0.923
+      herring|night                share  0.315   R_eff  0.31 m
+      herring|day                  share  0.268   R_eff  0.31 m
+      pout|night                   share  0.171   R_eff  0.31 m
+      pout|day                     share  0.154   R_eff  0.31 m
+      blue whiting|night           share  0.037   R_eff  0.31 m
+      blue whiting|day             share  0.033   R_eff  0.31 m
+      sprat|night                  share  0.012   R_eff  0.31 m
+      sprat|day                    share  0.010   R_eff  0.31 m
+
+  whiting->planktivorous_fish: a_eq 0.033058 (band_pairs.json A_band 0.033058; section 220 base 0.0212), night/day 0.212
+      pout|day                     share  0.523   R_eff  0.42 m
+      herring|day                  share  0.233   R_eff  0.47 m
+      pout|night                   share  0.158   R_eff  0.30 m
+      blue whiting|day             share  0.071   R_eff  0.44 m
+      sprat|day                    share  0.009   R_eff  0.47 m
+      blue whiting|night           share  0.003   R_eff  0.31 m
+      herring|night                share  0.003   R_eff  0.32 m
+      sprat|night                  share  0.000   R_eff  0.32 m
+
+  whiting->benthivorous_fish: a_eq 0.10219 (band_pairs.json A_band 0.10219; section 220 base 0.21), night/day 0.565
+      juvenile benthivores|day     share  0.648   (bed slab term)
+      juvenile benthivores|night   share  0.352   (bed slab term)
+
+  mackerel->planktivorous_fish: a_eq 0.024685 (band_pairs.json A_band 0.024685; section 220 base 0.0266), night/day 0.834
+      herring|day                  share  0.489   R_eff  0.52 m
+      herring|night                share  0.474   R_eff  0.32 m
+      sprat|day                    share  0.019   R_eff  0.52 m
+      sprat|night                  share  0.018   R_eff  0.32 m
+
+written /home/simon/eco-evo/research_notes/Stimskydd i motes-a/scripts/pair_terms.json
