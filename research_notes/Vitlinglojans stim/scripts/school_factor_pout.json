@@ -1,0 +1,869 @@
+{
+ "pairs": {
+  "predatory_fish->planktivorous_fish": {
+   "note_central": {
+    "F": 0.5710690882705837,
+    "F_day": 0.544072531468369,
+    "F_night": 1.0,
+    "nd_new": 0.1092530435624729
+   },
+   "note_clupeids_only": {
+    "F": 0.7741933855744924,
+    "F_day": 0.7599813040341916,
+    "F_night": 1.0,
+    "nd_new": 0.07821452931292681
+   },
+   "pout_low": {
+    "F": 0.7661382755771856,
+    "F_day": 0.7514192120762851,
+    "F_night": 1.0,
+    "nd_new": 0.07910574952883162
+   },
+   "pout_central": {
+    "F": 0.6297982069262983,
+    "F_day": 0.6064980122756022,
+    "F_night": 1.0,
+    "nd_new": 0.09800787270288272
+   },
+   "pout_high": {
+    "F": 0.39899903266582337,
+    "F_day": 0.364531143479157,
+    "F_night": 0.946637134907528,
+    "nd_new": 0.15436159015431652
+   },
+   "pout_none": {
+    "F": 0.7741933855744924,
+    "F_day": 0.7599813040341916,
+    "F_night": 1.0,
+    "nd_new": 0.07821452931292681
+   },
+   "all_high": {
+    "F": 0.2745482423176965,
+    "F_day": 0.2365116573461007,
+    "F_night": 0.8788870545028671,
+    "nd_new": 0.22088735807481688
+   }
+  },
+  "predatory_fish->benthivorous_fish": {
+   "note_central": {
+    "F": 1.0,
+    "F_day": 1.0,
+    "F_night": 1.0,
+    "nd_new": 0.16488101593951843
+   },
+   "note_clupeids_only": {
+    "F": 1.0,
+    "F_day": 1.0,
+    "F_night": 1.0,
+    "nd_new": 0.16488101593951843
+   },
+   "pout_low": {
+    "F": 1.0,
+    "F_day": 1.0,
+    "F_night": 1.0,
+    "nd_new": 0.16488101593951843
+   },
+   "pout_central": {
+    "F": 1.0,
+    "F_day": 1.0,
+    "F_night": 1.0,
+    "nd_new": 0.16488101593951843
+   },
+   "pout_high": {
+    "F": 1.0,
+    "F_day": 1.0,
+    "F_night": 1.0,
+    "nd_new": 0.16488101593951843
+   },
+   "pout_none": {
+    "F": 1.0,
+    "F_day": 1.0,
+    "F_night": 1.0,
+    "nd_new": 0.16488101593951843
+   },
+   "all_high": {
+    "F": 0.7329298998520548,
+    "F_day": 0.7110000000000002,
+    "F_night": 0.872,
+    "nd_new": 0.20221694219305208
+   }
+  },
+  "predatory_fish->whiting": {
+   "note_central": {
+    "F": 1.0,
+    "F_day": 1.0,
+    "F_night": 1.0,
+    "nd_new": 0.1368261364863775
+   },
+   "note_clupeids_only": {
+    "F": 1.0,
+    "F_day": 1.0,
+    "F_night": 1.0,
+    "nd_new": 0.1368261364863775
+   },
+   "pout_low": {
+    "F": 1.0,
+    "F_day": 1.0,
+    "F_night": 1.0,
+    "nd_new": 0.1368261364863775
+   },
+   "pout_central": {
+    "F": 1.0,
+    "F_day": 1.0,
+    "F_night": 1.0,
+    "nd_new": 0.1368261364863775
+   },
+   "pout_high": {
+    "F": 1.0,
+    "F_day": 1.0,
+    "F_night": 1.0,
+    "nd_new": 0.1368261364863775
+   },
+   "pout_none": {
+    "F": 1.0,
+    "F_day": 1.0,
+    "F_night": 1.0,
+    "nd_new": 0.1368261364863775
+   },
+   "all_high": {
+    "F": 0.5445077829955819,
+    "F_day": 0.5137499999999999,
+    "F_night": 0.7775,
+    "nd_new": 0.20707021142220638
+   }
+  },
+  "predatory_fish->mackerel": {
+   "note_central": {
+    "F": 0.2442953114482072,
+    "F_day": 0.2453051219762428,
+    "F_night": 0.24341669869272542,
+    "nd_new": 0.9161829996286935
+   },
+   "note_clupeids_only": {
+    "F": 0.2442953114482072,
+    "F_day": 0.2453051219762428,
+    "F_night": 0.24341669869272542,
+    "nd_new": 0.9161829996286935
+   },
+   "pout_low": {
+    "F": 0.2442953114482072,
+    "F_day": 0.2453051219762428,
+    "F_night": 0.24341669869272542,
+    "nd_new": 0.9161829996286935
+   },
+   "pout_central": {
+    "F": 0.2442953114482072,
+    "F_day": 0.2453051219762428,
+    "F_night": 0.24341669869272542,
+    "nd_new": 0.9161829996286935
+   },
+   "pout_high": {
+    "F": 0.2442953114482072,
+    "F_day": 0.2453051219762428,
+    "F_night": 0.24341669869272542,
+    "nd_new": 0.9161829996286935
+   },
+   "pout_none": {
+    "F": 0.2442953114482072,
+    "F_day": 0.2453051219762428,
+    "F_night": 0.24341669869272542,
+    "nd_new": 0.9161829996286935
+   },
+   "all_high": {
+    "F": 0.0026383893636406576,
+    "F_day": 0.002649295317343451,
+    "F_night": 0.0026289003458814467,
+    "nd_new": 0.916182999628688
+   }
+  },
+  "whiting->planktivorous_fish": {
+   "note_central": {
+    "F": 0.8325654125406966,
+    "F_day": 0.7998034400524102,
+    "F_night": 1.0,
+    "nd_new": 0.26510821018268016
+   },
+   "note_clupeids_only": {
+    "F": 0.8814360944532114,
+    "F_day": 0.8582366619430568,
+    "F_night": 1.0,
+    "nd_new": 0.24705826247296028
+   },
+   "pout_low": {
+    "F": 0.8814360944532114,
+    "F_day": 0.8582366619430568,
+    "F_night": 1.0,
+    "nd_new": 0.24705826247296028
+   },
+   "pout_central": {
+    "F": 0.8814360944532114,
+    "F_day": 0.8582366619430568,
+    "F_night": 1.0,
+    "nd_new": 0.24705826247296028
+   },
+   "pout_high": {
+    "F": 0.5495993253004207,
+    "F_day": 0.4757748084300726,
+    "F_night": 0.9268897198573596,
+    "nd_new": 0.41307895321031
+   },
+   "pout_none": {
+    "F": 0.8814360944532114,
+    "F_day": 0.8582366619430568,
+    "F_night": 1.0,
+    "nd_new": 0.24705826247296028
+   },
+   "all_high": {
+    "F": 0.35930188889183534,
+    "F_day": 0.25241736032432105,
+    "F_night": 0.9055500414681948,
+    "nd_new": 0.7606759393720955
+   }
+  },
+  "whiting->benthivorous_fish": {
+   "note_central": {
+    "F": 1.0,
+    "F_day": 1.0,
+    "F_night": 1.0,
+    "nd_new": 0.5647639574271673
+   },
+   "note_clupeids_only": {
+    "F": 1.0,
+    "F_day": 1.0,
+    "F_night": 1.0,
+    "nd_new": 0.5647639574271673
+   },
+   "pout_low": {
+    "F": 1.0,
+    "F_day": 1.0,
+    "F_night": 1.0,
+    "nd_new": 0.5647639574271673
+   },
+   "pout_central": {
+    "F": 1.0,
+    "F_day": 1.0,
+    "F_night": 1.0,
+    "nd_new": 0.5647639574271673
+   },
+   "pout_high": {
+    "F": 1.0,
+    "F_day": 1.0,
+    "F_night": 1.0,
+    "nd_new": 0.5647639574271673
+   },
+   "pout_none": {
+    "F": 1.0,
+    "F_day": 1.0,
+    "F_night": 1.0,
+    "nd_new": 0.5647639574271673
+   },
+   "all_high": {
+    "F": 0.7676660536693385,
+    "F_day": 0.7110000000000001,
+    "F_night": 0.8719999999999999,
+    "nd_new": 0.6926500293621516
+   }
+  },
+  "mackerel->planktivorous_fish": {
+   "note_central": {
+    "F": 0.7135490760305419,
+    "F_day": 0.43590128611393764,
+    "F_night": 1.0,
+    "nd_new": 1.9125761780761408
+   },
+   "note_clupeids_only": {
+    "F": 0.7135490760305419,
+    "F_day": 0.43590128611393764,
+    "F_night": 1.0,
+    "nd_new": 1.9125761780761408
+   },
+   "pout_low": {
+    "F": 0.7135490760305419,
+    "F_day": 0.43590128611393764,
+    "F_night": 1.0,
+    "nd_new": 1.9125761780761408
+   },
+   "pout_central": {
+    "F": 0.7135490760305419,
+    "F_day": 0.43590128611393764,
+    "F_night": 1.0,
+    "nd_new": 1.9125761780761408
+   },
+   "pout_high": {
+    "F": 0.7135490760305419,
+    "F_day": 0.43590128611393764,
+    "F_night": 1.0,
+    "nd_new": 1.9125761780761408
+   },
+   "pout_none": {
+    "F": 0.7135490760305419,
+    "F_day": 0.43590128611393764,
+    "F_night": 1.0,
+    "nd_new": 1.9125761780761408
+   },
+   "all_high": {
+    "F": 0.40332508048693805,
+    "F_day": 0.012440788374590285,
+    "F_night": 0.8066027967416265,
+    "nd_new": 54.052864430773035
+   }
+  },
+  "benthivorous_fish->planktivorous_fish": {
+   "note_central": {
+    "F": 0.6874208783717985,
+    "F_day": 0.6433472222222222,
+    "F_night": 1.0,
+    "nd_new": 0.21916625288745925
+   },
+   "note_clupeids_only": {
+    "F": 0.9142199824715161,
+    "F_day": 0.9021250000000001,
+    "F_night": 1.0,
+    "nd_new": 0.1562976305944298
+   },
+   "pout_low": {
+    "F": 0.9142199824715161,
+    "F_day": 0.9021250000000001,
+    "F_night": 1.0,
+    "nd_new": 0.1562976305944298
+   },
+   "pout_central": {
+    "F": 0.770111500632973,
+    "F_day": 0.7376972222222222,
+    "F_night": 1.0,
+    "nd_new": 0.191135327275945
+   },
+   "pout_high": {
+    "F": 0.41667903398578243,
+    "F_day": 0.34348611111111116,
+    "F_night": 0.9357777777777777,
+    "nd_new": 0.3841339209898507
+   },
+   "pout_none": {
+    "F": 0.9142199824715161,
+    "F_day": 0.9021250000000001,
+    "F_night": 1.0,
+    "nd_new": 0.1562976305944298
+   },
+   "all_high": {
+    "F": 0.34452439380660244,
+    "F_day": 0.2672833333333334,
+    "F_night": 0.8923333333333333,
+    "nd_new": 0.47073268067593677
+   }
+  },
+  "benthivorous_fish->whiting": {
+   "note_central": {
+    "F": 1.0,
+    "F_day": 1.0,
+    "F_night": 1.0,
+    "nd_new": 0.168
+   },
+   "note_clupeids_only": {
+    "F": 1.0,
+    "F_day": 1.0,
+    "F_night": 1.0,
+    "nd_new": 0.168
+   },
+   "pout_low": {
+    "F": 1.0,
+    "F_day": 1.0,
+    "F_night": 1.0,
+    "nd_new": 0.168
+   },
+   "pout_central": {
+    "F": 1.0,
+    "F_day": 1.0,
+    "F_night": 1.0,
+    "nd_new": 0.168
+   },
+   "pout_high": {
+    "F": 1.0,
+    "F_day": 1.0,
+    "F_night": 1.0,
+    "nd_new": 0.168
+   },
+   "pout_none": {
+    "F": 1.0,
+    "F_day": 1.0,
+    "F_night": 1.0,
+    "nd_new": 0.168
+   },
+   "all_high": {
+    "F": 0.5516866438356164,
+    "F_day": 0.5137499999999999,
+    "F_night": 0.7775,
+    "nd_new": 0.25424817518248183
+   }
+  }
+ },
+ "sweep": [
+  {
+   "sigma_day": 0.0,
+   "N": 2500,
+   "R_s": 13.0,
+   "F": {
+    "predatory_fish->planktivorous_fish": 0.7661382755771856,
+    "whiting->planktivorous_fish": 0.8814360944532114,
+    "benthivorous_fish->planktivorous_fish": 0.9142199824715161
+   }
+  },
+  {
+   "sigma_day": 0.0,
+   "N": 10000,
+   "R_s": 13.0,
+   "F": {
+    "predatory_fish->planktivorous_fish": 0.7661382755771856,
+    "whiting->planktivorous_fish": 0.8814360944532114,
+    "benthivorous_fish->planktivorous_fish": 0.9142199824715161
+   }
+  },
+  {
+   "sigma_day": 0.0,
+   "N": 50000,
+   "R_s": 13.0,
+   "F": {
+    "predatory_fish->planktivorous_fish": 0.7661382755771856,
+    "whiting->planktivorous_fish": 0.8814360944532114,
+    "benthivorous_fish->planktivorous_fish": 0.9142199824715161
+   }
+  },
+  {
+   "sigma_day": 0.0,
+   "N": 5000,
+   "R_s": 8.0,
+   "F": {
+    "predatory_fish->planktivorous_fish": 0.7661382755771856,
+    "whiting->planktivorous_fish": 0.8814360944532114,
+    "benthivorous_fish->planktivorous_fish": 0.9142199824715161
+   }
+  },
+  {
+   "sigma_day": 0.0,
+   "N": 10000,
+   "R_s": 18.0,
+   "F": {
+    "predatory_fish->planktivorous_fish": 0.7661382755771856,
+    "whiting->planktivorous_fish": 0.8814360944532114,
+    "benthivorous_fish->planktivorous_fish": 0.9142199824715161
+   }
+  },
+  {
+   "sigma_day": 0.0,
+   "N": 10000,
+   "R_s": 10.0,
+   "F": {
+    "predatory_fish->planktivorous_fish": 0.7661382755771856,
+    "whiting->planktivorous_fish": 0.8814360944532114,
+    "benthivorous_fish->planktivorous_fish": 0.9142199824715161
+   }
+  },
+  {
+   "sigma_day": 0.25,
+   "N": 2500,
+   "R_s": 13.0,
+   "F": {
+    "predatory_fish->planktivorous_fish": 0.7661382755771856,
+    "whiting->planktivorous_fish": 0.8814360944532114,
+    "benthivorous_fish->planktivorous_fish": 0.9142199824715161
+   }
+  },
+  {
+   "sigma_day": 0.25,
+   "N": 10000,
+   "R_s": 13.0,
+   "F": {
+    "predatory_fish->planktivorous_fish": 0.680925732670381,
+    "whiting->planktivorous_fish": 0.8814360944532114,
+    "benthivorous_fish->planktivorous_fish": 0.8241521813224266
+   }
+  },
+  {
+   "sigma_day": 0.25,
+   "N": 50000,
+   "R_s": 13.0,
+   "F": {
+    "predatory_fish->planktivorous_fish": 0.6402930189892515,
+    "whiting->planktivorous_fish": 0.7786710274179826,
+    "benthivorous_fish->planktivorous_fish": 0.747214310059402
+   }
+  },
+  {
+   "sigma_day": 0.25,
+   "N": 5000,
+   "R_s": 8.0,
+   "F": {
+    "predatory_fish->planktivorous_fish": 0.6686036819238846,
+    "whiting->planktivorous_fish": 0.857000753496954,
+    "benthivorous_fish->planktivorous_fish": 0.8008204304216573
+   }
+  },
+  {
+   "sigma_day": 0.25,
+   "N": 10000,
+   "R_s": 18.0,
+   "F": {
+    "predatory_fish->planktivorous_fish": 0.7275090952485992,
+    "whiting->planktivorous_fish": 0.8814360944532114,
+    "benthivorous_fish->planktivorous_fish": 0.9123575810692375
+   }
+  },
+  {
+   "sigma_day": 0.25,
+   "N": 10000,
+   "R_s": 10.0,
+   "F": {
+    "predatory_fish->planktivorous_fish": 0.6601886228774968,
+    "whiting->planktivorous_fish": 0.8337180323694465,
+    "benthivorous_fish->planktivorous_fish": 0.7848865517577173
+   }
+  },
+  {
+   "sigma_day": 0.4,
+   "N": 2500,
+   "R_s": 13.0,
+   "F": {
+    "predatory_fish->planktivorous_fish": 0.7661382755771856,
+    "whiting->planktivorous_fish": 0.8814360944532114,
+    "benthivorous_fish->planktivorous_fish": 0.9142199824715161
+   }
+  },
+  {
+   "sigma_day": 0.4,
+   "N": 10000,
+   "R_s": 13.0,
+   "F": {
+    "predatory_fish->planktivorous_fish": 0.6297982069262983,
+    "whiting->planktivorous_fish": 0.8814360944532114,
+    "benthivorous_fish->planktivorous_fish": 0.770111500632973
+   }
+  },
+  {
+   "sigma_day": 0.4,
+   "N": 50000,
+   "R_s": 13.0,
+   "F": {
+    "predatory_fish->planktivorous_fish": 0.5647858650364909,
+    "whiting->planktivorous_fish": 0.7170119871968452,
+    "benthivorous_fish->planktivorous_fish": 0.6470109066121336
+   }
+  },
+  {
+   "sigma_day": 0.4,
+   "N": 5000,
+   "R_s": 8.0,
+   "F": {
+    "predatory_fish->planktivorous_fish": 0.610082925731904,
+    "whiting->planktivorous_fish": 0.8423395489231996,
+    "benthivorous_fish->planktivorous_fish": 0.7327806991917422
+   }
+  },
+  {
+   "sigma_day": 0.4,
+   "N": 10000,
+   "R_s": 18.0,
+   "F": {
+    "predatory_fish->planktivorous_fish": 0.7043315870514473,
+    "whiting->planktivorous_fish": 0.8814360944532114,
+    "benthivorous_fish->planktivorous_fish": 0.9112401402278703
+   }
+  },
+  {
+   "sigma_day": 0.4,
+   "N": 10000,
+   "R_s": 10.0,
+   "F": {
+    "predatory_fish->planktivorous_fish": 0.5966188312576836,
+    "whiting->planktivorous_fish": 0.8050871951191877,
+    "benthivorous_fish->planktivorous_fish": 0.707286493329438
+   }
+  },
+  {
+   "sigma_day": 0.5,
+   "N": 2500,
+   "R_s": 13.0,
+   "F": {
+    "predatory_fish->planktivorous_fish": 0.7661382755771856,
+    "whiting->planktivorous_fish": 0.8814360944532114,
+    "benthivorous_fish->planktivorous_fish": 0.9142199824715161
+   }
+  },
+  {
+   "sigma_day": 0.5,
+   "N": 10000,
+   "R_s": 13.0,
+   "F": {
+    "predatory_fish->planktivorous_fish": 0.5957131897635765,
+    "whiting->planktivorous_fish": 0.8814360944532114,
+    "benthivorous_fish->planktivorous_fish": 0.7340843801733371
+   }
+  },
+  {
+   "sigma_day": 0.5,
+   "N": 50000,
+   "R_s": 13.0,
+   "F": {
+    "predatory_fish->planktivorous_fish": 0.5144477624013173,
+    "whiting->planktivorous_fish": 0.6759059603827537,
+    "benthivorous_fish->planktivorous_fish": 0.5802086376472879
+   }
+  },
+  {
+   "sigma_day": 0.5,
+   "N": 5000,
+   "R_s": 8.0,
+   "F": {
+    "predatory_fish->planktivorous_fish": 0.5710690882705837,
+    "whiting->planktivorous_fish": 0.8325654125406966,
+    "benthivorous_fish->planktivorous_fish": 0.6874208783717985
+   }
+  },
+  {
+   "sigma_day": 0.5,
+   "N": 10000,
+   "R_s": 18.0,
+   "F": {
+    "predatory_fish->planktivorous_fish": 0.6888799149200128,
+    "whiting->planktivorous_fish": 0.8814360944532114,
+    "benthivorous_fish->planktivorous_fish": 0.9104951796669588
+   }
+  },
+  {
+   "sigma_day": 0.5,
+   "N": 10000,
+   "R_s": 10.0,
+   "F": {
+    "predatory_fish->planktivorous_fish": 0.554238970177808,
+    "whiting->planktivorous_fish": 0.7859999702856817,
+    "benthivorous_fish->planktivorous_fish": 0.6555531210439185
+   }
+  },
+  {
+   "sigma_day": 0.75,
+   "N": 2500,
+   "R_s": 13.0,
+   "F": {
+    "predatory_fish->planktivorous_fish": 0.7661382755771856,
+    "whiting->planktivorous_fish": 0.8814360944532114,
+    "benthivorous_fish->planktivorous_fish": 0.9142199824715161
+   }
+  },
+  {
+   "sigma_day": 0.75,
+   "N": 10000,
+   "R_s": 13.0,
+   "F": {
+    "predatory_fish->planktivorous_fish": 0.5105006468567719,
+    "whiting->planktivorous_fish": 0.8814360944532114,
+    "benthivorous_fish->planktivorous_fish": 0.6440165790242477
+   }
+  },
+  {
+   "sigma_day": 0.75,
+   "N": 50000,
+   "R_s": 13.0,
+   "F": {
+    "predatory_fish->planktivorous_fish": 0.38860250581338307,
+    "whiting->planktivorous_fish": 0.5731408933475249,
+    "benthivorous_fish->planktivorous_fish": 0.41320296523517386
+   }
+  },
+  {
+   "sigma_day": 0.75,
+   "N": 5000,
+   "R_s": 8.0,
+   "F": {
+    "predatory_fish->planktivorous_fish": 0.4735344946172827,
+    "whiting->planktivorous_fish": 0.8081300715844392,
+    "benthivorous_fish->planktivorous_fish": 0.5740213263219398
+   }
+  },
+  {
+   "sigma_day": 0.75,
+   "N": 10000,
+   "R_s": 18.0,
+   "F": {
+    "predatory_fish->planktivorous_fish": 0.6502507345914262,
+    "whiting->planktivorous_fish": 0.8814360944532114,
+    "benthivorous_fish->planktivorous_fish": 0.90863277826468
+   }
+  },
+  {
+   "sigma_day": 0.75,
+   "N": 10000,
+   "R_s": 10.0,
+   "F": {
+    "predatory_fish->planktivorous_fish": 0.4482893174781193,
+    "whiting->planktivorous_fish": 0.7382819082019169,
+    "benthivorous_fish->planktivorous_fish": 0.5262196903301197
+   }
+  }
+ ],
+ "derivation": {
+  "n_pout": 1.7782794100389228,
+  "n_pout_p05": 0.5623413251903491,
+  "n_pout_p95": 11.220184543019636,
+  "n_her": 0.5718372887110225,
+  "ratio": 3.1097646920636106,
+  "V_a": 1296.8494474018667,
+  "V_b": 5882.35294117647,
+  "N_a": 2306.1606702350946,
+  "N_b": 77744.11730159026,
+  "N_geo": 13389.937477937348
+ },
+ "PAR_NEW": {
+  "R_s": {
+   "herring": [
+    30.0,
+    15.0,
+    10.0
+   ],
+   "sprat": [
+    30.0,
+    15.0,
+    10.0
+   ],
+   "pout": [
+    18.0,
+    13.0,
+    10.0
+   ],
+   "blue whiting": [
+    15.0,
+    8.0,
+    5.0
+   ],
+   "juv": [
+    8.0,
+    4.0,
+    2.0
+   ],
+   "whiting": [
+    10.0,
+    5.0,
+    3.0
+   ],
+   "mackerel": [
+    50.0,
+    25.0,
+    15.0
+   ]
+  },
+  "N": {
+   "herring": [
+    2000,
+    25000,
+    100000
+   ],
+   "sprat": [
+    2000,
+    25000,
+    100000
+   ],
+   "pout": [
+    2500,
+    10000,
+    50000
+   ],
+   "blue whiting": [
+    200,
+    2000,
+    20000
+   ],
+   "juv": [
+    20,
+    300,
+    1000
+   ],
+   "whiting": [
+    50,
+    300,
+    3000
+   ],
+   "mackerel": [
+    3000,
+    300000,
+    3000000
+   ]
+  },
+  "k": [
+   3.0,
+   1.0,
+   0.3
+  ],
+  "sigma_day": {
+   "herring": [
+    0.6,
+    0.9,
+    1.0
+   ],
+   "sprat": [
+    0.6,
+    0.9,
+    1.0
+   ],
+   "pout": [
+    0.15,
+    0.4,
+    0.7
+   ],
+   "blue whiting": [
+    0.0,
+    0.2,
+    0.5
+   ],
+   "juv": [
+    0.0,
+    0.0,
+    0.3
+   ],
+   "whiting": [
+    0.0,
+    0.1,
+    0.5
+   ],
+   "mackerel": [
+    0.8,
+    1.0,
+    1.0
+   ]
+  },
+  "sigma_night": {
+   "herring": [
+    0.0,
+    0.0,
+    0.2
+   ],
+   "sprat": [
+    0.0,
+    0.0,
+    0.2
+   ],
+   "pout": [
+    0.0,
+    0.0,
+    0.1
+   ],
+   "blue whiting": [
+    0.0,
+    0.0,
+    0.1
+   ],
+   "juv": [
+    0.0,
+    0.0,
+    0.15
+   ],
+   "whiting": [
+    0.0,
+    0.05,
+    0.25
+   ],
+   "mackerel": [
+    0.8,
+    1.0,
+    1.0
+   ]
+  }
+ }
+}

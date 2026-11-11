@@ -1,0 +1,109 @@
+S = per-capita capture rate in a school / dispersed (rule-A radius of the term), and term factor F = 1 - sigma (1 - S)
+Per term: S uncapped (theory) low / central / high protection; F with S capped at 1.
+
+predatory_fish->planktivorous_fish  (today's night/day 0.059)
+   pout          day   share 0.544 R_i 0.71 m  S    29.8 /   0.283 / 0.00331   sigma 0.00 / 0.50 / 0.90   F  1.000 /  0.641 /  0.103
+   herring       day   share 0.281 R_i 0.84 m  S      21 /    0.14 / 0.00467   sigma 0.60 / 0.90 / 1.00   F  1.000 /  0.226 /  0.005
+   blue whiting  day   share 0.105 R_i 0.76 m  S      65 /   0.617 / 0.00722   sigma 0.00 / 0.20 / 0.50   F  1.000 /  0.923 /  0.504
+   pout          night share 0.041 R_i 0.31 m  S     150 /    1.42 /  0.0166   sigma 0.00 / 0.25 / 0.90   F  1.000 /  1.000 /  0.115
+   herring       night share 0.015 R_i 0.39 m  S    97.5 /    0.65 /  0.0217   sigma 0.00 / 0.00 / 0.20   F  1.000 /  1.000 /  0.804
+   sprat         day   share 0.011 R_i 0.84 m  S      21 /    0.14 / 0.00467   sigma 0.60 / 0.90 / 1.00   F  1.000 /  0.226 /  0.005
+   -> low                   : pair factor  1.000  (day  1.000, night  1.000)  night/day 0.059 -> 0.059
+   -> central               : pair factor  0.571  (day  0.544, night  1.000)  night/day 0.059 -> 0.109
+   -> high                  : pair factor  0.129  (day  0.117, night  0.319)  night/day 0.059 -> 0.162
+   -> central_clupeids_only : pair factor  0.774  (day  0.760, night  1.000)  night/day 0.059 -> 0.078
+   -> central_fieldS        : pair factor  0.537  (day  0.508, night  1.000)  night/day 0.059 -> 0.117
+
+predatory_fish->benthivorous_fish  (today's night/day 0.165)
+   juv           day   share 0.864 R_i 0.60 m  S     293 /    1.63 /  0.0367   sigma 0.00 / 0.00 / 0.30   F  1.000 /  1.000 /  0.711
+   juv           night share 0.136 R_i 0.30 m  S 1.17e+03 /    6.52 /   0.147   sigma 0.00 / 0.00 / 0.15   F  1.000 /  1.000 /  0.872
+   -> low                   : pair factor  1.000  (day  1.000, night  1.000)  night/day 0.165 -> 0.165
+   -> central               : pair factor  1.000  (day  1.000, night  1.000)  night/day 0.165 -> 0.165
+   -> high                  : pair factor  0.733  (day  0.711, night  0.872)  night/day 0.165 -> 0.202
+   -> central_clupeids_only : pair factor  1.000  (day  1.000, night  1.000)  night/day 0.165 -> 0.165
+   -> central_fieldS        : pair factor  1.000  (day  1.000, night  1.000)  night/day 0.165 -> 0.165
+
+predatory_fish->whiting  (today's night/day 0.137)
+   whiting       day   share 0.883 R_i 0.60 m  S     183 /    2.55 /  0.0275   sigma 0.00 / 0.10 / 0.50   F  1.000 /  1.000 /  0.514
+   whiting       night share 0.117 R_i 0.30 m  S     733 /    10.2 /    0.11   sigma 0.00 / 0.05 / 0.25   F  1.000 /  1.000 /  0.777
+   -> low                   : pair factor  1.000  (day  1.000, night  1.000)  night/day 0.137 -> 0.137
+   -> central               : pair factor  1.000  (day  1.000, night  1.000)  night/day 0.137 -> 0.137
+   -> high                  : pair factor  0.545  (day  0.514, night  0.777)  night/day 0.137 -> 0.207
+   -> central_clupeids_only : pair factor  1.000  (day  1.000, night  1.000)  night/day 0.137 -> 0.137
+   -> central_fieldS        : pair factor  1.000  (day  1.000, night  1.000)  night/day 0.137 -> 0.137
+
+predatory_fish->mackerel  (today's night/day 0.923)
+   mackerel      night share 0.315 R_i 0.31 m  S     291 /   0.243 / 0.00262   sigma 0.80 / 1.00 / 1.00   F  1.000 /  0.243 /  0.003
+   mackerel      day   share 0.268 R_i 0.31 m  S     294 /   0.245 / 0.00264   sigma 0.80 / 1.00 / 1.00   F  1.000 /  0.245 /  0.003
+   mackerel      night share 0.171 R_i 0.31 m  S     293 /   0.244 / 0.00264   sigma 0.80 / 1.00 / 1.00   F  1.000 /  0.244 /  0.003
+   mackerel      day   share 0.154 R_i 0.31 m  S     295 /   0.246 / 0.00266   sigma 0.80 / 1.00 / 1.00   F  1.000 /  0.246 /  0.003
+   mackerel      night share 0.037 R_i 0.31 m  S     293 /   0.244 / 0.00264   sigma 0.80 / 1.00 / 1.00   F  1.000 /  0.244 /  0.003
+   mackerel      day   share 0.033 R_i 0.31 m  S     295 /   0.246 / 0.00266   sigma 0.80 / 1.00 / 1.00   F  1.000 /  0.246 /  0.003
+   mackerel      night share 0.012 R_i 0.31 m  S     291 /   0.243 / 0.00262   sigma 0.80 / 1.00 / 1.00   F  1.000 /  0.243 /  0.003
+   mackerel      day   share 0.010 R_i 0.31 m  S     294 /   0.245 / 0.00264   sigma 0.80 / 1.00 / 1.00   F  1.000 /  0.245 /  0.003
+   -> low                   : pair factor  1.000  (day  1.000, night  1.000)  night/day 0.923 -> 0.923
+   -> central               : pair factor  0.244  (day  0.245, night  0.243)  night/day 0.923 -> 0.916
+   -> high                  : pair factor  0.003  (day  0.003, night  0.003)  night/day 0.923 -> 0.916
+   -> central_clupeids_only : pair factor  0.244  (day  0.245, night  0.243)  night/day 0.923 -> 0.916
+   -> central_fieldS        : pair factor  0.244  (day  0.245, night  0.243)  night/day 0.923 -> 0.916
+
+whiting->planktivorous_fish  (today's night/day 0.212)
+   pout          day   share 0.523 R_i 0.42 m  S    85.8 /   0.813 / 0.00953   sigma 0.00 / 0.50 / 0.90   F  1.000 /  0.907 /  0.109
+   herring       day   share 0.233 R_i 0.47 m  S    68.2 /   0.455 /  0.0152   sigma 0.60 / 0.90 / 1.00   F  1.000 /  0.509 /  0.015
+   pout          night share 0.158 R_i 0.30 m  S     163 /    1.54 /  0.0181   sigma 0.00 / 0.25 / 0.90   F  1.000 /  1.000 /  0.116
+   blue whiting  day   share 0.071 R_i 0.44 m  S     193 /    1.83 /  0.0214   sigma 0.00 / 0.20 / 0.50   F  1.000 /  1.000 /  0.511
+   sprat         day   share 0.009 R_i 0.47 m  S    68.2 /   0.455 /  0.0152   sigma 0.60 / 0.90 / 1.00   F  1.000 /  0.509 /  0.015
+   -> low                   : pair factor  1.000  (day  1.000, night  1.000)  night/day 0.212 -> 0.212
+   -> central               : pair factor  0.833  (day  0.800, night  1.000)  night/day 0.212 -> 0.265
+   -> high                  : pair factor  0.119  (day  0.116, night  0.136)  night/day 0.212 -> 0.248
+   -> central_clupeids_only : pair factor  0.881  (day  0.858, night  1.000)  night/day 0.212 -> 0.247
+   -> central_fieldS        : pair factor  0.736  (day  0.684, night  1.000)  night/day 0.212 -> 0.310
+
+whiting->benthivorous_fish  (today's night/day 0.565)
+   juv           day   share 0.648 R_i 0.60 m  S     293 /    1.63 /  0.0367   sigma 0.00 / 0.00 / 0.30   F  1.000 /  1.000 /  0.711
+   juv           night share 0.352 R_i 0.30 m  S 1.17e+03 /    6.52 /   0.147   sigma 0.00 / 0.00 / 0.15   F  1.000 /  1.000 /  0.872
+   -> low                   : pair factor  1.000  (day  1.000, night  1.000)  night/day 0.565 -> 0.565
+   -> central               : pair factor  1.000  (day  1.000, night  1.000)  night/day 0.565 -> 0.565
+   -> high                  : pair factor  0.768  (day  0.711, night  0.872)  night/day 0.565 -> 0.693
+   -> central_clupeids_only : pair factor  1.000  (day  1.000, night  1.000)  night/day 0.565 -> 0.565
+   -> central_fieldS        : pair factor  1.000  (day  1.000, night  1.000)  night/day 0.565 -> 0.565
+
+mackerel->planktivorous_fish  (today's night/day 0.834)
+   herring       day   share 0.489 R_i 0.52 m  S      56 /   0.373 /  0.0124   sigma 0.60 / 0.90 / 1.00   F  1.000 /  0.436 /  0.012
+   herring       night share 0.474 R_i 0.32 m  S     149 /    0.99 /   0.033   sigma 0.00 / 0.00 / 0.20   F  1.000 /  1.000 /  0.807
+   sprat         day   share 0.019 R_i 0.52 m  S      56 /   0.373 /  0.0124   sigma 0.60 / 0.90 / 1.00   F  1.000 /  0.436 /  0.012
+   sprat         night share 0.018 R_i 0.32 m  S     149 /    0.99 /   0.033   sigma 0.00 / 0.00 / 0.20   F  1.000 /  1.000 /  0.807
+   -> low                   : pair factor  1.000  (day  1.000, night  1.000)  night/day 0.834 -> 0.834
+   -> central               : pair factor  0.714  (day  0.436, night  1.000)  night/day 0.834 -> 1.913  (>= 1: no light dependence in the engine)
+   -> high                  : pair factor  0.403  (day  0.012, night  0.807)  night/day 0.834 -> 54.053  (>= 1: no light dependence in the engine)
+   -> central_clupeids_only : pair factor  0.714  (day  0.436, night  1.000)  night/day 0.834 -> 1.913  (>= 1: no light dependence in the engine)
+   -> central_fieldS        : pair factor  0.548  (day  0.109, night  1.000)  night/day 0.834 -> 7.649  (>= 1: no light dependence in the engine)
+
+benthivorous_fish->planktivorous_fish  (today's night/day 0.141)
+   pout          day   share 0.745 R_i 0.60 m  S    41.2 /   0.391 / 0.00458   sigma 0.00 / 0.50 / 0.90   F  1.000 /  0.696 /  0.104
+   pout          night share 0.105 R_i 0.30 m  S     165 /    1.56 /  0.0183   sigma 0.00 / 0.25 / 0.90   F  1.000 /  1.000 /  0.116
+   herring       day   share 0.131 R_i 0.60 m  S    41.2 /   0.275 / 0.00917   sigma 0.60 / 0.90 / 1.00   F  1.000 /  0.348 /  0.009
+   herring       night share 0.019 R_i 0.30 m  S     165 /     1.1 /  0.0367   sigma 0.00 / 0.00 / 0.20   F  1.000 /  1.000 /  0.807
+   -> low                   : pair factor  1.000  (day  1.000, night  1.000)  night/day 0.141 -> 0.141
+   -> central               : pair factor  0.687  (day  0.643, night  1.000)  night/day 0.141 -> 0.219
+   -> high                  : pair factor  0.106  (day  0.090, night  0.220)  night/day 0.141 -> 0.345
+   -> central_clupeids_only : pair factor  0.914  (day  0.902, night  1.000)  night/day 0.141 -> 0.156
+   -> central_fieldS        : pair factor  0.656  (day  0.608, night  1.000)  night/day 0.141 -> 0.232
+
+benthivorous_fish->whiting  (today's night/day 0.168)
+   whiting       day   share 0.856 R_i 0.60 m  S     183 /    2.55 /  0.0275   sigma 0.00 / 0.10 / 0.50   F  1.000 /  1.000 /  0.514
+   whiting       night share 0.144 R_i 0.30 m  S     733 /    10.2 /    0.11   sigma 0.00 / 0.05 / 0.25   F  1.000 /  1.000 /  0.777
+   -> low                   : pair factor  1.000  (day  1.000, night  1.000)  night/day 0.168 -> 0.168
+   -> central               : pair factor  1.000  (day  1.000, night  1.000)  night/day 0.168 -> 0.168
+   -> high                  : pair factor  0.552  (day  0.514, night  0.777)  night/day 0.168 -> 0.254
+   -> central_clupeids_only : pair factor  1.000  (day  1.000, night  1.000)  night/day 0.168 -> 0.168
+   -> central_fieldS        : pair factor  1.000  (day  1.000, night  1.000)  night/day 0.168 -> 0.168
+
+Field cross-check, Andersen et al. 2017 (cod on sprat; sprat schools at the cod's depth by day):
+   ingestion per hour (share of 194 sprat): day 4.69e-04, twilight 0.435, night 0.0113
+   day / twilight 0.0011   day / night 0.042
+   (confounded: cod satiation after the dawn meal, night overlap; an upper bound on the day per-capita risk relative to dissolving schools)
+Rindorf & Gislason 2005 plateau K 0.10 of Wmax = a feeding window of 2.4 h per day at the digestive rate [D reading]
+Rindorf & Gislason 2005 plateau K 0.17 of Wmax = a feeding window of 4.1 h per day at the digestive rate [D reading]
+
+written school_factor_note_original.json

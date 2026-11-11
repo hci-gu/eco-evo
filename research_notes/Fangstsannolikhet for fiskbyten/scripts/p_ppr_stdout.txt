@@ -1,0 +1,72 @@
+1. Bluefish per-strike success vs PPR (Juanes & Conover 1994, E5): n points 17
+   PPR 0.162  success 0.600
+   PPR 0.162  success 0.812
+   PPR 0.162  success 0.868
+   PPR 0.207  success 0.631
+   PPR 0.207  success 0.750
+   PPR 0.207  success 0.885
+   PPR 0.286  success 0.733
+   PPR 0.324  success 0.481
+   PPR 0.324  success 0.512
+   PPR 0.324  success 0.667
+   PPR 0.414  success 0.250
+   PPR 0.414  success 0.408
+   PPR 0.486  success 0.348
+   PPR 0.486  success 0.504
+   PPR 0.571  success 0.231
+   PPR 0.621  success 0.229
+   PPR 0.621  success 0.286
+   line: p_s = 0.973 -1.230 PPR   (residual SD 0.111)
+   count-weighted (choice trials only): p_s = 1.033 -1.432 PPR
+
+2. Per-strike capture success on single / dispersed fish prey, other predators (PPR ~0.2-0.35)
+   perch / roach, single prey, pool 2.44 m (E1)                   PPR 0.27  p_s 0.20   (line 0.64)
+   pike pursuit / roach (E1)                                      PPR 0.30  p_s 0.12   (line 0.60)
+   pike sit-and-wait / roach (E1)                                 PPR 0.30  p_s 0.36   (line 0.60)
+   pikeperch / roach, dusk (E1)                                   PPR 0.30  p_s 0.09   (line 0.60)
+   0-group cod / flatfish, PPR 0.20-0.33, most trials 1.0 (E3)    PPR 0.27  p_s 0.80   (line 0.64)
+   0-group cod / flatfish, PPR 0.35-0.45 (E3)                     PPR 0.40  p_s 0.17   (line 0.48)
+   whiting 23-26 cm / shrimp, empty (E4)                          PPR 0.26  p_s 0.80   (line 0.65)
+   esocids / gizzard shad, 'optimal size' (E7, abstract)          PPR  nan  p_s 0.78   (line -)
+   esocids / fathead minnow (E7, abstract)                        PPR  nan  p_s 0.67   (line -)
+   esocids / bluegill, spiny (E7, abstract)                       PPR  nan  p_s 0.14   (line -)
+   PPR < 0.35 data: median 0.28, range 0.09-0.80
+
+3. Follow-up probability r inverted from per-strike and per-sequence success (E1, tanks)
+   perch      p_s 0.176  p_seq 0.745  -> r 0.93
+   pike       p_s 0.151  p_seq 0.250  -> r 0.47
+   pikeperch  p_s 0.085  p_seq 0.093  -> r 0.09
+
+Fullness factor on p_s (E4 slopes at stomach 1.8-4.2 g of 8 g):
+   1.8 g: small shrimp x0.77, large shrimp x0.62
+   3.0 g: small shrimp x0.62, large shrimp x0.36
+   4.2 g: small shrimp x0.47, large shrimp x0.11
+
+4. p per encounter by pair (p = q p_s / (1 - r (1 - p_s))); factor = p / p_library
+   pair                                     p_lib   PPR   p_s            low         percid        central   central_full     per_strike           high  tank_sequence
+   predatory_fish->planktivorous_fish        0.20  0.25  0.67   0.12 (x0.60)   0.21 (x1.05)   0.59 (x2.96)   0.39 (x1.95)   0.67 (x3.33)   0.91 (x4.55)   0.95 (x4.76)
+      saithe 0.9 of a: pollock mean 0.19, Mehl median 0.27, window p95 0.30; line p_s over PPR 0.19-0.33: 0.57-0.74 (+-SE 0.03)
+   predatory_fish->benthivorous_fish         0.20  0.25  0.67   0.12 (x0.60)   0.21 (x1.05)   0.59 (x2.96)   0.39 (x1.95)   0.67 (x3.33)   0.91 (x4.55)   0.95 (x4.76)
+      saithe on settled 0-group gadoids, window 16 cm at 52 cm; line p_s over PPR 0.19-0.33: 0.57-0.74 (+-SE 0.03)
+   predatory_fish->whiting                   0.20  0.25  0.67   0.12 (x0.60)   0.21 (x1.05)   0.59 (x2.96)   0.39 (x1.95)   0.67 (x3.33)   0.91 (x4.55)   0.95 (x4.76)
+      saithe on juvenile whiting (gape 0.47 share); line p_s over PPR 0.19-0.33: 0.57-0.74 (+-SE 0.03)
+   predatory_fish->mackerel                  0.20  0.30  0.60   0.12 (x0.60)   0.21 (x1.05)   0.55 (x2.74)   0.36 (x1.79)   0.60 (x3.02)   0.91 (x4.55)   0.94 (x4.69)
+      spurdog 0.76 / hake 0.22 of a on 30 cm mackerel [J]; line p_s over PPR 0.2-0.4: 0.48-0.73 (+-SE 0.03)
+   whiting->planktivorous_fish               0.20  0.28  0.63   0.12 (x0.60)   0.21 (x1.05)   0.57 (x2.83)   0.37 (x1.86)   0.63 (x3.15)   0.91 (x4.55)   0.94 (x4.72)
+      whiting 20-30 cm p50 0.26-0.27, p95 0.38-0.46; line p_s over PPR 0.26-0.4: 0.48-0.65 (+-SE 0.03)
+   whiting->benthivorous_fish                0.20  0.33  0.57   0.12 (x0.60)   0.21 (x1.05)   0.52 (x2.61)   0.34 (x1.70)   0.57 (x2.84)   0.91 (x4.55)   0.93 (x4.65)
+      benthivore prey p50 0.31, p95 0.45; line p_s over PPR 0.27-0.42: 0.46-0.64 (+-SE 0.03)
+   mackerel->planktivorous_fish              0.20  0.22  0.70   0.12 (x0.60)   0.21 (x1.05)   0.62 (x3.09)   0.41 (x2.04)   0.70 (x3.51)   0.91 (x4.55)   0.96 (x4.80)
+      age-0 sprat/herring, window p95 0.31-0.33 [J]; line p_s over PPR 0.15-0.31: 0.59-0.79 (+-SE 0.04)
+   benthivorous_fish->planktivorous_fish     0.30  0.20  0.73   0.12 (x0.40)   0.21 (x0.70)   0.63 (x2.11)   0.42 (x1.40)   0.73 (x2.42)   0.91 (x3.03)   0.96 (x3.21)
+      cod 45-65 cm p50 0.16-0.21, p95 0.30; line p_s over PPR 0.16-0.3: 0.60-0.78 (+-SE 0.04)
+   benthivorous_fish->whiting                0.30  0.22  0.70   0.12 (x0.40)   0.21 (x0.70)   0.62 (x2.06)   0.41 (x1.36)   0.70 (x2.34)   0.91 (x3.03)   0.96 (x3.20)
+      cod on whiting [J]; line p_s over PPR 0.16-0.33: 0.57-0.78 (+-SE 0.04)
+
+5. Group values: mean over the group's fish-prey pairs (central reading; low and high over its pairs)
+   predatory_fish       central 0.59  (low 0.12 - high 0.91)
+   whiting              central 0.54  (low 0.12 - high 0.91)
+   mackerel             central 0.62  (low 0.12 - high 0.91)
+   benthivorous_fish    central 0.63  (low 0.12 - high 0.91)
+
+written p_ppr.json
