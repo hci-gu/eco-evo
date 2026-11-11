@@ -1,0 +1,16 @@
+predatory_fish -> benthivores: predator class shares [0.043, 0.127, 0.782, 0.048]; depth table (mean 1) [1.63, 1.34, 0.55, 0.3]; stage_access [0.392, 0.0388]
+  encounter weight by class (predator x depth table): [0.102, 0.248, 0.628, 0.021] (predator alone [0.043, 0.127, 0.782, 0.048])
+  J ann              f 2.64/0.83/0.38/0.13  F (no depth table) 0.520  F_eff 0.716
+  Js ann (< 19 cm)   f 2.97/0.59/0.36/0.12  F (no depth table) 0.493  F_eff 0.681
+  J Q3               f 2.92/0.87/0.20/0.00  F (no depth table) 0.390  F_eff 0.638
+  import shape       f 2.71/1.00/0.21/0.05  F (no depth table) 0.407  F_eff 0.655
+  A ann              f 1.33/1.48/0.59/0.41  F (no depth table) 0.726  F_eff 0.882
+  J share of the pair's encounter at uniform prey 0.65; pair factor with J ann + A ann 0.774 (J part 0.716, A part 0.882)
+whiting -> benthivores: predator class shares [0.769, 0.204, 0.027, 0.001]; depth table (mean 1) [1.28, 1.15, 0.8, 0.69]; stage_access [0.038, 0.0064]
+  encounter weight by class (predator x depth table): [0.793, 0.19, 0.017, 0.001] (predator alone [0.769, 0.204, 0.027, 0.001])
+  J ann              f 2.64/0.83/0.38/0.13  F (no depth table) 2.207  F_eff 2.253
+  Js ann (< 19 cm)   f 2.97/0.59/0.36/0.12  F (no depth table) 2.415  F_eff 2.473
+  J Q3               f 2.92/0.87/0.20/0.00  F (no depth table) 2.428  F_eff 2.482
+  import shape       f 2.71/1.00/0.21/0.05  F (no depth table) 2.290  F_eff 2.337
+  A ann              f 1.33/1.48/0.59/0.41  F (no depth table) 1.339  F_eff 1.343
+  J share of the pair's encounter at uniform prey 0.52; pair factor with J ann + A ann 1.818 (J part 2.253, A part 1.343)

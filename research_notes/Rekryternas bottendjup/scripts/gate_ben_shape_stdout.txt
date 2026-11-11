@@ -1,0 +1,116 @@
+library: done
+library+shape: done
+combined: done
+combined+shape: done
+combined+shape+eq: done
+combined+shape+eq+pred: done
+combined+uniformJ+A: done
+combined+J_Q3: done
+combined+J_Q1: done
+combined+J_import: done
+combined+J_had0: done
+combined+wide: done
+combined+raw: done
+combined+sweptkm2: done
+combined+nb250: done
+combined+Js_lt19: done
+combined+J_import+eq: done
+
+J / A shapes used (f per class < 100 / 100-150 / 150-250 / >= 250 m, mean 1 on the 60x60 map; the gate renormalises on its 16x16 grid):
+  library+shape              J 2.64/0.83/0.38/0.13  A 1.33/1.48/0.59/0.41
+  combined+shape             J 2.64/0.83/0.38/0.13  A 1.33/1.48/0.59/0.41
+  combined+shape+eq          J 2.64/0.83/0.38/0.13  A 1.33/1.48/0.59/0.41
+  combined+shape+eq+pred     J 2.64/0.83/0.38/0.13  A 1.33/1.48/0.59/0.41  pred shares 0.370/0.401/0.176/0.052
+  combined+uniformJ+A        J 1.00/1.00/1.00/1.00  A 1.33/1.48/0.59/0.41
+  combined+J_Q3              J 2.92/0.87/0.20/0.00  A 1.42/1.60/0.50/0.21
+  combined+J_Q1              J 2.35/0.80/0.56/0.25  A 1.24/1.35/0.68/0.61
+  combined+J_import          J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  combined+J_had0            J 3.36/0.53/0.20/0.00  A 1.33/1.48/0.59/0.41
+  combined+wide              J 1.50/1.66/0.42/0.13  A 0.94/1.58/0.74/0.47
+  combined+raw               J 2.48/0.97/0.37/0.12  A 1.33/1.48/0.59/0.41
+  combined+sweptkm2          J 2.74/0.79/0.34/0.12  A 1.40/1.47/0.56/0.38
+  combined+nb250             J 2.59/0.82/0.37/0.27  A 1.32/1.47/0.60/0.41
+  combined+Js_lt19           J 2.97/0.59/0.36/0.12  A 1.33/1.48/0.59/0.41
+  combined+J_import+eq       J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+
+PREY SIDE on the benthivores: implied / booked M2, equal cells then field spread (* = OFF on the equal-cell prey check)
+  run                        predatory_fish        whiting          seals      porpoises   total eq / field
+  library                      0.97   1.13    0.12   0.07*   0.90    nan    2.44    nan     0.62 /  0.65
+  library+shape                0.97   0.95    0.12   0.14*   0.90    nan    2.44    nan     0.62 /  0.61
+  combined                     2.00   2.33    0.29   0.17*   0.90    nan    2.44    nan     1.06 /  1.12
+  combined+shape               2.00   1.98    0.29   0.33*   0.90    nan    2.44    nan     1.06 /  1.07
+  combined+shape+eq            2.59   1.98    0.33   0.33*   0.90    nan    2.44    nan     1.29 /  1.07
+  combined+shape+eq+pred       2.59   1.98    0.33   0.33*   0.90    nan    2.44    nan     1.29 /  1.07
+  combined+uniformJ+A          2.00   2.27    0.29   0.21*   0.90    nan    2.44    nan     1.06 /  1.12
+  combined+J_Q3                2.00   1.87    0.29   0.37*   0.90    nan    2.44    nan     1.06 /  1.05
+  combined+J_Q1                2.00   2.08    0.29   0.30*   0.90    nan    2.44    nan     1.06 /  1.09
+  combined+J_import            2.00   1.90    0.29   0.34*   0.90    nan    2.44    nan     1.06 /  1.05
+  combined+J_had0              2.00   1.83    0.29   0.39*   0.90    nan    2.44    nan     1.06 /  1.04
+  combined+wide                2.00   2.16    0.29   0.23*   0.90    nan    2.44    nan     1.06 /  1.09
+  combined+raw                 2.00   1.99    0.29   0.32*   0.90    nan    2.44    nan     1.06 /  1.07
+  combined+sweptkm2            2.00   1.95    0.29   0.34*   0.90    nan    2.44    nan     1.06 /  1.06
+  combined+nb250               2.00   1.96    0.29   0.33*   0.90    nan    2.44    nan     1.06 /  1.06
+  combined+Js_lt19             2.00   1.94    0.29   0.35*   0.90    nan    2.44    nan     1.06 /  1.07
+  combined+J_import+eq         2.66   1.90    0.34   0.34    0.90    nan    2.44    nan     1.31 /  1.05
+
+PREDATOR SIDE (encounter share / booked share of the predator's diet), equal cells | field spread:
+  run                          predatory_fish          whiting            seals        porpoises
+  library                     0.97  |  1.13   0.12* |  0.07*  0.90  |     -   2.44  |     - 
+  library+shape               0.97  |  0.95   0.12* |  0.14*  0.90  |     -   2.44  |     - 
+  combined                    2.00  |  2.33   0.29* |  0.17*  0.90  |     -   2.44  |     - 
+  combined+shape              2.00  |  1.98   0.29* |  0.33*  0.90  |     -   2.44  |     - 
+  combined+shape+eq           2.59  |  1.98   0.33* |  0.33*  0.90  |     -   2.44  |     - 
+  combined+shape+eq+pred      2.59  |  1.98   0.33* |  0.33*  0.90  |     -   2.44  |     - 
+  combined+uniformJ+A         2.00  |  2.27   0.29* |  0.21*  0.90  |     -   2.44  |     - 
+  combined+J_Q3               2.00  |  1.87   0.29* |  0.37   0.90  |     -   2.44  |     - 
+  combined+J_Q1               2.00  |  2.08   0.29* |  0.30*  0.90  |     -   2.44  |     - 
+  combined+J_import           2.00  |  1.90   0.29* |  0.34   0.90  |     -   2.44  |     - 
+  combined+J_had0             2.00  |  1.83   0.29* |  0.39   0.90  |     -   2.44  |     - 
+  combined+wide               2.00  |  2.16   0.29* |  0.23*  0.90  |     -   2.44  |     - 
+  combined+raw                2.00  |  1.99   0.29* |  0.32*  0.90  |     -   2.44  |     - 
+  combined+sweptkm2           2.00  |  1.95   0.29* |  0.34   0.90  |     -   2.44  |     - 
+  combined+nb250              2.00  |  1.96   0.29* |  0.33*  0.90  |     -   2.44  |     - 
+  combined+Js_lt19            2.00  |  1.94   0.29* |  0.35   0.90  |     -   2.44  |     - 
+  combined+J_import+eq        2.66  |  1.90   0.34  |  0.34   0.90  |     -   2.44  |     - 
+
+Other prey totals (implied / booked M2, equal cells / field spread):
+  run                         planktivorous          krill        whiting  mobile_epifau  norway_lobste  benthic_infau
+  library                      0.69/ 0.67     1.04/ 1.05     0.60/ 0.52     0.95/ 0.91     2.19/ 2.19     1.03/ 1.03  
+  library+shape                0.69/ 0.67     1.04/ 1.05     0.60/ 0.52     0.95/ 0.91     2.19/ 2.19     1.03/ 1.03  
+  combined                     0.89/ 0.85     1.01/ 1.02     1.03/ 0.87     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  combined+shape               0.89/ 0.86     1.01/ 1.02     1.03/ 0.88     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  combined+shape+eq            0.86/ 0.86     1.01/ 1.02     1.00/ 0.88     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  combined+shape+eq+pred       0.86/ 0.92     1.01/ 1.03     1.00/ 1.37     0.92/ 0.85     2.14/ 2.05     1.01/ 0.97  
+  combined+uniformJ+A          0.89/ 0.85     1.01/ 1.02     1.03/ 0.87     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  combined+J_Q3                0.89/ 0.86     1.01/ 1.02     1.03/ 0.89     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  combined+J_Q1                0.89/ 0.86     1.01/ 1.02     1.03/ 0.88     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  combined+J_import            0.89/ 0.86     1.01/ 1.02     1.03/ 0.89     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  combined+J_had0              0.89/ 0.87     1.01/ 1.02     1.03/ 0.89     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  combined+wide                0.89/ 0.85     1.01/ 1.02     1.03/ 0.88     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  combined+raw                 0.89/ 0.86     1.01/ 1.02     1.03/ 0.88     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  combined+sweptkm2            0.89/ 0.86     1.01/ 1.02     1.03/ 0.88     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  combined+nb250               0.89/ 0.86     1.01/ 1.02     1.03/ 0.88     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  combined+Js_lt19             0.89/ 0.86     1.01/ 1.02     1.03/ 0.88     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  combined+J_import+eq         0.86/ 0.86     1.01/ 1.02     0.99/ 0.89     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+
+Benthivores as predator at the field spread (P3 runs only): encounter / booked share
+  combined+shape+eq+pred: benthic_infauna 0.97; krill 1.31; mobile_epifauna 0.95; norway_lobster 2.05; planktivorous_fish 1.03; whiting 1.64
+
+OFF pairs per run (equal-cell diet / field diet / prey side):
+  library                    benthivorous_fish->whiting (prey), predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (f), whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  library+shape              benthivorous_fish->whiting (prey), predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (f), whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  combined                   predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (f), whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  combined+shape             predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (f), whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  combined+shape+eq          predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (f), whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  combined+shape+eq+pred     predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (f), whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  combined+uniformJ+A        predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (f), whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  combined+J_Q3              predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  combined+J_Q1              predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (f), whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  combined+J_import          predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  combined+J_had0            predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  combined+wide              predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (f), whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  combined+raw               predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (f), whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  combined+sweptkm2          predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  combined+nb250             predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (f), whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  combined+Js_lt19           predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  combined+J_import+eq       predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->mobile_epifauna (f)

@@ -1,0 +1,8028 @@
+{
+ "library": {
+  "diet": {
+   "benthivorous_fish->benthic_infauna": [
+    0.581,
+    0.563,
+    1.03,
+    false
+   ],
+   "benthivorous_fish->krill": [
+    0.024,
+    0.027,
+    0.91,
+    false
+   ],
+   "benthivorous_fish->mobile_epifauna": [
+    0.312,
+    0.31,
+    1.01,
+    false
+   ],
+   "benthivorous_fish->norway_lobster": [
+    0.034,
+    0.016,
+    2.19,
+    false
+   ],
+   "benthivorous_fish->planktivorous_fish": [
+    0.045,
+    0.073,
+    0.61,
+    false
+   ],
+   "benthivorous_fish->whiting": [
+    0.004,
+    0.012,
+    0.31,
+    false
+   ],
+   "mackerel->krill": [
+    0.659,
+    0.394,
+    1.67,
+    false
+   ],
+   "mackerel->planktivorous_fish": [
+    0.043,
+    0.055,
+    0.78,
+    false
+   ],
+   "mackerel->zooplankton": [
+    0.298,
+    0.551,
+    0.54,
+    false
+   ],
+   "planktivorous_fish->krill": [
+    0.378,
+    0.398,
+    0.95,
+    false
+   ],
+   "planktivorous_fish->zooplankton": [
+    0.622,
+    0.602,
+    1.03,
+    false
+   ],
+   "porpoises->benthivorous_fish": [
+    0.388,
+    0.159,
+    2.44,
+    false
+   ],
+   "porpoises->planktivorous_fish": [
+    0.328,
+    0.684,
+    0.48,
+    false
+   ],
+   "porpoises->predatory_fish": [
+    0.021,
+    0.02,
+    1.04,
+    false
+   ],
+   "porpoises->whiting": [
+    0.264,
+    0.137,
+    1.92,
+    false
+   ],
+   "predatory_fish->benthivorous_fish": [
+    0.075,
+    0.077,
+    0.97,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.503,
+    0.361,
+    1.39,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.02,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.391,
+    0.498,
+    0.78,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.027,
+    0.042,
+    0.64,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.004,
+    0.01,
+    0.38,
+    false
+   ],
+   "seals->benthivorous_fish": [
+    0.576,
+    0.641,
+    0.9,
+    false
+   ],
+   "seals->planktivorous_fish": [
+    0.292,
+    0.266,
+    1.1,
+    false
+   ],
+   "seals->predatory_fish": [
+    0.006,
+    0.023,
+    0.26,
+    false
+   ],
+   "seals->whiting": [
+    0.126,
+    0.07,
+    1.81,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.012,
+    0.097,
+    0.12,
+    true
+   ],
+   "whiting->krill": [
+    0.812,
+    0.557,
+    1.46,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.085,
+    0.171,
+    0.5,
+    false
+   ],
+   "whiting->planktivorous_fish": [
+    0.082,
+    0.153,
+    0.54,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.009,
+    0.023,
+    0.4,
+    false
+   ]
+  },
+  "diet_field": {
+   "predatory_fish->benthivorous_fish": [
+    0.087,
+    0.077,
+    1.13,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.506,
+    0.361,
+    1.4,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.03,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.38,
+    0.498,
+    0.76,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.02,
+    0.042,
+    0.46,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.006,
+    0.01,
+    0.62,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.007,
+    0.097,
+    0.07,
+    true
+   ],
+   "whiting->krill": [
+    0.883,
+    0.557,
+    1.59,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.04,
+    0.171,
+    0.23,
+    true
+   ],
+   "whiting->planktivorous_fish": [
+    0.066,
+    0.153,
+    0.43,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.004,
+    0.023,
+    0.19,
+    false
+   ]
+  },
+  "prey": {
+   "benthic_infauna": {
+    "benthivorous_fish": [
+     0.0396,
+     0.04089,
+     null,
+     false
+    ]
+   },
+   "benthivorous_fish": {
+    "whiting": [
+     0.1067,
+     0.013,
+     0.007657,
+     true
+    ],
+    "predatory_fish": [
+     0.0833,
+     0.08101,
+     0.09433,
+     false
+    ],
+    "seals": [
+     0.0373,
+     0.03352,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.0068,
+     0.0166,
+     null,
+     false
+    ]
+   },
+   "krill": {
+    "planktivorous_fish": [
+     2.071,
+     1.967,
+     null,
+     false
+    ],
+    "whiting": [
+     0.1873,
+     0.2733,
+     0.2972,
+     false
+    ],
+    "mackerel": [
+     0.125,
+     0.2092,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.119,
+     0.1658,
+     0.1669,
+     false
+    ],
+    "benthivorous_fish": [
+     0.035,
+     0.03187,
+     null,
+     false
+    ]
+   },
+   "mackerel": {
+    "predatory_fish": [
+     0.021,
+     0.0003997,
+     0.0005322,
+     true
+    ]
+   },
+   "mobile_epifauna": {
+    "benthivorous_fish": [
+     0.54,
+     0.5446,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0761,
+     0.03775,
+     0.01759,
+     false
+    ]
+   },
+   "norway_lobster": {
+    "benthivorous_fish": [
+     0.0225,
+     0.04919,
+     null,
+     false
+    ]
+   },
+   "phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "planktivorous_fish": {
+    "predatory_fish": [
+     0.174,
+     0.1364,
+     0.1327,
+     false
+    ],
+    "benthivorous_fish": [
+     0.1023,
+     0.06212,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0545,
+     0.02928,
+     0.02356,
+     false
+    ],
+    "mackerel": [
+     0.0186,
+     0.01443,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.00946,
+     0.004532,
+     null,
+     false
+    ],
+    "seals": [
+     0.00501,
+     0.005489,
+     null,
+     false
+    ]
+   },
+   "predatory_fish": {
+    "seals": [
+     0.0033,
+     0.0008427,
+     null,
+     true
+    ],
+    "porpoises": [
+     0.0021,
+     0.002175,
+     null,
+     false
+    ]
+   },
+   "subsurface_phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "whiting": {
+    "benthivorous_fish": [
+     0.18,
+     0.05645,
+     null,
+     true
+    ],
+    "predatory_fish": [
+     0.157,
+     0.1007,
+     0.07232,
+     false
+    ],
+    "porpoises": [
+     0.0201,
+     0.03861,
+     null,
+     false
+    ],
+    "seals": [
+     0.0139,
+     0.02518,
+     null,
+     false
+    ]
+   },
+   "zooplankton": {
+    "planktivorous_fish": [
+     1.612,
+     1.666,
+     null,
+     false
+    ],
+    "mackerel": [
+     0.09,
+     0.04873,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0039,
+     0.001548,
+     0.0007217,
+     false
+    ],
+    "predatory_fish": [
+     0.0017,
+     0.0006523,
+     0.00106,
+     false
+    ]
+   }
+  }
+ },
+ "library+shape": {
+  "diet": {
+   "benthivorous_fish->benthic_infauna": [
+    0.581,
+    0.563,
+    1.03,
+    false
+   ],
+   "benthivorous_fish->krill": [
+    0.024,
+    0.027,
+    0.91,
+    false
+   ],
+   "benthivorous_fish->mobile_epifauna": [
+    0.312,
+    0.31,
+    1.01,
+    false
+   ],
+   "benthivorous_fish->norway_lobster": [
+    0.034,
+    0.016,
+    2.19,
+    false
+   ],
+   "benthivorous_fish->planktivorous_fish": [
+    0.045,
+    0.073,
+    0.61,
+    false
+   ],
+   "benthivorous_fish->whiting": [
+    0.004,
+    0.012,
+    0.31,
+    false
+   ],
+   "mackerel->krill": [
+    0.659,
+    0.394,
+    1.67,
+    false
+   ],
+   "mackerel->planktivorous_fish": [
+    0.043,
+    0.055,
+    0.78,
+    false
+   ],
+   "mackerel->zooplankton": [
+    0.298,
+    0.551,
+    0.54,
+    false
+   ],
+   "planktivorous_fish->krill": [
+    0.378,
+    0.398,
+    0.95,
+    false
+   ],
+   "planktivorous_fish->zooplankton": [
+    0.622,
+    0.602,
+    1.03,
+    false
+   ],
+   "porpoises->benthivorous_fish": [
+    0.388,
+    0.159,
+    2.44,
+    false
+   ],
+   "porpoises->planktivorous_fish": [
+    0.328,
+    0.684,
+    0.48,
+    false
+   ],
+   "porpoises->predatory_fish": [
+    0.021,
+    0.02,
+    1.04,
+    false
+   ],
+   "porpoises->whiting": [
+    0.264,
+    0.137,
+    1.92,
+    false
+   ],
+   "predatory_fish->benthivorous_fish": [
+    0.075,
+    0.077,
+    0.97,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.503,
+    0.361,
+    1.39,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.02,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.391,
+    0.498,
+    0.78,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.027,
+    0.042,
+    0.64,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.004,
+    0.01,
+    0.38,
+    false
+   ],
+   "seals->benthivorous_fish": [
+    0.576,
+    0.641,
+    0.9,
+    false
+   ],
+   "seals->planktivorous_fish": [
+    0.292,
+    0.266,
+    1.1,
+    false
+   ],
+   "seals->predatory_fish": [
+    0.006,
+    0.023,
+    0.26,
+    false
+   ],
+   "seals->whiting": [
+    0.126,
+    0.07,
+    1.81,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.012,
+    0.097,
+    0.12,
+    true
+   ],
+   "whiting->krill": [
+    0.812,
+    0.557,
+    1.46,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.085,
+    0.171,
+    0.5,
+    false
+   ],
+   "whiting->planktivorous_fish": [
+    0.082,
+    0.153,
+    0.54,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.009,
+    0.023,
+    0.4,
+    false
+   ]
+  },
+  "diet_field": {
+   "predatory_fish->benthivorous_fish": [
+    0.073,
+    0.077,
+    0.95,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.514,
+    0.361,
+    1.42,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.03,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.386,
+    0.498,
+    0.77,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.02,
+    0.042,
+    0.47,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.006,
+    0.01,
+    0.63,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.013,
+    0.097,
+    0.14,
+    true
+   ],
+   "whiting->krill": [
+    0.878,
+    0.557,
+    1.58,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.039,
+    0.171,
+    0.23,
+    true
+   ],
+   "whiting->planktivorous_fish": [
+    0.066,
+    0.153,
+    0.43,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.004,
+    0.023,
+    0.18,
+    false
+   ]
+  },
+  "prey": {
+   "benthic_infauna": {
+    "benthivorous_fish": [
+     0.0396,
+     0.04089,
+     null,
+     false
+    ]
+   },
+   "benthivorous_fish": {
+    "whiting": [
+     0.1067,
+     0.013,
+     0.0147,
+     true
+    ],
+    "predatory_fish": [
+     0.0833,
+     0.08101,
+     0.07885,
+     false
+    ],
+    "seals": [
+     0.0373,
+     0.03352,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.0068,
+     0.0166,
+     null,
+     false
+    ]
+   },
+   "krill": {
+    "planktivorous_fish": [
+     2.071,
+     1.967,
+     null,
+     false
+    ],
+    "whiting": [
+     0.1873,
+     0.2733,
+     0.2953,
+     false
+    ],
+    "mackerel": [
+     0.125,
+     0.2092,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.119,
+     0.1658,
+     0.1696,
+     false
+    ],
+    "benthivorous_fish": [
+     0.035,
+     0.03187,
+     null,
+     false
+    ]
+   },
+   "mackerel": {
+    "predatory_fish": [
+     0.021,
+     0.0003997,
+     0.0005406,
+     true
+    ]
+   },
+   "mobile_epifauna": {
+    "benthivorous_fish": [
+     0.54,
+     0.5446,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0761,
+     0.03775,
+     0.01748,
+     false
+    ]
+   },
+   "norway_lobster": {
+    "benthivorous_fish": [
+     0.0225,
+     0.04919,
+     null,
+     false
+    ]
+   },
+   "phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "planktivorous_fish": {
+    "predatory_fish": [
+     0.174,
+     0.1364,
+     0.1348,
+     false
+    ],
+    "benthivorous_fish": [
+     0.1023,
+     0.06212,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0545,
+     0.02928,
+     0.02341,
+     false
+    ],
+    "mackerel": [
+     0.0186,
+     0.01443,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.00946,
+     0.004532,
+     null,
+     false
+    ],
+    "seals": [
+     0.00501,
+     0.005489,
+     null,
+     false
+    ]
+   },
+   "predatory_fish": {
+    "seals": [
+     0.0033,
+     0.0008427,
+     null,
+     true
+    ],
+    "porpoises": [
+     0.0021,
+     0.002175,
+     null,
+     false
+    ]
+   },
+   "subsurface_phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "whiting": {
+    "benthivorous_fish": [
+     0.18,
+     0.05645,
+     null,
+     true
+    ],
+    "predatory_fish": [
+     0.157,
+     0.1007,
+     0.07346,
+     false
+    ],
+    "porpoises": [
+     0.0201,
+     0.03861,
+     null,
+     false
+    ],
+    "seals": [
+     0.0139,
+     0.02518,
+     null,
+     false
+    ]
+   },
+   "zooplankton": {
+    "planktivorous_fish": [
+     1.612,
+     1.666,
+     null,
+     false
+    ],
+    "mackerel": [
+     0.09,
+     0.04873,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0039,
+     0.001548,
+     0.0007171,
+     false
+    ],
+    "predatory_fish": [
+     0.0017,
+     0.0006523,
+     0.001077,
+     false
+    ]
+   }
+  }
+ },
+ "combined": {
+  "diet": {
+   "benthivorous_fish->benthic_infauna": [
+    0.57,
+    0.563,
+    1.01,
+    false
+   ],
+   "benthivorous_fish->krill": [
+    0.024,
+    0.027,
+    0.89,
+    false
+   ],
+   "benthivorous_fish->mobile_epifauna": [
+    0.306,
+    0.31,
+    0.99,
+    false
+   ],
+   "benthivorous_fish->norway_lobster": [
+    0.034,
+    0.016,
+    2.14,
+    false
+   ],
+   "benthivorous_fish->planktivorous_fish": [
+    0.059,
+    0.073,
+    0.81,
+    false
+   ],
+   "benthivorous_fish->whiting": [
+    0.008,
+    0.012,
+    0.62,
+    false
+   ],
+   "mackerel->krill": [
+    0.636,
+    0.394,
+    1.61,
+    false
+   ],
+   "mackerel->planktivorous_fish": [
+    0.076,
+    0.055,
+    1.38,
+    false
+   ],
+   "mackerel->zooplankton": [
+    0.288,
+    0.551,
+    0.52,
+    false
+   ],
+   "planktivorous_fish->krill": [
+    0.378,
+    0.398,
+    0.95,
+    false
+   ],
+   "planktivorous_fish->zooplankton": [
+    0.622,
+    0.602,
+    1.03,
+    false
+   ],
+   "porpoises->benthivorous_fish": [
+    0.388,
+    0.159,
+    2.44,
+    false
+   ],
+   "porpoises->planktivorous_fish": [
+    0.328,
+    0.684,
+    0.48,
+    false
+   ],
+   "porpoises->predatory_fish": [
+    0.021,
+    0.02,
+    1.04,
+    false
+   ],
+   "porpoises->whiting": [
+    0.264,
+    0.137,
+    1.92,
+    false
+   ],
+   "predatory_fish->benthivorous_fish": [
+    0.155,
+    0.077,
+    2.0,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.35,
+    0.361,
+    0.97,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.0,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.437,
+    0.498,
+    0.88,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.055,
+    0.042,
+    1.31,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.003,
+    0.01,
+    0.27,
+    false
+   ],
+   "seals->benthivorous_fish": [
+    0.576,
+    0.641,
+    0.9,
+    false
+   ],
+   "seals->planktivorous_fish": [
+    0.292,
+    0.266,
+    1.1,
+    false
+   ],
+   "seals->predatory_fish": [
+    0.006,
+    0.023,
+    0.26,
+    false
+   ],
+   "seals->whiting": [
+    0.126,
+    0.07,
+    1.81,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.028,
+    0.097,
+    0.29,
+    true
+   ],
+   "whiting->krill": [
+    0.741,
+    0.557,
+    1.33,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.077,
+    0.171,
+    0.45,
+    false
+   ],
+   "whiting->planktivorous_fish": [
+    0.145,
+    0.153,
+    0.95,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.008,
+    0.023,
+    0.36,
+    false
+   ]
+  },
+  "diet_field": {
+   "predatory_fish->benthivorous_fish": [
+    0.18,
+    0.077,
+    2.33,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.352,
+    0.361,
+    0.97,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.0,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.424,
+    0.498,
+    0.85,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.04,
+    0.042,
+    0.94,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.004,
+    0.01,
+    0.43,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.017,
+    0.097,
+    0.17,
+    true
+   ],
+   "whiting->krill": [
+    0.823,
+    0.557,
+    1.48,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.037,
+    0.171,
+    0.22,
+    true
+   ],
+   "whiting->planktivorous_fish": [
+    0.119,
+    0.153,
+    0.78,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.004,
+    0.023,
+    0.17,
+    false
+   ]
+  },
+  "prey": {
+   "benthic_infauna": {
+    "benthivorous_fish": [
+     0.0396,
+     0.04009,
+     null,
+     false
+    ]
+   },
+   "benthivorous_fish": {
+    "whiting": [
+     0.1067,
+     0.03095,
+     0.01862,
+     true
+    ],
+    "predatory_fish": [
+     0.0833,
+     0.167,
+     0.194,
+     false
+    ],
+    "seals": [
+     0.0373,
+     0.03352,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.0068,
+     0.0166,
+     null,
+     false
+    ]
+   },
+   "krill": {
+    "planktivorous_fish": [
+     2.071,
+     1.967,
+     null,
+     false
+    ],
+    "whiting": [
+     0.1873,
+     0.2494,
+     0.277,
+     false
+    ],
+    "mackerel": [
+     0.125,
+     0.2019,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.119,
+     0.1154,
+     0.1159,
+     false
+    ],
+    "benthivorous_fish": [
+     0.035,
+     0.03125,
+     null,
+     false
+    ]
+   },
+   "mackerel": {
+    "predatory_fish": [
+     0.021,
+     6.797e-05,
+     9.031e-05,
+     true
+    ]
+   },
+   "mobile_epifauna": {
+    "benthivorous_fish": [
+     0.54,
+     0.534,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0761,
+     0.03445,
+     0.0164,
+     false
+    ]
+   },
+   "norway_lobster": {
+    "benthivorous_fish": [
+     0.0225,
+     0.04824,
+     null,
+     false
+    ]
+   },
+   "phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "planktivorous_fish": {
+    "predatory_fish": [
+     0.174,
+     0.1525,
+     0.1481,
+     false
+    ],
+    "benthivorous_fish": [
+     0.1023,
+     0.08269,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0545,
+     0.05164,
+     0.04244,
+     false
+    ],
+    "mackerel": [
+     0.0186,
+     0.02571,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.00946,
+     0.004532,
+     null,
+     false
+    ],
+    "seals": [
+     0.00501,
+     0.005489,
+     null,
+     false
+    ]
+   },
+   "predatory_fish": {
+    "seals": [
+     0.0033,
+     0.0008427,
+     null,
+     true
+    ],
+    "porpoises": [
+     0.0021,
+     0.002175,
+     null,
+     false
+    ]
+   },
+   "subsurface_phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "whiting": {
+    "benthivorous_fish": [
+     0.18,
+     0.1122,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.157,
+     0.205,
+     0.1469,
+     false
+    ],
+    "porpoises": [
+     0.0201,
+     0.03861,
+     null,
+     false
+    ],
+    "seals": [
+     0.0139,
+     0.02518,
+     null,
+     false
+    ]
+   },
+   "zooplankton": {
+    "planktivorous_fish": [
+     1.612,
+     1.666,
+     null,
+     false
+    ],
+    "mackerel": [
+     0.09,
+     0.04702,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0039,
+     0.001413,
+     0.0006727,
+     false
+    ],
+    "predatory_fish": [
+     0.0017,
+     0.000454,
+     0.0007362,
+     false
+    ]
+   }
+  }
+ },
+ "combined+shape": {
+  "diet": {
+   "benthivorous_fish->benthic_infauna": [
+    0.57,
+    0.563,
+    1.01,
+    false
+   ],
+   "benthivorous_fish->krill": [
+    0.024,
+    0.027,
+    0.89,
+    false
+   ],
+   "benthivorous_fish->mobile_epifauna": [
+    0.306,
+    0.31,
+    0.99,
+    false
+   ],
+   "benthivorous_fish->norway_lobster": [
+    0.034,
+    0.016,
+    2.14,
+    false
+   ],
+   "benthivorous_fish->planktivorous_fish": [
+    0.059,
+    0.073,
+    0.81,
+    false
+   ],
+   "benthivorous_fish->whiting": [
+    0.008,
+    0.012,
+    0.62,
+    false
+   ],
+   "mackerel->krill": [
+    0.636,
+    0.394,
+    1.61,
+    false
+   ],
+   "mackerel->planktivorous_fish": [
+    0.076,
+    0.055,
+    1.38,
+    false
+   ],
+   "mackerel->zooplankton": [
+    0.288,
+    0.551,
+    0.52,
+    false
+   ],
+   "planktivorous_fish->krill": [
+    0.378,
+    0.398,
+    0.95,
+    false
+   ],
+   "planktivorous_fish->zooplankton": [
+    0.622,
+    0.602,
+    1.03,
+    false
+   ],
+   "porpoises->benthivorous_fish": [
+    0.388,
+    0.159,
+    2.44,
+    false
+   ],
+   "porpoises->planktivorous_fish": [
+    0.328,
+    0.684,
+    0.48,
+    false
+   ],
+   "porpoises->predatory_fish": [
+    0.021,
+    0.02,
+    1.04,
+    false
+   ],
+   "porpoises->whiting": [
+    0.264,
+    0.137,
+    1.92,
+    false
+   ],
+   "predatory_fish->benthivorous_fish": [
+    0.155,
+    0.077,
+    2.0,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.35,
+    0.361,
+    0.97,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.0,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.437,
+    0.498,
+    0.88,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.055,
+    0.042,
+    1.31,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.003,
+    0.01,
+    0.27,
+    false
+   ],
+   "seals->benthivorous_fish": [
+    0.576,
+    0.641,
+    0.9,
+    false
+   ],
+   "seals->planktivorous_fish": [
+    0.292,
+    0.266,
+    1.1,
+    false
+   ],
+   "seals->predatory_fish": [
+    0.006,
+    0.023,
+    0.26,
+    false
+   ],
+   "seals->whiting": [
+    0.126,
+    0.07,
+    1.81,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.028,
+    0.097,
+    0.29,
+    true
+   ],
+   "whiting->krill": [
+    0.741,
+    0.557,
+    1.33,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.077,
+    0.171,
+    0.45,
+    false
+   ],
+   "whiting->planktivorous_fish": [
+    0.145,
+    0.153,
+    0.95,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.008,
+    0.023,
+    0.36,
+    false
+   ]
+  },
+  "diet_field": {
+   "predatory_fish->benthivorous_fish": [
+    0.153,
+    0.077,
+    1.98,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.363,
+    0.361,
+    1.01,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.0,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.438,
+    0.498,
+    0.88,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.041,
+    0.042,
+    0.97,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.004,
+    0.01,
+    0.45,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.032,
+    0.097,
+    0.33,
+    true
+   ],
+   "whiting->krill": [
+    0.81,
+    0.557,
+    1.46,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.036,
+    0.171,
+    0.21,
+    true
+   ],
+   "whiting->planktivorous_fish": [
+    0.117,
+    0.153,
+    0.77,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.004,
+    0.023,
+    0.17,
+    false
+   ]
+  },
+  "prey": {
+   "benthic_infauna": {
+    "benthivorous_fish": [
+     0.0396,
+     0.04009,
+     null,
+     false
+    ]
+   },
+   "benthivorous_fish": {
+    "whiting": [
+     0.1067,
+     0.03095,
+     0.03542,
+     true
+    ],
+    "predatory_fish": [
+     0.0833,
+     0.167,
+     0.1649,
+     false
+    ],
+    "seals": [
+     0.0373,
+     0.03352,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.0068,
+     0.0166,
+     null,
+     false
+    ]
+   },
+   "krill": {
+    "planktivorous_fish": [
+     2.071,
+     1.967,
+     null,
+     false
+    ],
+    "whiting": [
+     0.1873,
+     0.2494,
+     0.2727,
+     false
+    ],
+    "mackerel": [
+     0.125,
+     0.2019,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.119,
+     0.1154,
+     0.1197,
+     false
+    ],
+    "benthivorous_fish": [
+     0.035,
+     0.03125,
+     null,
+     false
+    ]
+   },
+   "mackerel": {
+    "predatory_fish": [
+     0.021,
+     6.797e-05,
+     9.328e-05,
+     true
+    ]
+   },
+   "mobile_epifauna": {
+    "benthivorous_fish": [
+     0.54,
+     0.534,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0761,
+     0.03445,
+     0.01614,
+     false
+    ]
+   },
+   "norway_lobster": {
+    "benthivorous_fish": [
+     0.0225,
+     0.04824,
+     null,
+     false
+    ]
+   },
+   "phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "planktivorous_fish": {
+    "predatory_fish": [
+     0.174,
+     0.1525,
+     0.153,
+     false
+    ],
+    "benthivorous_fish": [
+     0.1023,
+     0.08269,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0545,
+     0.05164,
+     0.04178,
+     false
+    ],
+    "mackerel": [
+     0.0186,
+     0.02571,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.00946,
+     0.004532,
+     null,
+     false
+    ],
+    "seals": [
+     0.00501,
+     0.005489,
+     null,
+     false
+    ]
+   },
+   "predatory_fish": {
+    "seals": [
+     0.0033,
+     0.0008427,
+     null,
+     true
+    ],
+    "porpoises": [
+     0.0021,
+     0.002175,
+     null,
+     false
+    ]
+   },
+   "subsurface_phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "whiting": {
+    "benthivorous_fish": [
+     0.18,
+     0.1122,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.157,
+     0.205,
+     0.1517,
+     false
+    ],
+    "porpoises": [
+     0.0201,
+     0.03861,
+     null,
+     false
+    ],
+    "seals": [
+     0.0139,
+     0.02518,
+     null,
+     false
+    ]
+   },
+   "zooplankton": {
+    "planktivorous_fish": [
+     1.612,
+     1.666,
+     null,
+     false
+    ],
+    "mackerel": [
+     0.09,
+     0.04702,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0039,
+     0.001413,
+     0.0006623,
+     false
+    ],
+    "predatory_fish": [
+     0.0017,
+     0.000454,
+     0.0007604,
+     false
+    ]
+   }
+  }
+ },
+ "combined+shape+eq": {
+  "diet": {
+   "benthivorous_fish->benthic_infauna": [
+    0.57,
+    0.563,
+    1.01,
+    false
+   ],
+   "benthivorous_fish->krill": [
+    0.024,
+    0.027,
+    0.89,
+    false
+   ],
+   "benthivorous_fish->mobile_epifauna": [
+    0.306,
+    0.31,
+    0.99,
+    false
+   ],
+   "benthivorous_fish->norway_lobster": [
+    0.034,
+    0.016,
+    2.14,
+    false
+   ],
+   "benthivorous_fish->planktivorous_fish": [
+    0.059,
+    0.073,
+    0.81,
+    false
+   ],
+   "benthivorous_fish->whiting": [
+    0.008,
+    0.012,
+    0.62,
+    false
+   ],
+   "mackerel->krill": [
+    0.636,
+    0.394,
+    1.61,
+    false
+   ],
+   "mackerel->planktivorous_fish": [
+    0.076,
+    0.055,
+    1.38,
+    false
+   ],
+   "mackerel->zooplankton": [
+    0.288,
+    0.551,
+    0.52,
+    false
+   ],
+   "planktivorous_fish->krill": [
+    0.378,
+    0.398,
+    0.95,
+    false
+   ],
+   "planktivorous_fish->zooplankton": [
+    0.622,
+    0.602,
+    1.03,
+    false
+   ],
+   "porpoises->benthivorous_fish": [
+    0.388,
+    0.159,
+    2.44,
+    false
+   ],
+   "porpoises->planktivorous_fish": [
+    0.328,
+    0.684,
+    0.48,
+    false
+   ],
+   "porpoises->predatory_fish": [
+    0.021,
+    0.02,
+    1.04,
+    false
+   ],
+   "porpoises->whiting": [
+    0.264,
+    0.137,
+    1.92,
+    false
+   ],
+   "predatory_fish->benthivorous_fish": [
+    0.2,
+    0.077,
+    2.59,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.331,
+    0.361,
+    0.92,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.0,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.414,
+    0.498,
+    0.83,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.052,
+    0.042,
+    1.24,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.003,
+    0.01,
+    0.25,
+    false
+   ],
+   "seals->benthivorous_fish": [
+    0.576,
+    0.641,
+    0.9,
+    false
+   ],
+   "seals->planktivorous_fish": [
+    0.292,
+    0.266,
+    1.1,
+    false
+   ],
+   "seals->predatory_fish": [
+    0.006,
+    0.023,
+    0.26,
+    false
+   ],
+   "seals->whiting": [
+    0.126,
+    0.07,
+    1.81,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.032,
+    0.097,
+    0.33,
+    true
+   ],
+   "whiting->krill": [
+    0.738,
+    0.557,
+    1.33,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.077,
+    0.171,
+    0.45,
+    false
+   ],
+   "whiting->planktivorous_fish": [
+    0.144,
+    0.153,
+    0.94,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.008,
+    0.023,
+    0.36,
+    false
+   ]
+  },
+  "diet_field": {
+   "predatory_fish->benthivorous_fish": [
+    0.153,
+    0.077,
+    1.98,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.363,
+    0.361,
+    1.01,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.0,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.438,
+    0.498,
+    0.88,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.041,
+    0.042,
+    0.97,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.004,
+    0.01,
+    0.45,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.032,
+    0.097,
+    0.33,
+    true
+   ],
+   "whiting->krill": [
+    0.81,
+    0.557,
+    1.46,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.036,
+    0.171,
+    0.21,
+    true
+   ],
+   "whiting->planktivorous_fish": [
+    0.117,
+    0.153,
+    0.77,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.004,
+    0.023,
+    0.17,
+    false
+   ]
+  },
+  "prey": {
+   "benthic_infauna": {
+    "benthivorous_fish": [
+     0.0396,
+     0.04009,
+     null,
+     false
+    ]
+   },
+   "benthivorous_fish": {
+    "whiting": [
+     0.1067,
+     0.03537,
+     0.03542,
+     true
+    ],
+    "predatory_fish": [
+     0.0833,
+     0.216,
+     0.1649,
+     false
+    ],
+    "seals": [
+     0.0373,
+     0.03352,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.0068,
+     0.0166,
+     null,
+     false
+    ]
+   },
+   "krill": {
+    "planktivorous_fish": [
+     2.071,
+     1.967,
+     null,
+     false
+    ],
+    "whiting": [
+     0.1873,
+     0.2484,
+     0.2727,
+     false
+    ],
+    "mackerel": [
+     0.125,
+     0.2019,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.119,
+     0.1092,
+     0.1197,
+     false
+    ],
+    "benthivorous_fish": [
+     0.035,
+     0.03125,
+     null,
+     false
+    ]
+   },
+   "mackerel": {
+    "predatory_fish": [
+     0.021,
+     6.431e-05,
+     9.328e-05,
+     true
+    ]
+   },
+   "mobile_epifauna": {
+    "benthivorous_fish": [
+     0.54,
+     0.534,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0761,
+     0.03431,
+     0.01614,
+     false
+    ]
+   },
+   "norway_lobster": {
+    "benthivorous_fish": [
+     0.0225,
+     0.04824,
+     null,
+     false
+    ]
+   },
+   "phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "planktivorous_fish": {
+    "predatory_fish": [
+     0.174,
+     0.1443,
+     0.153,
+     false
+    ],
+    "benthivorous_fish": [
+     0.1023,
+     0.08269,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0545,
+     0.05143,
+     0.04178,
+     false
+    ],
+    "mackerel": [
+     0.0186,
+     0.02571,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.00946,
+     0.004532,
+     null,
+     false
+    ],
+    "seals": [
+     0.00501,
+     0.005489,
+     null,
+     false
+    ]
+   },
+   "predatory_fish": {
+    "seals": [
+     0.0033,
+     0.0008427,
+     null,
+     true
+    ],
+    "porpoises": [
+     0.0021,
+     0.002175,
+     null,
+     false
+    ]
+   },
+   "subsurface_phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "whiting": {
+    "benthivorous_fish": [
+     0.18,
+     0.1122,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.157,
+     0.1939,
+     0.1517,
+     false
+    ],
+    "porpoises": [
+     0.0201,
+     0.03861,
+     null,
+     false
+    ],
+    "seals": [
+     0.0139,
+     0.02518,
+     null,
+     false
+    ]
+   },
+   "zooplankton": {
+    "planktivorous_fish": [
+     1.612,
+     1.666,
+     null,
+     false
+    ],
+    "mackerel": [
+     0.09,
+     0.04702,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0039,
+     0.001407,
+     0.0006623,
+     false
+    ],
+    "predatory_fish": [
+     0.0017,
+     0.0004296,
+     0.0007604,
+     false
+    ]
+   }
+  }
+ },
+ "combined+shape+eq+pred": {
+  "diet": {
+   "benthivorous_fish->benthic_infauna": [
+    0.57,
+    0.563,
+    1.01,
+    false
+   ],
+   "benthivorous_fish->krill": [
+    0.024,
+    0.027,
+    0.89,
+    false
+   ],
+   "benthivorous_fish->mobile_epifauna": [
+    0.306,
+    0.31,
+    0.99,
+    false
+   ],
+   "benthivorous_fish->norway_lobster": [
+    0.034,
+    0.016,
+    2.14,
+    false
+   ],
+   "benthivorous_fish->planktivorous_fish": [
+    0.059,
+    0.073,
+    0.81,
+    false
+   ],
+   "benthivorous_fish->whiting": [
+    0.008,
+    0.012,
+    0.62,
+    false
+   ],
+   "mackerel->krill": [
+    0.636,
+    0.394,
+    1.61,
+    false
+   ],
+   "mackerel->planktivorous_fish": [
+    0.076,
+    0.055,
+    1.38,
+    false
+   ],
+   "mackerel->zooplankton": [
+    0.288,
+    0.551,
+    0.52,
+    false
+   ],
+   "planktivorous_fish->krill": [
+    0.378,
+    0.398,
+    0.95,
+    false
+   ],
+   "planktivorous_fish->zooplankton": [
+    0.622,
+    0.602,
+    1.03,
+    false
+   ],
+   "porpoises->benthivorous_fish": [
+    0.388,
+    0.159,
+    2.44,
+    false
+   ],
+   "porpoises->planktivorous_fish": [
+    0.328,
+    0.684,
+    0.48,
+    false
+   ],
+   "porpoises->predatory_fish": [
+    0.021,
+    0.02,
+    1.04,
+    false
+   ],
+   "porpoises->whiting": [
+    0.264,
+    0.137,
+    1.92,
+    false
+   ],
+   "predatory_fish->benthivorous_fish": [
+    0.2,
+    0.077,
+    2.59,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.331,
+    0.361,
+    0.92,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.0,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.414,
+    0.498,
+    0.83,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.052,
+    0.042,
+    1.24,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.003,
+    0.01,
+    0.25,
+    false
+   ],
+   "seals->benthivorous_fish": [
+    0.576,
+    0.641,
+    0.9,
+    false
+   ],
+   "seals->planktivorous_fish": [
+    0.292,
+    0.266,
+    1.1,
+    false
+   ],
+   "seals->predatory_fish": [
+    0.006,
+    0.023,
+    0.26,
+    false
+   ],
+   "seals->whiting": [
+    0.126,
+    0.07,
+    1.81,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.032,
+    0.097,
+    0.33,
+    true
+   ],
+   "whiting->krill": [
+    0.738,
+    0.557,
+    1.33,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.077,
+    0.171,
+    0.45,
+    false
+   ],
+   "whiting->planktivorous_fish": [
+    0.144,
+    0.153,
+    0.94,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.008,
+    0.023,
+    0.36,
+    false
+   ]
+  },
+  "diet_field": {
+   "benthivorous_fish->benthic_infauna": [
+    0.545,
+    0.563,
+    0.97,
+    false
+   ],
+   "benthivorous_fish->krill": [
+    0.035,
+    0.027,
+    1.31,
+    false
+   ],
+   "benthivorous_fish->mobile_epifauna": [
+    0.293,
+    0.31,
+    0.95,
+    false
+   ],
+   "benthivorous_fish->norway_lobster": [
+    0.032,
+    0.016,
+    2.05,
+    false
+   ],
+   "benthivorous_fish->planktivorous_fish": [
+    0.076,
+    0.073,
+    1.03,
+    false
+   ],
+   "benthivorous_fish->whiting": [
+    0.02,
+    0.012,
+    1.64,
+    false
+   ],
+   "predatory_fish->benthivorous_fish": [
+    0.153,
+    0.077,
+    1.98,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.363,
+    0.361,
+    1.01,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.0,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.438,
+    0.498,
+    0.88,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.041,
+    0.042,
+    0.97,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.004,
+    0.01,
+    0.45,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.032,
+    0.097,
+    0.33,
+    true
+   ],
+   "whiting->krill": [
+    0.81,
+    0.557,
+    1.46,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.036,
+    0.171,
+    0.21,
+    true
+   ],
+   "whiting->planktivorous_fish": [
+    0.117,
+    0.153,
+    0.77,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.004,
+    0.023,
+    0.17,
+    false
+   ]
+  },
+  "prey": {
+   "benthic_infauna": {
+    "benthivorous_fish": [
+     0.0396,
+     0.04009,
+     0.03833,
+     false
+    ]
+   },
+   "benthivorous_fish": {
+    "whiting": [
+     0.1067,
+     0.03537,
+     0.03542,
+     true
+    ],
+    "predatory_fish": [
+     0.0833,
+     0.216,
+     0.1649,
+     false
+    ],
+    "seals": [
+     0.0373,
+     0.03352,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.0068,
+     0.0166,
+     null,
+     false
+    ]
+   },
+   "krill": {
+    "planktivorous_fish": [
+     2.071,
+     1.967,
+     null,
+     false
+    ],
+    "whiting": [
+     0.1873,
+     0.2484,
+     0.2727,
+     false
+    ],
+    "mackerel": [
+     0.125,
+     0.2019,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.119,
+     0.1092,
+     0.1197,
+     false
+    ],
+    "benthivorous_fish": [
+     0.035,
+     0.03125,
+     0.04597,
+     false
+    ]
+   },
+   "mackerel": {
+    "predatory_fish": [
+     0.021,
+     6.431e-05,
+     9.328e-05,
+     true
+    ]
+   },
+   "mobile_epifauna": {
+    "benthivorous_fish": [
+     0.54,
+     0.534,
+     0.5106,
+     false
+    ],
+    "whiting": [
+     0.0761,
+     0.03431,
+     0.01614,
+     false
+    ]
+   },
+   "norway_lobster": {
+    "benthivorous_fish": [
+     0.0225,
+     0.04824,
+     0.04612,
+     false
+    ]
+   },
+   "phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "planktivorous_fish": {
+    "predatory_fish": [
+     0.174,
+     0.1443,
+     0.153,
+     false
+    ],
+    "benthivorous_fish": [
+     0.1023,
+     0.08269,
+     0.1057,
+     false
+    ],
+    "whiting": [
+     0.0545,
+     0.05143,
+     0.04178,
+     false
+    ],
+    "mackerel": [
+     0.0186,
+     0.02571,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.00946,
+     0.004532,
+     null,
+     false
+    ],
+    "seals": [
+     0.00501,
+     0.005489,
+     null,
+     false
+    ]
+   },
+   "predatory_fish": {
+    "seals": [
+     0.0033,
+     0.0008427,
+     null,
+     true
+    ],
+    "porpoises": [
+     0.0021,
+     0.002175,
+     null,
+     false
+    ]
+   },
+   "subsurface_phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "whiting": {
+    "benthivorous_fish": [
+     0.18,
+     0.1122,
+     0.2944,
+     false
+    ],
+    "predatory_fish": [
+     0.157,
+     0.1939,
+     0.1517,
+     false
+    ],
+    "porpoises": [
+     0.0201,
+     0.03861,
+     null,
+     false
+    ],
+    "seals": [
+     0.0139,
+     0.02518,
+     null,
+     false
+    ]
+   },
+   "zooplankton": {
+    "planktivorous_fish": [
+     1.612,
+     1.666,
+     null,
+     false
+    ],
+    "mackerel": [
+     0.09,
+     0.04702,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0039,
+     0.001407,
+     0.0006623,
+     false
+    ],
+    "predatory_fish": [
+     0.0017,
+     0.0004296,
+     0.0007604,
+     false
+    ]
+   }
+  }
+ },
+ "combined+uniformJ+A": {
+  "diet": {
+   "benthivorous_fish->benthic_infauna": [
+    0.57,
+    0.563,
+    1.01,
+    false
+   ],
+   "benthivorous_fish->krill": [
+    0.024,
+    0.027,
+    0.89,
+    false
+   ],
+   "benthivorous_fish->mobile_epifauna": [
+    0.306,
+    0.31,
+    0.99,
+    false
+   ],
+   "benthivorous_fish->norway_lobster": [
+    0.034,
+    0.016,
+    2.14,
+    false
+   ],
+   "benthivorous_fish->planktivorous_fish": [
+    0.059,
+    0.073,
+    0.81,
+    false
+   ],
+   "benthivorous_fish->whiting": [
+    0.008,
+    0.012,
+    0.62,
+    false
+   ],
+   "mackerel->krill": [
+    0.636,
+    0.394,
+    1.61,
+    false
+   ],
+   "mackerel->planktivorous_fish": [
+    0.076,
+    0.055,
+    1.38,
+    false
+   ],
+   "mackerel->zooplankton": [
+    0.288,
+    0.551,
+    0.52,
+    false
+   ],
+   "planktivorous_fish->krill": [
+    0.378,
+    0.398,
+    0.95,
+    false
+   ],
+   "planktivorous_fish->zooplankton": [
+    0.622,
+    0.602,
+    1.03,
+    false
+   ],
+   "porpoises->benthivorous_fish": [
+    0.388,
+    0.159,
+    2.44,
+    false
+   ],
+   "porpoises->planktivorous_fish": [
+    0.328,
+    0.684,
+    0.48,
+    false
+   ],
+   "porpoises->predatory_fish": [
+    0.021,
+    0.02,
+    1.04,
+    false
+   ],
+   "porpoises->whiting": [
+    0.264,
+    0.137,
+    1.92,
+    false
+   ],
+   "predatory_fish->benthivorous_fish": [
+    0.155,
+    0.077,
+    2.0,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.35,
+    0.361,
+    0.97,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.0,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.437,
+    0.498,
+    0.88,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.055,
+    0.042,
+    1.31,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.003,
+    0.01,
+    0.27,
+    false
+   ],
+   "seals->benthivorous_fish": [
+    0.576,
+    0.641,
+    0.9,
+    false
+   ],
+   "seals->planktivorous_fish": [
+    0.292,
+    0.266,
+    1.1,
+    false
+   ],
+   "seals->predatory_fish": [
+    0.006,
+    0.023,
+    0.26,
+    false
+   ],
+   "seals->whiting": [
+    0.126,
+    0.07,
+    1.81,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.028,
+    0.097,
+    0.29,
+    true
+   ],
+   "whiting->krill": [
+    0.741,
+    0.557,
+    1.33,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.077,
+    0.171,
+    0.45,
+    false
+   ],
+   "whiting->planktivorous_fish": [
+    0.145,
+    0.153,
+    0.95,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.008,
+    0.023,
+    0.36,
+    false
+   ]
+  },
+  "diet_field": {
+   "predatory_fish->benthivorous_fish": [
+    0.175,
+    0.077,
+    2.27,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.354,
+    0.361,
+    0.98,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.0,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.427,
+    0.498,
+    0.86,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.04,
+    0.042,
+    0.94,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.004,
+    0.01,
+    0.44,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.02,
+    0.097,
+    0.21,
+    true
+   ],
+   "whiting->krill": [
+    0.821,
+    0.557,
+    1.47,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.037,
+    0.171,
+    0.21,
+    true
+   ],
+   "whiting->planktivorous_fish": [
+    0.119,
+    0.153,
+    0.78,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.004,
+    0.023,
+    0.17,
+    false
+   ]
+  },
+  "prey": {
+   "benthic_infauna": {
+    "benthivorous_fish": [
+     0.0396,
+     0.04009,
+     null,
+     false
+    ]
+   },
+   "benthivorous_fish": {
+    "whiting": [
+     0.1067,
+     0.03095,
+     0.02205,
+     true
+    ],
+    "predatory_fish": [
+     0.0833,
+     0.167,
+     0.1891,
+     false
+    ],
+    "seals": [
+     0.0373,
+     0.03352,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.0068,
+     0.0166,
+     null,
+     false
+    ]
+   },
+   "krill": {
+    "planktivorous_fish": [
+     2.071,
+     1.967,
+     null,
+     false
+    ],
+    "whiting": [
+     0.1873,
+     0.2494,
+     0.2761,
+     false
+    ],
+    "mackerel": [
+     0.125,
+     0.2019,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.119,
+     0.1154,
+     0.1166,
+     false
+    ],
+    "benthivorous_fish": [
+     0.035,
+     0.03125,
+     null,
+     false
+    ]
+   },
+   "mackerel": {
+    "predatory_fish": [
+     0.021,
+     6.797e-05,
+     9.081e-05,
+     true
+    ]
+   },
+   "mobile_epifauna": {
+    "benthivorous_fish": [
+     0.54,
+     0.534,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0761,
+     0.03445,
+     0.01635,
+     false
+    ]
+   },
+   "norway_lobster": {
+    "benthivorous_fish": [
+     0.0225,
+     0.04824,
+     null,
+     false
+    ]
+   },
+   "phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "planktivorous_fish": {
+    "predatory_fish": [
+     0.174,
+     0.1525,
+     0.1489,
+     false
+    ],
+    "benthivorous_fish": [
+     0.1023,
+     0.08269,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0545,
+     0.05164,
+     0.0423,
+     false
+    ],
+    "mackerel": [
+     0.0186,
+     0.02571,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.00946,
+     0.004532,
+     null,
+     false
+    ],
+    "seals": [
+     0.00501,
+     0.005489,
+     null,
+     false
+    ]
+   },
+   "predatory_fish": {
+    "seals": [
+     0.0033,
+     0.0008427,
+     null,
+     true
+    ],
+    "porpoises": [
+     0.0021,
+     0.002175,
+     null,
+     false
+    ]
+   },
+   "subsurface_phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "whiting": {
+    "benthivorous_fish": [
+     0.18,
+     0.1122,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.157,
+     0.205,
+     0.1477,
+     false
+    ],
+    "porpoises": [
+     0.0201,
+     0.03861,
+     null,
+     false
+    ],
+    "seals": [
+     0.0139,
+     0.02518,
+     null,
+     false
+    ]
+   },
+   "zooplankton": {
+    "planktivorous_fish": [
+     1.612,
+     1.666,
+     null,
+     false
+    ],
+    "mackerel": [
+     0.09,
+     0.04702,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0039,
+     0.001413,
+     0.0006706,
+     false
+    ],
+    "predatory_fish": [
+     0.0017,
+     0.000454,
+     0.0007403,
+     false
+    ]
+   }
+  }
+ },
+ "combined+J_Q3": {
+  "diet": {
+   "benthivorous_fish->benthic_infauna": [
+    0.57,
+    0.563,
+    1.01,
+    false
+   ],
+   "benthivorous_fish->krill": [
+    0.024,
+    0.027,
+    0.89,
+    false
+   ],
+   "benthivorous_fish->mobile_epifauna": [
+    0.306,
+    0.31,
+    0.99,
+    false
+   ],
+   "benthivorous_fish->norway_lobster": [
+    0.034,
+    0.016,
+    2.14,
+    false
+   ],
+   "benthivorous_fish->planktivorous_fish": [
+    0.059,
+    0.073,
+    0.81,
+    false
+   ],
+   "benthivorous_fish->whiting": [
+    0.008,
+    0.012,
+    0.62,
+    false
+   ],
+   "mackerel->krill": [
+    0.636,
+    0.394,
+    1.61,
+    false
+   ],
+   "mackerel->planktivorous_fish": [
+    0.076,
+    0.055,
+    1.38,
+    false
+   ],
+   "mackerel->zooplankton": [
+    0.288,
+    0.551,
+    0.52,
+    false
+   ],
+   "planktivorous_fish->krill": [
+    0.378,
+    0.398,
+    0.95,
+    false
+   ],
+   "planktivorous_fish->zooplankton": [
+    0.622,
+    0.602,
+    1.03,
+    false
+   ],
+   "porpoises->benthivorous_fish": [
+    0.388,
+    0.159,
+    2.44,
+    false
+   ],
+   "porpoises->planktivorous_fish": [
+    0.328,
+    0.684,
+    0.48,
+    false
+   ],
+   "porpoises->predatory_fish": [
+    0.021,
+    0.02,
+    1.04,
+    false
+   ],
+   "porpoises->whiting": [
+    0.264,
+    0.137,
+    1.92,
+    false
+   ],
+   "predatory_fish->benthivorous_fish": [
+    0.155,
+    0.077,
+    2.0,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.35,
+    0.361,
+    0.97,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.0,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.437,
+    0.498,
+    0.88,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.055,
+    0.042,
+    1.31,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.003,
+    0.01,
+    0.27,
+    false
+   ],
+   "seals->benthivorous_fish": [
+    0.576,
+    0.641,
+    0.9,
+    false
+   ],
+   "seals->planktivorous_fish": [
+    0.292,
+    0.266,
+    1.1,
+    false
+   ],
+   "seals->predatory_fish": [
+    0.006,
+    0.023,
+    0.26,
+    false
+   ],
+   "seals->whiting": [
+    0.126,
+    0.07,
+    1.81,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.028,
+    0.097,
+    0.29,
+    true
+   ],
+   "whiting->krill": [
+    0.741,
+    0.557,
+    1.33,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.077,
+    0.171,
+    0.45,
+    false
+   ],
+   "whiting->planktivorous_fish": [
+    0.145,
+    0.153,
+    0.95,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.008,
+    0.023,
+    0.36,
+    false
+   ]
+  },
+  "diet_field": {
+   "predatory_fish->benthivorous_fish": [
+    0.145,
+    0.077,
+    1.87,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.367,
+    0.361,
+    1.02,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.0,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.443,
+    0.498,
+    0.89,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.041,
+    0.042,
+    0.98,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.005,
+    0.01,
+    0.45,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.035,
+    0.097,
+    0.37,
+    false
+   ],
+   "whiting->krill": [
+    0.808,
+    0.557,
+    1.45,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.036,
+    0.171,
+    0.21,
+    true
+   ],
+   "whiting->planktivorous_fish": [
+    0.117,
+    0.153,
+    0.76,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.004,
+    0.023,
+    0.17,
+    false
+   ]
+  },
+  "prey": {
+   "benthic_infauna": {
+    "benthivorous_fish": [
+     0.0396,
+     0.04009,
+     null,
+     false
+    ]
+   },
+   "benthivorous_fish": {
+    "whiting": [
+     0.1067,
+     0.03095,
+     0.03903,
+     true
+    ],
+    "predatory_fish": [
+     0.0833,
+     0.167,
+     0.156,
+     false
+    ],
+    "seals": [
+     0.0373,
+     0.03352,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.0068,
+     0.0166,
+     null,
+     false
+    ]
+   },
+   "krill": {
+    "planktivorous_fish": [
+     2.071,
+     1.967,
+     null,
+     false
+    ],
+    "whiting": [
+     0.1873,
+     0.2494,
+     0.2718,
+     false
+    ],
+    "mackerel": [
+     0.125,
+     0.2019,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.119,
+     0.1154,
+     0.1209,
+     false
+    ],
+    "benthivorous_fish": [
+     0.035,
+     0.03125,
+     null,
+     false
+    ]
+   },
+   "mackerel": {
+    "predatory_fish": [
+     0.021,
+     6.797e-05,
+     9.419e-05,
+     true
+    ]
+   },
+   "mobile_epifauna": {
+    "benthivorous_fish": [
+     0.54,
+     0.534,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0761,
+     0.03445,
+     0.01609,
+     false
+    ]
+   },
+   "norway_lobster": {
+    "benthivorous_fish": [
+     0.0225,
+     0.04824,
+     null,
+     false
+    ]
+   },
+   "phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "planktivorous_fish": {
+    "predatory_fish": [
+     0.174,
+     0.1525,
+     0.1545,
+     false
+    ],
+    "benthivorous_fish": [
+     0.1023,
+     0.08269,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0545,
+     0.05164,
+     0.04164,
+     false
+    ],
+    "mackerel": [
+     0.0186,
+     0.02571,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.00946,
+     0.004532,
+     null,
+     false
+    ],
+    "seals": [
+     0.00501,
+     0.005489,
+     null,
+     false
+    ]
+   },
+   "predatory_fish": {
+    "seals": [
+     0.0033,
+     0.0008427,
+     null,
+     true
+    ],
+    "porpoises": [
+     0.0021,
+     0.002175,
+     null,
+     false
+    ]
+   },
+   "subsurface_phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "whiting": {
+    "benthivorous_fish": [
+     0.18,
+     0.1122,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.157,
+     0.205,
+     0.1532,
+     false
+    ],
+    "porpoises": [
+     0.0201,
+     0.03861,
+     null,
+     false
+    ],
+    "seals": [
+     0.0139,
+     0.02518,
+     null,
+     false
+    ]
+   },
+   "zooplankton": {
+    "planktivorous_fish": [
+     1.612,
+     1.666,
+     null,
+     false
+    ],
+    "mackerel": [
+     0.09,
+     0.04702,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0039,
+     0.001413,
+     0.00066,
+     false
+    ],
+    "predatory_fish": [
+     0.0017,
+     0.000454,
+     0.0007679,
+     false
+    ]
+   }
+  }
+ },
+ "combined+J_Q1": {
+  "diet": {
+   "benthivorous_fish->benthic_infauna": [
+    0.57,
+    0.563,
+    1.01,
+    false
+   ],
+   "benthivorous_fish->krill": [
+    0.024,
+    0.027,
+    0.89,
+    false
+   ],
+   "benthivorous_fish->mobile_epifauna": [
+    0.306,
+    0.31,
+    0.99,
+    false
+   ],
+   "benthivorous_fish->norway_lobster": [
+    0.034,
+    0.016,
+    2.14,
+    false
+   ],
+   "benthivorous_fish->planktivorous_fish": [
+    0.059,
+    0.073,
+    0.81,
+    false
+   ],
+   "benthivorous_fish->whiting": [
+    0.008,
+    0.012,
+    0.62,
+    false
+   ],
+   "mackerel->krill": [
+    0.636,
+    0.394,
+    1.61,
+    false
+   ],
+   "mackerel->planktivorous_fish": [
+    0.076,
+    0.055,
+    1.38,
+    false
+   ],
+   "mackerel->zooplankton": [
+    0.288,
+    0.551,
+    0.52,
+    false
+   ],
+   "planktivorous_fish->krill": [
+    0.378,
+    0.398,
+    0.95,
+    false
+   ],
+   "planktivorous_fish->zooplankton": [
+    0.622,
+    0.602,
+    1.03,
+    false
+   ],
+   "porpoises->benthivorous_fish": [
+    0.388,
+    0.159,
+    2.44,
+    false
+   ],
+   "porpoises->planktivorous_fish": [
+    0.328,
+    0.684,
+    0.48,
+    false
+   ],
+   "porpoises->predatory_fish": [
+    0.021,
+    0.02,
+    1.04,
+    false
+   ],
+   "porpoises->whiting": [
+    0.264,
+    0.137,
+    1.92,
+    false
+   ],
+   "predatory_fish->benthivorous_fish": [
+    0.155,
+    0.077,
+    2.0,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.35,
+    0.361,
+    0.97,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.0,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.437,
+    0.498,
+    0.88,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.055,
+    0.042,
+    1.31,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.003,
+    0.01,
+    0.27,
+    false
+   ],
+   "seals->benthivorous_fish": [
+    0.576,
+    0.641,
+    0.9,
+    false
+   ],
+   "seals->planktivorous_fish": [
+    0.292,
+    0.266,
+    1.1,
+    false
+   ],
+   "seals->predatory_fish": [
+    0.006,
+    0.023,
+    0.26,
+    false
+   ],
+   "seals->whiting": [
+    0.126,
+    0.07,
+    1.81,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.028,
+    0.097,
+    0.29,
+    true
+   ],
+   "whiting->krill": [
+    0.741,
+    0.557,
+    1.33,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.077,
+    0.171,
+    0.45,
+    false
+   ],
+   "whiting->planktivorous_fish": [
+    0.145,
+    0.153,
+    0.95,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.008,
+    0.023,
+    0.36,
+    false
+   ]
+  },
+  "diet_field": {
+   "predatory_fish->benthivorous_fish": [
+    0.161,
+    0.077,
+    2.08,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.36,
+    0.361,
+    1.0,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.0,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.434,
+    0.498,
+    0.87,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.041,
+    0.042,
+    0.96,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.004,
+    0.01,
+    0.44,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.029,
+    0.097,
+    0.3,
+    true
+   ],
+   "whiting->krill": [
+    0.813,
+    0.557,
+    1.46,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.036,
+    0.171,
+    0.21,
+    true
+   ],
+   "whiting->planktivorous_fish": [
+    0.118,
+    0.153,
+    0.77,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.004,
+    0.023,
+    0.17,
+    false
+   ]
+  },
+  "prey": {
+   "benthic_infauna": {
+    "benthivorous_fish": [
+     0.0396,
+     0.04009,
+     null,
+     false
+    ]
+   },
+   "benthivorous_fish": {
+    "whiting": [
+     0.1067,
+     0.03095,
+     0.03188,
+     true
+    ],
+    "predatory_fish": [
+     0.0833,
+     0.167,
+     0.1735,
+     false
+    ],
+    "seals": [
+     0.0373,
+     0.03352,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.0068,
+     0.0166,
+     null,
+     false
+    ]
+   },
+   "krill": {
+    "planktivorous_fish": [
+     2.071,
+     1.967,
+     null,
+     false
+    ],
+    "whiting": [
+     0.1873,
+     0.2494,
+     0.2736,
+     false
+    ],
+    "mackerel": [
+     0.125,
+     0.2019,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.119,
+     0.1154,
+     0.1186,
+     false
+    ],
+    "benthivorous_fish": [
+     0.035,
+     0.03125,
+     null,
+     false
+    ]
+   },
+   "mackerel": {
+    "predatory_fish": [
+     0.021,
+     6.797e-05,
+     9.241e-05,
+     true
+    ]
+   },
+   "mobile_epifauna": {
+    "benthivorous_fish": [
+     0.54,
+     0.534,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0761,
+     0.03445,
+     0.0162,
+     false
+    ]
+   },
+   "norway_lobster": {
+    "benthivorous_fish": [
+     0.0225,
+     0.04824,
+     null,
+     false
+    ]
+   },
+   "phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "planktivorous_fish": {
+    "predatory_fish": [
+     0.174,
+     0.1525,
+     0.1516,
+     false
+    ],
+    "benthivorous_fish": [
+     0.1023,
+     0.08269,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0545,
+     0.05164,
+     0.04192,
+     false
+    ],
+    "mackerel": [
+     0.0186,
+     0.02571,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.00946,
+     0.004532,
+     null,
+     false
+    ],
+    "seals": [
+     0.00501,
+     0.005489,
+     null,
+     false
+    ]
+   },
+   "predatory_fish": {
+    "seals": [
+     0.0033,
+     0.0008427,
+     null,
+     true
+    ],
+    "porpoises": [
+     0.0021,
+     0.002175,
+     null,
+     false
+    ]
+   },
+   "subsurface_phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "whiting": {
+    "benthivorous_fish": [
+     0.18,
+     0.1122,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.157,
+     0.205,
+     0.1503,
+     false
+    ],
+    "porpoises": [
+     0.0201,
+     0.03861,
+     null,
+     false
+    ],
+    "seals": [
+     0.0139,
+     0.02518,
+     null,
+     false
+    ]
+   },
+   "zooplankton": {
+    "planktivorous_fish": [
+     1.612,
+     1.666,
+     null,
+     false
+    ],
+    "mackerel": [
+     0.09,
+     0.04702,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0039,
+     0.001413,
+     0.0006645,
+     false
+    ],
+    "predatory_fish": [
+     0.0017,
+     0.000454,
+     0.0007533,
+     false
+    ]
+   }
+  }
+ },
+ "combined+J_import": {
+  "diet": {
+   "benthivorous_fish->benthic_infauna": [
+    0.57,
+    0.563,
+    1.01,
+    false
+   ],
+   "benthivorous_fish->krill": [
+    0.024,
+    0.027,
+    0.89,
+    false
+   ],
+   "benthivorous_fish->mobile_epifauna": [
+    0.306,
+    0.31,
+    0.99,
+    false
+   ],
+   "benthivorous_fish->norway_lobster": [
+    0.034,
+    0.016,
+    2.14,
+    false
+   ],
+   "benthivorous_fish->planktivorous_fish": [
+    0.059,
+    0.073,
+    0.81,
+    false
+   ],
+   "benthivorous_fish->whiting": [
+    0.008,
+    0.012,
+    0.62,
+    false
+   ],
+   "mackerel->krill": [
+    0.636,
+    0.394,
+    1.61,
+    false
+   ],
+   "mackerel->planktivorous_fish": [
+    0.076,
+    0.055,
+    1.38,
+    false
+   ],
+   "mackerel->zooplankton": [
+    0.288,
+    0.551,
+    0.52,
+    false
+   ],
+   "planktivorous_fish->krill": [
+    0.378,
+    0.398,
+    0.95,
+    false
+   ],
+   "planktivorous_fish->zooplankton": [
+    0.622,
+    0.602,
+    1.03,
+    false
+   ],
+   "porpoises->benthivorous_fish": [
+    0.388,
+    0.159,
+    2.44,
+    false
+   ],
+   "porpoises->planktivorous_fish": [
+    0.328,
+    0.684,
+    0.48,
+    false
+   ],
+   "porpoises->predatory_fish": [
+    0.021,
+    0.02,
+    1.04,
+    false
+   ],
+   "porpoises->whiting": [
+    0.264,
+    0.137,
+    1.92,
+    false
+   ],
+   "predatory_fish->benthivorous_fish": [
+    0.155,
+    0.077,
+    2.0,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.35,
+    0.361,
+    0.97,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.0,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.437,
+    0.498,
+    0.88,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.055,
+    0.042,
+    1.31,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.003,
+    0.01,
+    0.27,
+    false
+   ],
+   "seals->benthivorous_fish": [
+    0.576,
+    0.641,
+    0.9,
+    false
+   ],
+   "seals->planktivorous_fish": [
+    0.292,
+    0.266,
+    1.1,
+    false
+   ],
+   "seals->predatory_fish": [
+    0.006,
+    0.023,
+    0.26,
+    false
+   ],
+   "seals->whiting": [
+    0.126,
+    0.07,
+    1.81,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.028,
+    0.097,
+    0.29,
+    true
+   ],
+   "whiting->krill": [
+    0.741,
+    0.557,
+    1.33,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.077,
+    0.171,
+    0.45,
+    false
+   ],
+   "whiting->planktivorous_fish": [
+    0.145,
+    0.153,
+    0.95,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.008,
+    0.023,
+    0.36,
+    false
+   ]
+  },
+  "diet_field": {
+   "predatory_fish->benthivorous_fish": [
+    0.147,
+    0.077,
+    1.9,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.366,
+    0.361,
+    1.01,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.0,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.441,
+    0.498,
+    0.89,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.041,
+    0.042,
+    0.97,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.005,
+    0.01,
+    0.45,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.033,
+    0.097,
+    0.34,
+    false
+   ],
+   "whiting->krill": [
+    0.81,
+    0.557,
+    1.45,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.036,
+    0.171,
+    0.21,
+    true
+   ],
+   "whiting->planktivorous_fish": [
+    0.117,
+    0.153,
+    0.77,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.004,
+    0.023,
+    0.17,
+    false
+   ]
+  },
+  "prey": {
+   "benthic_infauna": {
+    "benthivorous_fish": [
+     0.0396,
+     0.04009,
+     null,
+     false
+    ]
+   },
+   "benthivorous_fish": {
+    "whiting": [
+     0.1067,
+     0.03095,
+     0.03645,
+     true
+    ],
+    "predatory_fish": [
+     0.0833,
+     0.167,
+     0.1584,
+     false
+    ],
+    "seals": [
+     0.0373,
+     0.03352,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.0068,
+     0.0166,
+     null,
+     false
+    ]
+   },
+   "krill": {
+    "planktivorous_fish": [
+     2.071,
+     1.967,
+     null,
+     false
+    ],
+    "whiting": [
+     0.1873,
+     0.2494,
+     0.2724,
+     false
+    ],
+    "mackerel": [
+     0.125,
+     0.2019,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.119,
+     0.1154,
+     0.1206,
+     false
+    ],
+    "benthivorous_fish": [
+     0.035,
+     0.03125,
+     null,
+     false
+    ]
+   },
+   "mackerel": {
+    "predatory_fish": [
+     0.021,
+     6.797e-05,
+     9.394e-05,
+     true
+    ]
+   },
+   "mobile_epifauna": {
+    "benthivorous_fish": [
+     0.54,
+     0.534,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0761,
+     0.03445,
+     0.01613,
+     false
+    ]
+   },
+   "norway_lobster": {
+    "benthivorous_fish": [
+     0.0225,
+     0.04824,
+     null,
+     false
+    ]
+   },
+   "phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "planktivorous_fish": {
+    "predatory_fish": [
+     0.174,
+     0.1525,
+     0.1541,
+     false
+    ],
+    "benthivorous_fish": [
+     0.1023,
+     0.08269,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0545,
+     0.05164,
+     0.04174,
+     false
+    ],
+    "mackerel": [
+     0.0186,
+     0.02571,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.00946,
+     0.004532,
+     null,
+     false
+    ],
+    "seals": [
+     0.00501,
+     0.005489,
+     null,
+     false
+    ]
+   },
+   "predatory_fish": {
+    "seals": [
+     0.0033,
+     0.0008427,
+     null,
+     true
+    ],
+    "porpoises": [
+     0.0021,
+     0.002175,
+     null,
+     false
+    ]
+   },
+   "subsurface_phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "whiting": {
+    "benthivorous_fish": [
+     0.18,
+     0.1122,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.157,
+     0.205,
+     0.1528,
+     false
+    ],
+    "porpoises": [
+     0.0201,
+     0.03861,
+     null,
+     false
+    ],
+    "seals": [
+     0.0139,
+     0.02518,
+     null,
+     false
+    ]
+   },
+   "zooplankton": {
+    "planktivorous_fish": [
+     1.612,
+     1.666,
+     null,
+     false
+    ],
+    "mackerel": [
+     0.09,
+     0.04702,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0039,
+     0.001413,
+     0.0006616,
+     false
+    ],
+    "predatory_fish": [
+     0.0017,
+     0.000454,
+     0.0007659,
+     false
+    ]
+   }
+  }
+ },
+ "combined+J_had0": {
+  "diet": {
+   "benthivorous_fish->benthic_infauna": [
+    0.57,
+    0.563,
+    1.01,
+    false
+   ],
+   "benthivorous_fish->krill": [
+    0.024,
+    0.027,
+    0.89,
+    false
+   ],
+   "benthivorous_fish->mobile_epifauna": [
+    0.306,
+    0.31,
+    0.99,
+    false
+   ],
+   "benthivorous_fish->norway_lobster": [
+    0.034,
+    0.016,
+    2.14,
+    false
+   ],
+   "benthivorous_fish->planktivorous_fish": [
+    0.059,
+    0.073,
+    0.81,
+    false
+   ],
+   "benthivorous_fish->whiting": [
+    0.008,
+    0.012,
+    0.62,
+    false
+   ],
+   "mackerel->krill": [
+    0.636,
+    0.394,
+    1.61,
+    false
+   ],
+   "mackerel->planktivorous_fish": [
+    0.076,
+    0.055,
+    1.38,
+    false
+   ],
+   "mackerel->zooplankton": [
+    0.288,
+    0.551,
+    0.52,
+    false
+   ],
+   "planktivorous_fish->krill": [
+    0.378,
+    0.398,
+    0.95,
+    false
+   ],
+   "planktivorous_fish->zooplankton": [
+    0.622,
+    0.602,
+    1.03,
+    false
+   ],
+   "porpoises->benthivorous_fish": [
+    0.388,
+    0.159,
+    2.44,
+    false
+   ],
+   "porpoises->planktivorous_fish": [
+    0.328,
+    0.684,
+    0.48,
+    false
+   ],
+   "porpoises->predatory_fish": [
+    0.021,
+    0.02,
+    1.04,
+    false
+   ],
+   "porpoises->whiting": [
+    0.264,
+    0.137,
+    1.92,
+    false
+   ],
+   "predatory_fish->benthivorous_fish": [
+    0.155,
+    0.077,
+    2.0,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.35,
+    0.361,
+    0.97,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.0,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.437,
+    0.498,
+    0.88,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.055,
+    0.042,
+    1.31,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.003,
+    0.01,
+    0.27,
+    false
+   ],
+   "seals->benthivorous_fish": [
+    0.576,
+    0.641,
+    0.9,
+    false
+   ],
+   "seals->planktivorous_fish": [
+    0.292,
+    0.266,
+    1.1,
+    false
+   ],
+   "seals->predatory_fish": [
+    0.006,
+    0.023,
+    0.26,
+    false
+   ],
+   "seals->whiting": [
+    0.126,
+    0.07,
+    1.81,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.028,
+    0.097,
+    0.29,
+    true
+   ],
+   "whiting->krill": [
+    0.741,
+    0.557,
+    1.33,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.077,
+    0.171,
+    0.45,
+    false
+   ],
+   "whiting->planktivorous_fish": [
+    0.145,
+    0.153,
+    0.95,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.008,
+    0.023,
+    0.36,
+    false
+   ]
+  },
+  "diet_field": {
+   "predatory_fish->benthivorous_fish": [
+    0.141,
+    0.077,
+    1.83,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.368,
+    0.361,
+    1.02,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.0,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.444,
+    0.498,
+    0.89,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.042,
+    0.042,
+    0.98,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.005,
+    0.01,
+    0.45,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.037,
+    0.097,
+    0.39,
+    false
+   ],
+   "whiting->krill": [
+    0.806,
+    0.557,
+    1.45,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.036,
+    0.171,
+    0.21,
+    true
+   ],
+   "whiting->planktivorous_fish": [
+    0.117,
+    0.153,
+    0.76,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.004,
+    0.023,
+    0.17,
+    false
+   ]
+  },
+  "prey": {
+   "benthic_infauna": {
+    "benthivorous_fish": [
+     0.0396,
+     0.04009,
+     null,
+     false
+    ]
+   },
+   "benthivorous_fish": {
+    "whiting": [
+     0.1067,
+     0.03095,
+     0.04122,
+     true
+    ],
+    "predatory_fish": [
+     0.0833,
+     0.167,
+     0.1526,
+     false
+    ],
+    "seals": [
+     0.0373,
+     0.03352,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.0068,
+     0.0166,
+     null,
+     false
+    ]
+   },
+   "krill": {
+    "planktivorous_fish": [
+     2.071,
+     1.967,
+     null,
+     false
+    ],
+    "whiting": [
+     0.1873,
+     0.2494,
+     0.2712,
+     false
+    ],
+    "mackerel": [
+     0.125,
+     0.2019,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.119,
+     0.1154,
+     0.1214,
+     false
+    ],
+    "benthivorous_fish": [
+     0.035,
+     0.03125,
+     null,
+     false
+    ]
+   },
+   "mackerel": {
+    "predatory_fish": [
+     0.021,
+     6.797e-05,
+     9.453e-05,
+     true
+    ]
+   },
+   "mobile_epifauna": {
+    "benthivorous_fish": [
+     0.54,
+     0.534,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0761,
+     0.03445,
+     0.01606,
+     false
+    ]
+   },
+   "norway_lobster": {
+    "benthivorous_fish": [
+     0.0225,
+     0.04824,
+     null,
+     false
+    ]
+   },
+   "phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "planktivorous_fish": {
+    "predatory_fish": [
+     0.174,
+     0.1525,
+     0.155,
+     false
+    ],
+    "benthivorous_fish": [
+     0.1023,
+     0.08269,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0545,
+     0.05164,
+     0.04155,
+     false
+    ],
+    "mackerel": [
+     0.0186,
+     0.02571,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.00946,
+     0.004532,
+     null,
+     false
+    ],
+    "seals": [
+     0.00501,
+     0.005489,
+     null,
+     false
+    ]
+   },
+   "predatory_fish": {
+    "seals": [
+     0.0033,
+     0.0008427,
+     null,
+     true
+    ],
+    "porpoises": [
+     0.0021,
+     0.002175,
+     null,
+     false
+    ]
+   },
+   "subsurface_phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "whiting": {
+    "benthivorous_fish": [
+     0.18,
+     0.1122,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.157,
+     0.205,
+     0.1538,
+     false
+    ],
+    "porpoises": [
+     0.0201,
+     0.03861,
+     null,
+     false
+    ],
+    "seals": [
+     0.0139,
+     0.02518,
+     null,
+     false
+    ]
+   },
+   "zooplankton": {
+    "planktivorous_fish": [
+     1.612,
+     1.666,
+     null,
+     false
+    ],
+    "mackerel": [
+     0.09,
+     0.04702,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0039,
+     0.001413,
+     0.0006587,
+     false
+    ],
+    "predatory_fish": [
+     0.0017,
+     0.000454,
+     0.0007706,
+     false
+    ]
+   }
+  }
+ },
+ "combined+wide": {
+  "diet": {
+   "benthivorous_fish->benthic_infauna": [
+    0.57,
+    0.563,
+    1.01,
+    false
+   ],
+   "benthivorous_fish->krill": [
+    0.024,
+    0.027,
+    0.89,
+    false
+   ],
+   "benthivorous_fish->mobile_epifauna": [
+    0.306,
+    0.31,
+    0.99,
+    false
+   ],
+   "benthivorous_fish->norway_lobster": [
+    0.034,
+    0.016,
+    2.14,
+    false
+   ],
+   "benthivorous_fish->planktivorous_fish": [
+    0.059,
+    0.073,
+    0.81,
+    false
+   ],
+   "benthivorous_fish->whiting": [
+    0.008,
+    0.012,
+    0.62,
+    false
+   ],
+   "mackerel->krill": [
+    0.636,
+    0.394,
+    1.61,
+    false
+   ],
+   "mackerel->planktivorous_fish": [
+    0.076,
+    0.055,
+    1.38,
+    false
+   ],
+   "mackerel->zooplankton": [
+    0.288,
+    0.551,
+    0.52,
+    false
+   ],
+   "planktivorous_fish->krill": [
+    0.378,
+    0.398,
+    0.95,
+    false
+   ],
+   "planktivorous_fish->zooplankton": [
+    0.622,
+    0.602,
+    1.03,
+    false
+   ],
+   "porpoises->benthivorous_fish": [
+    0.388,
+    0.159,
+    2.44,
+    false
+   ],
+   "porpoises->planktivorous_fish": [
+    0.328,
+    0.684,
+    0.48,
+    false
+   ],
+   "porpoises->predatory_fish": [
+    0.021,
+    0.02,
+    1.04,
+    false
+   ],
+   "porpoises->whiting": [
+    0.264,
+    0.137,
+    1.92,
+    false
+   ],
+   "predatory_fish->benthivorous_fish": [
+    0.155,
+    0.077,
+    2.0,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.35,
+    0.361,
+    0.97,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.0,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.437,
+    0.498,
+    0.88,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.055,
+    0.042,
+    1.31,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.003,
+    0.01,
+    0.27,
+    false
+   ],
+   "seals->benthivorous_fish": [
+    0.576,
+    0.641,
+    0.9,
+    false
+   ],
+   "seals->planktivorous_fish": [
+    0.292,
+    0.266,
+    1.1,
+    false
+   ],
+   "seals->predatory_fish": [
+    0.006,
+    0.023,
+    0.26,
+    false
+   ],
+   "seals->whiting": [
+    0.126,
+    0.07,
+    1.81,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.028,
+    0.097,
+    0.29,
+    true
+   ],
+   "whiting->krill": [
+    0.741,
+    0.557,
+    1.33,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.077,
+    0.171,
+    0.45,
+    false
+   ],
+   "whiting->planktivorous_fish": [
+    0.145,
+    0.153,
+    0.95,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.008,
+    0.023,
+    0.36,
+    false
+   ]
+  },
+  "diet_field": {
+   "predatory_fish->benthivorous_fish": [
+    0.167,
+    0.077,
+    2.16,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.357,
+    0.361,
+    0.99,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.0,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.431,
+    0.498,
+    0.86,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.04,
+    0.042,
+    0.95,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.004,
+    0.01,
+    0.44,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.023,
+    0.097,
+    0.23,
+    true
+   ],
+   "whiting->krill": [
+    0.818,
+    0.557,
+    1.47,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.037,
+    0.171,
+    0.21,
+    true
+   ],
+   "whiting->planktivorous_fish": [
+    0.118,
+    0.153,
+    0.77,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.004,
+    0.023,
+    0.17,
+    false
+   ]
+  },
+  "prey": {
+   "benthic_infauna": {
+    "benthivorous_fish": [
+     0.0396,
+     0.04009,
+     null,
+     false
+    ]
+   },
+   "benthivorous_fish": {
+    "whiting": [
+     0.1067,
+     0.03095,
+     0.02492,
+     true
+    ],
+    "predatory_fish": [
+     0.0833,
+     0.167,
+     0.1802,
+     false
+    ],
+    "seals": [
+     0.0373,
+     0.03352,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.0068,
+     0.0166,
+     null,
+     false
+    ]
+   },
+   "krill": {
+    "planktivorous_fish": [
+     2.071,
+     1.967,
+     null,
+     false
+    ],
+    "whiting": [
+     0.1873,
+     0.2494,
+     0.2754,
+     false
+    ],
+    "mackerel": [
+     0.125,
+     0.2019,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.119,
+     0.1154,
+     0.1178,
+     false
+    ],
+    "benthivorous_fish": [
+     0.035,
+     0.03125,
+     null,
+     false
+    ]
+   },
+   "mackerel": {
+    "predatory_fish": [
+     0.021,
+     6.797e-05,
+     9.172e-05,
+     true
+    ]
+   },
+   "mobile_epifauna": {
+    "benthivorous_fish": [
+     0.54,
+     0.534,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0761,
+     0.03445,
+     0.0163,
+     false
+    ]
+   },
+   "norway_lobster": {
+    "benthivorous_fish": [
+     0.0225,
+     0.04824,
+     null,
+     false
+    ]
+   },
+   "phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "planktivorous_fish": {
+    "predatory_fish": [
+     0.174,
+     0.1525,
+     0.1504,
+     false
+    ],
+    "benthivorous_fish": [
+     0.1023,
+     0.08269,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0545,
+     0.05164,
+     0.04219,
+     false
+    ],
+    "mackerel": [
+     0.0186,
+     0.02571,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.00946,
+     0.004532,
+     null,
+     false
+    ],
+    "seals": [
+     0.00501,
+     0.005489,
+     null,
+     false
+    ]
+   },
+   "predatory_fish": {
+    "seals": [
+     0.0033,
+     0.0008427,
+     null,
+     true
+    ],
+    "porpoises": [
+     0.0021,
+     0.002175,
+     null,
+     false
+    ]
+   },
+   "subsurface_phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "whiting": {
+    "benthivorous_fish": [
+     0.18,
+     0.1122,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.157,
+     0.205,
+     0.1492,
+     false
+    ],
+    "porpoises": [
+     0.0201,
+     0.03861,
+     null,
+     false
+    ],
+    "seals": [
+     0.0139,
+     0.02518,
+     null,
+     false
+    ]
+   },
+   "zooplankton": {
+    "planktivorous_fish": [
+     1.612,
+     1.666,
+     null,
+     false
+    ],
+    "mackerel": [
+     0.09,
+     0.04702,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0039,
+     0.001413,
+     0.0006688,
+     false
+    ],
+    "predatory_fish": [
+     0.0017,
+     0.000454,
+     0.0007477,
+     false
+    ]
+   }
+  }
+ },
+ "combined+raw": {
+  "diet": {
+   "benthivorous_fish->benthic_infauna": [
+    0.57,
+    0.563,
+    1.01,
+    false
+   ],
+   "benthivorous_fish->krill": [
+    0.024,
+    0.027,
+    0.89,
+    false
+   ],
+   "benthivorous_fish->mobile_epifauna": [
+    0.306,
+    0.31,
+    0.99,
+    false
+   ],
+   "benthivorous_fish->norway_lobster": [
+    0.034,
+    0.016,
+    2.14,
+    false
+   ],
+   "benthivorous_fish->planktivorous_fish": [
+    0.059,
+    0.073,
+    0.81,
+    false
+   ],
+   "benthivorous_fish->whiting": [
+    0.008,
+    0.012,
+    0.62,
+    false
+   ],
+   "mackerel->krill": [
+    0.636,
+    0.394,
+    1.61,
+    false
+   ],
+   "mackerel->planktivorous_fish": [
+    0.076,
+    0.055,
+    1.38,
+    false
+   ],
+   "mackerel->zooplankton": [
+    0.288,
+    0.551,
+    0.52,
+    false
+   ],
+   "planktivorous_fish->krill": [
+    0.378,
+    0.398,
+    0.95,
+    false
+   ],
+   "planktivorous_fish->zooplankton": [
+    0.622,
+    0.602,
+    1.03,
+    false
+   ],
+   "porpoises->benthivorous_fish": [
+    0.388,
+    0.159,
+    2.44,
+    false
+   ],
+   "porpoises->planktivorous_fish": [
+    0.328,
+    0.684,
+    0.48,
+    false
+   ],
+   "porpoises->predatory_fish": [
+    0.021,
+    0.02,
+    1.04,
+    false
+   ],
+   "porpoises->whiting": [
+    0.264,
+    0.137,
+    1.92,
+    false
+   ],
+   "predatory_fish->benthivorous_fish": [
+    0.155,
+    0.077,
+    2.0,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.35,
+    0.361,
+    0.97,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.0,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.437,
+    0.498,
+    0.88,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.055,
+    0.042,
+    1.31,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.003,
+    0.01,
+    0.27,
+    false
+   ],
+   "seals->benthivorous_fish": [
+    0.576,
+    0.641,
+    0.9,
+    false
+   ],
+   "seals->planktivorous_fish": [
+    0.292,
+    0.266,
+    1.1,
+    false
+   ],
+   "seals->predatory_fish": [
+    0.006,
+    0.023,
+    0.26,
+    false
+   ],
+   "seals->whiting": [
+    0.126,
+    0.07,
+    1.81,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.028,
+    0.097,
+    0.29,
+    true
+   ],
+   "whiting->krill": [
+    0.741,
+    0.557,
+    1.33,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.077,
+    0.171,
+    0.45,
+    false
+   ],
+   "whiting->planktivorous_fish": [
+    0.145,
+    0.153,
+    0.95,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.008,
+    0.023,
+    0.36,
+    false
+   ]
+  },
+  "diet_field": {
+   "predatory_fish->benthivorous_fish": [
+    0.154,
+    0.077,
+    1.99,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.363,
+    0.361,
+    1.01,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.0,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.438,
+    0.498,
+    0.88,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.041,
+    0.042,
+    0.97,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.004,
+    0.01,
+    0.45,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.031,
+    0.097,
+    0.32,
+    true
+   ],
+   "whiting->krill": [
+    0.811,
+    0.557,
+    1.46,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.036,
+    0.171,
+    0.21,
+    true
+   ],
+   "whiting->planktivorous_fish": [
+    0.117,
+    0.153,
+    0.77,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.004,
+    0.023,
+    0.17,
+    false
+   ]
+  },
+  "prey": {
+   "benthic_infauna": {
+    "benthivorous_fish": [
+     0.0396,
+     0.04009,
+     null,
+     false
+    ]
+   },
+   "benthivorous_fish": {
+    "whiting": [
+     0.1067,
+     0.03095,
+     0.03438,
+     true
+    ],
+    "predatory_fish": [
+     0.0833,
+     0.167,
+     0.1659,
+     false
+    ],
+    "seals": [
+     0.0373,
+     0.03352,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.0068,
+     0.0166,
+     null,
+     false
+    ]
+   },
+   "krill": {
+    "planktivorous_fish": [
+     2.071,
+     1.967,
+     null,
+     false
+    ],
+    "whiting": [
+     0.1873,
+     0.2494,
+     0.273,
+     false
+    ],
+    "mackerel": [
+     0.125,
+     0.2019,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.119,
+     0.1154,
+     0.1196,
+     false
+    ],
+    "benthivorous_fish": [
+     0.035,
+     0.03125,
+     null,
+     false
+    ]
+   },
+   "mackerel": {
+    "predatory_fish": [
+     0.021,
+     6.797e-05,
+     9.317e-05,
+     true
+    ]
+   },
+   "mobile_epifauna": {
+    "benthivorous_fish": [
+     0.54,
+     0.534,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0761,
+     0.03445,
+     0.01616,
+     false
+    ]
+   },
+   "norway_lobster": {
+    "benthivorous_fish": [
+     0.0225,
+     0.04824,
+     null,
+     false
+    ]
+   },
+   "phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "planktivorous_fish": {
+    "predatory_fish": [
+     0.174,
+     0.1525,
+     0.1528,
+     false
+    ],
+    "benthivorous_fish": [
+     0.1023,
+     0.08269,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0545,
+     0.05164,
+     0.04182,
+     false
+    ],
+    "mackerel": [
+     0.0186,
+     0.02571,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.00946,
+     0.004532,
+     null,
+     false
+    ],
+    "seals": [
+     0.00501,
+     0.005489,
+     null,
+     false
+    ]
+   },
+   "predatory_fish": {
+    "seals": [
+     0.0033,
+     0.0008427,
+     null,
+     true
+    ],
+    "porpoises": [
+     0.0021,
+     0.002175,
+     null,
+     false
+    ]
+   },
+   "subsurface_phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "whiting": {
+    "benthivorous_fish": [
+     0.18,
+     0.1122,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.157,
+     0.205,
+     0.1516,
+     false
+    ],
+    "porpoises": [
+     0.0201,
+     0.03861,
+     null,
+     false
+    ],
+    "seals": [
+     0.0139,
+     0.02518,
+     null,
+     false
+    ]
+   },
+   "zooplankton": {
+    "planktivorous_fish": [
+     1.612,
+     1.666,
+     null,
+     false
+    ],
+    "mackerel": [
+     0.09,
+     0.04702,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0039,
+     0.001413,
+     0.0006629,
+     false
+    ],
+    "predatory_fish": [
+     0.0017,
+     0.000454,
+     0.0007596,
+     false
+    ]
+   }
+  }
+ },
+ "combined+sweptkm2": {
+  "diet": {
+   "benthivorous_fish->benthic_infauna": [
+    0.57,
+    0.563,
+    1.01,
+    false
+   ],
+   "benthivorous_fish->krill": [
+    0.024,
+    0.027,
+    0.89,
+    false
+   ],
+   "benthivorous_fish->mobile_epifauna": [
+    0.306,
+    0.31,
+    0.99,
+    false
+   ],
+   "benthivorous_fish->norway_lobster": [
+    0.034,
+    0.016,
+    2.14,
+    false
+   ],
+   "benthivorous_fish->planktivorous_fish": [
+    0.059,
+    0.073,
+    0.81,
+    false
+   ],
+   "benthivorous_fish->whiting": [
+    0.008,
+    0.012,
+    0.62,
+    false
+   ],
+   "mackerel->krill": [
+    0.636,
+    0.394,
+    1.61,
+    false
+   ],
+   "mackerel->planktivorous_fish": [
+    0.076,
+    0.055,
+    1.38,
+    false
+   ],
+   "mackerel->zooplankton": [
+    0.288,
+    0.551,
+    0.52,
+    false
+   ],
+   "planktivorous_fish->krill": [
+    0.378,
+    0.398,
+    0.95,
+    false
+   ],
+   "planktivorous_fish->zooplankton": [
+    0.622,
+    0.602,
+    1.03,
+    false
+   ],
+   "porpoises->benthivorous_fish": [
+    0.388,
+    0.159,
+    2.44,
+    false
+   ],
+   "porpoises->planktivorous_fish": [
+    0.328,
+    0.684,
+    0.48,
+    false
+   ],
+   "porpoises->predatory_fish": [
+    0.021,
+    0.02,
+    1.04,
+    false
+   ],
+   "porpoises->whiting": [
+    0.264,
+    0.137,
+    1.92,
+    false
+   ],
+   "predatory_fish->benthivorous_fish": [
+    0.155,
+    0.077,
+    2.0,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.35,
+    0.361,
+    0.97,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.0,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.437,
+    0.498,
+    0.88,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.055,
+    0.042,
+    1.31,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.003,
+    0.01,
+    0.27,
+    false
+   ],
+   "seals->benthivorous_fish": [
+    0.576,
+    0.641,
+    0.9,
+    false
+   ],
+   "seals->planktivorous_fish": [
+    0.292,
+    0.266,
+    1.1,
+    false
+   ],
+   "seals->predatory_fish": [
+    0.006,
+    0.023,
+    0.26,
+    false
+   ],
+   "seals->whiting": [
+    0.126,
+    0.07,
+    1.81,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.028,
+    0.097,
+    0.29,
+    true
+   ],
+   "whiting->krill": [
+    0.741,
+    0.557,
+    1.33,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.077,
+    0.171,
+    0.45,
+    false
+   ],
+   "whiting->planktivorous_fish": [
+    0.145,
+    0.153,
+    0.95,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.008,
+    0.023,
+    0.36,
+    false
+   ]
+  },
+  "diet_field": {
+   "predatory_fish->benthivorous_fish": [
+    0.15,
+    0.077,
+    1.95,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.364,
+    0.361,
+    1.01,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.0,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.44,
+    0.498,
+    0.88,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.041,
+    0.042,
+    0.97,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.004,
+    0.01,
+    0.45,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.033,
+    0.097,
+    0.34,
+    false
+   ],
+   "whiting->krill": [
+    0.809,
+    0.557,
+    1.45,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.036,
+    0.171,
+    0.21,
+    true
+   ],
+   "whiting->planktivorous_fish": [
+    0.117,
+    0.153,
+    0.77,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.004,
+    0.023,
+    0.17,
+    false
+   ]
+  },
+  "prey": {
+   "benthic_infauna": {
+    "benthivorous_fish": [
+     0.0396,
+     0.04009,
+     null,
+     false
+    ]
+   },
+   "benthivorous_fish": {
+    "whiting": [
+     0.1067,
+     0.03095,
+     0.03671,
+     true
+    ],
+    "predatory_fish": [
+     0.0833,
+     0.167,
+     0.1623,
+     false
+    ],
+    "seals": [
+     0.0373,
+     0.03352,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.0068,
+     0.0166,
+     null,
+     false
+    ]
+   },
+   "krill": {
+    "planktivorous_fish": [
+     2.071,
+     1.967,
+     null,
+     false
+    ],
+    "whiting": [
+     0.1873,
+     0.2494,
+     0.2724,
+     false
+    ],
+    "mackerel": [
+     0.125,
+     0.2019,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.119,
+     0.1154,
+     0.1201,
+     false
+    ],
+    "benthivorous_fish": [
+     0.035,
+     0.03125,
+     null,
+     false
+    ]
+   },
+   "mackerel": {
+    "predatory_fish": [
+     0.021,
+     6.797e-05,
+     9.355e-05,
+     true
+    ]
+   },
+   "mobile_epifauna": {
+    "benthivorous_fish": [
+     0.54,
+     0.534,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0761,
+     0.03445,
+     0.01612,
+     false
+    ]
+   },
+   "norway_lobster": {
+    "benthivorous_fish": [
+     0.0225,
+     0.04824,
+     null,
+     false
+    ]
+   },
+   "phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "planktivorous_fish": {
+    "predatory_fish": [
+     0.174,
+     0.1525,
+     0.1534,
+     false
+    ],
+    "benthivorous_fish": [
+     0.1023,
+     0.08269,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0545,
+     0.05164,
+     0.04173,
+     false
+    ],
+    "mackerel": [
+     0.0186,
+     0.02571,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.00946,
+     0.004532,
+     null,
+     false
+    ],
+    "seals": [
+     0.00501,
+     0.005489,
+     null,
+     false
+    ]
+   },
+   "predatory_fish": {
+    "seals": [
+     0.0033,
+     0.0008427,
+     null,
+     true
+    ],
+    "porpoises": [
+     0.0021,
+     0.002175,
+     null,
+     false
+    ]
+   },
+   "subsurface_phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "whiting": {
+    "benthivorous_fish": [
+     0.18,
+     0.1122,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.157,
+     0.205,
+     0.1522,
+     false
+    ],
+    "porpoises": [
+     0.0201,
+     0.03861,
+     null,
+     false
+    ],
+    "seals": [
+     0.0139,
+     0.02518,
+     null,
+     false
+    ]
+   },
+   "zooplankton": {
+    "planktivorous_fish": [
+     1.612,
+     1.666,
+     null,
+     false
+    ],
+    "mackerel": [
+     0.09,
+     0.04702,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0039,
+     0.001413,
+     0.0006615,
+     false
+    ],
+    "predatory_fish": [
+     0.0017,
+     0.000454,
+     0.0007626,
+     false
+    ]
+   }
+  }
+ },
+ "combined+nb250": {
+  "diet": {
+   "benthivorous_fish->benthic_infauna": [
+    0.57,
+    0.563,
+    1.01,
+    false
+   ],
+   "benthivorous_fish->krill": [
+    0.024,
+    0.027,
+    0.89,
+    false
+   ],
+   "benthivorous_fish->mobile_epifauna": [
+    0.306,
+    0.31,
+    0.99,
+    false
+   ],
+   "benthivorous_fish->norway_lobster": [
+    0.034,
+    0.016,
+    2.14,
+    false
+   ],
+   "benthivorous_fish->planktivorous_fish": [
+    0.059,
+    0.073,
+    0.81,
+    false
+   ],
+   "benthivorous_fish->whiting": [
+    0.008,
+    0.012,
+    0.62,
+    false
+   ],
+   "mackerel->krill": [
+    0.636,
+    0.394,
+    1.61,
+    false
+   ],
+   "mackerel->planktivorous_fish": [
+    0.076,
+    0.055,
+    1.38,
+    false
+   ],
+   "mackerel->zooplankton": [
+    0.288,
+    0.551,
+    0.52,
+    false
+   ],
+   "planktivorous_fish->krill": [
+    0.378,
+    0.398,
+    0.95,
+    false
+   ],
+   "planktivorous_fish->zooplankton": [
+    0.622,
+    0.602,
+    1.03,
+    false
+   ],
+   "porpoises->benthivorous_fish": [
+    0.388,
+    0.159,
+    2.44,
+    false
+   ],
+   "porpoises->planktivorous_fish": [
+    0.328,
+    0.684,
+    0.48,
+    false
+   ],
+   "porpoises->predatory_fish": [
+    0.021,
+    0.02,
+    1.04,
+    false
+   ],
+   "porpoises->whiting": [
+    0.264,
+    0.137,
+    1.92,
+    false
+   ],
+   "predatory_fish->benthivorous_fish": [
+    0.155,
+    0.077,
+    2.0,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.35,
+    0.361,
+    0.97,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.0,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.437,
+    0.498,
+    0.88,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.055,
+    0.042,
+    1.31,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.003,
+    0.01,
+    0.27,
+    false
+   ],
+   "seals->benthivorous_fish": [
+    0.576,
+    0.641,
+    0.9,
+    false
+   ],
+   "seals->planktivorous_fish": [
+    0.292,
+    0.266,
+    1.1,
+    false
+   ],
+   "seals->predatory_fish": [
+    0.006,
+    0.023,
+    0.26,
+    false
+   ],
+   "seals->whiting": [
+    0.126,
+    0.07,
+    1.81,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.028,
+    0.097,
+    0.29,
+    true
+   ],
+   "whiting->krill": [
+    0.741,
+    0.557,
+    1.33,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.077,
+    0.171,
+    0.45,
+    false
+   ],
+   "whiting->planktivorous_fish": [
+    0.145,
+    0.153,
+    0.95,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.008,
+    0.023,
+    0.36,
+    false
+   ]
+  },
+  "diet_field": {
+   "predatory_fish->benthivorous_fish": [
+    0.151,
+    0.077,
+    1.96,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.364,
+    0.361,
+    1.01,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.0,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.439,
+    0.498,
+    0.88,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.041,
+    0.042,
+    0.97,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.004,
+    0.01,
+    0.45,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.032,
+    0.097,
+    0.33,
+    true
+   ],
+   "whiting->krill": [
+    0.811,
+    0.557,
+    1.46,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.036,
+    0.171,
+    0.21,
+    true
+   ],
+   "whiting->planktivorous_fish": [
+    0.117,
+    0.153,
+    0.77,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.004,
+    0.023,
+    0.17,
+    false
+   ]
+  },
+  "prey": {
+   "benthic_infauna": {
+    "benthivorous_fish": [
+     0.0396,
+     0.04009,
+     null,
+     false
+    ]
+   },
+   "benthivorous_fish": {
+    "whiting": [
+     0.1067,
+     0.03095,
+     0.03482,
+     true
+    ],
+    "predatory_fish": [
+     0.0833,
+     0.167,
+     0.1631,
+     false
+    ],
+    "seals": [
+     0.0373,
+     0.03352,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.0068,
+     0.0166,
+     null,
+     false
+    ]
+   },
+   "krill": {
+    "planktivorous_fish": [
+     2.071,
+     1.967,
+     null,
+     false
+    ],
+    "whiting": [
+     0.1873,
+     0.2494,
+     0.2728,
+     false
+    ],
+    "mackerel": [
+     0.125,
+     0.2019,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.119,
+     0.1154,
+     0.12,
+     false
+    ],
+    "benthivorous_fish": [
+     0.035,
+     0.03125,
+     null,
+     false
+    ]
+   },
+   "mackerel": {
+    "predatory_fish": [
+     0.021,
+     6.797e-05,
+     9.346e-05,
+     true
+    ]
+   },
+   "mobile_epifauna": {
+    "benthivorous_fish": [
+     0.54,
+     0.534,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0761,
+     0.03445,
+     0.01615,
+     false
+    ]
+   },
+   "norway_lobster": {
+    "benthivorous_fish": [
+     0.0225,
+     0.04824,
+     null,
+     false
+    ]
+   },
+   "phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "planktivorous_fish": {
+    "predatory_fish": [
+     0.174,
+     0.1525,
+     0.1533,
+     false
+    ],
+    "benthivorous_fish": [
+     0.1023,
+     0.08269,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0545,
+     0.05164,
+     0.0418,
+     false
+    ],
+    "mackerel": [
+     0.0186,
+     0.02571,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.00946,
+     0.004532,
+     null,
+     false
+    ],
+    "seals": [
+     0.00501,
+     0.005489,
+     null,
+     false
+    ]
+   },
+   "predatory_fish": {
+    "seals": [
+     0.0033,
+     0.0008427,
+     null,
+     true
+    ],
+    "porpoises": [
+     0.0021,
+     0.002175,
+     null,
+     false
+    ]
+   },
+   "subsurface_phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "whiting": {
+    "benthivorous_fish": [
+     0.18,
+     0.1122,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.157,
+     0.205,
+     0.152,
+     false
+    ],
+    "porpoises": [
+     0.0201,
+     0.03861,
+     null,
+     false
+    ],
+    "seals": [
+     0.0139,
+     0.02518,
+     null,
+     false
+    ]
+   },
+   "zooplankton": {
+    "planktivorous_fish": [
+     1.612,
+     1.666,
+     null,
+     false
+    ],
+    "mackerel": [
+     0.09,
+     0.04702,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0039,
+     0.001413,
+     0.0006626,
+     false
+    ],
+    "predatory_fish": [
+     0.0017,
+     0.000454,
+     0.0007619,
+     false
+    ]
+   }
+  }
+ },
+ "combined+Js_lt19": {
+  "diet": {
+   "benthivorous_fish->benthic_infauna": [
+    0.57,
+    0.563,
+    1.01,
+    false
+   ],
+   "benthivorous_fish->krill": [
+    0.024,
+    0.027,
+    0.89,
+    false
+   ],
+   "benthivorous_fish->mobile_epifauna": [
+    0.306,
+    0.31,
+    0.99,
+    false
+   ],
+   "benthivorous_fish->norway_lobster": [
+    0.034,
+    0.016,
+    2.14,
+    false
+   ],
+   "benthivorous_fish->planktivorous_fish": [
+    0.059,
+    0.073,
+    0.81,
+    false
+   ],
+   "benthivorous_fish->whiting": [
+    0.008,
+    0.012,
+    0.62,
+    false
+   ],
+   "mackerel->krill": [
+    0.636,
+    0.394,
+    1.61,
+    false
+   ],
+   "mackerel->planktivorous_fish": [
+    0.076,
+    0.055,
+    1.38,
+    false
+   ],
+   "mackerel->zooplankton": [
+    0.288,
+    0.551,
+    0.52,
+    false
+   ],
+   "planktivorous_fish->krill": [
+    0.378,
+    0.398,
+    0.95,
+    false
+   ],
+   "planktivorous_fish->zooplankton": [
+    0.622,
+    0.602,
+    1.03,
+    false
+   ],
+   "porpoises->benthivorous_fish": [
+    0.388,
+    0.159,
+    2.44,
+    false
+   ],
+   "porpoises->planktivorous_fish": [
+    0.328,
+    0.684,
+    0.48,
+    false
+   ],
+   "porpoises->predatory_fish": [
+    0.021,
+    0.02,
+    1.04,
+    false
+   ],
+   "porpoises->whiting": [
+    0.264,
+    0.137,
+    1.92,
+    false
+   ],
+   "predatory_fish->benthivorous_fish": [
+    0.155,
+    0.077,
+    2.0,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.35,
+    0.361,
+    0.97,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.0,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.437,
+    0.498,
+    0.88,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.055,
+    0.042,
+    1.31,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.003,
+    0.01,
+    0.27,
+    false
+   ],
+   "seals->benthivorous_fish": [
+    0.576,
+    0.641,
+    0.9,
+    false
+   ],
+   "seals->planktivorous_fish": [
+    0.292,
+    0.266,
+    1.1,
+    false
+   ],
+   "seals->predatory_fish": [
+    0.006,
+    0.023,
+    0.26,
+    false
+   ],
+   "seals->whiting": [
+    0.126,
+    0.07,
+    1.81,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.028,
+    0.097,
+    0.29,
+    true
+   ],
+   "whiting->krill": [
+    0.741,
+    0.557,
+    1.33,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.077,
+    0.171,
+    0.45,
+    false
+   ],
+   "whiting->planktivorous_fish": [
+    0.145,
+    0.153,
+    0.95,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.008,
+    0.023,
+    0.36,
+    false
+   ]
+  },
+  "diet_field": {
+   "predatory_fish->benthivorous_fish": [
+    0.15,
+    0.077,
+    1.94,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.365,
+    0.361,
+    1.01,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.0,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.44,
+    0.498,
+    0.88,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.041,
+    0.042,
+    0.97,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.005,
+    0.01,
+    0.45,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.034,
+    0.097,
+    0.35,
+    false
+   ],
+   "whiting->krill": [
+    0.809,
+    0.557,
+    1.45,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.036,
+    0.171,
+    0.21,
+    true
+   ],
+   "whiting->planktivorous_fish": [
+    0.117,
+    0.153,
+    0.76,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.004,
+    0.023,
+    0.17,
+    false
+   ]
+  },
+  "prey": {
+   "benthic_infauna": {
+    "benthivorous_fish": [
+     0.0396,
+     0.04009,
+     null,
+     false
+    ]
+   },
+   "benthivorous_fish": {
+    "whiting": [
+     0.1067,
+     0.03095,
+     0.03779,
+     true
+    ],
+    "predatory_fish": [
+     0.0833,
+     0.167,
+     0.1615,
+     false
+    ],
+    "seals": [
+     0.0373,
+     0.03352,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.0068,
+     0.0166,
+     null,
+     false
+    ]
+   },
+   "krill": {
+    "planktivorous_fish": [
+     2.071,
+     1.967,
+     null,
+     false
+    ],
+    "whiting": [
+     0.1873,
+     0.2494,
+     0.2721,
+     false
+    ],
+    "mackerel": [
+     0.125,
+     0.2019,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.119,
+     0.1154,
+     0.1202,
+     false
+    ],
+    "benthivorous_fish": [
+     0.035,
+     0.03125,
+     null,
+     false
+    ]
+   },
+   "mackerel": {
+    "predatory_fish": [
+     0.021,
+     6.797e-05,
+     9.363e-05,
+     true
+    ]
+   },
+   "mobile_epifauna": {
+    "benthivorous_fish": [
+     0.54,
+     0.534,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0761,
+     0.03445,
+     0.01611,
+     false
+    ]
+   },
+   "norway_lobster": {
+    "benthivorous_fish": [
+     0.0225,
+     0.04824,
+     null,
+     false
+    ]
+   },
+   "phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "planktivorous_fish": {
+    "predatory_fish": [
+     0.174,
+     0.1525,
+     0.1536,
+     false
+    ],
+    "benthivorous_fish": [
+     0.1023,
+     0.08269,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0545,
+     0.05164,
+     0.04169,
+     false
+    ],
+    "mackerel": [
+     0.0186,
+     0.02571,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.00946,
+     0.004532,
+     null,
+     false
+    ],
+    "seals": [
+     0.00501,
+     0.005489,
+     null,
+     false
+    ]
+   },
+   "predatory_fish": {
+    "seals": [
+     0.0033,
+     0.0008427,
+     null,
+     true
+    ],
+    "porpoises": [
+     0.0021,
+     0.002175,
+     null,
+     false
+    ]
+   },
+   "subsurface_phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "whiting": {
+    "benthivorous_fish": [
+     0.18,
+     0.1122,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.157,
+     0.205,
+     0.1523,
+     false
+    ],
+    "porpoises": [
+     0.0201,
+     0.03861,
+     null,
+     false
+    ],
+    "seals": [
+     0.0139,
+     0.02518,
+     null,
+     false
+    ]
+   },
+   "zooplankton": {
+    "planktivorous_fish": [
+     1.612,
+     1.666,
+     null,
+     false
+    ],
+    "mackerel": [
+     0.09,
+     0.04702,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0039,
+     0.001413,
+     0.0006608,
+     false
+    ],
+    "predatory_fish": [
+     0.0017,
+     0.000454,
+     0.0007633,
+     false
+    ]
+   }
+  }
+ },
+ "combined+J_import+eq": {
+  "diet": {
+   "benthivorous_fish->benthic_infauna": [
+    0.57,
+    0.563,
+    1.01,
+    false
+   ],
+   "benthivorous_fish->krill": [
+    0.024,
+    0.027,
+    0.89,
+    false
+   ],
+   "benthivorous_fish->mobile_epifauna": [
+    0.306,
+    0.31,
+    0.99,
+    false
+   ],
+   "benthivorous_fish->norway_lobster": [
+    0.034,
+    0.016,
+    2.14,
+    false
+   ],
+   "benthivorous_fish->planktivorous_fish": [
+    0.059,
+    0.073,
+    0.81,
+    false
+   ],
+   "benthivorous_fish->whiting": [
+    0.008,
+    0.012,
+    0.62,
+    false
+   ],
+   "mackerel->krill": [
+    0.636,
+    0.394,
+    1.61,
+    false
+   ],
+   "mackerel->planktivorous_fish": [
+    0.076,
+    0.055,
+    1.38,
+    false
+   ],
+   "mackerel->zooplankton": [
+    0.288,
+    0.551,
+    0.52,
+    false
+   ],
+   "planktivorous_fish->krill": [
+    0.378,
+    0.398,
+    0.95,
+    false
+   ],
+   "planktivorous_fish->zooplankton": [
+    0.622,
+    0.602,
+    1.03,
+    false
+   ],
+   "porpoises->benthivorous_fish": [
+    0.388,
+    0.159,
+    2.44,
+    false
+   ],
+   "porpoises->planktivorous_fish": [
+    0.328,
+    0.684,
+    0.48,
+    false
+   ],
+   "porpoises->predatory_fish": [
+    0.021,
+    0.02,
+    1.04,
+    false
+   ],
+   "porpoises->whiting": [
+    0.264,
+    0.137,
+    1.92,
+    false
+   ],
+   "predatory_fish->benthivorous_fish": [
+    0.206,
+    0.077,
+    2.66,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.329,
+    0.361,
+    0.91,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.0,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.411,
+    0.498,
+    0.82,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.052,
+    0.042,
+    1.23,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.003,
+    0.01,
+    0.25,
+    false
+   ],
+   "seals->benthivorous_fish": [
+    0.576,
+    0.641,
+    0.9,
+    false
+   ],
+   "seals->planktivorous_fish": [
+    0.292,
+    0.266,
+    1.1,
+    false
+   ],
+   "seals->predatory_fish": [
+    0.006,
+    0.023,
+    0.26,
+    false
+   ],
+   "seals->whiting": [
+    0.126,
+    0.07,
+    1.81,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.033,
+    0.097,
+    0.34,
+    false
+   ],
+   "whiting->krill": [
+    0.738,
+    0.557,
+    1.33,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.077,
+    0.171,
+    0.45,
+    false
+   ],
+   "whiting->planktivorous_fish": [
+    0.144,
+    0.153,
+    0.94,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.008,
+    0.023,
+    0.36,
+    false
+   ]
+  },
+  "diet_field": {
+   "predatory_fish->benthivorous_fish": [
+    0.147,
+    0.077,
+    1.9,
+    false
+   ],
+   "predatory_fish->krill": [
+    0.366,
+    0.361,
+    1.01,
+    false
+   ],
+   "predatory_fish->mackerel": [
+    0.0,
+    0.011,
+    0.0,
+    false
+   ],
+   "predatory_fish->planktivorous_fish": [
+    0.441,
+    0.498,
+    0.89,
+    false
+   ],
+   "predatory_fish->whiting": [
+    0.041,
+    0.042,
+    0.97,
+    false
+   ],
+   "predatory_fish->zooplankton": [
+    0.005,
+    0.01,
+    0.45,
+    false
+   ],
+   "whiting->benthivorous_fish": [
+    0.033,
+    0.097,
+    0.34,
+    false
+   ],
+   "whiting->krill": [
+    0.81,
+    0.557,
+    1.45,
+    false
+   ],
+   "whiting->mobile_epifauna": [
+    0.036,
+    0.171,
+    0.21,
+    true
+   ],
+   "whiting->planktivorous_fish": [
+    0.117,
+    0.153,
+    0.77,
+    false
+   ],
+   "whiting->zooplankton": [
+    0.004,
+    0.023,
+    0.17,
+    false
+   ]
+  },
+  "prey": {
+   "benthic_infauna": {
+    "benthivorous_fish": [
+     0.0396,
+     0.04009,
+     null,
+     false
+    ]
+   },
+   "benthivorous_fish": {
+    "whiting": [
+     0.1067,
+     0.03585,
+     0.03645,
+     false
+    ],
+    "predatory_fish": [
+     0.0833,
+     0.2218,
+     0.1584,
+     false
+    ],
+    "seals": [
+     0.0373,
+     0.03352,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.0068,
+     0.0166,
+     null,
+     false
+    ]
+   },
+   "krill": {
+    "planktivorous_fish": [
+     2.071,
+     1.967,
+     null,
+     false
+    ],
+    "whiting": [
+     0.1873,
+     0.2483,
+     0.2724,
+     false
+    ],
+    "mackerel": [
+     0.125,
+     0.2019,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.119,
+     0.1085,
+     0.1206,
+     false
+    ],
+    "benthivorous_fish": [
+     0.035,
+     0.03125,
+     null,
+     false
+    ]
+   },
+   "mackerel": {
+    "predatory_fish": [
+     0.021,
+     6.388e-05,
+     9.394e-05,
+     true
+    ]
+   },
+   "mobile_epifauna": {
+    "benthivorous_fish": [
+     0.54,
+     0.534,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0761,
+     0.03429,
+     0.01613,
+     false
+    ]
+   },
+   "norway_lobster": {
+    "benthivorous_fish": [
+     0.0225,
+     0.04824,
+     null,
+     false
+    ]
+   },
+   "phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "planktivorous_fish": {
+    "predatory_fish": [
+     0.174,
+     0.1434,
+     0.1541,
+     false
+    ],
+    "benthivorous_fish": [
+     0.1023,
+     0.08269,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0545,
+     0.05141,
+     0.04174,
+     false
+    ],
+    "mackerel": [
+     0.0186,
+     0.02571,
+     null,
+     false
+    ],
+    "porpoises": [
+     0.00946,
+     0.004532,
+     null,
+     false
+    ],
+    "seals": [
+     0.00501,
+     0.005489,
+     null,
+     false
+    ]
+   },
+   "predatory_fish": {
+    "seals": [
+     0.0033,
+     0.0008427,
+     null,
+     true
+    ],
+    "porpoises": [
+     0.0021,
+     0.002175,
+     null,
+     false
+    ]
+   },
+   "subsurface_phytoplankton": {
+    "zooplankton": [
+     22.63,
+     null,
+     null,
+     false
+    ]
+   },
+   "whiting": {
+    "benthivorous_fish": [
+     0.18,
+     0.1122,
+     null,
+     false
+    ],
+    "predatory_fish": [
+     0.157,
+     0.1926,
+     0.1528,
+     false
+    ],
+    "porpoises": [
+     0.0201,
+     0.03861,
+     null,
+     false
+    ],
+    "seals": [
+     0.0139,
+     0.02518,
+     null,
+     false
+    ]
+   },
+   "zooplankton": {
+    "planktivorous_fish": [
+     1.612,
+     1.666,
+     null,
+     false
+    ],
+    "mackerel": [
+     0.09,
+     0.04702,
+     null,
+     false
+    ],
+    "whiting": [
+     0.0039,
+     0.001407,
+     0.0006616,
+     false
+    ],
+    "predatory_fish": [
+     0.0017,
+     0.0004267,
+     0.0007659,
+     false
+    ]
+   }
+  }
+ }
+}

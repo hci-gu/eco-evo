@@ -1,0 +1,16 @@
+mean length (cm) at age, CA 2021-25 (n aged fish); the cut is age 1 in Q3
+         species  area        Q3 age0        Q3 age1        Q1 age1        Q3 age2
+         haddock  skag   12.9 (  424)   27.0 (  465)   18.4 (  696)   34.8 (  664)
+         haddock   all   12.3 ( 2025)   23.6 ( 4505)   17.5 ( 3322)   30.7 ( 6566)
+             cod  skag   10.1 (  333)   27.1 (  822)   17.6 (  465)   44.1 (  396)
+             cod   all    9.9 (  536)   27.8 ( 2474)   19.2 ( 1284)   42.2 ( 2271)
+          plaice  skag    9.9 (   11)   16.0 (  250)   11.2 (  132)   21.3 (  453)
+          plaice   all   10.7 (  180)   16.3 ( 1692)   12.2 (  891)   20.1 ( 2542)
+           witch  skag              -   14.8 (   25)   13.0 (   32)   20.4 (   34)
+           witch   all              -   15.0 (   30)   13.0 (   32)   20.7 (   45)
+             dab  skag              -              -              -              -
+             dab   all              -   14.4 (    5)              -   17.0 (    4)
+  long rough dab  skag              -              -              -              -
+  long rough dab   all              -              -              -              -
+      lemon sole  skag              -              -              -              -
+      lemon sole   all              -    6.0 (    3)              -   13.2 (   57)
