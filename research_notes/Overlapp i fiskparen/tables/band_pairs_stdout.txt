@@ -1,0 +1,72 @@
+================================================================================================================
+0. Overlap geometry (no vision): tau_j = O_band / O_in-layer = H_j sum_z f(z) phi_j(z) day/night, and in brackets
+   the member's time share inside prey j's support (phi_j > 0) day/night; in-layer credits 1 to EVERY layer.
+   Equal-cell means; day / night (sun 0 deg switch). H_j = the section 220 in-layer thickness.
+================================================================================================================
+  saithe          herring 0.58/0.08 [0.69/0.10]; pout 0.60/0.38 [0.87/0.94]; blue whiting 1.56/0.23 [0.82/0.51]; juvenile ben 0.13/0.16 [0.13/0.16]; whiting 0.49/0.57 [0.49/0.57]; mackerel 0.02/0.10 [0.02/0.10];  sum of time shares day 3.01 / night 2.38 (in-layer credits 6)
+  hake            herring 0.71/0.11 [0.82/0.13]; pout 0.81/0.17 [0.98/1.00]; blue whiting 1.86/0.25 [0.95/0.56]; juvenile ben 0.22/0.03 [0.22/0.03]; whiting 0.71/0.15 [0.71/0.15]; mackerel 0.01/0.13 [0.01/0.13];  sum of time shares day 3.68 / night 2.00 (in-layer credits 6)
+  spurdog         herring 0.49/0.41 [0.56/0.52]; pout 0.32/0.08 [0.53/0.67]; blue whiting 1.22/0.51 [0.56/0.89]; juvenile ben 0.05/0.01 [0.05/0.01]; whiting 0.25/0.04 [0.25/0.04]; mackerel 0.34/0.52 [0.34/0.52];  sum of time shares day 2.28 / night 2.63 (in-layer credits 6)
+  velvet belly    herring 0.06/0.00 [0.16/0.00]; pout 0.24/0.11 [0.48/0.48]; blue whiting 0.59/0.00 [0.44/0.01]; juvenile ben 0.03/0.03 [0.03/0.03]; whiting 0.16/0.16 [0.16/0.16]; mackerel 0.00/0.00 [0.00/0.00];  sum of time shares day 1.27 / night 0.69 (in-layer credits 6)
+  anglerfish      herring 0.89/0.01 [1.00/0.01]; pout 1.05/0.60 [1.00/1.00]; blue whiting 2.00/0.19 [1.00/0.44]; juvenile ben 1.00/1.00 [1.00/1.00]; whiting 1.00/1.00 [1.00/1.00]; mackerel 0.00/0.01 [0.00/0.01];  sum of time shares day 5.00 / night 3.46 (in-layer credits 6)
+  ling            herring 0.80/0.01 [0.91/0.02]; pout 0.94/0.53 [1.00/1.00]; blue whiting 1.97/0.19 [0.99/0.46]; juvenile ben 0.33/0.33 [0.33/0.33]; whiting 0.86/0.86 [0.86/0.86]; mackerel 0.00/0.02 [0.00/0.02];  sum of time shares day 4.09 / night 2.68 (in-layer credits 6)
+  whiting         herring 0.89/0.01 [1.00/0.01]; pout 1.05/0.60 [1.00/1.00]; blue whiting 2.00/0.19 [1.00/0.46]; juvenile ben 0.20/0.20 [0.20/0.20]; whiting 1.00/1.00 [1.00/1.00]; mackerel 0.00/0.01 [0.00/0.01];  sum of time shares day 4.20 / night 2.69 (in-layer credits 6)
+  mackerel        herring 0.55/0.80 [0.75/1.00]; pout 0.00/0.05 [0.01/0.50]; blue whiting 0.01/0.66 [0.00/1.00]; juvenile ben 0.00/0.00 [0.00/0.00]; whiting 0.00/0.00 [0.00/0.00]; mackerel 1.00/1.00 [1.00/1.00];  sum of time shares day 1.77 / night 3.50 (in-layer credits 6)
+  horse mackerel  herring 0.47/0.80 [0.58/1.00]; pout 0.50/0.05 [1.00/0.50]; blue whiting 1.46/0.66 [0.78/1.00]; juvenile ben 0.07/0.00 [0.07/0.00]; whiting 0.33/0.00 [0.33/0.00]; mackerel 0.01/1.00 [0.01/1.00];  sum of time shares day 2.78 / night 3.50 (in-layer credits 6)
+  saithe day profile Hs    5 m: time within 2 m of the bed 0.330, within 10 m 0.865 (243 judged 'foraging time within ~2 m' 0.05, 0.02-0.15)
+  saithe day profile Hs   15 m: time within 2 m of the bed 0.125, within 10 m 0.488 (243 judged 'foraging time within ~2 m' 0.05, 0.02-0.15)
+  saithe day profile Hs   40 m: time within 2 m of the bed 0.053, within 10 m 0.238 (243 judged 'foraging time within ~2 m' 0.05, 0.02-0.15)
+lib_band: done
+A_band: done
+A_band_noclip: done
+A_band_Hs5: done
+A_band_Hs40: done
+A_band_fup0.25: done
+A_band_Hn1.0: done
+A_band_Hw5: done
+A_band_Hw30: done
+A_band_Ke2e-4: done
+A_band_Ke0.1: done
+
+================================================================================================================
+1. a_new / a_library (equal-cell annual mean, library p); in-layer -> band. Krill pairs: rule A on the band (lib_band: library vision)
+================================================================================================================
+  pair                                          lib_band        A_band A_band_noclip    A_band_Hs5   A_band_Hs40 A_band_fup0.2  A_band_Hn1.0    A_band_Hw5   A_band_Hw30 A_band_Ke2e-4  A_band_Ke0.1
+  predatory_fish->krill                            1.000         0.450         0.450         0.462         0.383         0.454         0.450         0.450         0.450         0.517         0.384
+  whiting->krill                                   1.000         1.000         1.000         1.000         1.000         1.000         1.000         0.992         0.926         1.125         0.883
+  planktivorous_fish->krill                        1.000         1.000         1.000         1.000         1.000         1.000         1.000         1.000         1.000         1.064         0.947
+  benthivorous_fish->krill                         1.000         0.727         0.727         0.727         0.727         0.727         0.727         0.727         0.727         0.819         0.640
+  mackerel->krill                                  1.000         1.000         1.000         1.000         1.000         1.000         1.000         1.000         1.000         1.053         0.960
+  predatory_fish->planktivorous_fish               0.490         2.904         2.904         4.049         2.091         2.963         2.894         2.904         2.904         3.882         2.416
+  predatory_fish->benthivorous_fish                1.451         7.604         8.419        18.291         3.748         7.425         7.348         7.604         7.604        10.928         6.173
+  predatory_fish->whiting                          0.459         2.764         2.833         4.553         1.515         2.706         2.703         3.170         1.673         3.977         2.235
+  predatory_fish->mackerel                         0.130         0.155         0.155         0.155         0.155         0.155         0.155         0.155         0.155         0.167         0.152
+  whiting->planktivorous_fish                      0.753         1.554         1.554         1.554         1.554         1.554         1.554         1.540         0.810         1.851         1.408
+  whiting->benthivorous_fish                       0.195         0.489         0.509         0.489         0.489         0.489         0.489         0.977         0.163         0.587         0.448
+  mackerel->planktivorous_fish                     0.606         0.930         0.930         0.930         0.930         0.930         0.930         0.930         0.930         0.930         0.930
+  benthivorous_fish->planktivorous_fish            1.000         1.247         1.247         1.247         1.247         1.247         1.247         1.247         1.247         1.754         1.018
+  benthivorous_fish->whiting                       1.000         1.188         1.188         1.188         1.188         1.188         1.188         1.188         1.188         1.706         0.967
+
+2. A_band central: new a, class a / equal-cell a (< 100 / 100-150 / 150-250 / > 250 m), night/day at the pair's threshold (and at 0 deg), member shares of the new a
+  predatory_fish->planktivorous_fish     a_lib 0.006 -> lib_band 0.00294, A_band 0.01742; classes/eq 2.21 / 1.21 / 0.41 / 0.16; n/d 0.059 (0 deg 0.063; lib dark_ratio 0.41; lib_band n/d 0.175)
+      members: saithe|adult 0.59, saithe|large 0.33, hake|adult 0.04, ling|all 0.02, spurdog|all 0.01, pollack|all 0.01
+  predatory_fish->benthivorous_fish      a_lib 0.0055 -> lib_band 0.007982, A_band 0.04182; classes/eq 1.66 / 1.36 / 0.56 / 0.31; n/d 0.165 (0 deg 0.158; lib dark_ratio 0.48; lib_band n/d 0.525)
+      members: saithe|adult 0.60, saithe|large 0.29, hake|adult 0.05, ling|all 0.02, anglerfish|all 0.02, pollack|all 0.01
+  predatory_fish->whiting                a_lib 0.013 -> lib_band 0.005971, A_band 0.03593; classes/eq 1.67 / 1.38 / 0.55 / 0.27; n/d 0.137 (0 deg 0.132; lib dark_ratio 0.48; lib_band n/d 0.471)
+      members: saithe|adult 0.61, saithe|large 0.31, hake|adult 0.04, ling|all 0.02, pollack|all 0.01
+  predatory_fish->mackerel               a_lib 0.00088 -> lib_band 0.0001144, A_band 0.0001366; classes/eq 1.68 / 0.93 / 0.75 / 0.75; n/d 0.923 (0 deg 1.149; lib dark_ratio 0.92; lib_band n/d 0.902)
+      members: spurdog|all 0.76, hake|adult 0.19, hake|juvenile 0.03, ling|all 0.01
+  whiting->planktivorous_fish            a_lib 0.0212 -> lib_band 0.01596, A_band 0.03294; classes/eq 1.90 / 1.04 / 0.62 / 0.48; n/d 0.212 (0 deg 0.196; lib dark_ratio 0.48; lib_band n/d 0.192)
+      members: whiting|adult 1.00
+  whiting->benthivorous_fish             a_lib 0.21 -> lib_band 0.041, A_band 0.1026; classes/eq 1.29 / 1.16 / 0.80 / 0.70; n/d 0.565 (0 deg 0.543; lib dark_ratio 0.64; lib_band n/d 0.671)
+      members: whiting|adult 1.00
+  mackerel->planktivorous_fish           a_lib 0.0266 -> lib_band 0.01613, A_band 0.02475; classes/eq 1.00 / 1.01 / 0.99 / 1.00; n/d 0.834 (0 deg 0.969; lib dark_ratio 0.16; lib_band n/d 0.464)
+      members: mackerel|all 0.96, horse mackerel|all 0.04
+  benthivorous_fish->planktivorous_fish  a_lib 0.0198 -> A 0.02469 (already band; vision only); classes/eq 1.62 / 1.36 / 0.57 / 0.34; n/d 0.090 (lib 0.06)
+  benthivorous_fish->whiting             a_lib 0.021 -> A 0.02494 (already band; vision only); classes/eq 1.63 / 1.35 / 0.57 / 0.34; n/d 0.180 (lib 0.15)
+  predatory_fish->krill                  a_lib 0.026 -> A 0.01169; classes 0.03059 / 0.01409 / 0.00262 / 6.908e-05; n/d 0.025
+  whiting->krill                         a_lib 0.043 -> A 0.043; classes 0.1482 / 0.03538 / 0.001991 / 0; n/d 0.041
+  planktivorous_fish->krill              a_lib 0.023 -> A 0.023; classes 0.07066 / 0.02113 / 0.003772 / 0.001709; n/d 0.099
+  benthivorous_fish->krill               a_lib 0.013 -> A 0.009445; classes 0.03255 / 0.007779 / 0.0004315 / 0; n/d 0.036
+  mackerel->krill                        a_lib 0.0039 -> A 0.0039; classes 0.005323 / 0.004294 / 0.003104 / 0.00284; n/d 0.264
+
+written band_pairs.json

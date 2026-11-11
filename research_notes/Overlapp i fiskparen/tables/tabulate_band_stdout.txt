@@ -1,0 +1,394 @@
+1. Predator side: encounter share (ratio to booked) at equal cells | field spread; * = OFF
+
+  predatory_fish: booked ben 0.077, krill 0.361, mac 0.011, plk 0.498, whi 0.042, zoo 0.010
+    lib              eq: ben 0.014(0.18)* krill 0.870(2.41) mac 0.001(0.10) plk 0.105(0.21)* whi 0.008(0.18) zoo 0.003(0.30) | field: ben 0.021(0.27)* krill 0.811(2.25) mac 0.002(0.14) plk 0.158(0.32)* whi 0.004(0.09) zoo 0.005(0.45)
+    A_inlayer        eq: ben 0.051(0.66) krill 0.367(1.02) mac 0.003(0.24) plk 0.534(1.07) whi 0.041(0.97) zoo 0.003(0.28) | field: ben 0.062(0.80) krill 0.274(0.76) mac 0.003(0.29) plk 0.642(1.29) whi 0.016(0.37) zoo 0.003(0.34)
+    A_inlayer_T      eq: ben 0.051(0.66) krill 0.367(1.02) mac 0.003(0.24) plk 0.534(1.07) whi 0.041(0.97) zoo 0.003(0.28) | field: ben 0.052(0.67) krill 0.308(0.85) mac 0.004(0.33) plk 0.609(1.22) whi 0.025(0.58) zoo 0.004(0.38)
+    lib_band         eq: ben 0.021(0.27)* krill 0.918(2.54) mac 0.000(0.01) plk 0.054(0.11)* whi 0.004(0.09) zoo 0.003(0.31) | field: ben 0.032(0.42) krill 0.877(2.43) mac 0.000(0.02) plk 0.084(0.17)* whi 0.002(0.04) zoo 0.005(0.49)
+    lib_band_T       eq: ben 0.021(0.27)* krill 0.918(2.54) mac 0.000(0.01) plk 0.054(0.11)* whi 0.004(0.09) zoo 0.003(0.31) | field: ben 0.033(0.43) krill 0.898(2.49) mac 0.000(0.02) plk 0.061(0.12)* whi 0.002(0.04) zoo 0.005(0.50)
+    A_band           eq: ben 0.127(1.64) krill 0.475(1.31) mac 0.000(0.02) plk 0.369(0.74) whi 0.026(0.61) zoo 0.004(0.36) | field: ben 0.158(2.05) krill 0.367(1.02) mac 0.000(0.02) plk 0.461(0.92) whi 0.010(0.24) zoo 0.005(0.45)
+    A_band_T         eq: ben 0.127(1.64) krill 0.475(1.31) mac 0.000(0.02) plk 0.369(0.74) whi 0.026(0.61) zoo 0.004(0.36) | field: ben 0.146(1.89) krill 0.473(1.31) mac 0.000(0.02) plk 0.356(0.71) whi 0.018(0.43) zoo 0.006(0.58)
+    A_band_rev_T     eq: ben 0.163(2.11) krill 0.326(0.90) mac 0.000(0.02) plk 0.476(0.95) whi 0.033(0.78) zoo 0.002(0.21) | field: ben 0.188(2.44) krill 0.326(0.90) mac 0.000(0.03) plk 0.459(0.92) whi 0.024(0.56) zoo 0.003(0.33)
+    A_band_noclip_T  eq: ben 0.138(1.79) krill 0.468(1.30) mac 0.000(0.02) plk 0.364(0.73) whi 0.026(0.61) zoo 0.004(0.36) | field: ben 0.157(2.03) krill 0.467(1.29) mac 0.000(0.02) plk 0.351(0.70) whi 0.019(0.44) zoo 0.006(0.58)
+    A_band_Hs5_T     eq: ben 0.238(3.08)* krill 0.324(0.90) mac 0.000(0.01) plk 0.402(0.81) whi 0.033(0.78) zoo 0.003(0.28) | field: ben 0.304(3.94)* krill 0.236(0.65) mac 0.000(0.02) plk 0.429(0.86) whi 0.026(0.62) zoo 0.005(0.51)
+    A_band_Hs40_T    eq: ben 0.078(1.01) krill 0.566(1.57) mac 0.000(0.02) plk 0.334(0.67) whi 0.018(0.42) zoo 0.005(0.45) | field: ben 0.074(0.96) krill 0.640(1.77) mac 0.000(0.02) plk 0.269(0.54) whi 0.011(0.26) zoo 0.006(0.62)
+    A_band_fup0.25_T eq: ben 0.122(1.58) krill 0.477(1.32) mac 0.000(0.02) plk 0.372(0.75) whi 0.025(0.59) zoo 0.004(0.36) | field: ben 0.138(1.79) krill 0.478(1.32) mac 0.000(0.02) plk 0.360(0.72) whi 0.018(0.41) zoo 0.006(0.57)
+    A_band_Hn1.0_T   eq: ben 0.123(1.59) krill 0.478(1.32) mac 0.000(0.02) plk 0.370(0.74) whi 0.025(0.60) zoo 0.004(0.36) | field: ben 0.141(1.82) krill 0.479(1.33) mac 0.000(0.02) plk 0.356(0.71) whi 0.018(0.43) zoo 0.006(0.59)
+    A_band_Hw5_T     eq: ben 0.126(1.63) krill 0.473(1.31) mac 0.000(0.02) plk 0.368(0.74) whi 0.029(0.69) zoo 0.004(0.36) | field: ben 0.146(1.89) krill 0.472(1.31) mac 0.000(0.02) plk 0.355(0.71) whi 0.021(0.49) zoo 0.006(0.58)
+    A_band_Hw30_T    eq: ben 0.128(1.66) krill 0.479(1.33) mac 0.000(0.02) plk 0.373(0.75) whi 0.016(0.37) zoo 0.004(0.37) | field: ben 0.147(1.91) krill 0.477(1.32) mac 0.000(0.02) plk 0.359(0.72) whi 0.011(0.26) zoo 0.006(0.59)
+    A_band_Ke2e-4_T  eq: ben 0.142(1.84) krill 0.441(1.22) mac 0.000(0.02) plk 0.385(0.77) whi 0.029(0.68) zoo 0.003(0.28) | field: ben 0.173(2.25) krill 0.399(1.11) mac 0.000(0.01) plk 0.410(0.82) whi 0.014(0.32) zoo 0.003(0.35)
+    A_band_Ke0.1_T   eq: ben 0.125(1.61) krill 0.473(1.31) mac 0.000(0.02) plk 0.373(0.75) whi 0.025(0.59) zoo 0.004(0.44) | field: ben 0.151(1.96) krill 0.459(1.27) mac 0.000(0.03) plk 0.359(0.72) whi 0.022(0.51) zoo 0.008(0.82)
+    A_band_win243pre_T eq: ben 0.064(0.83) krill 0.509(1.41) mac 0.000(0.02) plk 0.396(0.79) whi 0.028(0.65) zoo 0.004(0.39) | field: ben 0.075(0.97) krill 0.513(1.42) mac 0.000(0.03) plk 0.386(0.77) whi 0.020(0.47) zoo 0.006(0.63)
+    A_band_winaw_T   eq: ben 0.045(0.58) krill 0.519(1.44) mac 0.000(0.02) plk 0.404(0.81) whi 0.028(0.66) zoo 0.004(0.40) | field: ben 0.053(0.68) krill 0.525(1.46) mac 0.000(0.03) plk 0.395(0.79) whi 0.020(0.48) zoo 0.006(0.65)
+    A_band_Hw5_epi_T eq: ben 0.126(1.63) krill 0.473(1.31) mac 0.000(0.02) plk 0.368(0.74) whi 0.029(0.69) zoo 0.004(0.36) | field: ben 0.146(1.89) krill 0.472(1.31) mac 0.000(0.02) plk 0.355(0.71) whi 0.021(0.49) zoo 0.006(0.58)
+    A_band_Hw30_epi_T eq: ben 0.128(1.66) krill 0.479(1.33) mac 0.000(0.02) plk 0.373(0.75) whi 0.016(0.37) zoo 0.004(0.37) | field: ben 0.147(1.91) krill 0.477(1.32) mac 0.000(0.02) plk 0.359(0.72) whi 0.011(0.26) zoo 0.006(0.59)
+
+  whiting: booked ben 0.097, krill 0.557, epi 0.171, plk 0.153, zoo 0.023
+    lib              eq: ben 0.025(0.25)* krill 0.826(1.48) epi 0.086(0.51) plk 0.054(0.35) zoo 0.009(0.40) | field: ben 0.012(0.12)* krill 0.917(1.65) epi 0.041(0.24)* plk 0.026(0.17)* zoo 0.004(0.19)
+    A_inlayer        eq: ben 0.057(0.58) krill 0.751(1.35) epi 0.078(0.46) plk 0.106(0.69) zoo 0.008(0.37) | field: ben 0.028(0.29)* krill 0.875(1.57) epi 0.039(0.23)* plk 0.053(0.35) zoo 0.004(0.18)
+    A_inlayer_T      eq: ben 0.057(0.58) krill 0.751(1.35) epi 0.078(0.46) plk 0.106(0.69) zoo 0.008(0.37) | field: ben 0.035(0.37) krill 0.862(1.55) epi 0.039(0.23)* plk 0.060(0.39) zoo 0.004(0.18)
+    lib_band         eq: ben 0.005(0.05)* krill 0.854(1.53) epi 0.089(0.52) plk 0.042(0.27)* zoo 0.009(0.42) | field: ben 0.002(0.02)* krill 0.932(1.67) epi 0.042(0.24)* plk 0.020(0.13)* zoo 0.004(0.20)
+    lib_band_T       eq: ben 0.005(0.05)* krill 0.854(1.53) epi 0.089(0.52) plk 0.042(0.27)* zoo 0.009(0.42) | field: ben 0.002(0.02)* krill 0.916(1.64) epi 0.041(0.24)* plk 0.037(0.24)* zoo 0.004(0.19)
+    A_band           eq: ben 0.012(0.12)* krill 0.812(1.46) epi 0.085(0.50) plk 0.082(0.54) zoo 0.009(0.40) | field: ben 0.006(0.06)* krill 0.910(1.63) epi 0.041(0.24)* plk 0.040(0.26)* zoo 0.004(0.19)
+    A_band_T         eq: ben 0.012(0.12)* krill 0.812(1.46) epi 0.085(0.50) plk 0.082(0.54) zoo 0.009(0.40) | field: ben 0.007(0.07)* krill 0.883(1.59) epi 0.040(0.23)* plk 0.066(0.43) zoo 0.004(0.19)
+    A_band_rev_T     eq: ben 0.021(0.21)* krill 0.761(1.37) epi 0.066(0.39) plk 0.145(0.95) zoo 0.007(0.31) | field: ben 0.012(0.13)* krill 0.836(1.50) epi 0.031(0.18)* plk 0.117(0.77) zoo 0.003(0.15)
+    A_band_noclip_T  eq: ben 0.012(0.13)* krill 0.812(1.46) epi 0.085(0.50) plk 0.082(0.54) zoo 0.009(0.40) | field: ben 0.007(0.07)* krill 0.883(1.59) epi 0.039(0.23)* plk 0.066(0.43) zoo 0.004(0.18)
+    A_band_Hs5_T     eq: ben 0.012(0.12)* krill 0.812(1.46) epi 0.085(0.50) plk 0.082(0.54) zoo 0.009(0.40) | field: ben 0.007(0.07)* krill 0.883(1.59) epi 0.040(0.23)* plk 0.066(0.43) zoo 0.004(0.19)
+    A_band_Hs40_T    eq: ben 0.012(0.12)* krill 0.812(1.46) epi 0.085(0.50) plk 0.082(0.54) zoo 0.009(0.40) | field: ben 0.007(0.07)* krill 0.883(1.59) epi 0.040(0.23)* plk 0.066(0.43) zoo 0.004(0.19)
+    A_band_fup0.25_T eq: ben 0.012(0.12)* krill 0.812(1.46) epi 0.085(0.50) plk 0.082(0.54) zoo 0.009(0.40) | field: ben 0.007(0.07)* krill 0.883(1.59) epi 0.040(0.23)* plk 0.066(0.43) zoo 0.004(0.19)
+    A_band_Hn1.0_T   eq: ben 0.012(0.12)* krill 0.812(1.46) epi 0.085(0.50) plk 0.082(0.54) zoo 0.009(0.40) | field: ben 0.007(0.07)* krill 0.883(1.59) epi 0.040(0.23)* plk 0.066(0.43) zoo 0.004(0.19)
+    A_band_Hw5_T     eq: ben 0.025(0.26)* krill 0.790(1.42) epi 0.089(0.52) plk 0.086(0.56) zoo 0.009(0.42) | field: ben 0.013(0.14)* krill 0.882(1.58) epi 0.038(0.22)* plk 0.063(0.41) zoo 0.004(0.18)
+    A_band_Hw30_T    eq: ben 0.004(0.04)* krill 0.873(1.57) epi 0.077(0.45) plk 0.039(0.25)* zoo 0.008(0.36) | field: ben 0.003(0.03)* krill 0.889(1.60) epi 0.054(0.31)* plk 0.048(0.31)* zoo 0.006(0.25)
+    A_band_Ke2e-4_T  eq: ben 0.012(0.13)* krill 0.820(1.47) epi 0.074(0.43) plk 0.086(0.56) zoo 0.008(0.35) | field: ben 0.007(0.07)* krill 0.889(1.60) epi 0.036(0.21)* plk 0.064(0.42) zoo 0.004(0.17)
+    A_band_Ke0.1_T   eq: ben 0.012(0.13)* krill 0.796(1.43) epi 0.097(0.57) plk 0.085(0.56) zoo 0.010(0.45) | field: ben 0.007(0.07)* krill 0.876(1.57) epi 0.044(0.25)* plk 0.068(0.45) zoo 0.005(0.20)
+    A_band_win243pre_T eq: ben 0.012(0.12)* krill 0.812(1.46) epi 0.085(0.50) plk 0.082(0.54) zoo 0.009(0.40) | field: ben 0.007(0.07)* krill 0.883(1.59) epi 0.040(0.23)* plk 0.066(0.43) zoo 0.004(0.19)
+    A_band_winaw_T   eq: ben 0.012(0.12)* krill 0.812(1.46) epi 0.085(0.50) plk 0.082(0.54) zoo 0.009(0.40) | field: ben 0.007(0.07)* krill 0.883(1.59) epi 0.040(0.23)* plk 0.066(0.43) zoo 0.004(0.19)
+    A_band_Hw5_epi_T eq: ben 0.023(0.24)* krill 0.725(1.30) epi 0.164(0.96) plk 0.079(0.52) zoo 0.009(0.38) | field: ben 0.013(0.13)* krill 0.850(1.53) epi 0.073(0.43) plk 0.061(0.40) zoo 0.004(0.17)
+    A_band_Hw30_epi_T eq: ben 0.004(0.04)* krill 0.920(1.65) epi 0.027(0.16)* plk 0.041(0.27)* zoo 0.009(0.38) | field: ben 0.003(0.03)* krill 0.923(1.66) epi 0.019(0.11)* plk 0.050(0.32)* zoo 0.006(0.26)
+
+  benthivorous_fish: booked inf 0.563, krill 0.027, epi 0.310, neph 0.016, plk 0.073, whi 0.012
+    lib              eq: inf 0.592(1.05) krill 0.032(1.22) epi 0.308(1.00) neph 0.035(2.26) plk 0.030(0.41) whi 0.003(0.21)
+    A_inlayer        eq: inf 0.592(1.05) krill 0.023(0.88) epi 0.309(1.00) neph 0.035(2.26) plk 0.037(0.51) whi 0.003(0.25)
+    A_inlayer_T      eq: inf 0.592(1.05) krill 0.023(0.88) epi 0.309(1.00) neph 0.035(2.26) plk 0.037(0.51) whi 0.003(0.25)
+    lib_band         eq: inf 0.592(1.05) krill 0.032(1.22) epi 0.308(1.00) neph 0.035(2.26) plk 0.030(0.41) whi 0.003(0.21)
+    lib_band_T       eq: inf 0.592(1.05) krill 0.032(1.22) epi 0.308(1.00) neph 0.035(2.26) plk 0.030(0.41) whi 0.003(0.21)
+    A_band           eq: inf 0.592(1.05) krill 0.023(0.88) epi 0.309(1.00) neph 0.035(2.26) plk 0.037(0.51) whi 0.003(0.25)
+    A_band_T         eq: inf 0.592(1.05) krill 0.023(0.88) epi 0.309(1.00) neph 0.035(2.26) plk 0.037(0.51) whi 0.003(0.25)
+    A_band_rev_T     eq: inf 0.578(1.03) krill 0.028(1.04) epi 0.301(0.97) neph 0.035(2.21) plk 0.054(0.74) whi 0.004(0.37)
+    A_band_noclip_T  eq: inf 0.592(1.05) krill 0.023(0.88) epi 0.309(1.00) neph 0.035(2.26) plk 0.037(0.51) whi 0.003(0.25)
+    A_band_Hs5_T     eq: inf 0.592(1.05) krill 0.023(0.88) epi 0.309(1.00) neph 0.035(2.26) plk 0.037(0.51) whi 0.003(0.25)
+    A_band_Hs40_T    eq: inf 0.592(1.05) krill 0.023(0.88) epi 0.309(1.00) neph 0.035(2.26) plk 0.037(0.51) whi 0.003(0.25)
+    A_band_fup0.25_T eq: inf 0.592(1.05) krill 0.023(0.88) epi 0.309(1.00) neph 0.035(2.26) plk 0.037(0.51) whi 0.003(0.25)
+    A_band_Hn1.0_T   eq: inf 0.592(1.05) krill 0.023(0.88) epi 0.309(1.00) neph 0.035(2.26) plk 0.037(0.51) whi 0.003(0.25)
+    A_band_Hw5_T     eq: inf 0.592(1.05) krill 0.023(0.88) epi 0.309(1.00) neph 0.035(2.26) plk 0.037(0.51) whi 0.003(0.25)
+    A_band_Hw30_T    eq: inf 0.592(1.05) krill 0.023(0.88) epi 0.309(1.00) neph 0.035(2.26) plk 0.037(0.51) whi 0.003(0.25)
+    A_band_Ke2e-4_T  eq: inf 0.580(1.03) krill 0.027(1.00) epi 0.303(0.98) neph 0.035(2.22) plk 0.051(0.70) whi 0.004(0.35)
+    A_band_Ke0.1_T   eq: inf 0.599(1.06) krill 0.020(0.77) epi 0.312(1.01) neph 0.036(2.29) plk 0.031(0.42) whi 0.003(0.21)
+    A_band_win243pre_T eq: inf 0.592(1.05) krill 0.023(0.88) epi 0.309(1.00) neph 0.035(2.26) plk 0.037(0.51) whi 0.003(0.25)
+    A_band_winaw_T   eq: inf 0.592(1.05) krill 0.023(0.88) epi 0.309(1.00) neph 0.035(2.26) plk 0.037(0.51) whi 0.003(0.25)
+    A_band_Hw5_epi_T eq: inf 0.592(1.05) krill 0.023(0.88) epi 0.309(1.00) neph 0.035(2.26) plk 0.037(0.51) whi 0.003(0.25)
+    A_band_Hw30_epi_T eq: inf 0.592(1.05) krill 0.023(0.88) epi 0.309(1.00) neph 0.035(2.26) plk 0.037(0.51) whi 0.003(0.25)
+
+  mackerel: booked krill 0.394, plk 0.055, zoo 0.551
+    lib              eq: krill 0.657(1.67) plk 0.046(0.83) zoo 0.297(0.54)
+    A_inlayer        eq: krill 0.648(1.65) plk 0.059(1.06) zoo 0.293(0.53)
+    A_inlayer_T      eq: krill 0.648(1.65) plk 0.059(1.06) zoo 0.293(0.53)
+    lib_band         eq: krill 0.669(1.70) plk 0.028(0.51) zoo 0.303(0.55)
+    lib_band_T       eq: krill 0.669(1.70) plk 0.028(0.51) zoo 0.303(0.55)
+    A_band           eq: krill 0.659(1.67) plk 0.043(0.77) zoo 0.298(0.54)
+    A_band_T         eq: krill 0.659(1.67) plk 0.043(0.77) zoo 0.298(0.54)
+    A_band_rev_T     eq: krill 0.667(1.69) plk 0.081(1.47) zoo 0.252(0.46)
+    A_band_noclip_T  eq: krill 0.659(1.67) plk 0.043(0.77) zoo 0.298(0.54)
+    A_band_Hs5_T     eq: krill 0.659(1.67) plk 0.043(0.77) zoo 0.298(0.54)
+    A_band_Hs40_T    eq: krill 0.659(1.67) plk 0.043(0.77) zoo 0.298(0.54)
+    A_band_fup0.25_T eq: krill 0.659(1.67) plk 0.043(0.77) zoo 0.298(0.54)
+    A_band_Hn1.0_T   eq: krill 0.659(1.67) plk 0.043(0.77) zoo 0.298(0.54)
+    A_band_Hw5_T     eq: krill 0.659(1.67) plk 0.043(0.77) zoo 0.298(0.54)
+    A_band_Hw30_T    eq: krill 0.659(1.67) plk 0.043(0.77) zoo 0.298(0.54)
+    A_band_Ke2e-4_T  eq: krill 0.671(1.71) plk 0.041(0.75) zoo 0.288(0.52)
+    A_band_Ke0.1_T   eq: krill 0.650(1.65) plk 0.044(0.79) zoo 0.306(0.56)
+    A_band_win243pre_T eq: krill 0.659(1.67) plk 0.043(0.77) zoo 0.298(0.54)
+    A_band_winaw_T   eq: krill 0.659(1.67) plk 0.043(0.77) zoo 0.298(0.54)
+    A_band_Hw5_epi_T eq: krill 0.659(1.67) plk 0.043(0.77) zoo 0.298(0.54)
+    A_band_Hw30_epi_T eq: krill 0.659(1.67) plk 0.043(0.77) zoo 0.298(0.54)
+
+  planktivorous_fish: booked krill 0.398, zoo 0.602
+    lib              eq: krill 0.379(0.95) zoo 0.621(1.03)
+    A_inlayer        eq: krill 0.378(0.95) zoo 0.622(1.03)
+    A_inlayer_T      eq: krill 0.378(0.95) zoo 0.622(1.03)
+    lib_band         eq: krill 0.378(0.95) zoo 0.622(1.03)
+    lib_band_T       eq: krill 0.378(0.95) zoo 0.622(1.03)
+    A_band           eq: krill 0.378(0.95) zoo 0.622(1.03)
+    A_band_T         eq: krill 0.378(0.95) zoo 0.622(1.03)
+    A_band_rev_T     eq: krill 0.422(1.06) zoo 0.578(0.96)
+    A_band_noclip_T  eq: krill 0.378(0.95) zoo 0.622(1.03)
+    A_band_Hs5_T     eq: krill 0.378(0.95) zoo 0.622(1.03)
+    A_band_Hs40_T    eq: krill 0.378(0.95) zoo 0.622(1.03)
+    A_band_fup0.25_T eq: krill 0.378(0.95) zoo 0.622(1.03)
+    A_band_Hn1.0_T   eq: krill 0.378(0.95) zoo 0.622(1.03)
+    A_band_Hw5_T     eq: krill 0.378(0.95) zoo 0.622(1.03)
+    A_band_Hw30_T    eq: krill 0.378(0.95) zoo 0.622(1.03)
+    A_band_Ke2e-4_T  eq: krill 0.398(1.00) zoo 0.602(1.00)
+    A_band_Ke0.1_T   eq: krill 0.361(0.91) zoo 0.639(1.06)
+    A_band_win243pre_T eq: krill 0.378(0.95) zoo 0.622(1.03)
+    A_band_winaw_T   eq: krill 0.378(0.95) zoo 0.622(1.03)
+    A_band_Hw5_epi_T eq: krill 0.378(0.95) zoo 0.622(1.03)
+    A_band_Hw30_epi_T eq: krill 0.378(0.95) zoo 0.622(1.03)
+
+2. Prey side: implied M2 / booked M2 per pair (equal cells; field spread in brackets where the predator has one); * = OFF (pair carries >= 0.10 of the prey's booked M2). Mammal and seabird pairs (out of scope, unchanged) enter the total at their booked M2, not at budget_gate's implied value.
+
+  krill: booked M2 total 2.537; pairs plk 2.071 (0.82), whi 0.1873 (0.07), mac 0.125 (0.05), WC 0.119 (0.05), ben 0.035 (0.01)
+    lib              total 1.10: plk 0.95, whi 1.48(1.65), mac 1.67, WC 2.41(2.25), ben 1.22
+    A_inlayer        total 1.02: plk 0.95, whi 1.35(1.57), mac 1.65, WC 1.02(0.76), ben 0.88
+    A_inlayer_T      total 1.02: plk 0.95, whi 1.35(1.55), mac 1.65, WC 1.02(0.85), ben 0.88
+    lib_band         total 1.11: plk 0.95, whi 1.53(1.67), mac 1.70, WC 2.54(2.43), ben 1.22
+    lib_band_T       total 1.11: plk 0.95, whi 1.53(1.64), mac 1.70, WC 2.54(2.49), ben 1.22
+    A_band           total 1.04: plk 0.95, whi 1.46(1.63), mac 1.67, WC 1.31(1.02), ben 0.88
+    A_band_T         total 1.04: plk 0.95, whi 1.46(1.59), mac 1.67, WC 1.31(1.31), ben 0.88
+    A_band_rev_T     total 1.11: plk 1.06, whi 1.37(1.50), mac 1.69, WC 0.90(0.90), ben 1.04
+    A_band_noclip_T  total 1.04: plk 0.95, whi 1.46(1.59), mac 1.67, WC 1.30(1.29), ben 0.88
+    A_band_Hs5_T     total 1.02: plk 0.95, whi 1.46(1.59), mac 1.67, WC 0.90(0.65), ben 0.88
+    A_band_Hs40_T    total 1.05: plk 0.95, whi 1.46(1.59), mac 1.67, WC 1.57(1.77), ben 0.88
+    A_band_fup0.25_T total 1.04: plk 0.95, whi 1.46(1.59), mac 1.67, WC 1.32(1.32), ben 0.88
+    A_band_Hn1.0_T   total 1.04: plk 0.95, whi 1.46(1.59), mac 1.67, WC 1.32(1.33), ben 0.88
+    A_band_Hw5_T     total 1.04: plk 0.95, whi 1.42(1.58), mac 1.67, WC 1.31(1.31), ben 0.88
+    A_band_Hw30_T    total 1.05: plk 0.95, whi 1.57(1.60), mac 1.67, WC 1.33(1.32), ben 0.88
+    A_band_Ke2e-4_T  total 1.08: plk 1.00, whi 1.47(1.60), mac 1.71, WC 1.22(1.11), ben 1.00
+    A_band_Ke0.1_T   total 1.00: plk 0.91, whi 1.43(1.57), mac 1.65, WC 1.31(1.27), ben 0.77
+    A_band_win243pre_T total 1.04: plk 0.95, whi 1.46(1.59), mac 1.67, WC 1.41(1.42), ben 0.88
+    A_band_winaw_T   total 1.05: plk 0.95, whi 1.46(1.59), mac 1.67, WC 1.44(1.46), ben 0.88
+    A_band_Hw5_epi_T total 1.03: plk 0.95, whi 1.30(1.53), mac 1.67, WC 1.31(1.31), ben 0.88
+    A_band_Hw30_epi_T total 1.05: plk 0.95, whi 1.65(1.66), mac 1.67, WC 1.33(1.32), ben 0.88
+
+  planktivorous_fish: booked M2 total 0.3806; pairs WC 0.174 (0.46), ben 0.1023 (0.27), whi 0.0545 (0.14), mac 0.0186 (0.05), seabirds 0.0167 (0.04), por 0.00946 (0.02), seal 0.00501 (0.01)
+    lib              total 0.38: WC 0.21*(0.32*), ben 0.41, whi 0.35(0.17*), mac 0.83
+    A_inlayer        total 0.86: WC 1.07(1.29), ben 0.51, whi 0.69(0.35), mac 1.06
+    A_inlayer_T      total 0.86: WC 1.07(1.22), ben 0.51, whi 0.69(0.39), mac 1.06
+    lib_band         total 0.31: WC 0.11*(0.17*), ben 0.41, whi 0.27*(0.13*), mac 0.51
+    lib_band_T       total 0.31: WC 0.11*(0.12*), ben 0.41, whi 0.27*(0.24*), mac 0.51
+    A_band           total 0.67: WC 0.74(0.92), ben 0.51, whi 0.54(0.26*), mac 0.77
+    A_band_T         total 0.67: WC 0.74(0.71), ben 0.51, whi 0.54(0.43), mac 0.77
+    A_band_rev_T     total 0.93: WC 0.95(0.92), ben 0.74, whi 0.95(0.77), mac 1.47
+    A_band_noclip_T  total 0.67: WC 0.73(0.70), ben 0.51, whi 0.54(0.43), mac 0.77
+    A_band_Hs5_T     total 0.70: WC 0.81(0.86), ben 0.51, whi 0.54(0.43), mac 0.77
+    A_band_Hs40_T    total 0.64: WC 0.67(0.54), ben 0.51, whi 0.54(0.43), mac 0.77
+    A_band_fup0.25_T total 0.67: WC 0.75(0.72), ben 0.51, whi 0.54(0.43), mac 0.77
+    A_band_Hn1.0_T   total 0.67: WC 0.74(0.71), ben 0.51, whi 0.54(0.43), mac 0.77
+    A_band_Hw5_T     total 0.67: WC 0.74(0.71), ben 0.51, whi 0.56(0.41), mac 0.77
+    A_band_Hw30_T    total 0.63: WC 0.75(0.72), ben 0.51, whi 0.25*(0.31*), mac 0.77
+    A_band_Ke2e-4_T  total 0.74: WC 0.77(0.82), ben 0.70, whi 0.56(0.42), mac 0.75
+    A_band_Ke0.1_T   total 0.65: WC 0.75(0.72), ben 0.42, whi 0.56(0.45), mac 0.79
+    A_band_win243pre_T total 0.70: WC 0.79(0.77), ben 0.51, whi 0.54(0.43), mac 0.77
+    A_band_winaw_T   total 0.70: WC 0.81(0.79), ben 0.51, whi 0.54(0.43), mac 0.77
+    A_band_Hw5_epi_T total 0.67: WC 0.74(0.71), ben 0.51, whi 0.52(0.40), mac 0.77
+    A_band_Hw30_epi_T total 0.64: WC 0.75(0.72), ben 0.51, whi 0.27*(0.32*), mac 0.77
+
+  benthivorous_fish: booked M2 total 0.2341; pairs whi 0.1067 (0.46), WC 0.0833 (0.36), seal 0.0373 (0.16), por 0.0068 (0.03)
+    lib              total 0.37: whi 0.25*(0.12*), WC 0.18*(0.27*)
+    A_inlayer        total 0.69: whi 0.58(0.29*), WC 0.66(0.80)
+    A_inlayer_T      total 0.69: whi 0.58(0.37), WC 0.66(0.67)
+    lib_band         total 0.31: whi 0.05*(0.02*), WC 0.27*(0.42)
+    lib_band_T       total 0.31: whi 0.05*(0.02*), WC 0.27*(0.43)
+    A_band           total 0.83: whi 0.12*(0.06*), WC 1.64(2.05)
+    A_band_T         total 0.83: whi 0.12*(0.07*), WC 1.64(1.89)
+    A_band_rev_T     total 1.04: whi 0.21*(0.13*), WC 2.11(2.44)
+    A_band_noclip_T  total 0.88: whi 0.13*(0.07*), WC 1.79(2.03)
+    A_band_Hs5_T     total 1.34: whi 0.12*(0.07*), WC 3.08*(3.94*)
+    A_band_Hs40_T    total 0.60: whi 0.12*(0.07*), WC 1.01(0.96)
+    A_band_fup0.25_T total 0.81: whi 0.12*(0.07*), WC 1.58(1.79)
+    A_band_Hn1.0_T   total 0.81: whi 0.12*(0.07*), WC 1.59(1.82)
+    A_band_Hw5_T     total 0.89: whi 0.26*(0.14*), WC 1.63(1.89)
+    A_band_Hw30_T    total 0.79: whi 0.04*(0.03*), WC 1.66(1.91)
+    A_band_Ke2e-4_T  total 0.90: whi 0.13*(0.07*), WC 1.84(2.25)
+    A_band_Ke0.1_T   total 0.82: whi 0.13*(0.07*), WC 1.61(1.96)
+    A_band_win243pre_T total 0.54: whi 0.12*(0.07*), WC 0.83(0.97)
+    A_band_winaw_T   total 0.45: whi 0.12*(0.07*), WC 0.58(0.68)
+    A_band_Hw5_epi_T total 0.88: whi 0.24*(0.13*), WC 1.63(1.89)
+    A_band_Hw30_epi_T total 0.80: whi 0.04*(0.03*), WC 1.66(1.91)
+
+  whiting: booked M2 total 0.371; pairs ben 0.18 (0.49), WC 0.157 (0.42), por 0.0201 (0.05), seal 0.0139 (0.04)
+    lib              total 0.27: ben 0.21*, WC 0.18*(0.09*)
+    A_inlayer        total 0.63: ben 0.25*, WC 0.97(0.37)
+    A_inlayer_T      total 0.63: ben 0.25*, WC 0.97(0.58)
+    lib_band         total 0.23: ben 0.21*, WC 0.09*(0.04*)
+    lib_band_T       total 0.23: ben 0.21*, WC 0.09*(0.04*)
+    A_band           total 0.47: ben 0.25*, WC 0.61(0.24*)
+    A_band_T         total 0.47: ben 0.25*, WC 0.61(0.43)
+    A_band_rev_T     total 0.60: ben 0.37, WC 0.78(0.56)
+    A_band_noclip_T  total 0.47: ben 0.25*, WC 0.61(0.44)
+    A_band_Hs5_T     total 0.54: ben 0.25*, WC 0.78(0.62)
+    A_band_Hs40_T    total 0.39: ben 0.25*, WC 0.42(0.26*)
+    A_band_fup0.25_T total 0.46: ben 0.25*, WC 0.59(0.41)
+    A_band_Hn1.0_T   total 0.47: ben 0.25*, WC 0.60(0.43)
+    A_band_Hw5_T     total 0.51: ben 0.25*, WC 0.69(0.49)
+    A_band_Hw30_T    total 0.37: ben 0.25*, WC 0.37(0.26*)
+    A_band_Ke2e-4_T  total 0.55: ben 0.35, WC 0.68(0.32*)
+    A_band_Ke0.1_T   total 0.44: ben 0.21*, WC 0.59(0.51)
+    A_band_win243pre_T total 0.49: ben 0.25*, WC 0.65(0.47)
+    A_band_winaw_T   total 0.49: ben 0.25*, WC 0.66(0.48)
+    A_band_Hw5_epi_T total 0.51: ben 0.25*, WC 0.69(0.49)
+    A_band_Hw30_epi_T total 0.37: ben 0.25*, WC 0.37(0.26*)
+
+  mackerel: booked M2 total 0.021; pairs WC 0.021 (1.00)
+    lib              total 0.10: WC 0.10*(0.14*)
+    A_inlayer        total 0.24: WC 0.24*(0.29*)
+    A_inlayer_T      total 0.24: WC 0.24*(0.33*)
+    lib_band         total 0.01: WC 0.01*(0.02*)
+    lib_band_T       total 0.01: WC 0.01*(0.02*)
+    A_band           total 0.02: WC 0.02*(0.02*)
+    A_band_T         total 0.02: WC 0.02*(0.02*)
+    A_band_rev_T     total 0.02: WC 0.02*(0.03*)
+    A_band_noclip_T  total 0.02: WC 0.02*(0.02*)
+    A_band_Hs5_T     total 0.01: WC 0.01*(0.02*)
+    A_band_Hs40_T    total 0.02: WC 0.02*(0.02*)
+    A_band_fup0.25_T total 0.02: WC 0.02*(0.02*)
+    A_band_Hn1.0_T   total 0.02: WC 0.02*(0.02*)
+    A_band_Hw5_T     total 0.02: WC 0.02*(0.02*)
+    A_band_Hw30_T    total 0.02: WC 0.02*(0.02*)
+    A_band_Ke2e-4_T  total 0.02: WC 0.02*(0.01*)
+    A_band_Ke0.1_T   total 0.02: WC 0.02*(0.03*)
+    A_band_win243pre_T total 0.02: WC 0.02*(0.03*)
+    A_band_winaw_T   total 0.02: WC 0.02*(0.03*)
+    A_band_Hw5_epi_T total 0.02: WC 0.02*(0.02*)
+    A_band_Hw30_epi_T total 0.02: WC 0.02*(0.02*)
+
+3. Per bed class (16 x 16 probe grid, predator uniform within the class): krill share of each predator's encounter; class < 100 / 100-150 / 150-250 / > 250 m. 'flat' = fish a's as the engine has them (no table); 'cls' = fish a's class-resolved by the rule
+
+  predatory_fish (booked krill share 0.361)
+    lib              flat 0.906 / 0.924 / 0.742 / 0.075   cls 0.906 / 0.924 / 0.742 / 0.075
+    A_inlayer        flat 0.450 / 0.517 / 0.201 / 0.008   cls 0.357 / 0.457 / 0.251 / 0.014
+    A_inlayer_T      flat 0.357 / 0.457 / 0.251 / 0.014   cls 0.357 / 0.457 / 0.251 / 0.014
+    lib_band         flat 0.943 / 0.954 / 0.825 / 0.116   cls 0.907 / 0.958 / 0.864 / 0.156
+    lib_band_T       flat 0.907 / 0.958 / 0.864 / 0.156   cls 0.907 / 0.958 / 0.864 / 0.156
+    A_band           flat 0.569 / 0.623 / 0.278 / 0.012   cls 0.391 / 0.561 / 0.451 / 0.053
+    A_band_T         flat 0.391 / 0.561 / 0.451 / 0.053   cls 0.391 / 0.561 / 0.451 / 0.053
+    A_band_rev_T     flat 0.255 / 0.406 / 0.307 / 0.030   cls 0.255 / 0.406 / 0.307 / 0.030
+    A_band_noclip_T  flat 0.384 / 0.553 / 0.446 / 0.052   cls 0.384 / 0.553 / 0.446 / 0.052
+    A_band_Hs5_T     flat 0.344 / 0.363 / 0.122 / 0.030   cls 0.344 / 0.363 / 0.122 / 0.030
+    A_band_Hs40_T    flat 0.395 / 0.642 / 0.682 / 0.290   cls 0.395 / 0.642 / 0.682 / 0.290
+    A_band_fup0.25_T flat 0.391 / 0.561 / 0.459 / 0.144   cls 0.391 / 0.561 / 0.459 / 0.144
+    A_band_Hn1.0_T   flat 0.392 / 0.564 / 0.459 / 0.056   cls 0.392 / 0.564 / 0.459 / 0.056
+    A_band_Hw5_T     flat 0.386 / 0.560 / 0.451 / 0.053   cls 0.386 / 0.560 / 0.451 / 0.053
+    A_band_Hw30_T    flat 0.404 / 0.565 / 0.452 / 0.053   cls 0.404 / 0.565 / 0.452 / 0.053
+    A_band_Ke2e-4_T  flat 0.393 / 0.542 / 0.358 / 0.069   cls 0.393 / 0.542 / 0.358 / 0.069
+    A_band_Ke0.1_T   flat 0.387 / 0.581 / 0.405 / 0.042   cls 0.387 / 0.581 / 0.405 / 0.042
+    A_band_win243pre_T flat 0.414 / 0.598 / 0.496 / 0.065   cls 0.414 / 0.598 / 0.496 / 0.065
+    A_band_winaw_T   flat 0.421 / 0.609 / 0.510 / 0.070   cls 0.421 / 0.609 / 0.510 / 0.070
+    A_band_Hw5_epi_T flat 0.386 / 0.560 / 0.451 / 0.053   cls 0.386 / 0.560 / 0.451 / 0.053
+    A_band_Hw30_epi_T flat 0.404 / 0.565 / 0.452 / 0.053   cls 0.404 / 0.565 / 0.452 / 0.053
+
+  whiting (booked krill share 0.557)
+    lib              flat 0.926 / 0.875 / 0.327 / 0.000   cls 0.926 / 0.875 / 0.327 / 0.000
+    A_inlayer        flat 0.888 / 0.817 / 0.234 / 0.000   cls 0.874 / 0.804 / 0.251 / 0.000
+    A_inlayer_T      flat 0.874 / 0.804 / 0.251 / 0.000   cls 0.874 / 0.804 / 0.251 / 0.000
+    lib_band         flat 0.939 / 0.897 / 0.373 / 0.000   cls 0.919 / 0.905 / 0.398 / 0.000
+    lib_band_T       flat 0.919 / 0.905 / 0.398 / 0.000   cls 0.919 / 0.905 / 0.398 / 0.000
+    A_band           flat 0.919 / 0.865 / 0.305 / 0.000   cls 0.889 / 0.861 / 0.346 / 0.000
+    A_band_T         flat 0.889 / 0.861 / 0.346 / 0.000   cls 0.889 / 0.861 / 0.346 / 0.000
+    A_band_rev_T     flat 0.841 / 0.818 / 0.298 / 0.000   cls 0.841 / 0.818 / 0.298 / 0.000
+    A_band_noclip_T  flat 0.888 / 0.861 / 0.345 / 0.000   cls 0.888 / 0.861 / 0.345 / 0.000
+    A_band_Hs5_T     flat 0.889 / 0.861 / 0.346 / 0.000   cls 0.889 / 0.861 / 0.346 / 0.000
+    A_band_Hs40_T    flat 0.889 / 0.861 / 0.346 / 0.000   cls 0.889 / 0.861 / 0.346 / 0.000
+    A_band_fup0.25_T flat 0.889 / 0.861 / 0.346 / 0.000   cls 0.889 / 0.861 / 0.346 / 0.000
+    A_band_Hn1.0_T   flat 0.889 / 0.861 / 0.346 / 0.000   cls 0.889 / 0.861 / 0.346 / 0.000
+    A_band_Hw5_T     flat 0.891 / 0.818 / 0.121 / 0.000   cls 0.891 / 0.818 / 0.121 / 0.000
+    A_band_Hw30_T    flat 0.876 / 0.930 / 0.768 / 0.000   cls 0.876 / 0.930 / 0.768 / 0.000
+    A_band_Ke2e-4_T  flat 0.895 / 0.869 / 0.464 / 0.000   cls 0.895 / 0.869 / 0.464 / 0.000
+    A_band_Ke0.1_T   flat 0.883 / 0.847 / 0.212 / 0.000   cls 0.883 / 0.847 / 0.212 / 0.000
+    A_band_win243pre_T flat 0.889 / 0.861 / 0.346 / 0.000   cls 0.889 / 0.861 / 0.346 / 0.000
+    A_band_winaw_T   flat 0.889 / 0.861 / 0.346 / 0.000   cls 0.889 / 0.861 / 0.346 / 0.000
+    A_band_Hw5_epi_T flat 0.863 / 0.761 / 0.083 / 0.000   cls 0.863 / 0.761 / 0.083 / 0.000
+    A_band_Hw30_epi_T flat 0.911 / 0.956 / 0.860 / 0.000   cls 0.911 / 0.956 / 0.860 / 0.000
+
+  benthivorous_fish (booked krill share 0.027)
+    lib              flat 0.081 / 0.047 / 0.003 / 0.000   cls 0.081 / 0.047 / 0.003 / 0.000
+    A_inlayer        flat 0.059 / 0.035 / 0.002 / 0.000   cls 0.057 / 0.034 / 0.002 / 0.000
+    A_inlayer_T      flat 0.057 / 0.034 / 0.002 / 0.000   cls 0.057 / 0.034 / 0.002 / 0.000
+    lib_band         flat 0.080 / 0.047 / 0.003 / 0.000   cls 0.078 / 0.047 / 0.003 / 0.000
+    lib_band_T       flat 0.078 / 0.047 / 0.003 / 0.000   cls 0.078 / 0.047 / 0.003 / 0.000
+    A_band           flat 0.059 / 0.035 / 0.002 / 0.000   cls 0.057 / 0.034 / 0.002 / 0.000
+    A_band_T         flat 0.057 / 0.034 / 0.002 / 0.000   cls 0.057 / 0.034 / 0.002 / 0.000
+    A_band_rev_T     flat 0.066 / 0.040 / 0.003 / 0.000   cls 0.066 / 0.040 / 0.003 / 0.000
+    A_band_noclip_T  flat 0.057 / 0.034 / 0.002 / 0.000   cls 0.057 / 0.034 / 0.002 / 0.000
+    A_band_Hs5_T     flat 0.057 / 0.034 / 0.002 / 0.000   cls 0.057 / 0.034 / 0.002 / 0.000
+    A_band_Hs40_T    flat 0.057 / 0.034 / 0.002 / 0.000   cls 0.057 / 0.034 / 0.002 / 0.000
+    A_band_fup0.25_T flat 0.057 / 0.034 / 0.002 / 0.000   cls 0.057 / 0.034 / 0.002 / 0.000
+    A_band_Hn1.0_T   flat 0.057 / 0.034 / 0.002 / 0.000   cls 0.057 / 0.034 / 0.002 / 0.000
+    A_band_Hw5_T     flat 0.057 / 0.034 / 0.002 / 0.000   cls 0.057 / 0.034 / 0.002 / 0.000
+    A_band_Hw30_T    flat 0.057 / 0.034 / 0.002 / 0.000   cls 0.057 / 0.034 / 0.002 / 0.000
+    A_band_Ke2e-4_T  flat 0.062 / 0.039 / 0.005 / 0.000   cls 0.062 / 0.039 / 0.005 / 0.000
+    A_band_Ke0.1_T   flat 0.053 / 0.029 / 0.001 / 0.000   cls 0.053 / 0.029 / 0.001 / 0.000
+    A_band_win243pre_T flat 0.057 / 0.034 / 0.002 / 0.000   cls 0.057 / 0.034 / 0.002 / 0.000
+    A_band_winaw_T   flat 0.057 / 0.034 / 0.002 / 0.000   cls 0.057 / 0.034 / 0.002 / 0.000
+    A_band_Hw5_epi_T flat 0.057 / 0.034 / 0.002 / 0.000   cls 0.057 / 0.034 / 0.002 / 0.000
+    A_band_Hw30_epi_T flat 0.057 / 0.034 / 0.002 / 0.000   cls 0.057 / 0.034 / 0.002 / 0.000
+
+  mackerel (booked krill share 0.394)
+    lib              flat 0.541 / 0.693 / 0.664 / 0.676   cls 0.541 / 0.693 / 0.664 / 0.676
+    A_inlayer        flat 0.532 / 0.684 / 0.655 / 0.670   cls 0.531 / 0.684 / 0.655 / 0.670
+    A_inlayer_T      flat 0.531 / 0.684 / 0.655 / 0.670   cls 0.531 / 0.684 / 0.655 / 0.670
+    lib_band         flat 0.555 / 0.703 / 0.675 / 0.690   cls 0.555 / 0.703 / 0.675 / 0.690
+    lib_band_T       flat 0.555 / 0.703 / 0.675 / 0.690   cls 0.555 / 0.703 / 0.675 / 0.690
+    A_band           flat 0.544 / 0.694 / 0.665 / 0.681   cls 0.544 / 0.694 / 0.665 / 0.681
+    A_band_T         flat 0.544 / 0.694 / 0.665 / 0.681   cls 0.544 / 0.694 / 0.665 / 0.681
+    A_band_rev_T     flat 0.553 / 0.701 / 0.674 / 0.689   cls 0.553 / 0.701 / 0.674 / 0.689
+    A_band_noclip_T  flat 0.544 / 0.694 / 0.665 / 0.681   cls 0.544 / 0.694 / 0.665 / 0.681
+    A_band_Hs5_T     flat 0.544 / 0.694 / 0.665 / 0.681   cls 0.544 / 0.694 / 0.665 / 0.681
+    A_band_Hs40_T    flat 0.544 / 0.694 / 0.665 / 0.681   cls 0.544 / 0.694 / 0.665 / 0.681
+    A_band_fup0.25_T flat 0.544 / 0.694 / 0.665 / 0.681   cls 0.544 / 0.694 / 0.665 / 0.681
+    A_band_Hn1.0_T   flat 0.544 / 0.694 / 0.665 / 0.681   cls 0.544 / 0.694 / 0.665 / 0.681
+    A_band_Hw5_T     flat 0.544 / 0.694 / 0.665 / 0.681   cls 0.544 / 0.694 / 0.665 / 0.681
+    A_band_Hw30_T    flat 0.544 / 0.694 / 0.665 / 0.681   cls 0.544 / 0.694 / 0.665 / 0.681
+    A_band_Ke2e-4_T  flat 0.552 / 0.704 / 0.683 / 0.688   cls 0.552 / 0.704 / 0.683 / 0.688
+    A_band_Ke0.1_T   flat 0.535 / 0.682 / 0.656 / 0.678   cls 0.535 / 0.682 / 0.656 / 0.678
+    A_band_win243pre_T flat 0.544 / 0.694 / 0.665 / 0.681   cls 0.544 / 0.694 / 0.665 / 0.681
+    A_band_winaw_T   flat 0.544 / 0.694 / 0.665 / 0.681   cls 0.544 / 0.694 / 0.665 / 0.681
+    A_band_Hw5_epi_T flat 0.544 / 0.694 / 0.665 / 0.681   cls 0.544 / 0.694 / 0.665 / 0.681
+    A_band_Hw30_epi_T flat 0.544 / 0.694 / 0.665 / 0.681   cls 0.544 / 0.694 / 0.665 / 0.681
+
+  planktivorous_fish (booked krill share 0.398)
+    lib              flat 0.561 / 0.478 / 0.164 / 0.095   cls 0.561 / 0.478 / 0.164 / 0.095
+    A_inlayer        flat 0.563 / 0.475 / 0.164 / 0.094   cls 0.563 / 0.475 / 0.164 / 0.094
+    A_inlayer_T      flat 0.563 / 0.475 / 0.164 / 0.094   cls 0.563 / 0.475 / 0.164 / 0.094
+    lib_band         flat 0.563 / 0.475 / 0.164 / 0.094   cls 0.563 / 0.475 / 0.164 / 0.094
+    lib_band_T       flat 0.563 / 0.475 / 0.164 / 0.094   cls 0.563 / 0.475 / 0.164 / 0.094
+    A_band           flat 0.563 / 0.475 / 0.164 / 0.094   cls 0.563 / 0.475 / 0.164 / 0.094
+    A_band_T         flat 0.563 / 0.475 / 0.164 / 0.094   cls 0.563 / 0.475 / 0.164 / 0.094
+    A_band_rev_T     flat 0.607 / 0.521 / 0.191 / 0.111   cls 0.607 / 0.521 / 0.191 / 0.111
+    A_band_noclip_T  flat 0.563 / 0.475 / 0.164 / 0.094   cls 0.563 / 0.475 / 0.164 / 0.094
+    A_band_Hs5_T     flat 0.563 / 0.475 / 0.164 / 0.094   cls 0.563 / 0.475 / 0.164 / 0.094
+    A_band_Hs40_T    flat 0.563 / 0.475 / 0.164 / 0.094   cls 0.563 / 0.475 / 0.164 / 0.094
+    A_band_fup0.25_T flat 0.563 / 0.475 / 0.164 / 0.094   cls 0.563 / 0.475 / 0.164 / 0.094
+    A_band_Hn1.0_T   flat 0.563 / 0.475 / 0.164 / 0.094   cls 0.563 / 0.475 / 0.164 / 0.094
+    A_band_Hw5_T     flat 0.563 / 0.475 / 0.164 / 0.094   cls 0.563 / 0.475 / 0.164 / 0.094
+    A_band_Hw30_T    flat 0.563 / 0.475 / 0.164 / 0.094   cls 0.563 / 0.475 / 0.164 / 0.094
+    A_band_Ke2e-4_T  flat 0.570 / 0.494 / 0.208 / 0.106   cls 0.570 / 0.494 / 0.208 / 0.106
+    A_band_Ke0.1_T   flat 0.555 / 0.455 / 0.139 / 0.091   cls 0.555 / 0.455 / 0.139 / 0.091
+    A_band_win243pre_T flat 0.563 / 0.475 / 0.164 / 0.094   cls 0.563 / 0.475 / 0.164 / 0.094
+    A_band_winaw_T   flat 0.563 / 0.475 / 0.164 / 0.094   cls 0.563 / 0.475 / 0.164 / 0.094
+    A_band_Hw5_epi_T flat 0.563 / 0.475 / 0.164 / 0.094   cls 0.563 / 0.475 / 0.164 / 0.094
+    A_band_Hw30_epi_T flat 0.563 / 0.475 / 0.164 / 0.094   cls 0.563 / 0.475 / 0.164 / 0.094
+
+4. Water column at 150-250 m (class 2), full diet: share (ratio to booked); flat reading | cls reading
+    lib              flat ben 0.029(0.37), krill 0.742(2.06), mac 0.002(0.20), plk 0.220(0.44), whi 0.001(0.03), zoo 0.006(0.63)
+    lib              cls  ben 0.029(0.37), krill 0.742(2.06), mac 0.002(0.20), plk 0.220(0.44), whi 0.001(0.03), zoo 0.006(0.63)
+    A_inlayer        flat ben 0.069(0.89), krill 0.201(0.56), mac 0.004(0.32), plk 0.718(1.44), whi 0.004(0.10), zoo 0.004(0.38)
+    A_inlayer        cls  ben 0.053(0.69), krill 0.251(0.69), mac 0.004(0.40), plk 0.684(1.37), whi 0.003(0.07), zoo 0.005(0.47)
+    A_inlayer_T      flat ben 0.053(0.69), krill 0.251(0.69), mac 0.004(0.40), plk 0.684(1.37), whi 0.003(0.07), zoo 0.005(0.47)
+    A_inlayer_T      cls  ben 0.053(0.69), krill 0.251(0.69), mac 0.004(0.40), plk 0.684(1.37), whi 0.003(0.07), zoo 0.005(0.47)
+    lib_band         flat ben 0.047(0.60), krill 0.825(2.29), mac 0.000(0.03), plk 0.120(0.24), whi 0.001(0.02), zoo 0.007(0.70)
+    lib_band         cls  ben 0.049(0.64), krill 0.864(2.39), mac 0.000(0.03), plk 0.078(0.16), whi 0.001(0.02), zoo 0.007(0.73)
+    lib_band_T       flat ben 0.049(0.64), krill 0.864(2.39), mac 0.000(0.03), plk 0.078(0.16), whi 0.001(0.02), zoo 0.007(0.73)
+    lib_band_T       cls  ben 0.049(0.64), krill 0.864(2.39), mac 0.000(0.03), plk 0.078(0.16), whi 0.001(0.02), zoo 0.007(0.73)
+    A_band           flat ben 0.182(2.36), krill 0.278(0.77), mac 0.000(0.03), plk 0.531(1.07), whi 0.003(0.07), zoo 0.005(0.52)
+    A_band           cls  ben 0.170(2.21), krill 0.451(1.25), mac 0.000(0.03), plk 0.367(0.74), whi 0.003(0.06), zoo 0.008(0.85)
+    A_band_T         flat ben 0.170(2.21), krill 0.451(1.25), mac 0.000(0.03), plk 0.367(0.74), whi 0.003(0.06), zoo 0.008(0.85)
+    A_band_T         cls  ben 0.170(2.21), krill 0.451(1.25), mac 0.000(0.03), plk 0.367(0.74), whi 0.003(0.06), zoo 0.008(0.85)
+    A_band_rev_T     flat ben 0.217(2.81), krill 0.307(0.85), mac 0.000(0.04), plk 0.468(0.94), whi 0.003(0.08), zoo 0.005(0.48)
+    A_band_rev_T     cls  ben 0.217(2.81), krill 0.307(0.85), mac 0.000(0.04), plk 0.468(0.94), whi 0.003(0.08), zoo 0.005(0.48)
+    A_band_noclip_T  flat ben 0.180(2.33), krill 0.446(1.24), mac 0.000(0.03), plk 0.363(0.73), whi 0.003(0.06), zoo 0.008(0.84)
+    A_band_noclip_T  cls  ben 0.180(2.33), krill 0.446(1.24), mac 0.000(0.03), plk 0.363(0.73), whi 0.003(0.06), zoo 0.008(0.84)
+    A_band_Hs5_T     flat ben 0.384(4.97), krill 0.122(0.34), mac 0.000(0.03), plk 0.482(0.97), whi 0.004(0.10), zoo 0.008(0.80)
+    A_band_Hs5_T     cls  ben 0.384(4.97), krill 0.122(0.34), mac 0.000(0.03), plk 0.482(0.97), whi 0.004(0.10), zoo 0.008(0.80)
+    A_band_Hs40_T    flat ben 0.073(0.94), krill 0.682(1.89), mac 0.000(0.03), plk 0.236(0.47), whi 0.001(0.03), zoo 0.008(0.77)
+    A_band_Hs40_T    cls  ben 0.073(0.94), krill 0.682(1.89), mac 0.000(0.03), plk 0.236(0.47), whi 0.001(0.03), zoo 0.008(0.77)
+    A_band_fup0.25_T flat ben 0.158(2.04), krill 0.459(1.27), mac 0.000(0.03), plk 0.372(0.75), whi 0.003(0.06), zoo 0.008(0.82)
+    A_band_fup0.25_T cls  ben 0.158(2.04), krill 0.459(1.27), mac 0.000(0.03), plk 0.372(0.75), whi 0.003(0.06), zoo 0.008(0.82)
+    A_band_Hn1.0_T   flat ben 0.163(2.11), krill 0.459(1.27), mac 0.000(0.03), plk 0.367(0.74), whi 0.003(0.06), zoo 0.009(0.86)
+    A_band_Hn1.0_T   cls  ben 0.163(2.11), krill 0.459(1.27), mac 0.000(0.03), plk 0.367(0.74), whi 0.003(0.06), zoo 0.009(0.86)
+    A_band_Hw5_T     flat ben 0.170(2.20), krill 0.451(1.25), mac 0.000(0.03), plk 0.367(0.74), whi 0.003(0.07), zoo 0.008(0.85)
+    A_band_Hw5_T     cls  ben 0.170(2.20), krill 0.451(1.25), mac 0.000(0.03), plk 0.367(0.74), whi 0.003(0.07), zoo 0.008(0.85)
+    A_band_Hw30_T    flat ben 0.170(2.21), krill 0.452(1.25), mac 0.000(0.03), plk 0.367(0.74), whi 0.002(0.04), zoo 0.008(0.85)
+    A_band_Hw30_T    cls  ben 0.170(2.21), krill 0.452(1.25), mac 0.000(0.03), plk 0.367(0.74), whi 0.002(0.04), zoo 0.008(0.85)
+    A_band_Ke2e-4_T  flat ben 0.196(2.54), krill 0.358(0.99), mac 0.000(0.01), plk 0.439(0.88), whi 0.003(0.08), zoo 0.004(0.40)
+    A_band_Ke2e-4_T  cls  ben 0.196(2.54), krill 0.358(0.99), mac 0.000(0.01), plk 0.439(0.88), whi 0.003(0.08), zoo 0.004(0.40)
+    A_band_Ke0.1_T   flat ben 0.197(2.55), krill 0.405(1.12), mac 0.001(0.05), plk 0.381(0.76), whi 0.003(0.07), zoo 0.014(1.40)
+    A_band_Ke0.1_T   cls  ben 0.197(2.55), krill 0.405(1.12), mac 0.001(0.05), plk 0.381(0.76), whi 0.003(0.07), zoo 0.014(1.40)
+    A_band_win243pre_T flat ben 0.088(1.14), krill 0.496(1.37), mac 0.000(0.03), plk 0.403(0.81), whi 0.003(0.07), zoo 0.009(0.93)
+    A_band_win243pre_T cls  ben 0.088(1.14), krill 0.496(1.37), mac 0.000(0.03), plk 0.403(0.81), whi 0.003(0.07), zoo 0.009(0.93)
+    A_band_winaw_T   flat ben 0.062(0.81), krill 0.510(1.41), mac 0.000(0.04), plk 0.415(0.83), whi 0.003(0.07), zoo 0.010(0.96)
+    A_band_winaw_T   cls  ben 0.062(0.81), krill 0.510(1.41), mac 0.000(0.04), plk 0.415(0.83), whi 0.003(0.07), zoo 0.010(0.96)
+    A_band_Hw5_epi_T flat ben 0.170(2.20), krill 0.451(1.25), mac 0.000(0.03), plk 0.367(0.74), whi 0.003(0.07), zoo 0.008(0.85)
+    A_band_Hw5_epi_T cls  ben 0.170(2.20), krill 0.451(1.25), mac 0.000(0.03), plk 0.367(0.74), whi 0.003(0.07), zoo 0.008(0.85)
+    A_band_Hw30_epi_T flat ben 0.170(2.21), krill 0.452(1.25), mac 0.000(0.03), plk 0.367(0.74), whi 0.002(0.04), zoo 0.008(0.85)
+    A_band_Hw30_epi_T cls  ben 0.170(2.21), krill 0.452(1.25), mac 0.000(0.03), plk 0.367(0.74), whi 0.002(0.04), zoo 0.008(0.85)
