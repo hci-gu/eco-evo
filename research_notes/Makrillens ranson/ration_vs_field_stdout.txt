@@ -1,0 +1,18 @@
+q 3399 MJ assimilated (net SDA) per t eaten
+month   B   model fill  field fill  model  need  SMS-quarters   (t/t/yr)
+   1  0.14     1.00      0.70    2.93  0.00   0.42
+   2  0.10     1.00      0.58    2.83  0.00   0.42
+   3  0.10     0.97      0.45    5.05  0.05   0.42
+   4  0.23     0.76      0.37    9.15  0.00   3.15
+   5  0.71     0.58      0.13   10.04 11.46   3.15
+   6  1.46     0.67      0.51   10.53  3.89   3.15
+   7  1.79     0.92      0.57    8.78 11.24   2.93
+   8  1.84     1.00      0.91    3.97  5.35   2.93
+   9  1.66     1.00      1.00    3.88  3.18   2.93
+  10  1.22     1.00      1.00    3.67  1.53   2.27
+  11  0.69     1.00      0.94    3.37  0.46   2.27
+  12  0.31     1.00      0.85    3.16  0.00   2.27
+presence-weighted: model 6.15, energetic need on the field fat cycle 4.99, field phi-mean 2.75, field SMS age 1 3.37, annual stock Q/B 2.20
+  Jan-Apr: presence share 0.06; model 5.79, need 0.01
+  May-Sep: presence share 0.73; model 6.97, need 6.57
+  Oct-Dec: presence share 0.22; model 3.50, need 0.99

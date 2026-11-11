@@ -135,7 +135,8 @@ def test_library_appetite_and_benthivore_budget():
     assert b.gate == pytest.approx(1.0 - 0.078)
     # C nets SDA: (0.8 - 0.10) x herring quality / h, below the 0.8 value.
     assert sd["benthivorous_fish"]["sda_fraction"] == pytest.approx(0.10)
-    assert b.ideal_cost == pytest.approx(3.33 * 1.18)
+    # Section 267: feeding_cost net of SDA and the growth cost's synthesis.
+    assert b.ideal_cost == pytest.approx(3.33 * 1.02)
     # Section 241: the growth cost leaves s* (and g) where it was.
     assert sd["benthivorous_fish"]["growth_cost"] == pytest.approx(0.69)
     assert {fid for fid, spec in sd.items()

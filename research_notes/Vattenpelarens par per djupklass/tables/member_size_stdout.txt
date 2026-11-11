@@ -1,0 +1,5 @@
+Krill share of the encounter (krill, planktivores, benthivores, whiting only) per saithe member
+  saithe < 60 cm   L 0.43 m: V_lib 150-250 0.779, saithe spread 0.842 | V_one 150-250 0.745, saithe spread 0.753
+      V_one class a krill 0.1028/0.04841/0.009031/0.0002033; planktivores 0.04212/0.02317/0.006828/0.001818
+  saithe >= 60 cm  L 0.70 m: V_lib 150-250 0.788, saithe spread 0.849 | V_one 150-250 0.573, saithe spread 0.568
+      V_one class a krill 0.0417/0.01964/0.003664/8.218e-05; planktivores 0.04361/0.02375/0.006209/0.0008245

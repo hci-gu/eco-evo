@@ -1,0 +1,26 @@
+weighted SMR 3925 MJ/t/yr = 2.688 MJ/t/tick (prior W.2: 2.688)
+prior group FMR 7257 MJ/t/yr = 1.85 x weighted SMR
+
+Route B (cod-anchored) per species and group, MJ/t/yr at ~7.5 C:
+  LRD from the Barents otoliths:
+    low     cod 11338 haddock 6803 LRD 7370 plaice/dab 4487 witch 2991 -> group 7922 MJ/t/yr = 5.43 MJ/t/tick = 2.02 x weighted SMR
+    central cod 11338 haddock 7937 LRD 9637 plaice/dab 6431 witch 4288 -> group 8891 MJ/t/yr = 6.09 MJ/t/tick = 2.27 x weighted SMR
+    high    cod 11338 haddock 9297 LRD 12472 plaice/dab 7977 witch 5286 -> group 9979 MJ/t/yr = 6.83 MJ/t/tick = 2.54 x weighted SMR
+  LRD from the plaice value (fallback):
+    low     cod 11338 haddock 6803 LRD 4487 plaice/dab 4487 witch 2991 -> group 7551 MJ/t/yr = 5.17 MJ/t/tick = 1.92 x weighted SMR
+    central cod 11338 haddock 7937 LRD 6431 plaice/dab 6431 witch 4288 -> group 8479 MJ/t/yr = 5.81 MJ/t/tick = 2.16 x weighted SMR
+    high    cod 11338 haddock 9297 LRD 7977 plaice/dab 7977 witch 5286 -> group 9401 MJ/t/yr = 6.44 MJ/t/tick = 2.40 x weighted SMR
+
+Per-species multipliers on the prior SMR denominators (central Route B):
+  cod      FMR  11338  SMR 3.53 MJ/t/tick (5154/yr)  -> 2.20 x SMR   (prior 2.20)
+  haddock  FMR   7937  SMR 2.50 MJ/t/tick (3650/yr)  -> 2.17 x SMR   (prior 1.70)
+  LRD      FMR   9637  SMR 1.50 MJ/t/tick (2190/yr)  -> 4.40 x SMR   (prior 1.40)
+  plaice   FMR   6431  SMR 2.85 MJ/t/tick (4161/yr)  -> 1.55 x SMR   (prior 1.40)
+  witch    FMR   4288  SMR 1.26 MJ/t/tick (1840/yr)  -> 2.33 x SMR   (prior 1.40)
+
+Route A (absolute, Chung calibration; Barents fish extrapolated to 7.5 C with Q10 2 / 2.67 / 3):
+  Q10 2    group 10211 MJ/t/yr
+  Q10 2.67 group 11593 MJ/t/yr
+  Q10 3    group 12211 MJ/t/yr
+
+biomass weight on own-species otolith FMR: 0.90 (cod, haddock, LRD, plaice, witch); prior note: 0.32 (cod only)

@@ -1,0 +1,38 @@
+1. Respiration (E21 Saborowski 2002; E33 Spicer & Saborowski 2010 Table 4.4)
+  acclimatised at ambient T (30-35)     32.5 umol/gDW/h ->   75.5 MJ/t/d ( 18.9 MJ/t/tick) = 1.51 %/d of body energy [DW/WW 0.2-0.27: 69-93 MJ/t/d]
+  Kosterfjorden 5-6 C low               21.9 umol/gDW/h ->   50.9 MJ/t/d ( 12.7 MJ/t/tick) = 1.02 %/d of body energy [DW/WW 0.2-0.27: 46-62 MJ/t/d]
+  Kosterfjorden 5-6 C high              40.6 umol/gDW/h ->   94.3 MJ/t/d ( 23.6 MJ/t/tick) = 1.89 %/d of body energy [DW/WW 0.2-0.27: 86-116 MJ/t/d]
+  Gullmarsfjord 6.5 C                   46.9 umol/gDW/h ->  109.0 MJ/t/d ( 27.2 MJ/t/tick) = 2.18 %/d of body energy [DW/WW 0.2-0.27: 99-134 MJ/t/d]
+  Kattegat 4 C                          33.3 umol/gDW/h ->   77.4 MJ/t/d ( 19.3 MJ/t/tick) = 1.55 %/d of body energy [DW/WW 0.2-0.27: 70-95 MJ/t/d]
+  Clyde 4 C                             23.2 umol/gDW/h ->   53.9 MJ/t/d ( 13.5 MJ/t/tick) = 1.08 %/d of body energy [DW/WW 0.2-0.27: 49-66 MJ/t/d]
+  Clyde 16 C                            58.9 umol/gDW/h ->  136.8 MJ/t/d ( 34.2 MJ/t/tick) = 2.74 %/d of body energy [DW/WW 0.2-0.27: 124-168 MJ/t/d]
+
+2. T. inermis starved (E35 Huenerlage et al. 2015)
+  7.6 J/d per 120 mg FW -> 63 MJ/t/d (6 umol O2/h/g FW x 0.44 x 24 = 63 J/g FW/d)
+  dry weight 30.0 -> 20.5 mg in 28 d: 32 % DW lost, 1.35 %/d
+
+3. Maximum ingestion (E34 McClatchie 1985 / PANGAEA 835086), 10 C, 'cultures isolated from Digby Neck' (food type not stated in the record)
+  33.8 ug C/h = 0.811 mg C/d = 5.6 % body C/d; max clearance 59.1 ml/h = 1.42 l/d per animal
+
+4. Copepod ration (E22 Bamstedt & Karlson 1998), % of body DW per day
+  lab mean                    12.7 %DW/d (copepod energy/DW ~ krill energy/DW assumed)
+  lab max                     33.0 %DW/d (copepod energy/DW ~ krill energy/DW assumed)
+  field station means low      1.0 %DW/d (copepod energy/DW ~ krill energy/DW assumed)
+  field station means high    20.0 %DW/d (copepod energy/DW ~ krill energy/DW assumed)
+
+5. Tarling 2003 (E23), Clyde summer model: assimilated 25 (male) / 35 (female) J/d
+  per 0.15 g WW adult: 167-233 MJ/t/d = 3.3-4.7 %/d of body energy
+  per 0.23 g WW adult: 109-152 MJ/t/d = 2.2-3.0 %/d of body energy
+  per 0.30 g WW adult: 83-117 MJ/t/d = 1.7-2.3 %/d of body energy
+
+6. Mortality (E23 Tarling 2003): adult beta 0.003 /d
+  0.002 /d = 0.73 /yr
+  0.003 /d = 1.09 /yr
+  0.004 /d = 1.46 /yr
+
+7. Clearance per tonne of krill per 6-h tick [I from M]
+  copepods at 2.0 l-1: 0.60 l/ind/h; adult 0.15 g WW -> 24,000 m3/t/tick
+  copepods at 2.0 l-1: 0.60 l/ind/h; adult 0.23 g WW -> 15,652 m3/t/tick
+  copepods at 1.2 l-1: 1.00 l/ind/h; adult 0.15 g WW -> 40,000 m3/t/tick
+  copepods at 1.2 l-1: 1.00 l/ind/h; adult 0.23 g WW -> 26,087 m3/t/tick
+  McClatchie max 59.1 ml/h, animal ~0.15 g WW (C/DW 0.45 assumed) -> 2,408 m3/t/tick

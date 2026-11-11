@@ -1,0 +1,114 @@
+conversion: 1 mg O2/kg/h = 119.1 MJ/t/yr = 0.0816 MJ/t/tick
+
+cod      all      n  64  mass 4-6210 g (median 1013)  T 2.2 (0.4-10.2) C  VO2 mean 95 median 79 mg O2/kg/h
+cod      >=100 g  n  56  mass 210-6210 g (median 1185)  T 1.7 (0.4-8.6) C  VO2 mean 75 median 69 mg O2/kg/h
+haddock  all      n  52  mass 27-4300 g (median 739)  T 4.0 (2.0-7.8) C  VO2 mean 75 median 71 mg O2/kg/h
+haddock  >=100 g  n  38  mass 406-4300 g (median 2155)  T 3.5 (2.0-7.8) C  VO2 mean 65 median 66 mg O2/kg/h
+LRD      all      n  22  mass 4-490 g (median 28)  T 3.4 (0.7-7.2) C  VO2 mean 91 median 83 mg O2/kg/h
+LRD      >=100 g  n   8  mass 111-490 g (median 340)  T 2.6 (0.7-7.0) C  VO2 mean 72 median 66 mg O2/kg/h
+
+--- adults >= 100 g, T coefficient fitted: n = 102, residual SD (ln) = 0.261
+  a_cod = 3.880 +- 0.237
+  a_haddock = 3.550 +- 0.257
+  a_LRD = 3.815 +- 0.215
+  b (ln mass) = 0.033 +- 0.032
+  c (per C) = 0.098 +- 0.019  -> Q10 2.67
+  haddock/cod FMR ratio at equal mass and T = 0.72 (95 % CI 0.63-0.82)
+  LRD/cod FMR ratio at equal mass and T = 0.94 (95 % CI 0.76-1.16)
+--- adults >= 100 g, Q10 2 imposed: n = 102, residual SD (ln) = 0.263
+  a_cod = 3.980 +- 0.230
+  a_haddock = 3.704 +- 0.238
+  a_LRD = 3.932 +- 0.203
+  b (ln mass) = 0.025 +- 0.032
+  c fixed = 0.0693 (Q10 2.00)
+  haddock/cod FMR ratio at equal mass and T = 0.76 (95 % CI 0.68-0.85)
+  LRD/cod FMR ratio at equal mass and T = 0.95 (95 % CI 0.77-1.18)
+--- adults >= 100 g, Q10 3 imposed: n = 102, residual SD (ln) = 0.261
+  a_cod = 3.839 +- 0.227
+  a_haddock = 3.487 +- 0.236
+  a_LRD = 3.767 +- 0.201
+  b (ln mass) = 0.036 +- 0.032
+  c fixed = 0.1099 (Q10 3.00)
+  haddock/cod FMR ratio at equal mass and T = 0.70 (95 % CI 0.63-0.78)
+  LRD/cod FMR ratio at equal mass and T = 0.93 (95 % CI 0.75-1.15)
+--- all sizes incl. juveniles, T fitted: n = 138, residual SD (ln) = 0.276
+  a_cod = 4.665 +- 0.128
+  a_haddock = 4.313 +- 0.147
+  a_LRD = 4.376 +- 0.113
+  b (ln mass) = -0.079 +- 0.016
+  c (per C) = 0.112 +- 0.014  -> Q10 3.08
+  haddock/cod FMR ratio at equal mass and T = 0.70 (95 % CI 0.63-0.79)
+  LRD/cod FMR ratio at equal mass and T = 0.75 (95 % CI 0.64-0.87)
+
+Predicted FMR_oto at the model's effective mass and 7.5 C (extrapolated):
+  [fitted] cod 1200 g 127 mg/kg/h = 15183 MJ/t/yr = 10.40 MJ/t/tick; haddock 275 g 87 mg/kg/h = 10401 MJ/t/yr = 7.12 MJ/t/tick; LRD 170 g 112 mg/kg/h = 13347 MJ/t/yr = 9.14 MJ/t/tick
+  [q10_2] cod 1200 g 108 mg/kg/h = 12830 MJ/t/yr = 8.79 MJ/t/tick; haddock 275 g 79 mg/kg/h = 9386 MJ/t/yr = 6.43 MJ/t/tick; LRD 170 g 98 mg/kg/h = 11641 MJ/t/yr = 7.97 MJ/t/tick
+  [q10_3] cod 1200 g 136 mg/kg/h = 16252 MJ/t/yr = 11.13 MJ/t/tick; haddock 275 g 91 mg/kg/h = 10842 MJ/t/yr = 7.43 MJ/t/tick; LRD 170 g 118 mg/kg/h = 14106 MJ/t/yr = 9.66 MJ/t/tick
+
+Other flatfish (no within-site cod comparator):
+  plaice, Jones 2023 Table 3: mean 54 mg/kg/h at mean 8 C, 200-800 g -> 6433 MJ/t/yr; per-fish SD 36
+  Glyptocephalus_cynoglossus: n 5, VO2 mean 36 (range 28-41) mg/kg/h at T 8.4 C, mass 215-1027 g -> 4238 MJ/t/yr at that T
+  Limanda_limanda: n 4, VO2 mean 178 (range 129-199) mg/kg/h at T 17.8 C, mass 100-198 g -> 21151 MJ/t/yr at that T
+  Microstomus_kitt: n 5, VO2 mean 119 (range 84-169) mg/kg/h at T 14.6 C, mass 97-234 g -> 14204 MJ/t/yr at that T
+
+SMR denominators and multipliers:
+  cod SMR at 7.5 C (Schurmann & Steffensen 1997, interpolated): 45.0; prior-note group table 3.53 MJ/t/tick at 7 C = 43.3 mg/kg/h (1.2 kg)
+  [fitted] FMR_oto / prior-note SMR (cod 3.53, haddock 2.50, LRD 1.50 MJ/t/tick at ~7 C): cod 2.95, haddock 2.85, LRD 6.09
+  [q10_2] FMR_oto / prior-note SMR (cod 3.53, haddock 2.50, LRD 1.50 MJ/t/tick at ~7 C): cod 2.49, haddock 2.57, LRD 5.32
+  [q10_3] FMR_oto / prior-note SMR (cod 3.53, haddock 2.50, LRD 1.50 MJ/t/tick at ~7 C): cod 3.15, haddock 2.97, LRD 6.44
+  haddock multiplier at 275 g = cod multiplier 2.2 x FMR ratio(275 g / 1200 g) / SMR ratio(275 g / 1200 g):
+    [fitted] FMR ratio 0.69; SMR ratio Norin 0.54 x1.34 = 0.73: haddock multiplier 2.08
+    [fitted] FMR ratio 0.69; SMR ratio Perez-Casanova 0.64 x1.34 = 0.86: haddock multiplier 1.75
+    [fitted] FMR ratio 0.69; SMR ratio Perez-Casanova 0.75 x1.34 = 1.01: haddock multiplier 1.50
+    [fitted] FMR ratio 0.69; SMR ratio prior table 2.50/3.53 = 0.71: haddock multiplier 2.13
+    [q10_2] FMR ratio 0.73; SMR ratio Norin 0.54 x1.34 = 0.73: haddock multiplier 2.22
+    [q10_2] FMR ratio 0.73; SMR ratio Perez-Casanova 0.64 x1.34 = 0.86: haddock multiplier 1.87
+    [q10_2] FMR ratio 0.73; SMR ratio Perez-Casanova 0.75 x1.34 = 1.01: haddock multiplier 1.60
+    [q10_2] FMR ratio 0.73; SMR ratio prior table 2.50/3.53 = 0.71: haddock multiplier 2.27
+    [q10_3] FMR ratio 0.67; SMR ratio Norin 0.54 x1.34 = 0.73: haddock multiplier 2.02
+    [q10_3] FMR ratio 0.67; SMR ratio Perez-Casanova 0.64 x1.34 = 0.86: haddock multiplier 1.71
+    [q10_3] FMR ratio 0.67; SMR ratio Perez-Casanova 0.75 x1.34 = 1.01: haddock multiplier 1.46
+    [q10_3] FMR ratio 0.67; SMR ratio prior table 2.50/3.53 = 0.71: haddock multiplier 2.07
+
+Diet-baseline sensitivity (C_resp recomputed by two-source mixing; check against the Bayesian value):
+  species diet d13C used by Alewijnse at the site: {'cod': -22.15, 'LRD': -20.27, 'haddock': -21.4}
+--- adults, Q10 2 imposed, diet own species values: n = 102, residual SD (ln) = 0.262
+  a_cod = 3.980 +- 0.229
+  a_haddock = 3.703 +- 0.237
+  a_LRD = 3.930 +- 0.202
+  b (ln mass) = 0.026 +- 0.032
+  c fixed = 0.0693 (Q10 2.00)
+  haddock/cod FMR ratio at equal mass and T = 0.76 (95 % CI 0.68-0.85)
+  LRD/cod FMR ratio at equal mass and T = 0.95 (95 % CI 0.77-1.18)
+--- adults, Q10 2 imposed, diet common = cod -22.15: n = 102, residual SD (ln) = 0.261
+  a_cod = 3.975 +- 0.227
+  a_haddock = 3.653 +- 0.236
+  a_LRD = 3.811 +- 0.201
+  b (ln mass) = 0.026 +- 0.032
+  c fixed = 0.0693 (Q10 2.00)
+  haddock/cod FMR ratio at equal mass and T = 0.72 (95 % CI 0.65-0.81)
+  LRD/cod FMR ratio at equal mass and T = 0.85 (95 % CI 0.69-1.05)
+--- adults, Q10 2 imposed, diet common = LRD -20.27: n = 102, residual SD (ln) = 0.272
+  a_cod = 4.086 +- 0.238
+  a_haddock = 3.754 +- 0.246
+  a_LRD = 3.916 +- 0.210
+  b (ln mass) = 0.028 +- 0.033
+  c fixed = 0.0693 (Q10 2.00)
+  haddock/cod FMR ratio at equal mass and T = 0.72 (95 % CI 0.64-0.80)
+  LRD/cod FMR ratio at equal mass and T = 0.84 (95 % CI 0.68-1.05)
+--- adults, Q10 2 imposed, diet common = haddock -21.40: n = 102, residual SD (ln) = 0.265
+  a_cod = 4.018 +- 0.231
+  a_haddock = 3.692 +- 0.240
+  a_LRD = 3.852 +- 0.204
+  b (ln mass) = 0.027 +- 0.032
+  c fixed = 0.0693 (Q10 2.00)
+  haddock/cod FMR ratio at equal mass and T = 0.72 (95 % CI 0.65-0.81)
+  LRD/cod FMR ratio at equal mass and T = 0.85 (95 % CI 0.68-1.05)
+
+  plaice: 54 / SMR Fonds 400 g at 8 C (31.2) = 1.73
+  plaice: 54 / SMR Fonds 150 g at 8 C (38.7) = 1.39
+  witch: 35 / SMR Moser 1996 400 g at 8.4 C (Q10 2.2) (13.4) = 2.61
+  witch: 35 / SMR Moser 1996 150 g at 8.4 C (18.0) = 1.94
+  witch: 35 / SMR plaice Fonds 400 g at 8.4 C (32.1) = 1.09
+  dab: 176 / plaice SMR 150 g at 17.8 C (77) = 2.29 (summer, English Channel; a bound only)
+  lemon sole: 114 / plaice SMR 150 g at 14.6 C (61) = 1.85

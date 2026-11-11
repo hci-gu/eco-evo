@@ -1,0 +1,25 @@
+Barents site (72.797 N), outer otolith edge, per species:
+  cod      n  64 (>=100 g:  56); mass 4-6210 g; T 0.4-10.2 C (mean 2.2); C_resp 0.125; VO2 mean 95 mg O2/kg/h
+  haddock  n  52 (>=100 g:  38); mass 27-4300 g; T 2.0-7.8 C (mean 4.0); C_resp 0.115; VO2 mean 75 mg O2/kg/h
+  bw       n  18 (>=100 g:  18); mass 102-304 g; T 4.3-7.6 C (mean 5.5); C_resp 0.163; VO2 mean 129 mg O2/kg/h
+--- cod + bw >= 100 g, T fitted: n 74, resid SD 0.239, b 0.046, c 0.119 (Q10 3.29); bw/cod at equal mass and T = 1.21 (95 % CI 0.91-1.61)
+--- cod + bw + haddock >= 100 g, T fitted: n 112, resid SD 0.257, b 0.033, c 0.103 (Q10 2.81); bw/cod at equal mass and T = 1.26 (95 % CI 1.01-1.57)
+--- cod + bw >= 100 g, Q10 2 imposed: n 74, resid SD 0.243, b 0.061, c 0.069 (Q10 2.00); bw/cod at equal mass and T = 1.51 (95 % CI 1.25-1.82)
+--- cod + bw >= 100 g, Q10 3 imposed: n 74, resid SD 0.237, b 0.048, c 0.110 (Q10 3.00); bw/cod at equal mass and T = 1.26 (95 % CI 1.05-1.52)
+
+Cod-anchored blue whiting FMR at 7.5 C (the sibling's cod 11 338 MJ/t/yr at 1.2 kg x ratio x (m/1200)^b):
+  [fit_cb] b 0.046: 60 g 11989 (9020-15934); 100 g 12270 (9232-16309); 150 g 12499 (9404-16613) MJ/t/yr
+  [fit_cbh] b 0.033: 60 g 12917 (10335-16144); 100 g 13135 (10510-16417); 150 g 13311 (10651-16637) MJ/t/yr
+  [q10_2] b 0.061: 60 g 14255 (11819-17194); 100 g 14705 (12192-17736); 150 g 15072 (12496-18178) MJ/t/yr
+  [q10_3] b 0.048: 60 g 12381 (10315-14861); 100 g 12691 (10573-15233); 150 g 12942 (10782-15535) MJ/t/yr
+
+Face value of the Chung calibration, blue whiting by site (all rows; C_resp < 0.243):
+  lat 54.08: n 3, mass 153-306 g, T 10.9 C (9.9-11.9), VO2 90 (43-150) mg/kg/h = 10692 MJ/t/yr
+  lat 57.10: n 7, mass 122-464 g, T 7.7 C (6.8-9.3), VO2 68 (38-134) mg/kg/h = 8069 MJ/t/yr
+  lat 72.80: n 18, mass 102-304 g, T 5.5 C (4.3-7.6), VO2 129 (83-177) mg/kg/h = 15342 MJ/t/yr
+
+Small pelagics with C_resp at or above the calibration asymptote 0.243 (no VO2 obtainable):
+  Sprattus_sprattus: n 5, C_resp 0.336-0.415, T 7.3-12.8 C, mass 4-25 g, sample {'whole'}, source {'IFREMER'}
+  Engraulis_encrasicolus: n 5, C_resp 0.295-0.368, T 7.7-10.2 C, mass 8-18 g, sample {'whole'}, source {'IFREMER'}
+  Clupea harengus, Trisopterus esmarkii: not in the dataset.
+  species in the dataset: 117; clupeoids/planktivore members present: ['Engraulis_encrasicolus', 'Micromesistius_poutassou', 'Sprattus_sprattus']

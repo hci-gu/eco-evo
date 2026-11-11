@@ -1,0 +1,8 @@
+series,lat,lon,n,mean_u_cm_s,mean_v_cm_s,mean_speed_vector_cm_s,dir_to_deg,std_u_cm_s,std_v_cm_s,mean_scalar_speed_cm_s
+radar_hourly_matched,58.385,10.005,1884,-2.136,-0.668,2.238,252.625,18.764,19.954,23.776
+norkyst0m_hourly_matched,58.388,10.002,1884,1.219,3.849,4.038,17.571,22.874,22.070,26.051
+norkyst0m_hourly_all,58.388,10.002,8640,-0.996,5.064,5.161,348.874,23.317,21.535,26.326
+radar_daily(>=12h),58.385,10.005,46,-5.860,-0.172,5.863,268.320,11.461,9.818,14.119
+norkyst0m_daily_same_hours,58.388,10.002,46,0.663,5.137,5.179,7.351,11.098,9.976,13.495
+# hourly correlation radar vs model: r_u=0.443 r_v=0.474 (n=1884 hours)
+# daily correlation (days with >=12 matched hours, n=46): r_u=0.686 r_v=0.759

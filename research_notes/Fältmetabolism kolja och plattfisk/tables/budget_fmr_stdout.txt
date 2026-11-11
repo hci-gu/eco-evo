@@ -1,0 +1,107 @@
+1. Finding-3 subtraction: activity left = (FMR - SDA - synthesis c P (ec + s ME)) / RM, s 0.62
+   SDA 1533, RM 4862 MJ/t/yr; synthesis per unit c at P 0.74: 3490
+   FMR case                                FMR   library 0.69   cod own 0.49 split, haddock           none   c_max (activity = RM)
+   prior W.2 (1.85 x SMR)                 7260           0.68           0.83           0.91           1.18   0.25
+   223.9 note central (2.0 x SMR)         8200           0.88           1.02           1.10           1.37   0.52
+   otolith low                            7922           0.82           0.96           1.04           1.31   0.44
+   otolith central                        8891           1.02           1.16           1.24           1.51   0.72
+   otolith high                           9979           1.24           1.39           1.46           1.74   1.03
+   otolith central, LRD = plaice          8479           0.93           1.08           1.16           1.43   0.60
+
+2. Field closure (223.9 form): assimilated need = FMR (incl. SDA and synthesis) + P x 4500
+   prior W.2 (1.85 x SMR)               P 0.64:  10140 MJ/t/yr -> Q/B 4.10 (redistributed diet)
+   prior W.2 (1.85 x SMR)               P 0.74:  10590 MJ/t/yr -> Q/B 4.28 (redistributed diet)
+   223.9 note central (2.0 x SMR)       P 0.64:  11080 MJ/t/yr -> Q/B 4.48 (redistributed diet)
+   223.9 note central (2.0 x SMR)       P 0.74:  11530 MJ/t/yr -> Q/B 4.66 (redistributed diet)
+   otolith low                          P 0.64:  10802 MJ/t/yr -> Q/B 4.37 (redistributed diet)
+   otolith low                          P 0.74:  11252 MJ/t/yr -> Q/B 4.55 (redistributed diet)
+   otolith central                      P 0.64:  11771 MJ/t/yr -> Q/B 4.76 (redistributed diet)
+   otolith central                      P 0.74:  12221 MJ/t/yr -> Q/B 4.94 (redistributed diet)
+   otolith high                         P 0.64:  12859 MJ/t/yr -> Q/B 5.20 (redistributed diet)
+   otolith high                         P 0.74:  13309 MJ/t/yr -> Q/B 5.38 (redistributed diet)
+   otolith central, LRD = plaice        P 0.64:  11359 MJ/t/yr -> Q/B 4.60 (redistributed diet)
+   otolith central, LRD = plaice        P 0.74:  11809 MJ/t/yr -> Q/B 4.78 (redistributed diet)
+
+3. Engine need with feeding_cost re-derived from the FMR: FC = (FMR - SDA - synthesis(c)) / RM,
+   need = RM (e FC + (1 - e)) + P (ec + c (ec + s ME)) + LOSS s ME, at e 0.95 (levers.py form)
+   prior W.2 (1.85 x SMR)               c 0.69 fill 1.00: FC 0.68 need   9537 -> Q/B 4.34  (FC < 1: eating cheaper than resting)
+   prior W.2 (1.85 x SMR)               c 0.69 fill 0.62: FC 0.68 need   8915 -> Q/B 4.06  (FC < 1: eating cheaper than resting)
+   prior W.2 (1.85 x SMR)               c 0.49 fill 1.00: FC 0.83 need   9401 -> Q/B 4.28  (FC < 1: eating cheaper than resting)
+   prior W.2 (1.85 x SMR)               c 0.49 fill 0.62: FC 0.83 need   8880 -> Q/B 4.04  (FC < 1: eating cheaper than resting)
+   prior W.2 (1.85 x SMR)               c 0.38 fill 1.00: FC 0.91 need   9326 -> Q/B 4.25  (FC < 1: eating cheaper than resting)
+   prior W.2 (1.85 x SMR)               c 0.38 fill 0.62: FC 0.91 need   8860 -> Q/B 4.03  (FC < 1: eating cheaper than resting)
+   prior W.2 (1.85 x SMR)               c 0.00 fill 1.00: FC 1.18 need   9068 -> Q/B 4.13
+   prior W.2 (1.85 x SMR)               c 0.00 fill 0.62: FC 1.18 need   8794 -> Q/B 4.00
+
+   223.9 note central (2.0 x SMR)       c 0.69 fill 1.00: FC 0.88 need  10430 -> Q/B 4.75  (FC < 1: eating cheaper than resting)
+   223.9 note central (2.0 x SMR)       c 0.69 fill 0.62: FC 0.88 need   9808 -> Q/B 4.46  (FC < 1: eating cheaper than resting)
+   223.9 note central (2.0 x SMR)       c 0.49 fill 1.00: FC 1.02 need  10294 -> Q/B 4.69
+   223.9 note central (2.0 x SMR)       c 0.49 fill 0.62: FC 1.02 need   9773 -> Q/B 4.45
+   223.9 note central (2.0 x SMR)       c 0.38 fill 1.00: FC 1.10 need  10219 -> Q/B 4.65
+   223.9 note central (2.0 x SMR)       c 0.38 fill 0.62: FC 1.10 need   9753 -> Q/B 4.44
+   223.9 note central (2.0 x SMR)       c 0.00 fill 1.00: FC 1.37 need   9961 -> Q/B 4.53
+   223.9 note central (2.0 x SMR)       c 0.00 fill 0.62: FC 1.37 need   9687 -> Q/B 4.41
+
+   otolith low                          c 0.69 fill 1.00: FC 0.82 need  10166 -> Q/B 4.63  (FC < 1: eating cheaper than resting)
+   otolith low                          c 0.69 fill 0.62: FC 0.82 need   9543 -> Q/B 4.34  (FC < 1: eating cheaper than resting)
+   otolith low                          c 0.49 fill 1.00: FC 0.96 need  10030 -> Q/B 4.57  (FC < 1: eating cheaper than resting)
+   otolith low                          c 0.49 fill 0.62: FC 0.96 need   9509 -> Q/B 4.33  (FC < 1: eating cheaper than resting)
+   otolith low                          c 0.38 fill 1.00: FC 1.04 need   9955 -> Q/B 4.53
+   otolith low                          c 0.38 fill 0.62: FC 1.04 need   9489 -> Q/B 4.32
+   otolith low                          c 0.00 fill 1.00: FC 1.31 need   9697 -> Q/B 4.41
+   otolith low                          c 0.00 fill 0.62: FC 1.31 need   9423 -> Q/B 4.29
+
+   otolith central                      c 0.69 fill 1.00: FC 1.02 need  11087 -> Q/B 5.05
+   otolith central                      c 0.69 fill 0.62: FC 1.02 need  10464 -> Q/B 4.76
+   otolith central                      c 0.49 fill 1.00: FC 1.16 need  10951 -> Q/B 4.98
+   otolith central                      c 0.49 fill 0.62: FC 1.16 need  10429 -> Q/B 4.75
+   otolith central                      c 0.38 fill 1.00: FC 1.24 need  10876 -> Q/B 4.95
+   otolith central                      c 0.38 fill 0.62: FC 1.24 need  10410 -> Q/B 4.74
+   otolith central                      c 0.00 fill 1.00: FC 1.51 need  10617 -> Q/B 4.83
+   otolith central                      c 0.00 fill 0.62: FC 1.51 need  10344 -> Q/B 4.71
+
+   otolith high                         c 0.69 fill 1.00: FC 1.24 need  12120 -> Q/B 5.52
+   otolith high                         c 0.69 fill 0.62: FC 1.24 need  11498 -> Q/B 5.23
+   otolith high                         c 0.49 fill 1.00: FC 1.39 need  11984 -> Q/B 5.45
+   otolith high                         c 0.49 fill 0.62: FC 1.39 need  11463 -> Q/B 5.22
+   otolith high                         c 0.38 fill 1.00: FC 1.46 need  11909 -> Q/B 5.42
+   otolith high                         c 0.38 fill 0.62: FC 1.46 need  11444 -> Q/B 5.21
+   otolith high                         c 0.00 fill 1.00: FC 1.74 need  11651 -> Q/B 5.30
+   otolith high                         c 0.00 fill 0.62: FC 1.74 need  11377 -> Q/B 5.18
+
+   otolith central, LRD = plaice        c 0.69 fill 1.00: FC 0.93 need  10695 -> Q/B 4.87  (FC < 1: eating cheaper than resting)
+   otolith central, LRD = plaice        c 0.69 fill 0.62: FC 0.93 need  10073 -> Q/B 4.58  (FC < 1: eating cheaper than resting)
+   otolith central, LRD = plaice        c 0.49 fill 1.00: FC 1.08 need  10559 -> Q/B 4.81
+   otolith central, LRD = plaice        c 0.49 fill 0.62: FC 1.08 need  10038 -> Q/B 4.57
+   otolith central, LRD = plaice        c 0.38 fill 1.00: FC 1.16 need  10484 -> Q/B 4.77
+   otolith central, LRD = plaice        c 0.38 fill 0.62: FC 1.16 need  10019 -> Q/B 4.56
+   otolith central, LRD = plaice        c 0.00 fill 1.00: FC 1.43 need  10226 -> Q/B 4.65
+   otolith central, LRD = plaice        c 0.00 fill 0.62: FC 1.43 need   9952 -> Q/B 4.53
+
+4. Per species, FMR from tables/group_fmr_stdout.txt (Route B central, low-high) and RM = 1.2 x SMR,
+   own lab residual c, group P 0.74 (species P not known), SDA at the group value
+   haddock  central FMR   7937 RM  4380: activity left at own c 0.84 = 0.79 x RM; c_max (activity = RM) 0.58
+   haddock  low     FMR   6803 RM  4380: activity left at own c 0.84 = 0.53 x RM; c_max (activity = RM) 0.26
+   haddock  high    FMR   9297 RM  4380: activity left at own c 0.84 = 1.10 x RM; c_max (activity = RM) 0.97
+   plaice   central FMR   6431 RM  4993: activity left at own c 0.75 = 0.46 x RM; c_max (activity = RM) -0.03
+   plaice   low     FMR   4487 RM  4993: activity left at own c 0.75 = 0.07 x RM; c_max (activity = RM) -0.58
+   plaice   high    FMR   7977 RM  4993: activity left at own c 0.75 = 0.77 x RM; c_max (activity = RM) 0.42
+   cod      central FMR  11338 RM  6185: activity left at own c 0.49 = 1.31 x RM; c_max (activity = RM) 1.04
+   cod      low     FMR  11338 RM  6185: activity left at own c 0.49 = 1.31 x RM; c_max (activity = RM) 1.04
+   cod      high    FMR  11338 RM  6185: activity left at own c 0.49 = 1.31 x RM; c_max (activity = RM) 1.04
+
+5. Per species with own field P (eggs excluded, as in the engine) and both FMR routes:
+   haddock P 0.43-0.61 /yr (Jones 1978 Table 2, 217-362 g); plaice P ~0.34 /yr (Rijnsdorp & Ibelings
+   1989: somatic 543 kJ/yr on a ~1 600 kJ spent female). Otolith = Route B; ration = Q3 (E8, E11).
+   haddock  otolith low              FMR   6803: P 0.43: c_max  0.44, activity at own c 0.84 0.81 x RM; P 0.61: c_max  0.31, activity at own c 0.84 0.65 x RM
+   haddock  otolith central          FMR   7937: P 0.43: c_max  1.00, activity at own c 0.84 1.07 x RM; P 0.61: c_max  0.70, activity at own c 0.84 0.91 x RM
+   haddock  otolith high             FMR   9297: P 0.43: c_max  1.67, activity at own c 0.84 1.38 x RM; P 0.61: c_max  1.18, activity at own c 0.84 1.22 x RM
+   haddock  ration single-meal       FMR   4900: P 0.43: c_max -0.50, activity at own c 0.84 0.38 x RM; P 0.61: c_max -0.35, activity at own c 0.84 0.22 x RM
+   haddock  ration continuous 450 g  FMR   9400: P 0.43: c_max  1.72, activity at own c 0.84 1.41 x RM; P 0.61: c_max  1.21, activity at own c 0.84 1.24 x RM
+   haddock  ration continuous 600 g  FMR  11200: P 0.43: c_max  2.61, activity at own c 0.84 1.82 x RM; P 0.61: c_max  1.84, activity at own c 0.84 1.66 x RM
+   plaice   otolith low              FMR   4487: P 0.34: c_max -1.27, activity at own c 0.75 0.35 x RM
+   plaice   otolith central          FMR   6431: P 0.34: c_max -0.06, activity at own c 0.75 0.74 x RM
+   plaice   otolith high             FMR   7977: P 0.34: c_max  0.90, activity at own c 0.75 1.05 x RM
+   plaice   ration annual (weak)     FMR   7900: P 0.34: c_max  0.86, activity at own c 0.75 1.03 x RM
+
+6. Group c_max at the central otolith FMR with a realistic-meal SDA 0.13 of intake (x1.3 of 1 533): 0.58

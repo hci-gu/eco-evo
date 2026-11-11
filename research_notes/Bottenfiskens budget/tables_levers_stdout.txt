@@ -1,0 +1,17 @@
+field-implied net intake at Q/B 4.46: 9799 MJ/t/yr
+case                                           costs      G refill   need Q/B needed
+library, trained fish (e 0.95, fill 1)          5693   5421    720  11835       5.39
+c 0.49 (cod alone, 241.2)                       5693   4622    720  11035       5.02
+c 0 (no growth cost)                            5693   2664    720   9077       4.13
+P 0.64 (Z, the 223.9 budget's production)       5693   4689    720  11102       5.05
+fill at the field mean 0.62                     5693   5072    446  11212       5.10
+eating share 0.5                                5300   5421    720  11441       5.21
+c 0.49 + fill 0.62                              5693   4374    446  10514       4.79
+c 0.49 + fill 0.62 + P 0.64                     5693   3783    446   9923       4.52
+
+field frame (223.9 table: FMR incl. SDA 8200 (6100-10200), P 2900 = Z 0.64 x 4500):
+  model metabolism without c (action costs at e 0.95): 5693 + SDA (netted from intake)
+  model synthesis cost c P (ec + ME): 2757
+  model deposition P ec + refill (s ME x losses): 2664 + 720 = 3384
+  FMR-derived feeding_cost if the field synthesis at P 0.74 is taken out of the 240.2 FMR 4.97/tick:
+    (4.97 - SDA 1.05 - synthesis 1.65) / RM 3.33 = 0.68  (resting_cost 1.0)

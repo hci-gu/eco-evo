@@ -1,0 +1,49 @@
+================================================================================================================
+A. Krill pair (water column), library derivation (section 245 / 253 / 262), central
+================================================================================================================
+R_sat on krill = min(R0 0.869 m (k_v 100.0, L 25 mm, beam c 0.25), cap 2.0 L_pred); R_nv 0.1 m; p 0.5; scan 0.5; u_krill 0.04 m/s; Ke_gad 0.02 lx; day share of the year (sun > 0.0 deg) 0.500
+reproduction, class a: 0.06774 / 0.03144 / 0.005791 / 0.0001364   library 0.068 / 0.031 / 0.0058 / 0.00014
+equal-cell a 0.02596 (library 0.026)
+
+Per member, per class: W | share of the class a | O_eff (1/m, x1000) | R_eff (m) | night share of a
+  saithe < 60 cm         W 0.504 R_sat 0.86 N_t v_rel(day)    535.6: 0.76  22.34 0.71 0.02 | 0.78   9.73 0.74 0.01 | 0.79   2.80 0.60 0.03 | 0.75   0.16 0.37 0.96
+  saithe >= 60 cm        W 0.293 R_sat 0.87 N_t v_rel(day)    213.3: 0.18  22.32 0.72 0.02 | 0.18   9.72 0.75 0.01 | 0.19   2.80 0.60 0.03 | 0.18   0.16 0.38 0.96
+  spurdog                W 0.097 R_sat 0.87 N_t v_rel(day)    220.2: 0.00  24.37 0.10 0.42 | 0.00   8.77 0.10 0.48 | 0.00   3.08 0.10 0.71 | 0.07   2.50 0.10 0.88
+  hake juvenile          W 0.001 R_sat 0.27 N_t v_rel(day)   4013.6: 0.00  29.62 0.23 0.09 | 0.00  11.18 0.21 0.10 | 0.00   3.42 0.15 0.30 | 0.00   0.00 0.22 0.00
+  hake adult             W 0.047 R_sat 0.73 N_t v_rel(day)    387.3: 0.05  29.62 0.59 0.03 | 0.03  11.18 0.55 0.03 | 0.02   3.42 0.32 0.07 | 0.00   0.00 0.56 0.00
+  velvet belly           W 0.009 R_sat 0.76 N_t v_rel(day)    929.5: 0.00   0.00 0.00 0.00 | 0.00   0.00 0.00 0.00 | 0.00   3.63 0.10 0.27 | 0.00   0.00 0.00 0.00
+  pollack                W 0.008 R_sat 0.87 N_t v_rel(day)    263.1: 0.01  22.32 0.72 0.02 | 0.01   9.72 0.75 0.01 | 0.01   2.80 0.60 0.03 | 0.01   0.16 0.38 0.96
+
+Krill day layer and daytime light at the layer, at each class's median bed (measured light):
+  < 100 m    median bed    83 m: layer  60.0- 82.2 m (   1 m above bed); daytime median light at its centre 2.4 lx, gadoid g 0.99
+  100-150 m  median bed   123 m: layer  80.0-110.0 m (  13 m above bed); daytime median light at its centre 0.568 lx, gadoid g 0.97
+  150-250 m  median bed   190 m: layer 115.8-153.9 m (  36 m above bed); daytime median light at its centre 0.0548 lx, gadoid g 0.73
+  > 250 m    median bed   325 m: layer 113.7-163.7 m ( 161 m above bed); daytime median light at its centre 0.0431 lx, gadoid g 0.68
+
+================================================================================================================
+B. Fish pairs (section 220 in-layer encounter, rest water column, per whole-group tonne), central
+================================================================================================================
+  planktivores (243.3 pool shares, dispersed prey): 0.005948  (library 0.0060)
+  benthivores in-layer 0.06507 (243: 0.0651) x member overlaps -> 0.005692 (library 0.0055)
+  whiting (H 10 m, no overlap factor): 0.01301  (library 0.013)
+  mackerel prey (planktivore geometry, eaters only; per rest tonne): 0.001171 (library 0.00088 after the 228 split-script's own pool shares; geometry only, not re-derived here)
+
+Saithe < 60 cm (L 0.430 m, N/t 1241, v 0.430 m/s day, 0.258 night), in-layer terms per prey type:
+  herring+sprat day              R 0.50 m  H  70.0 m  O = 1/H  14.29 e-3/m  A/pi 0.250 m2  v_rel 0.461 m/s  p 0.2
+  herring+sprat night            R 0.20 m  H  40.0 m  O = 1/H  25.00 e-3/m  A/pi 0.040 m2  v_rel 0.310 m/s  p 0.2
+  pout (day and night)           R 0.20 m  H  15.0 m  O = 1/H  66.67 e-3/m  A/pi 0.040 m2  v_rel 0.438 m/s  p 0.2
+  blue whiting (day and night)   R 0.20 m  H  50.0 m  O = 1/H  20.00 e-3/m  A/pi 0.040 m2  v_rel 0.438 m/s  p 0.2
+  juvenile benthivores day       R 0.25 m  H   2.0 m  O = 1/H 500.00 e-3/m  A/pi 0.062 m2  v_rel 0.438 m/s  p 0.2
+  juvenile benthivores night     R 0.20 m  H   2.0 m  O = 1/H 500.00 e-3/m  A/pi 0.040 m2  v_rel 0.271 m/s  p 0.2
+  whiting day                    R 0.25 m  H  10.0 m  O = 1/H 100.00 e-3/m  A/pi 0.062 m2  v_rel 0.438 m/s  p 0.2
+  whiting night                  R 0.20 m  H  10.0 m  O = 1/H 100.00 e-3/m  A/pi 0.040 m2  v_rel 0.271 m/s  p 0.2
+
+================================================================================================================
+C. The same saithe < 60 cm met in the krill pair's convention (band O, one vision function, measured light)
+================================================================================================================
+  krill                              R_sat 0.86 R_nv 0.10: O day/night x1000 by class 31.36/22.07 | 15.90/5.89 | 4.58/1.69 | 0.00/0.53; R_eff 0.71 / 0.74 / 0.60 / 0.37
+  pout                               R_sat 0.86 R_nv 0.20: O day/night x1000 by class 40.34/28.31 | 39.77/25.53 | 39.73/24.32 | 39.73/23.62; R_eff 0.72 / 0.66 / 0.38 / 0.20
+  herring                            R_sat 0.86 R_nv 0.20: O day/night x1000 by class 24.77/3.98 | 6.12/1.45 | 2.55/1.40 | 2.43/1.40; R_eff 0.81 / 0.77 / 0.44 / 0.28
+  blue whiting                       R_sat 0.86 R_nv 0.20: O day/night x1000 by class 37.39/12.51 | 36.86/4.84 | 27.26/1.01 | 19.29/0.92; R_eff 0.78 / 0.75 / 0.49 / 0.21
+  juvenile benthivores (bottom 2 m)  R_sat 0.86 R_nv 0.20: O day/night x1000 by class 63.37/80.91 | 62.47/80.65 | 62.41/80.65 | 62.41/80.65; R_eff 0.65 / 0.58 / 0.33 / 0.20
+  whiting (bottom 10 m)              R_sat 0.86 R_nv 0.20: O day/night x1000 by class 49.41/57.31 | 48.70/57.12 | 48.66/57.12 | 48.66/57.12; R_eff 0.66 / 0.60 / 0.35 / 0.20

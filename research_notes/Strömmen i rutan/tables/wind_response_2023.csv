@@ -1,0 +1,114 @@
+year,point,depth_m,lag_days,quantity,r_u,r_v,gain,angle_deg
+2023,C,wind10m,0,mean_wind_u_v_m_s,1.181,-0.530,6.977,nan
+2023,NW,0,0,complex_corr_current_vs_wind_stress,0.352,0.514,0.434,-4.687
+2023,NW,0,1,complex_corr_current_vs_wind_stress,0.149,0.291,0.228,-15.334
+2023,NW,0,2,complex_corr_current_vs_wind_stress,-0.018,0.185,0.102,-35.229
+2023,NW,0,0,complex_regression_current_on_wind (gain=|g| in percent of wind),0.449,nan,1.142,-7.816
+2023,NW,10,0,complex_corr_current_vs_wind_stress,0.125,0.462,0.355,-34.484
+2023,NW,10,1,complex_corr_current_vs_wind_stress,-0.009,0.246,0.177,-48.673
+2023,NW,10,2,complex_corr_current_vs_wind_stress,-0.121,0.141,0.089,-84.090
+2023,NW,10,0,complex_regression_current_on_wind (gain=|g| in percent of wind),0.359,nan,0.792,-37.850
+2023,NW,25,0,complex_corr_current_vs_wind_stress,-0.090,0.240,0.187,-69.172
+2023,NW,25,1,complex_corr_current_vs_wind_stress,-0.133,0.094,0.107,-103.604
+2023,NW,25,2,complex_corr_current_vs_wind_stress,-0.176,0.061,0.095,-131.575
+2023,NW,25,0,complex_regression_current_on_wind (gain=|g| in percent of wind),0.192,nan,0.344,-75.504
+2023,NW,50,0,complex_corr_current_vs_wind_stress,-0.117,0.105,0.077,-94.958
+2023,NW,50,1,complex_corr_current_vs_wind_stress,-0.078,0.050,0.029,-120.096
+2023,NW,50,2,complex_corr_current_vs_wind_stress,-0.122,0.026,0.065,-138.533
+2023,NW,50,0,complex_regression_current_on_wind (gain=|g| in percent of wind),0.105,nan,0.165,-95.124
+2023,N,0,0,complex_corr_current_vs_wind_stress,0.305,-0.018,0.245,62.218
+2023,N,0,1,complex_corr_current_vs_wind_stress,0.071,-0.131,0.202,103.458
+2023,N,0,2,complex_corr_current_vs_wind_stress,0.007,-0.178,0.204,119.463
+2023,N,0,0,complex_regression_current_on_wind (gain=|g| in percent of wind),0.270,nan,0.880,64.639
+2023,N,10,0,complex_corr_current_vs_wind_stress,0.064,-0.141,0.144,114.461
+2023,N,10,1,complex_corr_current_vs_wind_stress,-0.092,-0.230,0.240,136.311
+2023,N,10,2,complex_corr_current_vs_wind_stress,-0.108,-0.257,0.260,139.034
+2023,N,10,0,complex_regression_current_on_wind (gain=|g| in percent of wind),0.187,nan,0.558,115.799
+2023,N,25,0,complex_corr_current_vs_wind_stress,-0.199,-0.284,0.298,146.101
+2023,N,25,1,complex_corr_current_vs_wind_stress,-0.215,-0.324,0.350,142.454
+2023,N,25,2,complex_corr_current_vs_wind_stress,-0.158,-0.322,0.330,140.767
+2023,N,25,0,complex_regression_current_on_wind (gain=|g| in percent of wind),0.336,nan,0.953,141.272
+2023,N,50,0,complex_corr_current_vs_wind_stress,-0.282,-0.397,0.413,146.981
+2023,N,50,1,complex_corr_current_vs_wind_stress,-0.251,-0.381,0.421,140.520
+2023,N,50,2,complex_corr_current_vs_wind_stress,-0.171,-0.352,0.367,139.614
+2023,N,50,0,complex_regression_current_on_wind (gain=|g| in percent of wind),0.426,nan,1.083,143.190
+2023,NE,0,0,complex_corr_current_vs_wind_stress,0.238,0.118,0.277,55.858
+2023,NE,0,1,complex_corr_current_vs_wind_stress,-0.128,-0.023,0.246,103.866
+2023,NE,0,2,complex_corr_current_vs_wind_stress,-0.270,-0.070,0.255,122.500
+2023,NE,0,0,complex_regression_current_on_wind (gain=|g| in percent of wind),0.301,nan,1.057,53.493
+2023,NE,10,0,complex_corr_current_vs_wind_stress,-0.168,-0.033,0.170,115.761
+2023,NE,10,1,complex_corr_current_vs_wind_stress,-0.413,-0.159,0.333,134.179
+2023,NE,10,2,complex_corr_current_vs_wind_stress,-0.446,-0.174,0.337,138.277
+2023,NE,10,0,complex_regression_current_on_wind (gain=|g| in percent of wind),0.198,nan,0.637,114.454
+2023,NE,25,0,complex_corr_current_vs_wind_stress,-0.452,-0.262,0.379,141.541
+2023,NE,25,1,complex_corr_current_vs_wind_stress,-0.552,-0.333,0.487,139.730
+2023,NE,25,2,complex_corr_current_vs_wind_stress,-0.495,-0.290,0.421,141.038
+2023,NE,25,0,complex_regression_current_on_wind (gain=|g| in percent of wind),0.398,nan,1.288,138.056
+2023,NE,50,0,complex_corr_current_vs_wind_stress,-0.536,-0.327,0.441,145.055
+2023,NE,50,1,complex_corr_current_vs_wind_stress,-0.630,-0.407,0.547,143.460
+2023,NE,50,2,complex_corr_current_vs_wind_stress,-0.518,-0.351,0.454,144.942
+2023,NE,50,0,complex_regression_current_on_wind (gain=|g| in percent of wind),0.444,nan,1.359,142.369
+2023,C,0,0,complex_corr_current_vs_wind_stress,0.513,0.227,0.421,26.999
+2023,C,0,1,complex_corr_current_vs_wind_stress,0.338,0.039,0.244,36.806
+2023,C,0,2,complex_corr_current_vs_wind_stress,0.335,-0.010,0.254,47.876
+2023,C,0,0,complex_regression_current_on_wind (gain=|g| in percent of wind),0.431,nan,1.394,26.568
+2023,C,10,0,complex_corr_current_vs_wind_stress,0.360,0.108,0.263,24.017
+2023,C,10,1,complex_corr_current_vs_wind_stress,0.274,-0.059,0.181,49.193
+2023,C,10,2,complex_corr_current_vs_wind_stress,0.326,-0.105,0.240,58.832
+2023,C,10,0,complex_regression_current_on_wind (gain=|g| in percent of wind),0.261,nan,0.728,27.440
+2023,C,25,0,complex_corr_current_vs_wind_stress,0.205,-0.109,0.160,69.332
+2023,C,25,1,complex_corr_current_vs_wind_stress,0.230,-0.159,0.194,75.818
+2023,C,25,2,complex_corr_current_vs_wind_stress,0.334,-0.166,0.254,67.018
+2023,C,25,0,complex_regression_current_on_wind (gain=|g| in percent of wind),0.184,nan,0.477,72.985
+2023,C,50,0,complex_corr_current_vs_wind_stress,0.174,-0.262,0.238,97.683
+2023,C,50,1,complex_corr_current_vs_wind_stress,0.261,-0.154,0.230,73.484
+2023,C,50,2,complex_corr_current_vs_wind_stress,0.362,-0.141,0.270,62.458
+2023,C,50,0,complex_regression_current_on_wind (gain=|g| in percent of wind),0.244,nan,0.498,94.788
+2023,SW,0,0,complex_corr_current_vs_wind_stress,0.764,0.617,0.712,22.411
+2023,SW,0,1,complex_corr_current_vs_wind_stress,0.651,0.474,0.567,14.863
+2023,SW,0,2,complex_corr_current_vs_wind_stress,0.431,0.322,0.383,17.604
+2023,SW,0,0,complex_regression_current_on_wind (gain=|g| in percent of wind),0.716,nan,3.085,20.239
+2023,SW,10,0,complex_corr_current_vs_wind_stress,0.729,0.507,0.643,21.296
+2023,SW,10,1,complex_corr_current_vs_wind_stress,0.635,0.369,0.524,15.410
+2023,SW,10,2,complex_corr_current_vs_wind_stress,0.415,0.210,0.343,20.441
+2023,SW,10,0,complex_regression_current_on_wind (gain=|g| in percent of wind),0.627,nan,2.168,19.555
+2023,SW,25,0,complex_corr_current_vs_wind_stress,0.705,0.135,0.568,30.351
+2023,SW,25,1,complex_corr_current_vs_wind_stress,0.639,0.168,0.487,20.288
+2023,SW,25,2,complex_corr_current_vs_wind_stress,0.405,0.117,0.320,24.339
+2023,SW,25,0,complex_regression_current_on_wind (gain=|g| in percent of wind),0.551,nan,1.573,27.963
+2023,SW,50,0,complex_corr_current_vs_wind_stress,0.715,-0.107,0.565,40.717
+2023,SW,50,1,complex_corr_current_vs_wind_stress,0.645,0.001,0.461,26.200
+2023,SW,50,2,complex_corr_current_vs_wind_stress,0.350,-0.012,0.256,30.243
+2023,SW,50,0,complex_regression_current_on_wind (gain=|g| in percent of wind),0.538,nan,1.248,37.890
+2023,S,0,0,complex_corr_current_vs_wind_stress,0.730,0.427,0.669,28.926
+2023,S,0,1,complex_corr_current_vs_wind_stress,0.655,0.275,0.537,23.204
+2023,S,0,2,complex_corr_current_vs_wind_stress,0.438,0.161,0.355,24.225
+2023,S,0,0,complex_regression_current_on_wind (gain=|g| in percent of wind),0.669,nan,2.997,26.679
+2023,S,10,0,complex_corr_current_vs_wind_stress,0.678,0.242,0.595,33.193
+2023,S,10,1,complex_corr_current_vs_wind_stress,0.671,0.110,0.535,30.022
+2023,S,10,2,complex_corr_current_vs_wind_stress,0.459,-0.001,0.363,34.664
+2023,S,10,0,complex_regression_current_on_wind (gain=|g| in percent of wind),0.587,nan,2.253,32.423
+2023,S,25,0,complex_corr_current_vs_wind_stress,0.651,-0.152,0.559,45.618
+2023,S,25,1,complex_corr_current_vs_wind_stress,0.696,-0.172,0.541,39.541
+2023,S,25,2,complex_corr_current_vs_wind_stress,0.467,-0.171,0.374,44.404
+2023,S,25,0,complex_regression_current_on_wind (gain=|g| in percent of wind),0.552,nan,2.040,44.182
+2023,S,50,0,complex_corr_current_vs_wind_stress,0.633,-0.332,0.561,52.660
+2023,S,50,1,complex_corr_current_vs_wind_stress,0.700,-0.274,0.550,43.458
+2023,S,50,2,complex_corr_current_vs_wind_stress,0.426,-0.223,0.346,48.252
+2023,S,50,0,complex_regression_current_on_wind (gain=|g| in percent of wind),0.543,nan,1.861,50.659
+2023,SE,0,0,complex_corr_current_vs_wind_stress,0.696,0.440,0.639,25.926
+2023,SE,0,1,complex_corr_current_vs_wind_stress,0.689,0.302,0.560,23.954
+2023,SE,0,2,complex_corr_current_vs_wind_stress,0.458,0.206,0.361,18.436
+2023,SE,0,0,complex_regression_current_on_wind (gain=|g| in percent of wind),0.649,nan,2.080,23.657
+2023,SE,10,0,complex_corr_current_vs_wind_stress,0.608,0.268,0.529,30.051
+2023,SE,10,1,complex_corr_current_vs_wind_stress,0.681,0.115,0.520,31.490
+2023,SE,10,2,complex_corr_current_vs_wind_stress,0.450,0.054,0.324,28.665
+2023,SE,10,0,complex_regression_current_on_wind (gain=|g| in percent of wind),0.519,nan,1.342,30.142
+2023,SE,25,0,complex_corr_current_vs_wind_stress,0.535,-0.227,0.470,59.511
+2023,SE,25,1,complex_corr_current_vs_wind_stress,0.710,-0.275,0.537,52.334
+2023,SE,25,2,complex_corr_current_vs_wind_stress,0.501,-0.200,0.372,51.863
+2023,SE,25,0,complex_regression_current_on_wind (gain=|g| in percent of wind),0.481,nan,1.273,59.642
+2023,SE,50,0,complex_corr_current_vs_wind_stress,0.547,-0.397,0.497,74.130
+2023,SE,50,1,complex_corr_current_vs_wind_stress,0.730,-0.333,0.545,60.636
+2023,SE,50,2,complex_corr_current_vs_wind_stress,0.475,-0.191,0.364,59.432
+2023,SE,50,0,complex_regression_current_on_wind (gain=|g| in percent of wind),0.485,nan,1.246,71.972

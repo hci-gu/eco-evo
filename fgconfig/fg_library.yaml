@@ -908,15 +908,21 @@
     # 0.1 read as residence), which left the benthivores the only fish
     # prey unable to leave a cell.
     movement_speed: 1.0
-    # Section 240: foraging activity only; SDA is sda_fraction. Was 2.0
-    # from plaice fed/unfed respiration at SATIATION, which holds SDA.
-    # (weighted field metabolism 4.97 MJ/t/tick - SDA at the field ration
-    # 0.10 x Q/B 4.46 x 3440 MJ/t / 1460 = 1.05) / RM 3.33 = 1.18
-    # (0.98-1.76 over the field-metabolism range 4.32-6.91; 68 % of the
-    # weight on judged multipliers). Same note, W.
+    # Section 267: foraging activity only, net of SDA AND of the synthesis
+    # that growth_cost charges separately (a wild fish pays its growth's
+    # synthesis inside its field metabolism, so FMR - SDA alone counted it
+    # twice). (group FMR 8 891 MJ/t/yr = 2.27 x SMR, otolith carbon, own-
+    # species for 0.90 of the biomass: Alewijnse 2022, Jones et al. 2023,
+    # cod-anchored - SDA at the booked ration 0.10 x Q/B 4.46 x 3440 =
+    # 1 533 - synthesis c 0.69 x P 0.74 x (3600 + 0.62 x 1800) = 2 408)
+    # / RM 4 862 = 1.02 (0.82-1.24 over the FMR range 7 922-9 979; 0.98
+    # with SDA at the closure ration 4.94). research_notes/"Faltmetabolism
+    # kolja och plattfisk" (a-umlaut), "Bottenfiskens budget". Was 1.18
+    # (section 240: FMR 4.97 MJ/t/tick, 68 % judged multipliers, minus SDA
+    # only); before that 2.0, plaice fed/unfed respiration at satiation.
     # Cruising haddock 1.48 x SMR, cod
     # 1.32, plaice active/rest 2.4-2.8: 1.6 x RM (judgement for the pool).
-    feeding_cost: 1.18
+    feeding_cost: 1.02
     movement_cost: 1.6
     # Section 223.9: LEAN body 3600 (weighted 3628, 3400-3850: haddock and
     # cod 3.8 kJ/g without the liver store, long rough dab 2.6, dab and

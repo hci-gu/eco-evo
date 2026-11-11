@@ -558,8 +558,13 @@ fabricates mass.
   is the specific dynamic action as a share of the INGESTED energy, netted
   from every pair's assimilation in `energy_gain_mat` (and in s*'s C);
   benthivores 0.10 (biomass-weighted), whose `feeding_cost` is now the
-  foraging activity only (2.0 -> 1.18 = (weighted field metabolism - SDA
-  at the field ration)/RM). Since section 244 every fish group: the
+  foraging activity only (2.0 -> 1.18 -> 1.02 since section 267 = (group
+  field metabolism 8 891 MJ/t/yr, 2.27 x SMR, otolith carbon for 0.90 of
+  the biomass - SDA at the booked ration - the growth_cost synthesis of the
+  field growth)/RM: a wild fish pays its growth's synthesis inside its
+  field metabolism, so a cost from FMR - SDA plus a separate c counted it
+  twice; research_notes/"Faltmetabolism kolja och plattfisk", a-umlaut,
+  and "Bottenfiskens budget"). Since section 244 every fish group: the
   others carried "SDA 0.17 of half the ceiling" inside feeding_cost
   (0.17 is FB4's share of ASSIMILATED energy), now moved out:
   planktivores 0.11 (feeding_cost 2.0 -> 1.65), whiting 0.12 (2.19 ->

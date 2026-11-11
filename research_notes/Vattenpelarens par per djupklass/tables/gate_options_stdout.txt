@@ -1,0 +1,79 @@
+cells per class (60 x 60): [0.232 0.299 0.324 0.146]  krill B by class: [2.08 5.02 6.11 7.12]
+generic evaluator krill classes (V_one): [0.06774 0.03144 0.00579 0.00014]  library [0.068   0.031   0.0058  0.00014]
+
+Gate: krill encounter share (needed factor on the krill a, or 1/x on all fish a's) | planktivores | benthivores | whiting | mackerel
+  V_lib
+    equal   krill 0.873 (x0.082) | plk 0.102 (0.21 of booked) | ben 0.013 (0.17) | whi 0.007 (0.18) | mac 0.0010 (0.09)
+    saithe  krill 0.809 (x0.134) | plk 0.161 (0.32 of booked) | ben 0.021 (0.27) | whi 0.003 (0.08) | mac 0.0016 (0.14)
+    class0  krill 0.915 (x0.053) | plk 0.069 (0.14 of booked) | ben 0.009 (0.12) | whi 0.005 (0.12) | mac 0.0007 (0.06)
+    class1  krill 0.922 (x0.048) | plk 0.063 (0.13 of booked) | ben 0.008 (0.11) | whi 0.005 (0.11) | mac 0.0006 (0.06)
+    class2  krill 0.728 (x0.211) | plk 0.219 (0.44 of booked) | ben 0.029 (0.37) | whi 0.016 (0.38) | mac 0.0022 (0.20)
+    class3  krill 0.070 (x7.504) | plk 0.748 (1.50 of booked) | ben 0.098 (1.27) | whi 0.055 (1.30) | mac 0.0074 (0.67)
+    a by class: krill 0.068/0.031/0.0058/0.00014; planktivores 0.006/0.006/0.006/0.006; benthivores 0.0055/0.0055/0.0055/0.0055; whiting 0.013/0.013/0.013/0.013
+  V_p
+    equal   krill 0.788 (x0.152) | plk 0.173 (0.35 of booked) | ben 0.023 (0.29) | whi 0.013 (0.30) | mac 0.0017 (0.15)
+    saithe  krill 0.696 (x0.247) | plk 0.259 (0.52 of booked) | ben 0.034 (0.44) | whi 0.006 (0.13) | mac 0.0025 (0.23)
+    class0  krill 0.852 (x0.098) | plk 0.120 (0.24 of booked) | ben 0.016 (0.20) | whi 0.009 (0.21) | mac 0.0012 (0.11)
+    class1  krill 0.864 (x0.089) | plk 0.111 (0.22 of booked) | ben 0.015 (0.19) | whi 0.008 (0.19) | mac 0.0011 (0.10)
+    class2  krill 0.591 (x0.390) | plk 0.333 (0.67 of booked) | ben 0.044 (0.57) | whi 0.024 (0.58) | mac 0.0033 (0.30)
+    class3  krill 0.039 (x13.890) | plk 0.783 (1.57 of booked) | ben 0.103 (1.33) | whi 0.057 (1.37) | mac 0.0077 (0.70)
+    a by class: krill 0.0816/0.0372/0.00696/0.000168; planktivores 0.0135/0.0135/0.0135/0.0135; benthivores 0.01237/0.01237/0.01237/0.01237; whiting 0.02925/0.02925/0.02925/0.02925
+  V_one
+    equal   krill 0.687 (x0.258) | plk 0.216 (0.43 of booked) | ben 0.079 (1.03) | whi 0.015 (0.35) | mac 0.0009 (0.09)
+    saithe  krill 0.705 (x0.236) | plk 0.198 (0.40 of booked) | ben 0.084 (1.08) | whi 0.010 (0.25) | mac 0.0007 (0.06)
+    class0  krill 0.618 (x0.349) | plk 0.279 (0.56 of booked) | ben 0.083 (1.08) | whi 0.015 (0.36) | mac 0.0017 (0.16)
+    class1  krill 0.749 (x0.190) | plk 0.165 (0.33 of booked) | ben 0.071 (0.93) | whi 0.013 (0.32) | mac 0.0003 (0.02)
+    class2  krill 0.693 (x0.250) | plk 0.196 (0.39 of booked) | ben 0.090 (1.17) | whi 0.018 (0.42) | mac 0.0007 (0.06)
+    class3  krill 0.188 (x2.443) | plk 0.445 (0.89 of booked) | ben 0.280 (3.63) | whi 0.049 (1.18) | mac 0.0066 (0.60)
+    a by class: krill 0.06774/0.03144/0.005791/0.0001364; planktivores 0.03587/0.01964/0.005624/0.001295; benthivores 0.07459/0.05923/0.01804/0.005694; whiting 0.05798/0.04692/0.01501/0.004262
+  V_one_p
+    equal   krill 0.540 (x0.481) | plk 0.318 (0.64 of booked) | ben 0.117 (1.52) | whi 0.022 (0.52) | mac 0.0014 (0.13)
+    saithe  krill 0.562 (x0.441) | plk 0.295 (0.59 of booked) | ben 0.125 (1.62) | whi 0.016 (0.37) | mac 0.0010 (0.09)
+    class0  krill 0.464 (x0.652) | plk 0.393 (0.79 of booked) | ben 0.117 (1.52) | whi 0.021 (0.51) | mac 0.0025 (0.22)
+    class1  krill 0.614 (x0.355) | plk 0.254 (0.51 of booked) | ben 0.110 (1.43) | whi 0.021 (0.49) | mac 0.0004 (0.04)
+    class2  krill 0.548 (x0.466) | plk 0.290 (0.58 of booked) | ben 0.133 (1.73) | whi 0.026 (0.62) | mac 0.0010 (0.09)
+    class3  krill 0.112 (x4.482) | plk 0.497 (1.00 of booked) | ben 0.313 (4.06) | whi 0.055 (1.32) | mac 0.0073 (0.67)
+    a by class: krill 0.08129/0.03773/0.006949/0.0001637; planktivores 0.08071/0.04419/0.01265/0.002915; benthivores 0.1678/0.1333/0.04059/0.01281; whiting 0.1305/0.1056/0.03377/0.009589
+  V_dark
+    equal   krill 0.955 (x0.027) | plk 0.027 (0.05 of booked) | ben 0.015 (0.20) | whi 0.003 (0.06) | mac 0.0002 (0.02)
+    saithe  krill 0.934 (x0.040) | plk 0.039 (0.08 of booked) | ben 0.025 (0.33) | whi 0.001 (0.03) | mac 0.0002 (0.02)
+    class0  krill 0.963 (x0.022) | plk 0.025 (0.05 of booked) | ben 0.010 (0.13) | whi 0.002 (0.04) | mac 0.0003 (0.02)
+    class1  krill 0.974 (x0.015) | plk 0.015 (0.03 of booked) | ben 0.009 (0.12) | whi 0.002 (0.04) | mac 0.0001 (0.01)
+    class2  krill 0.901 (x0.062) | plk 0.055 (0.11 of booked) | ben 0.037 (0.48) | whi 0.007 (0.16) | mac 0.0003 (0.03)
+    class3  krill 0.205 (x2.193) | plk 0.434 (0.87 of booked) | ben 0.303 (3.93) | whi 0.053 (1.27) | mac 0.0024 (0.22)
+    a by class: krill 0.06774/0.03144/0.005791/0.0001364; planktivores 0.002081/0.001386/0.001229/0.001159; benthivores 0.005787/0.005657/0.005708/0.005651; whiting 0.004352/0.004226/0.004278/0.004219
+  V_fv_lo
+    equal   krill 0.133 (x3.678) | plk 0.698 (1.40 of booked) | ben 0.091 (1.19) | whi 0.051 (1.22) | mac 0.0069 (0.62)
+    saithe  krill 0.101 (x5.007) | plk 0.754 (1.51 of booked) | ben 0.099 (1.28) | whi 0.016 (0.39) | mac 0.0074 (0.67)
+    class0  krill 0.187 (x2.454) | plk 0.654 (1.31 of booked) | ben 0.086 (1.11) | whi 0.048 (1.14) | mac 0.0064 (0.58)
+    class1  krill 0.191 (x2.387) | plk 0.651 (1.31 of booked) | ben 0.085 (1.11) | whi 0.048 (1.13) | mac 0.0064 (0.58)
+    class2  krill 0.080 (x6.523) | plk 0.741 (1.49 of booked) | ben 0.097 (1.26) | whi 0.054 (1.29) | mac 0.0073 (0.66)
+    class3  krill 0.010 (x57.937) | plk 0.797 (1.60 of booked) | ben 0.104 (1.36) | whi 0.058 (1.39) | mac 0.0078 (0.71)
+    a by class: krill 0.001463/0.0006242/0.0001876/1.813e-05; planktivores 0.006/0.006/0.006/0.006; benthivores 0.0055/0.0055/0.0055/0.0055; whiting 0.013/0.013/0.013/0.013
+  V_fv_hi
+    equal   krill 0.304 (x1.293) | plk 0.560 (1.12 of booked) | ben 0.073 (0.95) | whi 0.041 (0.98) | mac 0.0055 (0.50)
+    saithe  krill 0.243 (x1.760) | plk 0.636 (1.28 of booked) | ben 0.083 (1.08) | whi 0.014 (0.33) | mac 0.0062 (0.57)
+    class0  krill 0.396 (x0.863) | plk 0.486 (0.98 of booked) | ben 0.064 (0.83) | whi 0.036 (0.85) | mac 0.0048 (0.43)
+    class1  krill 0.402 (x0.839) | plk 0.481 (0.97 of booked) | ben 0.063 (0.82) | whi 0.035 (0.84) | mac 0.0047 (0.43)
+    class2  krill 0.198 (x2.293) | plk 0.646 (1.30 of booked) | ben 0.085 (1.10) | whi 0.047 (1.13) | mac 0.0063 (0.58)
+    class3  krill 0.027 (x20.366) | plk 0.783 (1.57 of booked) | ben 0.103 (1.33) | whi 0.057 (1.36) | mac 0.0077 (0.70)
+    a by class: krill 0.004162/0.001776/0.0005336/5.158e-05; planktivores 0.006/0.006/0.006/0.006; benthivores 0.0055/0.0055/0.0055/0.0055; whiting 0.013/0.013/0.013/0.013
+
+Factor decomposition, saithe < 60 cm, library derivations: krill a / planktivore a per t/km2
+  planktivore pool (in-layer): O_eff 29.96 e-3/m (speed-weighted), R_eff 0.266 m, p 0.2
+  class 0: p x2.50  O x0.746 (krill 22.34 e-3/m)  R^2 x7.15 (krill R_eff 0.71 m)  = saithe x13.336; members x0.85; group a ratio x11.333
+  class 1: p x2.50  O x0.325 (krill 9.73 e-3/m)  R^2 x7.74 (krill R_eff 0.74 m)  = saithe x6.282; members x0.82; group a ratio x5.167
+  class 2: p x2.50  O x0.093 (krill 2.80 e-3/m)  R^2 x5.02 (krill R_eff 0.60 m)  = saithe x1.172; members x0.82; group a ratio x0.967
+  class 3: p x2.50  O x0.005 (krill 0.16 e-3/m)  R^2 x1.98 (krill R_eff 0.37 m)  = saithe x0.026; members x0.88; group a ratio x0.023
+
+Required krill/planktivore a ratio for the booked diet, and the excess (= needed factor's krill:plk part)
+  equal  : a ratio 4.487 x B ratio 1.90 (krill B seen 3.38 t/km2 vs plk 1.776) -> required a ratio 0.381; excess x11.78; planktivores' share of fish encounter 0.80 vs booked 0.78; needed: krill a x0.082 or every fish a x12.17
+  saithe : a ratio 1.901 x B ratio 2.65 (krill B seen 4.70 t/km2 vs plk 1.776) -> required a ratio 0.274; excess x6.94; planktivores' share of fish encounter 0.84 vs booked 0.78; needed: krill a x0.134 or every fish a x7.48
+  class 0: a ratio 11.333 x B ratio 1.17 -> required 0.618; excess x18.34; needed: krill a x0.053 or every fish a x18.94
+  class 1: a ratio 5.167 x B ratio 2.83 -> required 0.256; excess x20.15; needed: krill a x0.048 or every fish a x20.81
+  class 2: a ratio 0.967 x B ratio 3.44 -> required 0.211; excess x4.59; needed: krill a x0.211 or every fish a x4.74
+  class 3: a ratio 0.023 x B ratio 4.01 -> required 0.181; excess x0.13; needed: krill a x7.504 or every fish a x0.13
+
+Where the krill encounter comes from (library): class share of sum_c w_c a_c B_c
+  equal  : 0.361 / 0.512 / 0.126 / 0.002  (predator weights [0.232 0.299 0.324 0.146])
+  saithe : 0.114 / 0.369 / 0.517 / 0.001  (predator weights [0.043 0.127 0.782 0.048])

@@ -25035,3 +25035,49 @@ remain open exactly as described in 71.9 / 71.11.
     - mackerel was 0.41-0.54 on < 100 m beds;
     - planktivores and benthivores were about as before.
     Retraining is the test.
+
+267 BENTHIVORE FEEDING COST NET OF THE GROWTH SYNTHESIS (2026-11-11; user: apply option B)
+------------------------------------------------------------------------------------------
+
+267.1 Why. The policy-free closure (research_notes/"Krillens flykt och energibudget", check 4a;
+    research_notes/"Bottenfiskens budget") found that the benthivores' budget could not close at
+    the field Q/B 4.46 even resting all the time: resting metabolism 4 862 + growth at the c 0.69
+    tonne price 5 068-5 421 MJ/t/yr exceeded the field intake 9 800. The c source
+    (slope_decomposition) reads the haddock and plaice residuals as "more likely an unmeasured
+    feeding cost", and feeding_cost (240.2) came from total field metabolism minus SDA only.
+267.2 Evidence (research_notes/"Faltmetabolism kolja och plattfisk", a-umlaut; summary.md,
+    evidence.md E1-E19). Own-species otolith-carbon field metabolism exists for haddock, long
+    rough dab and witch (Alewijnse 2022 dataset, doi:10.6084/m9.figshare.22110335) and North Sea
+    plaice (Jones et al. 2023, doi:10.3389/fevo.2023.1161105): the earlier "none for haddock or
+    flatfish" was wrong. At one Barents site haddock/cod 0.72-0.76 and long rough dab/cod
+    0.84-0.95 (n 8 adults) at equal mass and temperature. Cod-anchored (Chung 2019, 2.2 x SMR)
+    group FMR 8 891 (7 922-9 979) MJ/t/yr = 2.27 x the weighted SMR, against 7 260 (1.85 x) in
+    240.2 and 8 200 in 223.9; own-species weight 0.90 (was 0.32). Haddock's field-ration route
+    (Jones 1978) gives 2.0-2.5 x SMR, consistent. Protein synthesis is largely inside measured
+    SDA (23-44 % of the cod post-meal rise) and a realistic-meal SDA explains at most a third of
+    the haddock/plaice residual, so a wild fish pays its growth's synthesis inside its FMR: a
+    feeding_cost from FMR - SDA plus a separate c is a double count by construction. All
+    otolith FMR rests on the cod calibration (the plaice authors flag it as probably low).
+267.3 Applied (fg_library.yaml only). benthivorous_fish feeding_cost 1.18 -> 1.02 = (FMR 8 891 -
+    SDA at the booked ration 0.10 x 4.46 x 3440 = 1 533 - synthesis c 0.69 x P 0.74 x (3600 +
+    0.62 x 1800) = 2 408) / RM 4 862. Range 0.82-1.24 over the FMR range; 0.98 with SDA at the
+    closure ration 4.94 (the booked 4.46 kept, as the pair M2s use it). growth_cost 0.69 kept
+    (group bound at the central FMR 0.58-0.72). Derived g unchanged (s* = 1, open-population
+    P/((1 - u) 1460)): 0.00054972810745. tests/test_appetite_sda.py ideal_cost pin 3.33 x 1.02.
+    budget_gate: only the benthivore cost columns move (3.9 -> 3.4 MJ/t/tick per eat tick),
+    every pair still ok.
+267.4 Budget after the change (research_notes/"Bottenfiskens budget", update section). The field
+    closure with the new FMR and the box's P is Q/B 4.94 (4.55-5.38); the engine needs 4.91 at the
+    field fill 0.62 and 5.29 at fill 1 (corrected for M1 in the refill, 267.6; first written 4.76 /
+    5.05). The parameter side closes; the rest of the realised excess
+    (6.4 t/t/yr in fix96) is the full reserve, i.e. the food surplus (the krill pool's supply is
+    physical, research_notes/"Krillens tillforsel", o-umlaut; the rations and the water column's
+    pairs are the open items, research_notes/"Vattenpelarens par per djupklass").
+267.5 Not done: no training or smoke run (the user starts training); fix96 was trained with 1.18.
+267.6 Unit bug in the closure diagnostics (found 2026-11-11 by research_notes/"Planktivorernas
+    energibudget"). research_notes/"Krillens flykt och energibudget"/diagnostics/scripts/closure.py
+    read natural_mortality (per tick in the library) as per year, so M1 (0.16-0.29 /yr) was missing
+    from the refill of every closure row and from the LOSS copied into "Bottenfiskens budget"/scripts/
+    levers.py and "Faltmetabolism kolja och plattfisk"/scripts/budget_fmr.py. All three fixed and
+    re-run; notes carry correction sections. Planktivore e* 0.43 / 0.32 -> 0.29 / 0.10. The library
+    and engine were never affected (diagnostic scripts only).
