@@ -1,0 +1,218 @@
+======================================================================================================================
+Seasonal herring / sprat profile. Readings (k on the July bottom-10-m share, winter day midwater layer, months):
+  null (winter = July profile)   k 1.0, day layer 10-100 m (bed - 10 at most), months [11, 12, 1, 2, 3]
+  central                        k 2.0, day layer 50-120 m (bed - 10 at most), months [11, 12, 1, 2, 3]
+  k1.5                           k 1.5, day layer 50-120 m (bed - 10 at most), months [11, 12, 1, 2, 3]
+  k3                             k 3.0, day layer 50-120 m (bed - 10 at most), months [11, 12, 1, 2, 3]
+  k2_july_layer                  k 2.0, day layer 10-100 m (bed - 10 at most), months [11, 12, 1, 2, 3]
+  k1_deep_layer                  k 1.0, day layer 50-120 m (bed - 10 at most), months [11, 12, 1, 2, 3]
+  k2_layer70_bed                 k 2.0, day layer 70-999 m (bed - 10 at most), months [11, 12, 1, 2, 3]
+  central_DecFeb                 k 2.0, day layer 50-120 m (bed - 10 at most), months [12, 1, 2]
+  central_OctApr                 k 2.0, day layer 50-120 m (bed - 10 at most), months [10, 11, 12, 1, 2, 3, 4]
+======================================================================================================================
+null (winter = July profile): done
+central: done
+k1.5: done
+k3: done
+k2_july_layer: done
+k1_deep_layer: done
+k2_layer70_bed: done
+central_DecFeb: done
+central_OctApr: done
+
+1. Reproduction (null reading = July profile all year) vs band_pairs.json A_band and the combined central F
+  predatory_fish->planktivorous_fish     eq 0.0172733 vs 0.0172733 (x1.000000); F 0.5420 vs combined 0.5431 (day 0.5132 vs 0.5143)
+  whiting->planktivorous_fish            eq 0.0330583 vs 0.0330583 (x1.000000); F 0.6825 vs combined 0.6825 (day 0.6204 vs 0.6204)
+  mackerel->planktivorous_fish           eq 0.0246854 vs 0.0246854 (x1.000000); F 0.5982 vs combined 0.5982 (day 0.2088 vs 0.2088)
+  benthivorous_fish->planktivorous_fish  a_rel 1.0000; F 0.6425 vs combined 0.6425
+  herring July bottom-10-m share, box equal-cell mean 0.127 (benth_encounter herring F_day central 0.15; 'Bottenfiskens sillbyte' reconcile 0.16)
+
+2. Herring day term per pair: overlap per unit time (sum f phi, rel. to the July rest-of-year value) and the
+   light-weighted detection radius R_eff (m), winter vs rest of year, central reading
+  [central]
+    predatory_fish->planktivorous_fish     herring|day overlap winter/rest  1.76; R_eff rest 0.87 m, winter 0.81 m
+    whiting->planktivorous_fish            herring|day overlap winter/rest  1.78; R_eff rest 0.47 m, winter 0.45 m
+    mackerel->planktivorous_fish           herring|day overlap winter/rest  0.13; R_eff rest 0.52 m, winter 0.32 m
+    benthivorous_fish->planktivorous_fish  herring bottom-10-m share box mean July 0.127, winter 0.227; light-weighted herring|day term x1.195 (annual)
+  [k2_july_layer]
+    predatory_fish->planktivorous_fish     herring|day overlap winter/rest  1.54; R_eff rest 0.87 m, winter 0.80 m
+    whiting->planktivorous_fish            herring|day overlap winter/rest  1.78; R_eff rest 0.47 m, winter 0.45 m
+    mackerel->planktivorous_fish           herring|day overlap winter/rest  0.89; R_eff rest 0.52 m, winter 0.50 m
+    benthivorous_fish->planktivorous_fish  herring bottom-10-m share box mean July 0.127, winter 0.227; light-weighted herring|day term x1.195 (annual)
+  [k1_deep_layer]
+    predatory_fish->planktivorous_fish     herring|day overlap winter/rest  1.29; R_eff rest 0.87 m, winter 0.84 m
+    whiting->planktivorous_fish            herring|day overlap winter/rest  1.00; R_eff rest 0.47 m, winter 0.46 m
+    mackerel->planktivorous_fish           herring|day overlap winter/rest  0.13; R_eff rest 0.52 m, winter 0.35 m
+    benthivorous_fish->planktivorous_fish  herring bottom-10-m share box mean July 0.127, winter 0.127; light-weighted herring|day term x1.000 (annual)
+  [k3]
+    predatory_fish->planktivorous_fish     herring|day overlap winter/rest  2.08; R_eff rest 0.87 m, winter 0.79 m
+    whiting->planktivorous_fish            herring|day overlap winter/rest  2.27; R_eff rest 0.47 m, winter 0.44 m
+    mackerel->planktivorous_fish           herring|day overlap winter/rest  0.14; R_eff rest 0.52 m, winter 0.32 m
+    benthivorous_fish->planktivorous_fish  herring bottom-10-m share box mean July 0.127, winter 0.289; light-weighted herring|day term x1.293 (annual)
+
+3. Annual-mean a by pair (central p and schooling F at the new p, as the combined derivation). a_band = band a, A rule,
+   equal-time; factor = p factor x F; 'comb' = the combined central (July profile all year).
+  [null (winter = July profile)]
+    predatory_fish->planktivorous_fish     a_lib 0.0174  band x1.000  p x2.96  F 0.542 (day 0.513)  a 0.02792  (comb 0.02797, x0.998)  night/day 0.116
+    whiting->planktivorous_fish            a_lib 0.0329  band x1.000  p x2.83  F 0.682 (day 0.620)  a 0.06357  (comb 0.06357, x1.000)  night/day 0.342
+    mackerel->planktivorous_fish           a_lib 0.0248  band x1.000  p x3.09  F 0.598 (day 0.209)  a 0.04579  (comb 0.04579, x1.000)  night/day 0.160
+    benthivorous_fish->planktivorous_fish  a_lib 0.0214  band x1.000  p x2.11  F 0.643 (day 0.592)  a 0.02905  (comb 0.02905, x1.000)  night/day 0.238
+  [central]
+    predatory_fish->planktivorous_fish     a_lib 0.0174  band x1.053  p x2.96  F 0.522 (day 0.494)  a 0.02833  (comb 0.02797, x1.013)  night/day 0.114
+    whiting->planktivorous_fish            a_lib 0.0329  band x1.049  p x2.83  F 0.663 (day 0.600)  a 0.06477  (comb 0.06357, x1.019)  night/day 0.334
+    mackerel->planktivorous_fish           a_lib 0.0248  band x0.864  p x3.09  F 0.661 (day 0.211)  a 0.04369  (comb 0.04579, x0.954)  night/day 0.160
+    benthivorous_fish->planktivorous_fish  a_lib 0.0214  band x1.026  p x2.11  F 0.631 (day 0.580)  a 0.02925  (comb 0.02905, x1.007)  night/day 0.236
+  [k1.5]
+    predatory_fish->planktivorous_fish     a_lib 0.0174  band x1.042  p x2.96  F 0.526 (day 0.497)  a 0.02824  (comb 0.02797, x1.009)  night/day 0.114
+    whiting->planktivorous_fish            a_lib 0.0329  band x1.030  p x2.83  F 0.670 (day 0.608)  a 0.06429  (comb 0.06357, x1.011)  night/day 0.337
+    mackerel->planktivorous_fish           a_lib 0.0248  band x0.864  p x3.09  F 0.661 (day 0.211)  a 0.04368  (comb 0.04579, x0.954)  night/day 0.160
+    benthivorous_fish->planktivorous_fish  a_lib 0.0214  band x1.016  p x2.11  F 0.635 (day 0.585)  a 0.02918  (comb 0.02905, x1.004)  night/day 0.237
+  [k3]
+    predatory_fish->planktivorous_fish     a_lib 0.0174  band x1.069  p x2.96  F 0.517 (day 0.489)  a 0.02847  (comb 0.02797, x1.018)  night/day 0.113
+    whiting->planktivorous_fish            a_lib 0.0329  band x1.076  p x2.83  F 0.653 (day 0.591)  a 0.06548  (comb 0.06357, x1.030)  night/day 0.330
+    mackerel->planktivorous_fish           a_lib 0.0248  band x0.865  p x3.09  F 0.660 (day 0.212)  a 0.04371  (comb 0.04579, x0.955)  night/day 0.160
+    benthivorous_fish->planktivorous_fish  a_lib 0.0214  band x1.039  p x2.11  F 0.625 (day 0.575)  a 0.02936  (comb 0.02905, x1.011)  night/day 0.235
+  [k2_july_layer]
+    predatory_fish->planktivorous_fish     a_lib 0.0174  band x1.035  p x2.96  F 0.529 (day 0.500)  a 0.0282  (comb 0.02797, x1.008)  night/day 0.115
+    whiting->planktivorous_fish            a_lib 0.0329  band x1.049  p x2.83  F 0.663 (day 0.600)  a 0.06477  (comb 0.06357, x1.019)  night/day 0.334
+    mackerel->planktivorous_fish           a_lib 0.0248  band x0.981  p x3.09  F 0.606 (day 0.209)  a 0.04552  (comb 0.04579, x0.994)  night/day 0.160
+    benthivorous_fish->planktivorous_fish  a_lib 0.0214  band x1.026  p x2.11  F 0.631 (day 0.580)  a 0.02925  (comb 0.02905, x1.007)  night/day 0.236
+  [k1_deep_layer]
+    predatory_fish->planktivorous_fish     a_lib 0.0174  band x1.025  p x2.96  F 0.532 (day 0.504)  a 0.0281  (comb 0.02797, x1.005)  night/day 0.115
+    whiting->planktivorous_fish            a_lib 0.0329  band x1.000  p x2.83  F 0.682 (day 0.620)  a 0.06357  (comb 0.06357, x1.000)  night/day 0.342
+    mackerel->planktivorous_fish           a_lib 0.0248  band x0.866  p x3.09  F 0.660 (day 0.211)  a 0.0437  (comb 0.04579, x0.954)  night/day 0.160
+    benthivorous_fish->planktivorous_fish  a_lib 0.0214  band x1.000  p x2.11  F 0.643 (day 0.592)  a 0.02905  (comb 0.02905, x1.000)  night/day 0.238
+  [k2_layer70_bed]
+    predatory_fish->planktivorous_fish     a_lib 0.0174  band x1.072  p x2.96  F 0.516 (day 0.488)  a 0.02849  (comb 0.02797, x1.019)  night/day 0.113
+    whiting->planktivorous_fish            a_lib 0.0329  band x1.049  p x2.83  F 0.663 (day 0.600)  a 0.06477  (comb 0.06357, x1.019)  night/day 0.334
+    mackerel->planktivorous_fish           a_lib 0.0248  band x0.867  p x3.09  F 0.660 (day 0.213)  a 0.04377  (comb 0.04579, x0.956)  night/day 0.160
+    benthivorous_fish->planktivorous_fish  a_lib 0.0214  band x1.026  p x2.11  F 0.631 (day 0.580)  a 0.02925  (comb 0.02905, x1.007)  night/day 0.236
+  [central_DecFeb]
+    predatory_fish->planktivorous_fish     a_lib 0.0174  band x1.027  p x2.96  F 0.532 (day 0.503)  a 0.02813  (comb 0.02797, x1.006)  night/day 0.115
+    whiting->planktivorous_fish            a_lib 0.0329  band x1.026  p x2.83  F 0.672 (day 0.610)  a 0.06421  (comb 0.06357, x1.010)  night/day 0.338
+    mackerel->planktivorous_fish           a_lib 0.0248  band x0.928  p x3.09  F 0.629 (day 0.210)  a 0.04468  (comb 0.04579, x0.976)  night/day 0.160
+    benthivorous_fish->planktivorous_fish  a_lib 0.0214  band x1.013  p x2.11  F 0.637 (day 0.586)  a 0.02915  (comb 0.02905, x1.004)  night/day 0.237
+  [central_OctApr]
+    predatory_fish->planktivorous_fish     a_lib 0.0174  band x1.088  p x2.96  F 0.510 (day 0.482)  a 0.02859  (comb 0.02797, x1.022)  night/day 0.113
+    whiting->planktivorous_fish            a_lib 0.0329  band x1.080  p x2.83  F 0.651 (day 0.588)  a 0.06548  (comb 0.06357, x1.030)  night/day 0.330
+    mackerel->planktivorous_fish           a_lib 0.0248  band x0.783  p x3.09  F 0.708 (day 0.215)  a 0.04246  (comb 0.04579, x0.927)  night/day 0.160
+    benthivorous_fish->planktivorous_fish  a_lib 0.0214  band x1.042  p x2.11  F 0.624 (day 0.573)  a 0.02939  (comb 0.02905, x1.012)  night/day 0.235
+
+4. Monthly a (band x vision, before p and F) relative to the pair's equal-time annual mean, central vs null;
+   and the annual mean under three weightings (equal time = engine convention; prey presence; prey x predator
+   presence = the flow-preserving mean), relative to equal time
+  predatory_fish->planktivorous_fish     null (winter Jan 0.42 Feb 0.71 Mar 0.93 Apr 1.22 May 1.39 Jun 1.42 Jul 1.51 Aug 1.32 Sep 1.04 Oct 0.85 Nov 0.64 Dec 0.57
+  predatory_fish->planktivorous_fish     central      Jan 0.47 Feb 0.81 Mar 1.06 Apr 1.16 May 1.32 Jun 1.34 Jul 1.44 Aug 1.25 Sep 0.98 Oct 0.80 Nov 0.72 Dec 0.64
+  predatory_fish->planktivorous_fish     k3           Jan 0.48 Feb 0.84 Mar 1.10 Apr 1.14 May 1.30 Jun 1.33 Jul 1.42 Aug 1.23 Sep 0.97 Oct 0.79 Nov 0.75 Dec 0.66
+      weights [null (winter]: prey-presence x1.063, flow x1.190; winter(Nov-Mar)/rest-of-year a 0.52
+      weights [central]: prey-presence x1.050, flow x1.144; winter(Nov-Mar)/rest-of-year a 0.62
+      weights [k3]: prey-presence x1.046, flow x1.132; winter(Nov-Mar)/rest-of-year a 0.65
+  whiting->planktivorous_fish            null (winter Jan 0.60 Feb 0.79 Mar 0.96 Apr 1.16 May 1.28 Jun 1.32 Jul 1.36 Aug 1.22 Sep 1.03 Oct 0.88 Nov 0.73 Dec 0.67
+  whiting->planktivorous_fish            central      Jan 0.65 Feb 0.88 Mar 1.08 Apr 1.10 May 1.22 Jun 1.25 Jul 1.30 Aug 1.17 Sep 0.98 Oct 0.84 Nov 0.80 Dec 0.73
+  whiting->planktivorous_fish            k3           Jan 0.68 Feb 0.92 Mar 1.14 Apr 1.07 May 1.19 Jun 1.22 Jul 1.26 Aug 1.14 Sep 0.95 Oct 0.82 Nov 0.84 Dec 0.76
+      weights [null (winter]: prey-presence x1.045, flow x1.045; winter(Nov-Mar)/rest-of-year a 0.64
+      weights [central]: prey-presence x1.034, flow x1.034; winter(Nov-Mar)/rest-of-year a 0.74
+      weights [k3]: prey-presence x1.028, flow x1.028; winter(Nov-Mar)/rest-of-year a 0.79
+  mackerel->planktivorous_fish           null (winter Jan 0.92 Feb 0.97 Mar 0.98 Apr 1.01 May 1.04 Jun 1.05 Jul 1.06 Aug 1.02 Sep 1.00 Oct 0.99 Nov 0.98 Dec 0.99
+  mackerel->planktivorous_fish           central      Jan 0.78 Feb 0.71 Mar 0.58 Apr 1.17 May 1.20 Jun 1.21 Jul 1.23 Aug 1.19 Sep 1.16 Oct 1.14 Nov 0.78 Dec 0.85
+  mackerel->planktivorous_fish           k3           Jan 0.78 Feb 0.71 Mar 0.59 Apr 1.17 May 1.20 Jun 1.21 Jul 1.23 Aug 1.18 Sep 1.16 Oct 1.14 Nov 0.78 Dec 0.85
+      weights [null (winter]: prey-presence x1.007, flow x1.029; winter(Nov-Mar)/rest-of-year a 0.94
+      weights [central]: prey-presence x1.038, flow x1.181; winter(Nov-Mar)/rest-of-year a 0.62
+      weights [k3]: prey-presence x1.038, flow x1.180; winter(Nov-Mar)/rest-of-year a 0.63
+  benthivorous_fish->planktivorous_fish  null (winter herring|day term, month / July-profile month: Jan 1.00 Feb 1.00 Mar 1.00 Apr 1.00 May 1.00 Jun 1.00 Jul 1.00 Aug 1.00 Sep 1.00 Oct 1.00 Nov 1.00 Dec 1.00
+  benthivorous_fish->planktivorous_fish  central      herring|day term, month / July-profile month: Jan 1.69 Feb 1.72 Mar 1.73 Apr 1.00 May 1.00 Jun 1.00 Jul 1.00 Aug 1.00 Sep 1.00 Oct 1.00 Nov 1.73 Dec 1.73
+  benthivorous_fish->planktivorous_fish  k3           herring|day term, month / July-profile month: Jan 2.00 Feb 2.09 Mar 2.10 Apr 1.00 May 1.00 Jun 1.00 Jul 1.00 Aug 1.00 Sep 1.00 Oct 1.00 Nov 2.11 Dec 2.11
+
+4b. Derived monthly a AFTER the schooling factor (day rows x F_day, night rows x F_night; p is a constant) relative
+    to its annual mean, against the engine's only seasonal lever m(t) (lib/world/daylight.attack_multiplier at the
+    pair's new night/day and light_threshold_deg; annual mean 1). residual = derived / engine, per month.
+  predatory_fish->planktivorous_fish   null (winter nd 0.116 thr -5.0
+      derived   0.46  0.73  0.93  1.20  1.36  1.38  1.48  1.29  1.03  0.86  0.67  0.61
+      engine    0.69  0.81  0.95  1.13  1.29  1.40  1.33  1.16  1.01  0.84  0.72  0.66
+      residual  0.66  0.90  0.98  1.06  1.05  0.99  1.11  1.11  1.02  1.03  0.93  0.93   (Nov-Mar mean 0.88, Apr-Oct 1.05)
+  predatory_fish->planktivorous_fish   central      nd 0.114 thr -5.0
+      derived   0.51  0.83  1.06  1.14  1.29  1.31  1.40  1.23  0.98  0.82  0.75  0.68
+      engine    0.69  0.81  0.95  1.13  1.29  1.40  1.33  1.16  1.01  0.83  0.72  0.66
+      residual  0.73  1.01  1.11  1.01  1.00  0.94  1.05  1.06  0.97  0.98  1.04  1.04   (Nov-Mar mean 0.99, Apr-Oct 1.00)
+  predatory_fish->planktivorous_fish   k3           nd 0.113 thr -5.0
+      derived   0.52  0.85  1.09  1.12  1.27  1.29  1.38  1.21  0.97  0.81  0.78  0.70
+      engine    0.69  0.81  0.95  1.13  1.29  1.40  1.33  1.16  1.01  0.83  0.72  0.65
+      residual  0.75  1.05  1.15  0.99  0.98  0.92  1.04  1.04  0.96  0.97  1.08  1.07   (Nov-Mar mean 1.02, Apr-Oct 0.99)
+  whiting->planktivorous_fish          null (winter nd 0.342 thr -5.0
+      derived   0.67  0.83  0.96  1.12  1.22  1.24  1.29  1.18  1.02  0.91  0.79  0.75
+      engine    0.80  0.88  0.97  1.08  1.19  1.26  1.21  1.11  1.01  0.89  0.82  0.78
+      residual  0.84  0.95  0.99  1.04  1.03  0.99  1.06  1.07  1.01  1.02  0.96  0.96   (Nov-Mar mean 0.94, Apr-Oct 1.03)
+  whiting->planktivorous_fish          central      nd 0.334 thr -5.0
+      derived   0.72  0.91  1.07  1.07  1.17  1.19  1.23  1.13  0.98  0.87  0.86  0.80
+      engine    0.80  0.88  0.97  1.09  1.19  1.26  1.22  1.11  1.01  0.89  0.82  0.78
+      residual  0.90  1.04  1.11  0.99  0.98  0.94  1.01  1.02  0.97  0.98  1.05  1.03   (Nov-Mar mean 1.03, Apr-Oct 0.98)
+  whiting->planktivorous_fish          k3           nd 0.330 thr -5.0
+      derived   0.75  0.95  1.13  1.05  1.14  1.16  1.20  1.10  0.95  0.85  0.89  0.83
+      engine    0.80  0.88  0.97  1.09  1.19  1.26  1.22  1.11  1.01  0.89  0.82  0.77
+      residual  0.93  1.09  1.17  0.96  0.95  0.92  0.99  0.99  0.95  0.96  1.09  1.07   (Nov-Mar mean 1.07, Apr-Oct 0.96)
+  mackerel->planktivorous_fish         null (winter nd 0.160 thr -5.0
+      derived   1.19  1.12  0.98  0.88  0.80  0.75  0.81  0.86  0.99  1.10  1.21  1.30
+      engine    0.72  0.83  0.95  1.12  1.27  1.37  1.31  1.15  1.01  0.85  0.75  0.68
+      residual  1.65  1.35  1.02  0.79  0.63  0.55  0.62  0.75  0.98  1.30  1.62  1.90   (Nov-Mar mean 1.51, Apr-Oct 0.80)
+  mackerel->planktivorous_fish         central      nd 0.160 thr -5.0
+      derived   1.15  1.04  0.85  0.93  0.84  0.79  0.86  0.91  1.04  1.16  1.16  1.27
+      engine    0.72  0.83  0.95  1.12  1.27  1.37  1.31  1.15  1.01  0.85  0.75  0.68
+      residual  1.61  1.26  0.89  0.83  0.67  0.58  0.66  0.79  1.03  1.36  1.56  1.86   (Nov-Mar mean 1.43, Apr-Oct 0.84)
+  mackerel->planktivorous_fish         k3           nd 0.160 thr -5.0
+      derived   1.15  1.04  0.85  0.93  0.84  0.79  0.86  0.91  1.04  1.16  1.16  1.27
+      engine    0.72  0.83  0.95  1.12  1.27  1.37  1.31  1.15  1.01  0.85  0.75  0.68
+      residual  1.61  1.26  0.89  0.83  0.67  0.58  0.66  0.79  1.03  1.36  1.56  1.86   (Nov-Mar mean 1.43, Apr-Oct 0.84)
+    (MN: Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec)
+gate combined_central: done
+gate seasonal_central: done
+gate seasonal_central_T: done
+gate seasonal_k1.5: done
+gate seasonal_k3: done
+gate seasonal_k2_july_layer: done
+gate seasonal_k1_deep_layer: done
+gate seasonal_k2_layer70_bed: done
+gate seasonal_DecFeb: done
+gate seasonal_OctApr: done
+gate seasonal_central_flow: done
+gate null_flow: done
+
+5. budget_gate (implied / booked M2; * = OFF)
+                                          combined_cent     s_central   s_central_T        s_k1.5          s_k3 s_k2_july_lay s_k1_deep_lay s_k2_layer70_      s_DecFeb      s_OctApr s_central_flo     null_flow
+  prey total planktivorous_fish                    0.89          0.89          0.89          0.89          0.89          0.89          0.88          0.89          0.89          0.89          0.94          0.93
+  prey total krill                                 1.01          1.01          1.01          1.01          1.01          1.01          1.01          1.01          1.01          1.01          1.01          1.01
+  prey total benthivorous_fish                     1.06          1.06          1.06          1.06          1.05          1.06          1.06          1.05          1.06          1.05          1.01          1.00
+  prey total whiting                               1.03          1.02          1.02          1.02          1.02          1.02          1.03          1.02          1.03          1.02          0.99          0.98
+  prey total zooplankton                           1.00          1.00          1.00          1.00          1.00          1.00          1.00          1.00          1.00          1.00          1.00          1.00
+  prey side predatory_fish->planktivorous_fish        0.88          0.88          0.88          0.88          0.89          0.88          0.88          0.89          0.88          0.89          0.95          0.96 
+  prey side whiting->planktivorous_fish           0.95          0.96          0.96          0.96          0.97          0.96          0.95          0.96          0.96          0.97          0.99          0.98 
+  prey side mackerel->planktivorous_fish          1.38          1.32          1.32          1.32          1.32          1.37          1.32          1.33          1.35          1.29          1.54          1.42 
+  prey side benthivorous_fish->planktivorous_fish        0.81          0.81          0.81          0.81          0.82          0.81          0.81          0.81          0.81          0.82          0.81          0.81 
+  prey side predatory_fish->krill                 0.97          0.96          0.96          0.97          0.96          0.97          0.97          0.96          0.97          0.96          0.91          0.90 
+  diet equal cells predatory_fish->krill          0.97          0.96          0.96          0.97          0.96          0.97          0.97          0.96          0.97          0.96          0.91          0.90 
+  diet equal cells predatory_fish->plankti        0.88          0.88          0.88          0.88          0.89          0.88          0.88          0.89          0.88          0.89          0.95          0.96 
+  diet equal cells whiting->planktivorous_        0.95          0.96          0.96          0.96          0.97          0.96          0.95          0.96          0.96          0.97          0.99          0.98 
+  diet equal cells benthivorous_fish->plan        0.81          0.81          0.81          0.81          0.82          0.81          0.81          0.81          0.81          0.82          0.81          0.81 
+  diet equal cells mackerel->planktivorous        1.38          1.32          1.32          1.32          1.32          1.37          1.32          1.33          1.35          1.29          1.54          1.42 
+  diet equal cells whiting->krill                 1.33          1.33          1.33          1.33          1.33          1.33          1.33          1.33          1.33          1.33          1.32          1.32 
+  diet field spread predatory_fish->krill         0.97          0.97          0.98          0.97          0.97          0.97          0.97          0.97          0.97          0.97          0.91          0.90 
+  diet field spread predatory_fish->plankt        0.85          0.86          0.85          0.86          0.86          0.86          0.85          0.86          0.85          0.86          0.92          0.94 
+  diet field spread whiting->planktivorous        0.78          0.79          0.81          0.79          0.80          0.79          0.78          0.79          0.79          0.80          0.81          0.81 
+  diet field spread benthivorous_fish->pla            -             -             -             -             -             -             -             -             -             -             -             -
+  diet field spread mackerel->planktivorou            -             -             -             -             -             -             -             -             -             -             -             -
+  diet field spread whiting->krill                1.48          1.48          1.47          1.48          1.47          1.48          1.48          1.48          1.48          1.47          1.47          1.47 
+
+OFF pairs per run:
+  combined_central           predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  seasonal_central           predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  seasonal_central_T         predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  seasonal_k1.5              predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  seasonal_k3                predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  seasonal_k2_july_layer     predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  seasonal_k1_deep_layer     predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  seasonal_k2_layer70_bed    predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  seasonal_DecFeb            predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  seasonal_OctApr            predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  seasonal_central_flow      predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  null_flow                  predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+
+written seasonal_pairs.json

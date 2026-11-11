@@ -1,0 +1,19 @@
+a_engine / a_equal-time (flow-preserving, engine frame) and, for contrast, the naive flow mean without m(t)
+  predatory_fish->planktivorous_fish   null (winter herring winter presence 0.6: engine-frame x1.046   naive x1.175
+  predatory_fish->planktivorous_fish   null (winter herring winter presence 0.3: engine-frame x1.052   naive x1.216
+  predatory_fish->planktivorous_fish   central      herring winter presence 0.6: engine-frame x1.007   naive x1.132
+  predatory_fish->planktivorous_fish   central      herring winter presence 0.3: engine-frame x1.007   naive x1.165
+  predatory_fish->planktivorous_fish   k3           herring winter presence 0.6: engine-frame x0.996   naive x1.120
+  predatory_fish->planktivorous_fish   k3           herring winter presence 0.3: engine-frame x0.995   naive x1.151
+  whiting->planktivorous_fish          null (winter herring winter presence 0.6: engine-frame x1.008   naive x1.036
+  whiting->planktivorous_fish          null (winter herring winter presence 0.3: engine-frame x1.017   naive x1.082
+  whiting->planktivorous_fish          central      herring winter presence 0.6: engine-frame x0.997   naive x1.025
+  whiting->planktivorous_fish          central      herring winter presence 0.3: engine-frame x0.993   naive x1.057
+  whiting->planktivorous_fish          k3           herring winter presence 0.6: engine-frame x0.992   naive x1.020
+  whiting->planktivorous_fish          k3           herring winter presence 0.3: engine-frame x0.980   naive x1.044
+  mackerel->planktivorous_fish         null (winter herring winter presence 0.6: engine-frame x0.772   naive x0.891
+  mackerel->planktivorous_fish         null (winter herring winter presence 0.3: engine-frame x0.755   naive x0.882
+  mackerel->planktivorous_fish         central      herring winter presence 0.6: engine-frame x0.809   naive x0.933
+  mackerel->planktivorous_fish         central      herring winter presence 0.3: engine-frame x0.793   naive x0.925
+  mackerel->planktivorous_fish         k3           herring winter presence 0.6: engine-frame x0.809   naive x0.933
+  mackerel->planktivorous_fish         k3           herring winter presence 0.3: engine-frame x0.793   naive x0.925
