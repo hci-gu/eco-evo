@@ -1,0 +1,112 @@
+hauls in window 1533 (box 436); years 2000-2025
+model map cell shares per bed class [0.2317, 0.2992, 0.3236, 0.1456]; pair depth table (mean 1) [1.629, 1.34, 0.55, 0.301]
+median tow length 3.43 km, wing spread 20.0 m (model cell 1 km)
+catch rows matched 102445
+
+Hauls per class (< 100 / 100-150 / 150-250 / >= 250 m), share with saithe >= 35 cm, share with J; hauls per (year, class) stratum (median):
+  box  Q1: n [127, 103, 26, 0]; S>0 0.08/0.33/0.92/0.00; J>0 0.98/0.95/0.96/0.00; hauls per year-class [5.0, 4.0, 1.0, 0]
+  box  Q3: n [83, 40, 54, 3]; S>0 0.27/0.93/0.94/1.00; J>0 1.00/1.00/0.89/0.33; hauls per year-class [3.0, 2.0, 2.0, 1.0]
+  wide Q1: n [542, 138, 69, 24]; S>0 0.06/0.39/0.91/0.67; J>0 0.96/0.96/0.96/0.92; hauls per year-class [21.0, 5.0, 3.0, 1.0]
+  wide Q3: n [561, 74, 112, 13]; S>0 0.11/0.89/0.92/0.77; J>0 0.90/1.00/0.88/0.38; hauls per year-class [22.0, 2.0, 5.0, 1.0]
+
+Class means and the class-level factor (saithe kg/h; J relative units):
+  box  Q1: saithe 0.31/2.53/27.84/-  J 0.470/0.159/0.112/-  F_class 0.524 (with the depth table 0.561); F_haul 0.277 = F_class x W(nom) 0.277
+  box  Q3: saithe 1.83/40.77/186.33/14.63  J 0.644/0.192/0.043/0.000  F_class 0.316 (with the depth table 0.447); F_haul 0.211 = F_class x W(nom) 0.211
+  wide Q1: saithe 0.27/3.05/33.62/22.67  J 0.219/0.216/0.089/0.039  F_class 0.575 (with the depth table 0.688); F_haul 0.421 = F_class x W(nom) 0.421
+  wide Q3: saithe 3.78/81.59/182.80/38.38  J 0.237/0.289/0.037/0.000  F_class 0.685 (with the depth table 1.049); F_haul 0.672 = F_class x W(nom) 0.672
+
+Bootstrap: 1000 year resamples; permutation nulls: 1000 ...
+
+=== Within-class factor W = haul level / class level, aggregated over the classes with the pair's encounter weights (cell share x depth table x saithe x prey). 95 % year-bootstrap in brackets. E(g) = the W that co-occurrence only at the scale of g gives; W / E(g) = what remains inside g. ===
+
+--- box ---
+  J  Q1            W 0.57 [0.35-0.90] E_band 1.09 [0.80-1.21] W/E_band 0.52 [0.34-0.92] E_rect 0.98 [0.84-1.06] W/E_rect 0.58 [0.36-0.92] W/E_year 0.85 [0.65-1.07] W/E_yearLOO 1.48 [0.22-3.24]
+                 per class: W 0.18/0.98/0.49/-; E_band 0.49/1.09/1.15/-; W LOO 0.18/0.98/0.48/-; W(nom) 0.530
+                 null (shuffle inside class): mean 1.009, 95 % 0.54-1.69; p(null <= obs) 0.036
+                 null (shuffle inside band): mean 1.106, 95 % 0.56-1.74; p(null <= obs) 0.028
+  J  Q3            W 0.78 [0.58-1.07] E_band 1.06 [0.80-1.22] W/E_band 0.74 [0.57-1.09] E_rect 0.98 [0.85-1.12] W/E_rect 0.80 [0.61-1.07] W/E_year 0.95 [0.82-1.07] W/E_yearLOO 0.99 [0.69-1.42]
+                 per class: W 0.75/0.96/0.40/2.24; E_band 1.50/0.99/1.06/1.00; W LOO 0.75/0.96/0.40/5.94; W(nom) 0.668
+                 null (shuffle inside class): mean 0.991, 95 % 0.60-1.68; p(null <= obs) 0.215
+                 null (shuffle inside band): mean 1.047, 95 % 0.64-1.54; p(null <= obs) 0.123
+  J  Q3 0.9/Q1 0.1 W 0.76 [0.57-1.02] E_band 1.06 [0.82-1.20] W/E_band 0.72 [0.56-1.05] E_rect 0.98 [0.86-1.11] W/E_rect 0.78 [0.61-1.03] W/E_year 0.94 [0.82-1.05] W/E_yearLOO 1.04 [0.71-1.45]
+  J  equal Q       W 0.67 [0.52-0.91] E_band 1.07 [0.87-1.15] W/E_band 0.63 [0.51-0.92] E_rect 0.98 [0.88-1.06] W/E_rect 0.69 [0.54-0.90] W/E_year 0.90 [0.79-1.03] W/E_yearLOO 1.23 [0.55-2.12]
+  Js Q1            W 0.38 [0.19-0.85] E_band 1.16 [0.63-1.39] W/E_band 0.33 [0.18-0.92] E_rect 0.91 [0.71-0.99] W/E_rect 0.42 [0.21-0.93] W/E_year 0.63 [0.42-0.95] W/E_yearLOO 0.90 [0.12-2.75]
+                 per class: W 0.14/0.61/0.36/-; E_band 0.35/1.11/1.26/-; W LOO 0.14/0.60/0.35/-; W(nom) 0.372
+                 null (shuffle inside class): mean 0.988, 95 % 0.41-2.05; p(null <= obs) 0.020
+                 null (shuffle inside band): mean 1.147, 95 % 0.39-2.00; p(null <= obs) 0.019
+  Js Q3            W 0.84 [0.56-1.13] E_band 1.17 [0.77-1.45] W/E_band 0.72 [0.43-1.20] E_rect 1.01 [0.84-1.14] W/E_rect 0.83 [0.59-1.18] W/E_year 0.90 [0.76-1.00] W/E_yearLOO 1.03 [0.61-1.80]
+                 per class: W 0.84/1.18/0.40/-; E_band 1.47/1.00/1.28/-; W LOO 0.84/1.18/0.40/-; W(nom) 0.686
+                 null (shuffle inside class): mean 1.005, 95 % 0.52-1.95; p(null <= obs) 0.404
+                 null (shuffle inside band): mean 1.182, 95 % 0.57-2.03; p(null <= obs) 0.269
+  Js Q3 0.9/Q1 0.1 W 0.80 [0.55-1.06] E_band 1.17 [0.79-1.41] W/E_band 0.68 [0.44-1.13] E_rect 1.00 [0.85-1.12] W/E_rect 0.79 [0.58-1.13] W/E_year 0.87 [0.74-0.97] W/E_yearLOO 1.02 [0.62-1.77]
+  Js equal Q       W 0.61 [0.44-0.89] E_band 1.16 [0.82-1.31] W/E_band 0.53 [0.36-0.92] E_rect 0.96 [0.83-1.04] W/E_rect 0.63 [0.46-0.96] W/E_year 0.76 [0.64-0.92] W/E_yearLOO 0.97 [0.45-1.94]
+  A  Q1            W 1.06 [0.81-1.41] E_band 1.04 [0.90-1.16] W/E_band 1.02 [0.82-1.30] E_rect 1.15 [1.04-1.33] W/E_rect 0.92 [0.74-1.18] W/E_year 1.24 [1.14-1.37] W/E_yearLOO 3.18 [0.84-5.63]
+                 per class: W 1.81/1.82/0.74/-; E_band 1.21/1.16/0.99/-; W LOO 1.82/1.83/0.73/-; W(nom) 0.896
+  A  Q3            W 1.41 [0.89-2.06] E_band 1.00 [0.85-1.57] W/E_band 1.42 [0.98-1.75] E_rect 1.02 [0.91-1.33] W/E_rect 1.38 [0.89-1.93] W/E_year 0.99 [0.90-1.07] W/E_yearLOO 1.07 [0.73-1.60]
+                 per class: W 1.09/1.34/1.54/0.86; E_band 1.43/0.94/1.06/1.00; W LOO 1.10/1.35/1.56/0.80; W(nom) 1.458
+  A  Q3 0.9/Q1 0.1 W 1.38 [0.91-1.96] E_band 1.00 [0.86-1.52] W/E_band 1.38 [0.98-1.69] E_rect 1.04 [0.93-1.33] W/E_rect 1.33 [0.90-1.83] W/E_year 1.02 [0.93-1.09] W/E_yearLOO 1.28 [0.81-1.80]
+  A  equal Q       W 1.23 [0.94-1.63] E_band 1.02 [0.92-1.32] W/E_band 1.22 [0.97-1.43] E_rect 1.09 [1.00-1.31] W/E_rect 1.15 [0.87-1.46] W/E_year 1.12 [1.05-1.19] W/E_yearLOO 2.13 [0.88-3.44]
+  B  Q1            W 0.98 [0.76-1.28] E_band 1.05 [0.90-1.13] W/E_band 0.94 [0.77-1.20] E_rect 1.12 [1.03-1.28] W/E_rect 0.88 [0.71-1.10] W/E_year 1.19 [1.10-1.30] W/E_yearLOO 2.89 [0.75-5.04]
+                 per class: W 1.29/1.71/0.70/-; E_band 0.98/1.15/1.01/-; W LOO 1.30/1.73/0.69/-; W(nom) 0.840
+  B  Q3            W 1.33 [0.88-1.89] E_band 1.00 [0.87-1.48] W/E_band 1.32 [0.95-1.59] E_rect 1.02 [0.91-1.28] W/E_rect 1.31 [0.88-1.77] W/E_year 0.99 [0.90-1.07] W/E_yearLOO 1.06 [0.74-1.54]
+                 per class: W 0.97/1.29/1.43/0.86; E_band 1.45/0.94/1.06/1.00; W LOO 0.97/1.30/1.44/0.81; W(nom) 1.364
+  B  Q3 0.9/Q1 0.1 W 1.30 [0.90-1.80] E_band 1.01 [0.88-1.43] W/E_band 1.29 [0.95-1.53] E_rect 1.03 [0.93-1.27] W/E_rect 1.26 [0.88-1.68] W/E_year 1.01 [0.93-1.08] W/E_yearLOO 1.25 [0.81-1.72]
+  B  equal Q       W 1.16 [0.90-1.48] E_band 1.03 [0.93-1.27] W/E_band 1.13 [0.92-1.32] E_rect 1.07 [1.00-1.26] W/E_rect 1.09 [0.86-1.35] W/E_year 1.09 [1.02-1.16] W/E_yearLOO 1.98 [0.83-3.11]
+
+--- wide ---
+  J  Q1            W 0.93 [0.62-1.36] E_band 0.91 [0.69-1.06] W/E_band 1.03 [0.72-1.46] E_rect 0.91 [0.70-1.10] W/E_rect 1.03 [0.73-1.40] W/E_year 0.81 [0.50-1.19] W/E_yearLOO 0.72 [0.42-1.21]
+                 per class: W 3.46/1.54/0.55/0.56; E_band 1.23/1.02/0.83/1.00; W LOO 3.48/1.55/0.55/0.55; W(nom) 0.732
+                 null (shuffle inside class): mean 1.008, 95 % 0.66-1.62; p(null <= obs) 0.435
+                 null (shuffle inside band): mean 0.912, 95 % 0.61-1.38; p(null <= obs) 0.596
+  J  Q3            W 0.91 [0.48-1.55] E_band 1.01 [0.73-1.20] W/E_band 0.90 [0.53-1.50] E_rect 1.25 [0.56-1.82] W/E_rect 0.72 [0.47-1.21] W/E_year 0.96 [0.68-1.20] W/E_yearLOO 1.00 [0.60-1.48]
+                 per class: W 1.64/0.81/1.48/0.39; E_band 2.54/0.95/1.07/0.99; W LOO 1.65/0.80/1.49/0.37; W(nom) 0.981
+                 null (shuffle inside class): mean 1.006, 95 % 0.53-1.98; p(null <= obs) 0.503
+                 null (shuffle inside band): mean 1.007, 95 % 0.53-2.38; p(null <= obs) 0.554
+  J  Q3 0.9/Q1 0.1 W 0.91 [0.52-1.51] E_band 1.00 [0.75-1.17] W/E_band 0.91 [0.58-1.46] E_rect 1.22 [0.59-1.74] W/E_rect 0.75 [0.52-1.19] W/E_year 0.95 [0.69-1.17] W/E_yearLOO 0.97 [0.61-1.43]
+  J  equal Q       W 0.92 [0.65-1.36] E_band 0.96 [0.79-1.09] W/E_band 0.96 [0.72-1.35] E_rect 1.08 [0.73-1.38] W/E_rect 0.88 [0.70-1.22] W/E_year 0.89 [0.68-1.13] W/E_yearLOO 0.86 [0.62-1.22]
+  Js Q1            W 0.54 [0.38-0.82] E_band 1.04 [0.70-1.18] W/E_band 0.52 [0.37-0.91] E_rect 0.94 [0.67-1.10] W/E_rect 0.57 [0.43-0.95] W/E_year 0.65 [0.38-0.97] W/E_yearLOO 0.54 [0.30-0.85]
+                 per class: W 1.77/0.71/0.41/0.11; E_band 1.11/1.06/1.03/1.00; W LOO 1.77/0.71/0.41/0.11; W(nom) 0.443
+                 null (shuffle inside class): mean 1.009, 95 % 0.57-1.80; p(null <= obs) 0.014
+                 null (shuffle inside band): mean 1.039, 95 % 0.55-1.82; p(null <= obs) 0.021
+  Js Q3            W 0.99 [0.45-1.86] E_band 1.10 [0.72-1.31] W/E_band 0.90 [0.45-1.79] E_rect 1.11 [0.44-2.25] W/E_rect 0.89 [0.71-1.30] W/E_year 1.10 [0.86-1.24] W/E_yearLOO 1.25 [0.82-1.63]
+                 per class: W 1.44/0.86/1.87/0.08; E_band 2.26/1.05/1.06/0.96; W LOO 1.44/0.86/1.89/0.07; W(nom) 1.102
+                 null (shuffle inside class): mean 1.015, 95 % 0.43-2.65; p(null <= obs) 0.680
+                 null (shuffle inside band): mean 1.145, 95 % 0.45-3.52; p(null <= obs) 0.602
+  Js Q3 0.9/Q1 0.1 W 0.95 [0.45-1.73] E_band 1.09 [0.75-1.27] W/E_band 0.86 [0.47-1.68] E_rect 1.10 [0.48-2.12] W/E_rect 0.86 [0.70-1.25] W/E_year 1.06 [0.83-1.18] W/E_yearLOO 1.18 [0.79-1.53]
+  Js equal Q       W 0.76 [0.46-1.20] E_band 1.07 [0.82-1.19] W/E_band 0.71 [0.48-1.16] E_rect 1.03 [0.64-1.58] W/E_rect 0.73 [0.61-1.05] W/E_year 0.87 [0.68-1.04] W/E_yearLOO 0.90 [0.64-1.13]
+  A  Q1            W 0.98 [0.84-1.17] E_band 0.95 [0.89-1.02] W/E_band 1.03 [0.90-1.20] E_rect 1.01 [0.92-1.12] W/E_rect 0.98 [0.85-1.12] W/E_year 1.08 [0.98-1.19] W/E_yearLOO 1.07 [0.93-1.26]
+                 per class: W 3.50/1.53/0.79/0.81; E_band 1.13/1.11/0.89/1.00; W LOO 3.52/1.54/0.79/0.80; W(nom) 0.874
+  A  Q3            W 1.16 [0.90-1.44] E_band 0.83 [0.67-1.04] W/E_band 1.39 [0.98-1.76] E_rect 0.83 [0.67-1.19] W/E_rect 1.39 [1.00-1.53] W/E_year 0.72 [0.60-1.03] W/E_yearLOO 0.63 [0.50-1.05]
+                 per class: W 1.87/1.16/1.10/0.81; E_band 2.27/0.72/1.05/1.02; W LOO 1.88/1.16/1.10/0.80; W(nom) 1.136
+  A  Q3 0.9/Q1 0.1 W 1.14 [0.90-1.38] E_band 0.84 [0.70-1.04] W/E_band 1.36 [0.98-1.69] E_rect 0.85 [0.71-1.18] W/E_rect 1.35 [1.00-1.47] W/E_year 0.75 [0.66-1.03] W/E_yearLOO 0.67 [0.56-1.06]
+  A  equal Q       W 1.07 [0.93-1.23] E_band 0.89 [0.80-1.01] W/E_band 1.21 [1.00-1.42] E_rect 0.92 [0.82-1.13] W/E_rect 1.18 [0.96-1.27] W/E_year 0.90 [0.84-1.05] W/E_yearLOO 0.85 [0.76-1.08]
+  B  Q1            W 0.98 [0.83-1.17] E_band 0.95 [0.88-1.02] W/E_band 1.03 [0.89-1.20] E_rect 0.99 [0.91-1.10] W/E_rect 0.98 [0.85-1.13] W/E_year 1.04 [0.93-1.13] W/E_yearLOO 1.01 [0.88-1.15]
+                 per class: W 3.49/1.54/0.76/0.79; E_band 1.15/1.09/0.89/1.00; W LOO 3.51/1.54/0.76/0.78; W(nom) 0.859
+  B  Q3            W 1.12 [0.87-1.39] E_band 0.86 [0.70-1.06] W/E_band 1.31 [0.99-1.63] E_rect 0.89 [0.72-1.20] W/E_rect 1.25 [0.98-1.42] W/E_year 0.74 [0.61-1.05] W/E_yearLOO 0.65 [0.51-1.11]
+                 per class: W 1.82/1.10/1.13/0.81; E_band 2.33/0.76/1.05/1.02; W LOO 1.82/1.10/1.13/0.80; W(nom) 1.117
+  B  Q3 0.9/Q1 0.1 W 1.11 [0.88-1.34] E_band 0.86 [0.72-1.05] W/E_band 1.28 [0.99-1.58] E_rect 0.90 [0.74-1.18] W/E_rect 1.23 [0.98-1.38] W/E_year 0.77 [0.66-1.05] W/E_yearLOO 0.69 [0.56-1.10]
+  B  equal Q       W 1.05 [0.91-1.21] E_band 0.90 [0.81-1.02] W/E_band 1.17 [1.00-1.36] E_rect 0.94 [0.84-1.11] W/E_rect 1.12 [0.95-1.22] W/E_year 0.89 [0.83-1.04] W/E_yearLOO 0.83 [0.75-1.07]
+
+=== Decomposition W(J) = W(B) x R; R = J/B met by saithe relative to the class J/B ===
+  box  1   : W(J) 0.569 = W(B) 0.983 [0.76-1.28] x R 0.579 [0.37-0.89]
+  box  3   : W(J) 0.780 = W(B) 1.331 [0.88-1.89] x R 0.586 [0.35-1.02]
+  box  pres: W(J) 0.759 = W(B) 1.296 [0.90-1.80] x R 0.586 [0.37-0.98]
+  wide 1   : W(J) 0.934 = W(B) 0.978 [0.83-1.17] x R 0.955 [0.68-1.28]
+  wide 3   : W(J) 0.906 = W(B) 1.120 [0.87-1.39] x R 0.808 [0.45-1.32]
+  wide pres: W(J) 0.909 = W(B) 1.106 [0.88-1.34] x R 0.821 [0.49-1.28]
+
+=== J against the benthivore adults inside the class (the engine carries J inside B: W(J vs A) = 1 is 'J spread like A') ===
+  box  Q1: per class 1.75/1.40/1.37/-; E_band 0.96/1.05/0.90/-
+  box  Q3: per class 1.69/1.08/1.12/0.83; E_band 1.23/1.03/1.28/1.00
+  wide Q1: per class 1.55/1.21/1.06/1.32; E_band 0.99/1.02/1.20/1.00
+  wide Q3: per class 1.77/0.97/1.16/0.78; E_band 1.49/1.03/1.22/0.99
+
+=== Robustness of W(J) (aggregate, with the depth table) and W / E_band ===
+  box  1   :  J 0.57/0.52  J_raw 0.60/0.55  J_sa 0.57/0.53  J_S40 0.51/0.47  J_Spa 1.04/1.07  J_droptop 0.63/0.55
+  box  3   :  J 0.78/0.74  J_raw 0.69/0.68  J_sa 0.80/0.75  J_S40 0.79/0.77  J_Spa 1.11/0.97  J_droptop 0.83/0.84
+  box  pres:  J 0.76/0.72  J_raw 0.68/0.67  J_sa 0.78/0.73  J_S40 0.76/0.74  J_Spa 1.10/0.98  J_droptop 0.81/0.81
+  wide 1   :  J 0.93/1.03  J_raw 0.99/1.11  J_sa 0.98/1.05  J_S40 0.92/1.02  J_Spa 1.38/1.36  J_droptop 0.98/1.08
+  wide 3   :  J 0.91/0.90  J_raw 0.80/0.85  J_sa 0.95/0.93  J_S40 0.92/0.91  J_Spa 1.01/0.92  J_droptop 1.15/1.14
+  wide pres:  J 0.91/0.91  J_raw 0.82/0.88  J_sa 0.95/0.94  J_S40 0.92/0.92  J_Spa 1.05/0.96  J_droptop 1.14/1.13
+
+wrote ../tables/within_class.json

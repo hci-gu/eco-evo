@@ -1,0 +1,225 @@
+book_0.0833: done
+book_0.0833+eq: done
+book_0.0578: done
+book_0.0578+eq: done
+book_0.0414: done
+book_0.0414+eq: done
+book_0.0910: done
+book_0.0910+eq: done
+book_0.0266: done
+book_0.0266+eq: done
+book_0.0647: done
+book_0.0647+eq: done
+W_box_0.76: done
+W_box_0.76+eq: done
+W_box_0.76+book: done
+W_box_0.76+book+eq: done
+W_box_lo_0.57: done
+W_box_lo_0.57+eq: done
+W_box_lo_0.57+book: done
+W_box_lo_0.57+book+eq: done
+W_box_hi_1.02: done
+W_box_hi_1.02+eq: done
+W_box_hi_1.02+book: done
+W_box_hi_1.02+book+eq: done
+W_wide_0.91: done
+W_wide_0.91+eq: done
+W_wide_0.91+book: done
+W_wide_0.91+book+eq: done
+W_box_within-year_1.04: done
+W_box_within-year_1.04+eq: done
+W_box_within-year_1.04+book: done
+W_box_within-year_1.04+book+eq: done
+
+Pair edits (a after the combined factor x2.96 and the adult-part corrections; stage_access; booking):
+  book_0.0833                        a 0.117 (x0.945), stage_access [0.3818, 0.01653] (f_J x 1.000), predation_mortality 0.0833  [0.0833 (library)]
+  book_0.0578                        a 0.117 (x0.945), stage_access [0.3818, 0.01653] (f_J x 1.000), predation_mortality 0.0578  [field central]
+  book_0.0414                        a 0.117 (x0.945), stage_access [0.3818, 0.01653] (f_J x 1.000), predation_mortality 0.0414  [field MC 5 %]
+  book_0.0910                        a 0.117 (x0.945), stage_access [0.3818, 0.01653] (f_J x 1.000), predation_mortality 0.091  [field MC 95 %]
+  book_0.0266                        a 0.117 (x0.945), stage_access [0.3818, 0.01653] (f_J x 1.000), predation_mortality 0.0266  [SMS stomach-level (pred side)]
+  book_0.0647                        a 0.117 (x0.945), stage_access [0.3818, 0.01653] (f_J x 1.000), predation_mortality 0.0647  [SMS level (prey side)]
+  W_box_0.76                         a 0.117 (x0.945), stage_access [0.2898, 0.01653] (f_J x 0.759), predation_mortality 0.0833  [diagnostic: f_J x W, booking 0.0833]
+  W_box_0.76+book                    a 0.117 (x0.945), stage_access [0.2898, 0.01653] (f_J x 0.759), predation_mortality 0.0578  [diagnostic: f_J x W, field-central booking]
+  W_box_lo_0.57                      a 0.117 (x0.945), stage_access [0.2189, 0.01653] (f_J x 0.573), predation_mortality 0.0833  [diagnostic: f_J x W, booking 0.0833]
+  W_box_lo_0.57+book                 a 0.117 (x0.945), stage_access [0.2189, 0.01653] (f_J x 0.573), predation_mortality 0.0578  [diagnostic: f_J x W, field-central booking]
+  W_box_hi_1.02                      a 0.117 (x0.945), stage_access [0.3909, 0.01653] (f_J x 1.024), predation_mortality 0.0833  [diagnostic: f_J x W, booking 0.0833]
+  W_box_hi_1.02+book                 a 0.117 (x0.945), stage_access [0.3909, 0.01653] (f_J x 1.024), predation_mortality 0.0578  [diagnostic: f_J x W, field-central booking]
+  W_wide_0.91                        a 0.117 (x0.945), stage_access [0.3469, 0.01653] (f_J x 0.909), predation_mortality 0.0833  [diagnostic: f_J x W, booking 0.0833]
+  W_wide_0.91+book                   a 0.117 (x0.945), stage_access [0.3469, 0.01653] (f_J x 0.909), predation_mortality 0.0578  [diagnostic: f_J x W, field-central booking]
+  W_box_within-year_1.04             a 0.117 (x0.945), stage_access [0.3967, 0.01653] (f_J x 1.039), predation_mortality 0.0833  [diagnostic: f_J x W, booking 0.0833]
+  W_box_within-year_1.04+book        a 0.117 (x0.945), stage_access [0.3967, 0.01653] (f_J x 1.039), predation_mortality 0.0578  [diagnostic: f_J x W, field-central booking]
+
+J / A shapes used (f per class < 100 / 100-150 / 150-250 / >= 250 m, mean 1 on the 60x60 map; the gate renormalises on its 16x16 grid):
+  book_0.0833                J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  book_0.0833+eq             J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  book_0.0578                J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  book_0.0578+eq             J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  book_0.0414                J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  book_0.0414+eq             J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  book_0.0910                J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  book_0.0910+eq             J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  book_0.0266                J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  book_0.0266+eq             J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  book_0.0647                J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  book_0.0647+eq             J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  W_box_0.76                 J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  W_box_0.76+eq              J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  W_box_0.76+book            J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  W_box_0.76+book+eq         J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  W_box_lo_0.57              J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  W_box_lo_0.57+eq           J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  W_box_lo_0.57+book         J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  W_box_lo_0.57+book+eq      J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  W_box_hi_1.02              J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  W_box_hi_1.02+eq           J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  W_box_hi_1.02+book         J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  W_box_hi_1.02+book+eq      J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  W_wide_0.91                J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  W_wide_0.91+eq             J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  W_wide_0.91+book           J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  W_wide_0.91+book+eq        J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  W_box_within-year_1.04     J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  W_box_within-year_1.04+eq  J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  W_box_within-year_1.04+book J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  W_box_within-year_1.04+book+eq J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+
+PREY SIDE on the benthivores: implied / booked M2, equal cells then field spread (* = OFF on the equal-cell prey check)
+  run                        predatory_fish        whiting          seals      porpoises   total eq / field
+  book_0.0833                  1.54   1.41    0.29   0.34*   0.90    nan    2.44    nan     0.89 /  0.87
+  book_0.0833+eq               2.13   1.41    0.34   0.34    0.90    nan    2.44    nan     1.13 /  0.87
+  book_0.0578                  2.17   1.98    0.29   0.34*   0.90    nan    2.44    nan     0.99 /  0.96
+  book_0.0578+eq               3.00   1.98    0.34   0.34    0.90    nan    2.44    nan     1.24 /  0.96
+  book_0.0414                  2.98   2.72    0.29   0.34*   0.90    nan    2.44    nan     1.06 /  1.04
+  book_0.0414+eq               4.12   2.72*   0.34   0.34    0.90    nan    2.44    nan     1.33 /  1.04
+  book_0.0910                  1.42   1.30    0.29   0.34*   0.90    nan    2.44    nan     0.87 /  0.85
+  book_0.0910+eq               1.96   1.30    0.34   0.34    0.90    nan    2.44    nan     1.09 /  0.85
+  book_0.0266                  4.57   4.18*   0.29   0.34*   0.90    nan    2.44    nan     1.14 /  1.11
+  book_0.0266+eq               6.32   4.18*   0.34   0.34    0.90    nan    2.44    nan     1.43 /  1.11
+  book_0.0647                  1.95   1.78    0.29   0.34*   0.90    nan    2.44    nan     0.96 /  0.94
+  book_0.0647+eq               2.69   1.78    0.34   0.34    0.90    nan    2.44    nan     1.21 /  0.94
+  W_box_0.76                   1.27   1.17    0.29   0.34*   0.90    nan    2.44    nan     0.80 /  0.79
+  W_box_0.76+eq                1.76   1.17    0.34   0.34    0.90    nan    2.44    nan     0.99 /  0.79
+  W_box_0.76+book              1.79   1.65    0.29   0.34*   0.90    nan    2.44    nan     0.88 /  0.87
+  W_box_0.76+book+eq           2.47   1.65    0.34   0.34    0.90    nan    2.44    nan     1.10 /  0.87
+  W_box_lo_0.57                1.05   0.98    0.29   0.34*   0.90    nan    2.44    nan     0.72 /  0.72
+  W_box_lo_0.57+eq             1.45   0.98    0.34   0.34    0.90    nan    2.44    nan     0.88 /  0.72
+  W_box_lo_0.57+book           1.48   1.38    0.29   0.34*   0.90    nan    2.44    nan     0.80 /  0.80
+  W_box_lo_0.57+book+eq        2.05   1.38    0.34   0.34    0.90    nan    2.44    nan     0.98 /  0.80
+  W_box_hi_1.02                1.57   1.43    0.29   0.34*   0.90    nan    2.44    nan     0.90 /  0.88
+  W_box_hi_1.02+eq             2.16   1.43    0.34   0.34    0.90    nan    2.44    nan     1.14 /  0.88
+  W_box_hi_1.02+book           2.21   2.01    0.29   0.34*   0.90    nan    2.44    nan     1.00 /  0.97
+  W_box_hi_1.02+book+eq        3.05   2.01*   0.34   0.34    0.90    nan    2.44    nan     1.26 /  0.97
+  W_wide_0.91                  1.44   1.32    0.29   0.34*   0.90    nan    2.44    nan     0.86 /  0.84
+  W_wide_0.91+eq               1.99   1.32    0.34   0.34    0.90    nan    2.44    nan     1.08 /  0.84
+  W_wide_0.91+book             2.03   1.86    0.29   0.34*   0.90    nan    2.44    nan     0.95 /  0.93
+  W_wide_0.91+book+eq          2.80   1.86    0.34   0.34    0.90    nan    2.44    nan     1.19 /  0.93
+  W_box_within-year_1.04       1.58   1.45    0.29   0.34*   0.90    nan    2.44    nan     0.91 /  0.88
+  W_box_within-year_1.04+eq    2.19   1.45    0.34   0.34    0.90    nan    2.44    nan     1.15 /  0.88
+  W_box_within-year_1.04+book   2.23   2.03    0.29   0.34*   0.90    nan    2.44    nan     1.01 /  0.98
+  W_box_within-year_1.04+book+eq   3.08   2.03*   0.34   0.34    0.90    nan    2.44    nan     1.26 /  0.98
+
+PREDATOR SIDE (encounter share / booked share of the predator's diet), equal cells | field spread:
+  run                          predatory_fish          whiting            seals        porpoises
+  book_0.0833                 1.54  |  1.41   0.29* |  0.34   0.90  |     -   2.44  |     - 
+  book_0.0833+eq              2.13  |  1.41   0.34  |  0.34   0.90  |     -   2.44  |     - 
+  book_0.0578                 2.17  |  1.98   0.29* |  0.34   0.90  |     -   2.44  |     - 
+  book_0.0578+eq              3.00  |  1.98   0.34  |  0.34   0.90  |     -   2.44  |     - 
+  book_0.0414                 2.98  |  2.72   0.29* |  0.34   0.90  |     -   2.44  |     - 
+  book_0.0414+eq              4.12* |  2.72   0.34  |  0.34   0.90  |     -   2.44  |     - 
+  book_0.0910                 1.42  |  1.30   0.29* |  0.34   0.90  |     -   2.44  |     - 
+  book_0.0910+eq              1.96  |  1.30   0.34  |  0.34   0.90  |     -   2.44  |     - 
+  book_0.0266                 4.57* |  4.18*  0.29* |  0.34   0.90  |     -   2.44  |     - 
+  book_0.0266+eq              6.32* |  4.18*  0.34  |  0.34   0.90  |     -   2.44  |     - 
+  book_0.0647                 1.95  |  1.78   0.29* |  0.34   0.90  |     -   2.44  |     - 
+  book_0.0647+eq              2.69  |  1.78   0.34  |  0.34   0.90  |     -   2.44  |     - 
+  W_box_0.76                  1.27  |  1.17   0.29* |  0.34   0.90  |     -   2.44  |     - 
+  W_box_0.76+eq               1.76  |  1.17   0.34  |  0.34   0.90  |     -   2.44  |     - 
+  W_box_0.76+book             1.79  |  1.65   0.29* |  0.34   0.90  |     -   2.44  |     - 
+  W_box_0.76+book+eq          2.47  |  1.65   0.34  |  0.34   0.90  |     -   2.44  |     - 
+  W_box_lo_0.57               1.05  |  0.98   0.29* |  0.34   0.90  |     -   2.44  |     - 
+  W_box_lo_0.57+eq            1.45  |  0.98   0.34  |  0.34   0.90  |     -   2.44  |     - 
+  W_box_lo_0.57+book          1.48  |  1.38   0.29* |  0.34   0.90  |     -   2.44  |     - 
+  W_box_lo_0.57+book+eq       2.05  |  1.38   0.34  |  0.34   0.90  |     -   2.44  |     - 
+  W_box_hi_1.02               1.57  |  1.43   0.29* |  0.34   0.90  |     -   2.44  |     - 
+  W_box_hi_1.02+eq            2.16  |  1.43   0.34  |  0.34   0.90  |     -   2.44  |     - 
+  W_box_hi_1.02+book          2.21  |  2.01   0.29* |  0.34   0.90  |     -   2.44  |     - 
+  W_box_hi_1.02+book+eq       3.05* |  2.01   0.34  |  0.34   0.90  |     -   2.44  |     - 
+  W_wide_0.91                 1.44  |  1.32   0.29* |  0.34   0.90  |     -   2.44  |     - 
+  W_wide_0.91+eq              1.99  |  1.32   0.34  |  0.34   0.90  |     -   2.44  |     - 
+  W_wide_0.91+book            2.03  |  1.86   0.29* |  0.34   0.90  |     -   2.44  |     - 
+  W_wide_0.91+book+eq         2.80  |  1.86   0.34  |  0.34   0.90  |     -   2.44  |     - 
+  W_box_within-year_1.04      1.58  |  1.45   0.29* |  0.34   0.90  |     -   2.44  |     - 
+  W_box_within-year_1.04+eq   2.19  |  1.45   0.34  |  0.34   0.90  |     -   2.44  |     - 
+  W_box_within-year_1.04+book  2.23  |  2.03   0.29* |  0.34   0.90  |     -   2.44  |     - 
+  W_box_within-year_1.04+book+eq  3.08* |  2.03   0.34  |  0.34   0.90  |     -   2.44  |     - 
+
+Other prey totals (implied / booked M2, equal cells / field spread):
+  run                         planktivorous          krill        whiting  mobile_epifau  norway_lobste  benthic_infau
+  book_0.0833                  0.90/ 0.88     1.01/ 1.02     1.05/ 0.90     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  book_0.0833+eq               0.88/ 0.88     1.01/ 1.02     1.02/ 0.90     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  book_0.0578                  0.89/ 0.87     1.01/ 1.02     1.04/ 0.89     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  book_0.0578+eq               0.87/ 0.87     1.01/ 1.02     1.01/ 0.89     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  book_0.0414                  0.89/ 0.87     1.01/ 1.02     1.03/ 0.89     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  book_0.0414+eq               0.87/ 0.87     1.01/ 1.02     1.00/ 0.89     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  book_0.0910                  0.91/ 0.89     1.01/ 1.02     1.05/ 0.91     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  book_0.0910+eq               0.88/ 0.89     1.01/ 1.02     1.02/ 0.91     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  book_0.0266                  0.88/ 0.86     1.01/ 1.02     1.02/ 0.88     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  book_0.0266+eq               0.86/ 0.86     1.01/ 1.02     0.99/ 0.88     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  book_0.0647                  0.90/ 0.87     1.01/ 1.02     1.04/ 0.90     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  book_0.0647+eq               0.87/ 0.87     1.01/ 1.02     1.01/ 0.90     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  W_box_0.76                   0.91/ 0.89     1.01/ 1.03     1.06/ 0.91     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  W_box_0.76+eq                0.90/ 0.89     1.01/ 1.03     1.04/ 0.91     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  W_box_0.76+book              0.90/ 0.88     1.01/ 1.02     1.05/ 0.90     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  W_box_0.76+book+eq           0.89/ 0.88     1.01/ 1.02     1.03/ 0.90     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  W_box_lo_0.57                0.92/ 0.90     1.01/ 1.03     1.07/ 0.92     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  W_box_lo_0.57+eq             0.91/ 0.90     1.01/ 1.03     1.05/ 0.92     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  W_box_lo_0.57+book           0.91/ 0.89     1.01/ 1.02     1.06/ 0.91     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  W_box_lo_0.57+book+eq        0.90/ 0.89     1.01/ 1.02     1.04/ 0.91     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  W_box_hi_1.02                0.90/ 0.88     1.01/ 1.02     1.05/ 0.90     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  W_box_hi_1.02+eq             0.88/ 0.88     1.01/ 1.02     1.02/ 0.90     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  W_box_hi_1.02+book           0.89/ 0.87     1.01/ 1.02     1.04/ 0.89     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  W_box_hi_1.02+book+eq        0.87/ 0.87     1.01/ 1.02     1.01/ 0.89     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  W_wide_0.91                  0.91/ 0.89     1.01/ 1.02     1.06/ 0.91     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  W_wide_0.91+eq               0.89/ 0.89     1.01/ 1.02     1.03/ 0.91     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  W_wide_0.91+book             0.90/ 0.88     1.01/ 1.02     1.04/ 0.90     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  W_wide_0.91+book+eq          0.88/ 0.88     1.01/ 1.02     1.01/ 0.90     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  W_box_within-year_1.04       0.90/ 0.88     1.01/ 1.02     1.05/ 0.90     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  W_box_within-year_1.04+eq    0.88/ 0.88     1.01/ 1.02     1.02/ 0.90     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  W_box_within-year_1.04+book   0.89/ 0.87     1.01/ 1.02     1.03/ 0.89     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  W_box_within-year_1.04+book+eq   0.87/ 0.87     1.01/ 1.02     1.00/ 0.89     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+
+Benthivores as predator at the field spread (P3 runs only): encounter / booked share
+
+OFF pairs per run (equal-cell diet / field diet / prey side):
+  book_0.0833                predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  book_0.0833+eq             predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->mobile_epifauna (f)
+  book_0.0578                predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  book_0.0578+eq             predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->mobile_epifauna (f)
+  book_0.0414                predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  book_0.0414+eq             predatory_fish->benthivorous_fish, predatory_fish->benthivorous_fish (prey), predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->mobile_epifauna (f)
+  book_0.0910                predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  book_0.0910+eq             predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->mobile_epifauna (f)
+  book_0.0266                predatory_fish->benthivorous_fish, predatory_fish->benthivorous_fish (f), predatory_fish->benthivorous_fish (prey), predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  book_0.0266+eq             predatory_fish->benthivorous_fish, predatory_fish->benthivorous_fish (f), predatory_fish->benthivorous_fish (prey), predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->mobile_epifauna (f)
+  book_0.0647                predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  book_0.0647+eq             predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->mobile_epifauna (f)
+  W_box_0.76                 predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  W_box_0.76+eq              predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->mobile_epifauna (f)
+  W_box_0.76+book            predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  W_box_0.76+book+eq         predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->mobile_epifauna (f)
+  W_box_lo_0.57              predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  W_box_lo_0.57+eq           predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->mobile_epifauna (f)
+  W_box_lo_0.57+book         predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  W_box_lo_0.57+book+eq      predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->mobile_epifauna (f)
+  W_box_hi_1.02              predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  W_box_hi_1.02+eq           predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->mobile_epifauna (f)
+  W_box_hi_1.02+book         predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  W_box_hi_1.02+book+eq      predatory_fish->benthivorous_fish, predatory_fish->benthivorous_fish (prey), predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->mobile_epifauna (f)
+  W_wide_0.91                predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  W_wide_0.91+eq             predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->mobile_epifauna (f)
+  W_wide_0.91+book           predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  W_wide_0.91+book+eq        predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->mobile_epifauna (f)
+  W_box_within-year_1.04     predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  W_box_within-year_1.04+eq  predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->mobile_epifauna (f)
+  W_box_within-year_1.04+book predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  W_box_within-year_1.04+book+eq predatory_fish->benthivorous_fish, predatory_fish->benthivorous_fish (prey), predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->mobile_epifauna (f)

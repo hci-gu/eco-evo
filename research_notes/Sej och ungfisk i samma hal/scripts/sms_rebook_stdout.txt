@@ -1,0 +1,42 @@
+1. Origin of 0.0833 (split_fields_223, the pre-228 water column of 0.754 t/km2; Q t/km2/yr x 'Bf' share):
+   saithe          Q 1.4739 x 0.05 = 0.0737  (0-1 group haddock; today: rest)
+   mackerel        Q 0.2117 x 0.01 = 0.0021  (trace; today: mackerel (no benthivore pair))
+   spurdog         Q 0.1201 x 0.22 = 0.0264  (Ecopath 'Bf' incl. small gadoids (poor cod, bib, rocklings), gurnards, rays; today: rest)
+   horse mackerel  Q 0.1489 x 0.07 = 0.0104  (haddock in 20-29 cm horse mackerel, Dahl & Kirkegaard 1985; today: mackerel (no pair))
+   hake            Q 0.1044 x 0.01 = 0.0010  (juveniles; today: rest (out of this pair, user 2026-11-11))
+   anglerfish      Q 0.0296 x 0.30 = 0.0089  (Ecopath-like 'Bf' incl. small gadoids; today: rest)
+   ling            Q 0.0167 x 0.30 = 0.0050  (anglerfish proxy; today: rest)
+   velvet belly    Q 0.0114 x 0.07 = 0.0008  (horse mackerel proxy; today: rest)
+   pollack         Q 0.0149 x 0.05 = 0.0007  (saithe proxy; today: rest)
+   sum 0.1291 t/km2/yr -> / 1.53 = 0.0844 /yr raw; x 0.9874 (library-sum scale) = 0.0833 -> library 0.0833; booked flow 0.1274 t/km2/yr
+   of which by members now in the mackerel group (228 kept the M2 on the rest): 0.0125 t/km2/yr (0.10 of the flow)
+
+2. Field route (member B x Q/B x share on the model's benthivores x J/A); t/km2/yr
+   member             B    flow       J       A   source
+   saithe        0.4917  0.0738  0.0679  0.0059   E5 stomachs 1980-91 + Mehl 2005; Q/B SMS 2.78 - Ecopath 3.6
+   spurdog       0.0598  0.0072  0.0011  0.0061   Ecopath 1991 on the model's members 0.068; ICES dab
+   anglerfish    0.0167  0.0057  0.0009  0.0048   Ecopath 0.186 on members; ICES n 34; Iceland, Shetland
+   ling          0.0086  0.0017  0.0009  0.0009   [J] Q/B; MFRI Iceland haddock + cod ~15 %; in-area anecdotal
+   pollack       0.0049  0.0000  0.0000  0.0000   ICES n 30: none
+   velvet belly  0.0056  0.0000  0.0000  0.0000   [J]
+   hake          0.0296  0.0010  0.0010  0.0000   284 ICES stomachs; excluded (EXCLUDED)
+   total (hake out): 0.0884 (J 0.0707, A 0.0177; A share 0.20); MC 5-95 % 0.0634-0.1392; all-lo / all-hi ends 0.0315 / 0.2001
+   booking = flow / 1.53: 0.0578 /yr (MC 5-95 % 0.0414-0.0910; ends 0.0206-0.1308); with hake 0.0584
+   the library 0.0833 sits at the 87th percentile of the MC; J share of the MC flow 5-95 % 0.71-0.87
+   M2 on J 0.298 /yr (J 0.237 t/km2), on A 0.0137 /yr (A 1.293 t/km2)
+   saithe 0.83 of the field flow; the saithe share 0.05 (0.02-0.09) alone spans 0.0288-0.0963 /yr
+   the field share of the rest's ration: 0.051 at the group Q/B 2.83 (booked today 0.073)
+
+3. SMS 2023 key run 2001-22 (annual means): saithe biomass 366102 t (0.637 t/km2), Q/B 2.87; haddock share of saithe food 4.1 % (J 3.5, A 0.6); cod eaten by saithe 0 t
+   haddock J (< 27 cm) 89641 t, A 118226 t; M2 by saithe on J 0.432, on A 0.0522 /yr at 0.637 t/km2 of saithe
+   box saithe 0.492 t/km2 (0.77 x the North Sea mean)
+   predator side: 0.0579 t/km2/yr (J 0.0491, A 0.0089) = box saithe x SMS haddock eaten per saithe tonne 0.1158
+   prey side: M2 on haddock J 0.334, A 0.0403 /yr x box haddock J 0.206, A 0.384 t/km2 = 0.0844 (J 0.0689, A 0.0155)
+   box haddock J per saithe tonne 0.420 vs SMS North Sea 0.254 (the two sides differ by this ratio)
+   predator side SMS level          : saithe 0.0579 + other members (field) 0.0146 = 0.0725 t/km2/yr -> booking 0.0474 /yr
+   predator side stomach level x0.45: saithe 0.0261 + other members (field) 0.0146 = 0.0407 t/km2/yr -> booking 0.0266 /yr
+   prey side     SMS level          : saithe 0.0844 + other members (field) 0.0146 = 0.0990 t/km2/yr -> booking 0.0647 /yr
+   prey side     stomach level x0.45: saithe 0.0380 + other members (field) 0.0146 = 0.0526 t/km2/yr -> booking 0.0344 /yr
+   M2 on the model's J from saithe (SMS, prey side) 0.291 /yr; field route saithe J 0.286 /yr
+
+wrote ../tables/rebook.json

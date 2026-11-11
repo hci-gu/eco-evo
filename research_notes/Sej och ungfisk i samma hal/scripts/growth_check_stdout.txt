@@ -1,0 +1,14 @@
+muted in mareld2.yaml: ['seabirds']
+benthivorous_fish: somatic_production 0.74, r_max None, spawn {'mode': 'colony', 'n_colonies': 25, 'sigma_cells': 1.0, 'amplitude_mode': 'jitter', 'amplitude_min': 0.0, 'amplitude_max': 1.0}; predatory_fish somatic_production 0.42
+groups with spawn mode equilibrium (the only engine use of the booked M2 sum, habitat.predation_m2): benthic_infauna, mobile_epifauna, norway_lobster, krill
+
+ booking                        changed derived g  benthivore M2 sum  WC booked ration (t/t/yr)
+  0.0833                                     none  0.2341             2.673
+  0.0578                                     none  0.2086             2.610
+  0.0414                                     none  0.1922             2.569
+  0.0910                                     none  0.2418             2.692
+  0.0266                                     none  0.1774             2.532
+  0.1308                                     none  0.2816             2.791
+
+benthivorous_fish g 0.0005497281074495587 (= P 0.74 / ((s* - u) x 1460)); predatory_fish g 0.0003093239063190455
+benthivore budget: g = 0.0005497 = P 0.74 / (0.922 x 1460); booked predation terms (not in g) {'seals': 0.0373, 'predatory_fish': 0.0833, 'whiting': 0.1067, 'porpoises': 0.0068}
