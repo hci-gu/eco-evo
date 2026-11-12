@@ -120,9 +120,49 @@ def test_fg_editor_round_trip():
             "set_point_onset_day_length_h": "13.64", "set_point_low_day_length_h": "14.11",
             "set_point_top_day_length_h": "17.44", "set_point_observed": "1"}
     block, error = App._collect_set_point_block(rows, "reserve_room")
-    assert error is None and block == BLOCK
+    assert error is None and block == dict(BLOCK, observed=True)
+    block, error = App._collect_set_point_block(dict(rows, set_point_observed=""), "reserve_room")
+    assert error is None and block["observed"] is True
     block, error = App._collect_set_point_block(dict(rows, set_point_observed="0"), "reserve_room")
     assert error is None and block["observed"] is False
     assert App._collect_set_point_block(dict(rows, set_point_depth=""), "reserve_room") == (None, None)
     _, error = App._collect_set_point_block(rows, "gate")
     assert error and "reserve_room" in error
+
+
+def test_fg_editor_apply_keeps_the_block_and_its_comments(tmp_path):
+    """An Apply on the planktivores with the live library writes the block
+    back unchanged: every key kept, the comment after it kept."""
+    pytest.importorskip("ruamel.yaml")
+    tk = pytest.importorskip("tkinter")
+    sys.path.insert(0, str(ROOT / "fgconfig"))
+    fgconfig = pytest.importorskip("fgconfig")
+    try:
+        root = tk.Tk()
+    except tk.TclError:
+        pytest.skip("no display")
+    root.withdraw()
+    from unittest import mock
+    target = tmp_path / "lib.yaml"
+    target.write_text((ROOT / "fgconfig" / "fg_library.yaml").read_text())
+    try:
+        with mock.patch.object(fgconfig.messagebox, "showinfo"), \
+                mock.patch.object(fgconfig.messagebox, "askyesno", return_value=True):
+            app = fgconfig.FGConfigApp(root)
+            app.load_project_from_path(str(ROOT / "mareld2.yaml"))
+            app.library_path = str(target)
+            ids = [fg["group_id"] for fg in app.project_data["decision_makers"]]
+            app.fg_listbox.selection_clear(0, "end")
+            app.fg_listbox.selection_set(ids.index("planktivorous_fish"))
+            app.on_fg_select("decision_makers")
+            assert app.set_point_vars["set_point_depth"].get() == "0.5"
+            app.apply_fg_changes()
+    finally:
+        root.destroy()
+    text = target.read_text()
+    block = text[text.index("    reserve_set_point:"):]
+    assert "      observed: true\n    # Section 265" in block
+    written = yaml.safe_load(text)["species_definitions"]["planktivorous_fish"]
+    assert written[set_point.KEY] == dict(BLOCK, observed=True)
+    # Section 250: a migrating open population keeps no r_max after an Apply.
+    assert "r_max" not in written

@@ -5044,9 +5044,10 @@ class FGConfigApp:
         except ValueError:
             return None, ("Reserve Set Point: depth, member share and the three "
                           "day lengths must all be numbers")
+        # Always written (default 1), so an Apply updates the library's key in
+        # place and keeps the comments that ruamel attaches to it.
         observed = str(values.get("set_point_observed", "") or "").strip().lower()
-        if observed in ("0", "no", "false"):
-            block["observed"] = False
+        block["observed"] = observed not in ("0", "no", "false")
         try:
             _set_point.settings({"appetite": appetite, _set_point.KEY: block})
         except ValueError as exc:
@@ -5505,9 +5506,17 @@ class FGConfigApp:
         # overwrite the field with the budget over the APPLIED predation
         # matrix and the active project FGs. r_max = 0 keeps the legacy
         # hand-set growth_rate and is not stored - except for an open pool
-        # (section 245), derived with r_max 0.
-        if open_pool_on:
+        # (section 245), derived with r_max 0. An open population that pays
+        # its somatic production (section 250) has no r_max at all, migrating
+        # or not: its budget refuses one, and the library keeps the key out.
+        try:
+            somatic_on = float(config.get("somatic_production", 0.0) or 0.0) > 0.0
+        except (TypeError, ValueError):
+            somatic_on = False
+        if open_pool_on and not somatic_on:
             config["r_max"] = 0.0
+        elif somatic_on:
+            config.pop("r_max", None)
         if not open_pool_on and not float(config.get("r_max", 0.0) or 0.0):
             config.pop("r_max", None)
         else:
@@ -5827,8 +5836,6 @@ class FGConfigApp:
                 target.pop("reserve_set_point", None)
             elif isinstance(target.get("reserve_set_point"), dict):
                 self._update_mapping(target["reserve_set_point"], set_point_block)
-                if "observed" not in set_point_block:
-                    target["reserve_set_point"].pop("observed", None)
             else:
                 target["reserve_set_point"] = set_point_block
         self.current_fg_configs[fg_id] = target
