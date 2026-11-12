@@ -199,10 +199,14 @@ def test_mareld2_open_population():
     from lib.config.config_loader import load_project_config
     fgs = load_project_config(str(ROOT / "mareld2.yaml"), mode="inference", spawn_seed=1,
                               grid_size=(6, 7))[0]
+    from lib.world import set_point
     for fid, (p, _, _) in expected.items():
         fg = fgs[fid]
-        assert fg.growth_rate == pytest.approx(p / ((1.0 - fg.params["maintenance_level"])
-                                                    * TICKS_PER_YEAR), rel=1e-9), fid
+        # Section 271: a reserve set point caps s* at its annual mean target.
+        u = fg.params["maintenance_level"]
+        window = set_point.budget_gate(fg.params, fg.params["daylight"]["latitude_deg"], 1.0, u)
+        gate = (1.0 - u) if window is None else window[0]
+        assert fg.growth_rate == pytest.approx(p / (gate * TICKS_PER_YEAR), rel=1e-9), fid
 
 
 def test_ledger_covers_the_open_population_groups():

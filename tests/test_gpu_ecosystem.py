@@ -969,3 +969,91 @@ def test_fixed_attack_matches_reference(device, handling):
     assert env._has_fixed_attack
     model = _assert_parity(env, device, ticks=6)
     assert model.fixed_attack
+
+
+SET_POINT = {"member_share": 1.0, "depth": 0.5, "onset_day_length_h": 13.64,
+             "low_day_length_h": 14.11, "top_day_length_h": 17.44}
+
+
+@pytest.mark.parametrize("observed", [True, False])
+@pytest.mark.parametrize("fill", [0.3, 0.95])
+def test_reserve_set_point_matches_reference(device, observed, fill):
+    """Section 271: DM ``a``'s reserve room ends at its set point s_T(t)
+    on both engines, and with ``observed`` the room max(s_T - s, 0) is the
+    last slot of its observation. Start in November (target ~0.80 for a
+    whole-group member share): from fill 0.95 the room is closed, from 0.3
+    it is open."""
+    block = dict(SET_POINT, observed=observed)
+    env = make_env(handling=0.2, min_split=0.0, extinction_factor=0.0,
+                   daylight={"latitude_deg": 58.15, "tick_hours": 6,
+                             "start_tick": 1220, "random_start": False},
+                   regen={"a": {"appetite": "reserve_room",
+                                "material_growth_share": 0.5,
+                                "reserve_set_point": block}})
+    a = env.fgs["a"]
+    a.energy_reserve[:] = (fill * a.biomass * a.max_energy_reserve).astype(
+        a.energy_reserve.dtype)
+    env.build_static_caches()
+    i = env.dm_ids.index("a")
+    assert env._has_set_point and env.dm_set_point[i]
+    assert bool(env.dm_set_point_obs[i]) is observed
+    target = float(env.set_point_table[env.light_start, i])
+    assert 0.75 < target < 0.85
+    obs = env.get_observation().features[i]
+    last = obs[:, int(env.per_dm_in_dim[i]) - 1]
+    if observed:
+        expected = np.maximum(target - a.energy_level.reshape(-1), 0.0)
+        np.testing.assert_allclose(last, expected, atol=1e-6)
+    first = copy.deepcopy(env)
+    first.step()
+    eaten = sum(first.intake_by_pred_prey.get("a", {}).values())
+    # Closed room: nothing eaten in the first tick (the fixture's growth
+    # then draws the store below the target); open room: it eats.
+    assert (eaten == 0.0) if fill > target else (eaten > 0.0)
+    # The room is a difference of near-equal float32 numbers: a few ULP.
+    model = _assert_parity(env, device, ticks=6, base_tol=5e-6)
+    assert model.set_point_on
+    assert model.in_dims == tuple(int(n) for n in env.per_dm_in_dim)
+    # November: the target is falling, so the growth window is closed.
+    assert float(env.set_point_growth[env.light_start, i]) == 0.0
+
+
+@pytest.mark.parametrize("start_tick", [1220, 600])
+def test_reserve_set_point_growth_window_matches_reference(device, start_tick):
+    """Section 271 (form 2): the material law grows only in the window
+    (closed in November, open in July) on both engines."""
+    env = make_env(handling=0.2, min_split=0.0, extinction_factor=0.0,
+                   daylight={"latitude_deg": 58.15, "tick_hours": 6,
+                             "start_tick": start_tick, "random_start": False},
+                   regen={"a": {"appetite": "reserve_room",
+                                "material_growth_share": 0.5,
+                                "reserve_set_point": dict(SET_POINT)}})
+    env.build_static_caches()
+    i = env.dm_ids.index("a")
+    is_open = float(env.set_point_growth[env.light_start, i])
+    assert is_open == (1.0 if start_tick == 600 else 0.0)
+    model = _assert_parity(env, device, ticks=6, base_tol=5e-6)
+    assert model.set_point_on
+
+
+def test_reserve_set_point_needs_a_food_growth_law():
+    """The window acts in the material / income law; a reserve-funded DM
+    with a set point is refused."""
+    with pytest.raises(ValueError, match="growth law"):
+        env = make_env(daylight={"latitude_deg": 58.15, "tick_hours": 6,
+                                 "start_tick": 0, "random_start": False},
+                       regen={"a": {"appetite": "reserve_room",
+                                    "reserve_set_point": dict(SET_POINT)}})
+        env.build_static_caches()
+
+
+def test_reserve_set_point_inert_without_daylight():
+    """Section 271: without the daylight calendar the block has no site to
+    run on - the room is the full reserve and no channel is added."""
+    with_block = make_env(regen={"a": {"appetite": "reserve_room",
+                                       "reserve_set_point": dict(SET_POINT)}})
+    with_block.build_static_caches()
+    plain = make_env(regen={"a": {"appetite": "reserve_room"}})
+    plain.build_static_caches()
+    assert not with_block._has_set_point
+    assert list(with_block.per_dm_in_dim) == list(plain.per_dm_in_dim)

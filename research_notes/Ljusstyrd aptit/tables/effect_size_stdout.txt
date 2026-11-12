@@ -1,0 +1,12 @@
+latitude 58.15: day length (h) at mid-month
+  Jan 6.9  Feb 9.1  Mar 11.5  Apr 14.2  May 16.5  Jun 17.9  Jul 17.2  Aug 15.0  Sep 12.3  Oct 9.8  Nov 7.4  Dec 6.1
+  change (min/day): Jan +3.4  Feb +4.9  Mar +5.2  Apr +5.1  May +4.1  Jun +0.7  Jul -3.2  Aug -4.9  Sep -5.2  Oct -5.0  Nov -4.0  Dec -0.6
+
+five-group krill flow (years 2-3 mean): 19568 t/yr
+planktivorous_fish: Nov-Mar krill 6984 t (0.357 of the total); model Nov-Mar krill ration Nov 1.52, Dec 1.58, Jan 1.46, Feb 1.26, Mar 0.93 %BW/d
+   whole group at the field krill ration: 1237 t (516-2372); total flow -29.4% (-23.6% to -33.1%)
+   herring share only (0.554) at central 0.10 %BW/d, pout as realised: 3400 t; total flow -18.3%
+   herring share only (0.554) at low 0.03 %BW/d, pout as realised: 3200 t; total flow -19.3%
+   herring share only (0.554) at high 0.53 %BW/d, pout as realised: 4629 t; total flow -12.0%
+whiting: Nov-Mar krill 683 t (0.035 of the total); model Nov-Mar krill ration Nov 0.94, Dec 0.93, Jan 0.88, Feb 0.81, Mar 0.76 %BW/d
+   whole group at the field krill ration: 237 t (111-395); total flow -2.3% (-1.5% to -2.9%)

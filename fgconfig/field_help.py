@@ -926,6 +926,51 @@ FIELD_HELP = {
         "benthivores 1.1 / 0.17, whiting 0.2 / 0.3, planktivores 0.1 / 0 "
         "(their adults migrate)."
     ),
+    "reserve_set_point": (
+        "Reserve set point (section 271, lib/world/set_point.py): with "
+        "appetite reserve_room the room ends at a defended level s_T(t) "
+        "instead of the full reserve, room = max(s_T B ME - R, 0). Below "
+        "s_T the fish eat at full appetite (and make up losses); above it "
+        "eating gains nothing.\n\n"
+        "s_T follows an annual clock entrained by photoperiod, driven only "
+        "by the day length and whether the days are getting longer: it "
+        "falls from the Onset day length (falling days) to the Low (rising "
+        "days), linearly in the photoperiod change travelled, and returns "
+        "to full by the Top day length. The group target is 1 - Member "
+        "share x Depth x g. Inert without the daylight calendar. Library: "
+        "planktivores, herring 0.554, depth 0.5 (Bull 1996: lipid x0.49 "
+        "Sep -> Apr under excess food; Berg et al. 2024), onset 13.64 h (1 "
+        "Sep), low 14.11 h (15 Apr), top 17.44 h (1 Jun); "
+        "research_notes/\"Ljusstyrd aptit\" design.md."
+    ),
+    "set_point_depth": (
+        "Depth: how far the member species' target falls at the low, 0-1 "
+        "(target 1 - depth). Empty or 0 = no set point."
+    ),
+    "set_point_member_share": (
+        "Member share: the biomass share of the group that defends the "
+        "set point (the other members keep target 1), so the group target "
+        "is 1 - share x depth x g."
+    ),
+    "set_point_onset_day_length_h": (
+        "Onset day length (h): on falling days, the target starts to fall "
+        "when the day is shorter than this."
+    ),
+    "set_point_low_day_length_h": (
+        "Low day length (h): on rising days, the target reaches its low at "
+        "this day length (the winter solstice's day length = a low at the "
+        "solstice)."
+    ),
+    "set_point_top_day_length_h": (
+        "Top day length (h): on rising days, the target is full again at "
+        "this day length."
+    ),
+    "set_point_observed": (
+        "Observed: 1 (default) adds one observation channel, the own room "
+        "to the target max(s_T - s, 0) per cell - the fish perceives its "
+        "hunger; 0 = no channel (checkpoints trained without it keep "
+        "their input width)."
+    ),
     "juvenile_recruit_depth_table": (
         "Recruit depth shape (section 270): where the Recruit Import "
         "arrives, by the cell's bed depth, written depth: weight, ... (m; "

@@ -88,6 +88,17 @@ class TensorEcosystem:
         if self.reserve_room:
             self.reserve_room_mask = tensor(
                 env.dm_reserve_room, torch.bool)[None, :, None]
+        # Section 271: (T, D) defended reserve level s_T per year tick
+        # (``env.set_point_table``, 1 for a DM without one), the top of the
+        # reserve room; ``set_point_obs`` lists the DMs observing their room.
+        self.set_point_on = bool(getattr(env, "_has_set_point", False))
+        self.set_point = (tensor(env.set_point_table) if self.set_point_on else None)
+        # Form 2: (T, D) growth window, 1 while the target is not falling.
+        self.set_point_growth = (tensor(env.set_point_growth)
+                                 if self.set_point_on else None)
+        self.set_point_obs = (
+            [int(d) for d in np.flatnonzero(env.dm_set_point_obs)]
+            if self.set_point_on else [])
         # Per-pair Holling type mask (section 141): [1, D, G, 1].
         self.type3 = tensor(env._type3_pred_mask.reshape(self.D, self.G))[None, :, :, None]
         # Beddington-DeAngelis interference w_X [1/ton], per DM. Mirrors
@@ -586,6 +597,9 @@ class TensorEcosystem:
         impacts = [impact_base + k for k in range(self.n_obs_imp)]
         juvenile_base = impact_base + self.n_obs_imp
         juvenile_visible_base = juvenile_base + self.G
+        # Section 271: the set-point room block (D channels) closes the bank.
+        set_point_base = juvenile_base + (
+            (self.G + (self.D * self.G if pair else self.G)) if self.stages_on else 0)
         for d, own in enumerate(self.dm_positions):
             others = list(env.obs_others_idx[d])
             visible = [visible_base + (d * self.G + j if pair else j)
@@ -606,8 +620,13 @@ class TensorEcosystem:
                     offset += 1
             if self.daylight:
                 # One broadcast light channel after the energy block, read
-                # into the last slot of the DM's compact layout.
+                # into the last slot of the DM's compact layout (the one
+                # before the set-point room, section 271).
                 obs_indices[d, :, offset] = (energy_base + self.G) * self.C + cells
+                obs_valid[d, :, offset] = 1.0
+                offset += 1
+            if d in self.set_point_obs:
+                obs_indices[d, :, offset] = (set_point_base + d) * self.C + cells
                 obs_valid[d, :, offset] = 1.0
         self.obs_indices = self.tensor(obs_indices, torch.long)
         self.obs_valid = self.tensor(obs_valid)
@@ -798,6 +817,15 @@ class TensorEcosystem:
             else:
                 parts.append((juvenile[:, None] * (1.0 - hidden[:, None]
                                                    * (1.0 - self.pair_visibility))).flatten(1, 2))
+        if self.set_point_obs:
+            # Section 271: each DM's room to its defended level,
+            # max(s_T - s, 0), one block of D channels (read by the DMs
+            # that observe it).
+            if light_index is None:
+                raise ValueError("light_index is required with a reserve set point")
+            target = self.set_point[light_index.reshape(-1)][:, :, None]
+            own = energy[:, self.dm_index]
+            parts.append((target - own).clamp_min(0.0).expand(biomass.shape[0], self.D, self.C))
         bank = torch.cat(parts, dim=1)
         return bank.flatten(1)[:, self.obs_indices] * self.obs_valid
 
@@ -1010,8 +1038,13 @@ class TensorEcosystem:
                 offset = (density - self.reserve_reference) * self.reserve_food_mask
                 potential = potential + (demand * self.assimilation
                                          * offset[:, None]).sum(2)
-            room = (b_dm * self.max_reserve[:, self.dm_index]
-                    - reserve[:, self.dm_index]).clamp_min(0.0)
+            top = b_dm * self.max_reserve[:, self.dm_index]
+            if self.set_point_on:
+                # Section 271: the room ends at s_T B ME.
+                if light_index is None:
+                    raise ValueError("light_index is required with a reserve set point")
+                top = top * self.set_point[light_index.reshape(-1)][:, :, None]
+            room = (top - reserve[:, self.dm_index]).clamp_min(0.0)
             capped = self.reserve_room_mask & (potential > room)
             demand = demand * torch.where(
                 capped, room / potential.clamp_min(1e-30), 1.0)[:, :, None]
@@ -1130,7 +1163,8 @@ class TensorEcosystem:
         if self.income_on:
             before = stay_b
             stay_b, stay_r = self.income_growth(b, r, gains, metabolism, rest,
-                                                eat, move_fraction, stay_b, stay_r)
+                                                eat, move_fraction, stay_b, stay_r,
+                                                light_index)
             if juvenile is not None:
                 share = self.growth_share(b, j, light_index, self.dm_index)
                 stay_j = stay_j + (stay_b - before).clamp_min(0) * share
@@ -1182,7 +1216,7 @@ class TensorEcosystem:
         return b_total, r_total, b_cancel, residue, b_push
 
     def income_growth(self, b, r, gains, metabolism, rest, eat, move_fraction,
-                      stay_b, stay_r):
+                      stay_b, stay_r, light_index=None):
         """Sections 184, 244 mirror of ``movement.income_growth``: per
         cell G = min(kappa I - C, B g (s - u) p), at most the settling
         reserve (income law), or G = min(B g (s - u) p, kappa_m I p / ec,
@@ -1201,6 +1235,11 @@ class TensorEcosystem:
         price = tonne_price(ec, self.growth_cost[:, self.dm_index][:, :, None], fill,
                             self.max_reserve[:, self.dm_index])
         ceiling = b * growth * (fill - maintenance).clamp_min(0) * price
+        if self.set_point_on:
+            # Section 271 (form 2): growth only in the set point's window.
+            if light_index is None:
+                raise ValueError("light_index is required with a reserve set point")
+            ceiling = ceiling * self.set_point_growth[light_index.reshape(-1)][:, :, None]
         paid = torch.minimum((self.income_kappa * gains - cost).clamp_min(0), ceiling)
         paid = torch.minimum(paid, stay_r.clamp_min(0))
         paid = torch.where((self.income_kappa > 0) & (ec > 0), paid, 0.0)

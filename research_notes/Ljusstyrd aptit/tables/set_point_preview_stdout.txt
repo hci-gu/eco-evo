@@ -1,0 +1,27 @@
+
+== central (Bull: onset 1 Sep, low mid-Apr): L_on 13.64 h (falling), L_low 14.11 h, L_top 17.44 h (rising)
+   g by month: Jan 0.54 Feb 0.67 Mar 0.83 Apr 0.88 May 0.29 Jun 0.00 Jul 0.00 Aug 0.00 Sep 0.08 Oct 0.25 Nov 0.40 Dec 0.48
+   depth 0.28: herring s_T 0.85 0.81 0.77 0.75 0.92 1.00 1.00 1.00 0.98 0.93 0.89 0.87 | group s_T min 0.86
+      %BW/d now -> (a) cap only / (b) rest at target: Jan 1.49->1.00/0.69  Feb 1.54->0.90/0.57  Mar 1.62->0.98/0.63  Apr 1.79->1.60/1.29  Nov 1.74->1.20/0.79  Dec 1.59->1.13/0.79
+   depth 0.5: herring s_T 0.73 0.66 0.58 0.56 0.86 1.00 1.00 1.00 0.96 0.88 0.80 0.76 | group s_T min 0.76
+      %BW/d now -> (a) cap only / (b) rest at target: Jan 1.49->0.90/0.56  Feb 1.54->0.75/0.38  Mar 1.62->0.86/0.50  Apr 1.79->1.91/1.64  Nov 1.74->1.08/0.64  Dec 1.59->1.06/0.70
+   depth 0.66: herring s_T 0.64 0.56 0.45 0.42 0.81 1.00 1.00 1.00 0.95 0.84 0.74 0.68 | group s_T min 0.68
+      %BW/d now -> (a) cap only / (b) rest at target: Jan 1.49->0.83/0.47  Feb 1.54->0.63/0.24  Mar 1.62->0.78/0.40  Apr 1.79->2.14/1.90  Nov 1.74->0.99/0.54  Dec 1.59->1.00/0.63
+
+== Berg phase (low at the winter solstice): L_on 13.64 h (falling), L_low 6.10 h, L_top 14.11 h (rising)
+   g by month: Jan 0.89 Feb 0.63 Mar 0.32 Apr 0.04 May 0.00 Jun 0.00 Jul 0.00 Aug 0.00 Sep 0.17 Oct 0.51 Nov 0.82 Dec 0.98
+   depth 0.28: herring s_T 0.75 0.82 0.91 0.99 1.00 1.00 1.00 1.00 0.95 0.86 0.77 0.72 | group s_T min 0.85
+      %BW/d now -> (a) cap only / (b) rest at target: Jan 1.49->1.37/1.14  Feb 1.54->1.49/1.28  Mar 1.62->1.53/1.29  Apr 1.79->1.44/1.10  Nov 1.74->1.04/0.60  Dec 1.59->1.18/0.85
+   depth 0.5: herring s_T 0.55 0.68 0.84 0.98 1.00 1.00 1.00 1.00 0.92 0.74 0.59 0.51 | group s_T min 0.73
+      %BW/d now -> (a) cap only / (b) rest at target: Jan 1.49->1.55/1.37  Feb 1.54->1.79/1.65  Mar 1.62->1.86/1.67  Apr 1.79->1.62/1.31  Nov 1.74->0.79/0.30  Dec 1.59->1.14/0.80
+   depth 0.66: herring s_T 0.41 0.58 0.79 0.98 1.00 1.00 1.00 1.00 0.89 0.66 0.46 0.35 | group s_T min 0.64
+      %BW/d now -> (a) cap only / (b) rest at target: Jan 1.49->1.69/1.54  Feb 1.54->2.01/1.92  Mar 1.62->2.10/1.95  Apr 1.79->1.75/1.46  Nov 1.74->0.60/0.08  Dec 1.59->1.12/0.77
+
+== late onset (1 Oct), low mid-Apr: L_on 11.05 h (falling), L_low 14.11 h, L_top 17.44 h (rising)
+   g by month: Jan 0.45 Feb 0.61 Mar 0.80 Apr 0.88 May 0.29 Jun 0.00 Jul 0.00 Aug 0.00 Sep 0.00 Oct 0.10 Nov 0.28 Dec 0.38
+   depth 0.28: herring s_T 0.87 0.83 0.78 0.75 0.92 1.00 1.00 1.00 1.00 0.97 0.92 0.89 | group s_T min 0.86
+      %BW/d now -> (a) cap only / (b) rest at target: Jan 1.49->0.98/0.66  Feb 1.54->0.86/0.52  Mar 1.62->0.93/0.58  Apr 1.79->1.58/1.26  Nov 1.74->1.17/0.75  Dec 1.59->1.11/0.77
+   depth 0.5: herring s_T 0.78 0.70 0.60 0.56 0.86 1.00 1.00 1.00 1.00 0.95 0.86 0.81 | group s_T min 0.76
+      %BW/d now -> (a) cap only / (b) rest at target: Jan 1.49->0.86/0.51  Feb 1.54->0.68/0.30  Mar 1.62->0.79/0.41  Apr 1.79->1.87/1.59  Nov 1.74->1.02/0.58  Dec 1.59->1.02/0.66
+   depth 0.66: herring s_T 0.70 0.60 0.47 0.42 0.81 1.00 1.00 1.00 1.00 0.94 0.82 0.75 | group s_T min 0.68
+      %BW/d now -> (a) cap only / (b) rest at target: Jan 1.49->0.77/0.40  Feb 1.54->0.54/0.13  Mar 1.62->0.68/0.28  Apr 1.79->2.08/1.84  Nov 1.74->0.91/0.45  Dec 1.59->0.96/0.58

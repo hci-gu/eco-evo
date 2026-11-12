@@ -4,7 +4,7 @@ from typing import Dict, List, Optional
 import numpy as np
 import torch
 
-from lib.world import nutrients, temperature
+from lib.world import nutrients, set_point, temperature
 from lib.world.growth_budget import growth_law, income_growth
 from lib.environments.ecosystem_env import (
     grid_masks, impacts, interactions, natural_mortality, open_pool, refuge,
@@ -268,6 +268,7 @@ def build_static_caches(env):
         [getattr(env.fgs[fid], "appetite", "gate") == "reserve_room"
          for fid in env.dm_ids], dtype=bool)
     env._has_reserve_room = bool(env.dm_reserve_room.any())
+    _build_set_point(env)
     # Section 265: DMs that attack every prey they meet (p = 1 on each
     # pair of the menu, ``attack_choice: fixed``); their eat shares set
     # only the foraging time.
@@ -355,15 +356,18 @@ def build_static_caches(env):
     # so center_dim_i = 2 + k_i + m_i + n_obs_imp and nbr_dim_i =
     # 1 + k_i + m_i + n_obs_imp; m_i = 0 without juvenile compartments.
     # With the daylight calendar one more channel, the light level F of
-    # the tick, is appended LAST (after the neighbours), so the layout of
-    # everything before it is unchanged.
+    # the tick, is appended after the neighbours, so the layout of
+    # everything before it is unchanged. A DM with an observed reserve set
+    # point (section 271) has one more after that, LAST: its own room to
+    # the target, max(s_T - s, 0) per cell.
     env.per_dm_in_dim = np.zeros(env.N_dm, dtype=np.int64)
     for i in range(env.N_dm):
         k_i = int(env.obs_others_idx[i].shape[0]) + int(env.obs_juvenile_idx[i].shape[0])
         center_dim_i = 2 + k_i + n_obs_imp
         nbr_dim_i = 1 + k_i + n_obs_imp
         env.per_dm_in_dim[i] = (center_dim_i + 4 * nbr_dim_i
-                                + (1 if env._has_daylight else 0))
+                                + (1 if env._has_daylight else 0)
+                                + (1 if env.dm_set_point_obs[i] else 0))
     env.max_in_dim = int(env.per_dm_in_dim.max()) if env.N_dm > 0 else 0
     env.n_obs_imp = n_obs_imp
 
@@ -412,6 +416,49 @@ def build_static_caches(env):
     policies.rebuild_batched_weights(env)
     grid_masks.apply_accessibility_biomass_mask(env)
     env._static_built = True
+
+
+def _build_set_point(env):
+    """Section 271: the reserve set point s_T per year tick and DM.
+
+    ``env.set_point_table`` (T, N_dm) is the group target (1 for a DM
+    without a ``reserve_set_point`` block), read with ``light_index``;
+    ``env.dm_set_point`` marks the DMs whose room it sets and
+    ``env.dm_set_point_obs`` those that also observe it. Inert (None,
+    all False) without the daylight calendar: the block has no latitude
+    to run on, and the growth budget then ignores it too."""
+    env._has_set_point = False
+    env.set_point_table = None
+    env.set_point_growth = None
+    env.dm_set_point = np.zeros(env.N_dm, dtype=bool)
+    env.dm_set_point_obs = np.zeros(env.N_dm, dtype=bool)
+    configs = {}
+    for i, fid in enumerate(env.dm_ids):
+        cfg = set_point.settings(env.fgs[fid].params)
+        if cfg is not None:
+            configs[i] = cfg
+    if not configs or not getattr(env, "_has_daylight", False):
+        return
+    latitude = float(env.daylight["latitude_deg"])
+    tick_hours = int(env.daylight["tick_hours"])
+    table = np.ones((env.light_period, env.N_dm), dtype=env.dtype)
+    window = np.ones((env.light_period, env.N_dm), dtype=env.dtype)
+    for i, cfg in configs.items():
+        fid = env.dm_ids[i]
+        if growth_law(env.fgs[fid].params) is None:
+            raise ValueError(
+                f"'{fid}': reserve_set_point needs a growth law that runs on the "
+                "tick's food (material_growth_share or income_growth_kappa): its "
+                "growth window acts there (section 271)")
+        table[:, i] = set_point.tick_table(cfg, latitude, tick_hours)
+        window[:, i] = set_point.growth_window_table(cfg, latitude, tick_hours)
+        env.dm_set_point[i] = True
+        env.dm_set_point_obs[i] = bool(cfg["observed"])
+    env.set_point_table = table
+    # Form 2 (section 271): the growth branch runs only while the target
+    # is not falling (``movement.income_growth``, GPU ``income_growth``).
+    env.set_point_growth = window
+    env._has_set_point = True
 
 
 def _build_edge_closure(env):

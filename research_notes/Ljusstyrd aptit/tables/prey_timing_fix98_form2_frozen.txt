@@ -1,0 +1,6 @@
+planktivorous_fish: krill 9627 -> 8008 t/yr (x0.83), zooplankton 15902 -> 16839 t/yr (x1.06)
+benthivorous_fish: benthic_infauna 5017 -> 4696 t/yr (x0.94), krill 1716 -> 1612 t/yr (x0.94), mobile_epifauna 777 -> 713 t/yr (x0.92), norway_lobster 325 -> 304 t/yr (x0.93), planktivorous_fish 268 -> 237 t/yr (x0.88), whiting 7 -> 8 t/yr (x1.15)
+whiting: benthivorous_fish 6 -> 6 t/yr (x1.07), krill 1740 -> 1630 t/yr (x0.94), mobile_epifauna 368 -> 342 t/yr (x0.93), planktivorous_fish 48 -> 49 t/yr (x1.03), zooplankton 30 -> 24 t/yr (x0.82)
+predatory_fish: benthivorous_fish 129 -> 120 t/yr (x0.93), krill 1030 -> 941 t/yr (x0.91), planktivorous_fish 623 -> 584 t/yr (x0.94), whiting 66 -> 61 t/yr (x0.93), zooplankton 7 -> 6 t/yr (x0.88)
+mackerel: krill 3158 -> 3113 t/yr (x0.99), planktivorous_fish 123 -> 151 t/yr (x1.23), zooplankton 1505 -> 1224 t/yr (x0.81)
+all five fish: benthic_infauna 5017 -> 4696 (x0.94), benthivorous_fish 134 -> 126 (x0.94), krill 17270 -> 15304 (x0.89), mobile_epifauna 1145 -> 1054 (x0.92), norway_lobster 325 -> 304 (x0.93), planktivorous_fish 1062 -> 1022 (x0.96), whiting 73 -> 69 (x0.95), zooplankton 17443 -> 18093 (x1.04)

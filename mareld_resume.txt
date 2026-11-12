@@ -25239,3 +25239,117 @@ remain open exactly as described in 71.9 / 71.11.
     non-uniform map, habitat builds the weight, mareld2's benthivores import on shallow beds;
     test_fgconfig_juvenile: the editor rows. Checkpoints before 270 are invalid (payoffs and the meaning of
     observations change; shapes unchanged): retrain. No training run (the user starts it).
+
+271 LIGHT-ENTRAINED RESERVE SET POINT FOR THE PLANKTIVORES (2026-11-12)
+------------------------------------------------------------------------
+271.1 Trigger. Fix97 (269) and fix98 (270, stopped at update ~630) realise the same rations
+    and fills: every fish group at fill 0.96-1.00 in every month, the reserve room the only
+    binding limit (pre/post-cap gain 1.3-2.8), energy 1.06-1.08 of the need on the field fill
+    cycle (research_notes/"Ransonen i energi"). The planktivores eat 1.5-1.6 %BW/d in Nov-Mar,
+    0.94 of it krill, against the field 0.45-1.0 (krill 0.10-0.46): field fish meet krill but
+    eat about maintenance (research_notes/"Krillparen mot vintermagar", verdict C). The
+    trained policies learn no winter rest (eat 0.98 Dec-Feb): with h = 1 and growth from the
+    tick's food, eating always pays. Krill M2 realised 5.05 vs booked 2.54 (x2.0): planktivores
+    40 % of the excess, mackerel 28 % (yardstick), benthivores 17 %, whiting and WC 16 %.
+271.2 Why herring rested in winter before (sections 154-183) and not now: its only winter food
+    was zooplankton, scarce Nov-Feb and a visual pair (dark 0.03), so the long nights paid
+    rest (156.3: winter rest 0.42-0.47 was mostly nights; 183.8: rest 0.94-1.00 Nov-Feb, intake
+    0-0.36 %BW/d, starving), helped by the hunger gate, rest as hiding from gadoids and
+    reserve-funded growth. Since 245 krill (open pool, dark 0.57) feeds them day and night;
+    since 244.10 h = 1, 244 growth from today's food, 270 floors 1.0. Neither state matched the
+    field; the gap is rest WITH food, which a falling set point gives.
+271.3 Biology (research_notes/"Ljusstyrd aptit" summary.md, evidence.md). Salmonids under excess
+    food defend a reserve level that falls from early autumn to a spring low (Metcalfe & Thorpe
+    1992: appetite -96 % Sep -> Dec, hyperphagia after deprivation then back to control; Bull
+    1996: control lipid 5.32 -> 2.63 % Sep -> Apr with 24-h feeders; Tveiten et al. 1996
+    threshold condition) on an endogenous clock entrained by photoperiod (Saether et al. 1996:
+    cycles under constant 12:12; Bull ch. 3.5). Herring condition follows the light at constant
+    temperature (Berg et al. 2024: 3.6-8.3 % of weight; 0.28-0.66 fill as lipid). Norway pout
+    feeds all winter (Albert 1994): not a member. Gadoid drawdown Feb-Jun is spawning (gonad
+    term, open). A rate cap Cmax x f(L) is contradicted (hyperphagia then return).
+271.4 Rule (user, 2026-11-12, provisional): an endogenous annual clock entrained by photoperiod
+    counts as a physical driver, although (L, sign dL/dt) at a fixed latitude carries the day
+    of year. No month key anywhere.
+271.5 Form (lib/world/set_point.py). Block on a DM with appetite reserve_room:
+    reserve_set_point: {member_share, depth, onset_day_length_h, low_day_length_h,
+    top_day_length_h, observed}. Progress g: 0 at the onset (falling days), 1 at the low
+    (rising days), linear in the photoperiod change travelled ((L_on - L) down to the winter
+    solstice, then (L - L_ws)); recovery 1 -> 0 linearly in L from L_low to L_top (rising); 0
+    from L_top to L_on. Continuous at both solstices. Group target s_T = 1 - share depth g
+    (other members 1). Room = max(s_T B ME - R, 0) (predation._reserve_room_cap; GPU
+    TensorEcosystem.predation). Table env.set_point_table (T, N_dm) on the daylight calendar,
+    read with light_index; inert without daylight on both engines (no site).
+271.6 Observation: with observed (default true) one more slot, LAST (after the light slot):
+    the own room max(s_T - s, 0) per cell - interoception, the fish feels its hunger. Without
+    it the policy cannot tell that eating at a closed room costs 1.65 RM for nothing, and a
+    rest probability ~0 has ~0 gradient (154.5). CPU observations.py, GPU bank block of D
+    channels after the juvenile blocks. Checkpoints before 271 are invalid (input width,
+    payoffs).
+271.7 Growth budget: s* = min(closed form, annual mean target) (growth_budget._ideal_gate,
+    latitude_deg from the loader's daylight settings and the FG editor's project; None = inert).
+    Planktivores: mean target 0.898, s* 1 -> 0.898, derived g x1.124. FALSIFIED as a closure by
+    the frozen check (271.11): growth is not year-round under the clock.
+271.8 Library (planktivores): member_share 0.554 (herring; 0.575 with sprat), depth 0.5 (Bull
+    x0.49; Berg 0.28-0.66), onset 13.64 h (1 Sep), low 14.11 h (15 Apr, Bull; Berg's phase = the
+    solstice 6.10 h, the named alternative), top 17.44 h (1 Jun, judged), observed true. Group
+    target min 0.723 (mid-Apr), Jan 0.86, Mar 0.79. Nothing from start_fill.
+    Preview from tables (design.md): herring share Nov-Mar 0.75-1.1 %BW/d with the cap only,
+    0.4-0.7 if rest is learned; the Berg phase predicts 1.5-2.1 in Feb-Mar.
+271.9 FG editor: Reserve Set Point rows (empty depth = none), checked with set_point.settings;
+    field_help entries; growth budget with the project's latitude.
+271.10 Tests: tests/test_set_point.py (clock shape and continuity, group target and mean,
+    malformed blocks and day lengths outside the site refused, the library block and the
+    growth budget's s* with and without the latitude, FG editor rows); test_gpu_ecosystem
+    (CPU == GPU with the set point, observed and not, closed and open room; inert without
+    daylight); test_daylight (the room slot after the light slot). train.py
+    get_dynamic_policy_params counts the room slot (it had its own dim formula).
+271.11 Frozen check (fix98 update-630 policies, CPU, probe world, 3 yr; scratch library with
+    observed false - fix98 has no room slot): research_notes/"Ljusstyrd aptit" frozen_check.md.
+    Planktivore ration Nov-Mar 1.23 / 1.34 / 1.11 / 0.95 / 0.98 %BW/d (was 1.49-1.74; field
+    0.45-1.0), krill 0.46-1.25 (was 0.96-1.49), May refill 2.91, fill tracks the target (Jan 0.84,
+    Apr 0.74); annual ration 6.74 -> 6.19 (energy 1.00 of field Q/B); krill per planktivore
+    tonne -23 %, five-group krill ~-13 % at equal biomass. BUT production 0.58 -> 0.34 /yr,
+    losses unchanged, planktivores -11 % then -7 %/yr: the material law's surplus term
+    max(I - C, 0) (244.10) binds Sep-Mar (0.58-0.96 of the biomass) while the target falls,
+    the g ceiling in summer (scripts/growth_terms.py). The clock makes growth seasonal; g still
+    pays P all year.
+271.12 OPEN (user): g under the clock. The clock's growth window (target not falling) is 15
+    Apr - 30 Aug, 138 d, mean target 0.956; P 0.66 paid in it needs g 0.00136 /tick (x2.78 the
+    no-set-point g), payable (P_n 1.75 vs Pmax 15.5; material need 0.08 vs kappa_m 0.43). Forms:
+    (1) g x12/n only; (2) g x12/n and a growth multiplier from the clock (1 in the window, 0
+    outside); or neither for now. Either reopens 250's refusal of a season for an open
+    population, for the clock's window only. Do not train on 271 until settled.
+271.13 Fix98 other findings (research_notes/"Fix98 mot fix97"): rations and fills identical to
+    fix97; krill M2 x2.0; benthivores at the GOV bed spread meet krill x9-13 the booking - the
+    diet gate with the benthivores spread as predators reads x1.25, the excess is trained
+    aggregation (half the fish on 3.5 % of the cells) on locally depleted beds with saturated
+    bed pairs; porpoises die out by starvation in every probe since ~25 (fix97 kept 0.15-0.5;
+    cause not separated); seals now eat their booked diet; epifauna and Nephrops no longer
+    decline. Checkpoints before 271 are invalid.
+271.14 APPLIED (user: "form 2"): the growth window from the clock. set_point.
+    growth_window_by_day / growth_window_table: 1 on the days the group target is not
+    falling, else 0 (15 Apr - 30 Aug, 0.378 of the year); env.set_point_growth (T, N_dm)
+    multiplies the material/income law's g ceiling (movement.income_growth, GPU
+    TensorEcosystem.income_growth, light_index passed); a set point needs a food growth law
+    (refused otherwise). Budget: set_point.budget_gate, gate = mean_t[w (min(s_T, s*) - u)],
+    g = P / (gate 1460), reference fill = the window's mean target 0.956, window_share for
+    _material_closure (P laid down in the window: need 0.08 of the ideal intake vs kappa_m
+    0.43). Planktivores g 0.00055 -> 0.00136 (x2.78 the no-set-point 0.00049). Reopens 250's
+    refusal of a season for an open population, for the clock's own window only (the
+    window is the model's, not a field month count; 250 refused n because the fish were not
+    seasonal - 249.1 - and its "grows less in lean months by itself" accepted P < field).
+    Frozen check (as 271.11): grown 0.61 / 0.64 / 0.64 /yr (no set point 0.57-0.58), biomass
+    3735 / 3731 / 3653 t (stationary); ration Nov-Mar 1.19 / 1.17 / 1.00 / 0.91 / 0.92 %BW/d,
+    May 3.53, Jun-Aug 2.6-2.9; annual 6.91 (energy 1.11 of field Q/B, unchanged: the intake
+    moved to summer); krill per tonne -21 % (five groups -9 %), zooplankton per tonne +23 %
+    (fix98 realised zoo M2 from planktivores 1.05 of booked -> ~1.3). Open: the field summer
+    ration of herring; the zooplankton prey side in the retrained probe; Nov-Dec rations
+    1.2 vs field 0.45-1.0. Tests: test_set_point (window), test_gpu_ecosystem (window parity
+    in Nov and Jul; refusal without a food growth law). Library g stored 0.00136331.
+271.15 Mackerel checked, not changed: it is an open (migrating, 246) group but kept the pre-250
+    budget, g = (M1 0.159 + booked M2 0.021) / ((1 - u) 1460) x 12/5.5. The x12/5.5 is right
+    for a visitor: 85 % of its box tonne-years fall in May-Oct, its feeding months, and it
+    grows 0.33-0.35 per box tonne-year, on its budget (0.18 x 12/5.5 x 0.85 x fill). The claim
+    in the session that 249.1 cause (1) survives in mackerel was wrong. Converting it to the
+    250 P form needs a field somatic P/B for the box's mackerel (not in the library); growth is
+    ~8 % of its energy budget, so the item is small.

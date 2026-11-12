@@ -655,6 +655,37 @@
     # store is ~0.2 high. research_notes/"Hostens tillvaxt och sommarens
     # aptit" (Swedish letters).
     appetite: reserve_room
+    # Section 271: a light-entrained reserve set point for the herring share.
+    # Field herring and Norway pout meet krill all winter but eat about
+    # maintenance (0.45-1.0 %BW/d); the model's fish, always at a full
+    # reserve, ate 1.5-1.6 (research_notes/"Krillparen mot vintermagar").
+    # Salmonids under excess food defend a level that falls from early
+    # autumn to a spring low (Metcalfe & Thorpe 1992: appetite -96 % Sep ->
+    # Dec; Bull 1996: control lipid x0.49 Sep -> Apr, 24-h feeders; Tveiten
+    # et al. 1996), on an endogenous clock entrained by photoperiod (Saether
+    # et al. 1996; Bull ch. 3.5). Herring condition follows the light at a
+    # constant temperature (Berg et al. 2024: 3.6-8.3 % of weight, 0.28-0.66
+    # fill as lipid). Pout contradicts it (feeds all winter, Albert 1994), so
+    # member_share = herring 0.554 (0.575 with sprat). depth 0.5 (Bull's
+    # x0.49, inside Berg's 0.28-0.66); onset 13.64 h on falling days (1 Sep;
+    # Metcalfe: from early September), low 14.11 h on rising days (15 Apr;
+    # Bull's lipid low; Berg's phase = the solstice, 6.10 h, the named
+    # alternative), top 17.44 h (1 Jun; judged: herring fatten May-Jul).
+    # Nothing from start_fill. Group target 1 - 0.277 g (annual mean 0.898).
+    # Growth (form 2, user 2026-11-12): the frozen fix98 check showed the
+    # material law's surplus term max(I - C, 0) holding growth near zero
+    # while the target falls (production 0.58 -> 0.34 /yr), so growth runs
+    # only while the target is not falling (15 Apr - 30 Aug) and the budget
+    # pays P there (g x2.78). The room channel (observed) lets the policy
+    # feel its hunger.
+    # research_notes/"Ljusstyrd aptit" summary.md, design.md, frozen_check.md.
+    reserve_set_point:
+      member_share: 0.554
+      depth: 0.5
+      onset_day_length_h: 13.64
+      low_day_length_h: 14.11
+      top_day_length_h: 17.44
+      observed: true
     # Section 265: attacks every prey of its menu it meets (p = 1); the eat
     # shares set only the foraging time. Field gadoid diets track what the
     # fish meet; the learned p drifted while the reserve-room cap bound
@@ -771,7 +802,12 @@
     # Section 247 (u to the field value, g x (1 - u_old)/(1 - u_new)): 0.0016645 -> 0.0014459.
     # Section 250 (somatic production instead of r_max + M1 + M2, no season factor):
     # 0.0014458512097 -> 0.0004908.
-    growth_rate: 0.00049083039579
+    # Section 271 (reserve set point, form 2: P paid inside the clock's
+    # growth window, 15 Apr - 30 Aug, 0.378 of the year at mean target
+    # 0.956 at the manifest's 58.15 N, g = P / (1460 mean(w (s_T - u)));
+    # the library-only path, without a site, keeps 0.0004908):
+    # 0.00049083039579 -> 0.00136331.
+    growth_rate: 0.00136331
     # Section 209: M1 = M0 + predation by groups that are not FGs = 0.26
     # /yr (0.11-0.38): herring M0 0.25, sprat 0.42, Norway pout 0.30,
     # blue whiting 0.20, + squid ~0.01. Was 0.580 (Ecopath 1991), which

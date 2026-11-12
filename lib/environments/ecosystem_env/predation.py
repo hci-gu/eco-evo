@@ -300,7 +300,8 @@ def _reserve_room_cap(env, demand, predator_biomass, reserve_offset):
     energy (static quality plus the reserve-food correction, as in the
     gain below) is scaled down to that room per cell; the harvest caps
     that follow only lower it further, so the gain never overflows the
-    reserve the engines clip at B ME.
+    reserve the engines clip at B ME. With a reserve set point (section
+    271) the room ends at s_T(t) B ME (``lib/world/set_point.py``).
     """
     potential = (demand * env.energy_gain_mat[:, :, None, None]).sum(axis=1)
     if reserve_offset is not None:
@@ -309,9 +310,11 @@ def _reserve_room_cap(env, demand, predator_biomass, reserve_offset):
             * reserve_offset[None, :, :, :]).sum(axis=1)
     reserve = np.stack([env.fgs[fid].energy_reserve for fid in env.dm_ids],
                        axis=0)
-    room = np.maximum(
-        predator_biomass * env.dm_max_energy_reserve[:, None, None] - reserve,
-        np.float32(0.0))
+    top = predator_biomass * env.dm_max_energy_reserve[:, None, None]
+    if getattr(env, "_has_set_point", False):
+        # Section 271: the room ends at the defended level s_T B ME.
+        top = top * env.set_point_table[interactions.light_index(env)][:, None, None]
+    room = np.maximum(top - reserve, np.float32(0.0))
     capped = env.dm_reserve_room[:, None, None] & (potential > room)
     scale = np.where(
         capped, room / np.maximum(potential, np.float32(1e-30)),

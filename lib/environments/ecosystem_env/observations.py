@@ -119,9 +119,18 @@ def build_observation_batch(env):
             for k, layer_shift in enumerate(impact_shifts[direction]):
                 obs[i, base + 1 + n_other + k] = layer_shift
 
+        set_point_obs = bool(getattr(env, "dm_set_point_obs", None) is not None
+                             and env.dm_set_point_obs[i])
         if env._has_daylight:
             # Light level of this tick, uniform over the grid; the last
-            # slot of the DM's compact layout (section 137).
-            obs[i, int(env.per_dm_in_dim[i]) - 1] = light
+            # slot of the DM's compact layout (section 137), or the one
+            # before the set-point room (section 271).
+            obs[i, int(env.per_dm_in_dim[i]) - 1 - int(set_point_obs)] = light
+        if set_point_obs:
+            # Section 271: the own room to the defended level,
+            # max(s_T - s, 0) per cell - what the fish feels as hunger.
+            target = env.set_point_table[interactions.light_index(env), i]
+            obs[i, int(env.per_dm_in_dim[i]) - 1] = np.maximum(
+                np.float32(target) - own_energy, np.float32(0.0))
 
     return obs.transpose(0, 2, 3, 1).reshape(env.N_dm, H * W, max_dim)

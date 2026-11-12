@@ -29,7 +29,8 @@ from lib.world.energy_balance import (  # noqa: E402
 from lib.world.tick_time import LIBRARY_TICK_HOURS, tick_label  # noqa: E402
 from lib.viz.i18n import FG_NAMES  # noqa: E402
 from lib.world.daylight import (  # noqa: E402
-    DEFAULT_THRESHOLD_DEG as DAYLIGHT_DEFAULT_THRESHOLD_DEG)
+    DEFAULT_THRESHOLD_DEG as DAYLIGHT_DEFAULT_THRESHOLD_DEG,
+    parse_settings as parse_daylight_settings)
 from lib.world.growth_budget import (  # noqa: E402
     PREYS_ON,
     TICKS_PER_YEAR,
@@ -929,6 +930,35 @@ class FGConfigApp:
             entry.grid(row=grow, column=1, sticky="ew", padx=5, pady=2)
             attach_help(entry, key)
             self.juvenile_vars[key] = var
+            grow += 1
+        ttk.Separator(self.editor_frame, orient="horizontal").grid(
+            row=grow, column=0, columnspan=2, sticky="ew", padx=4, pady=(0, 2))
+        grow += 1
+
+        # Reserve set point (section 271, lib/world/set_point.py): the
+        # library's nested ``reserve_set_point`` block. Empty Depth = no
+        # set point (the block is removed on Apply).
+        set_point_lbl = ttk.Label(self.editor_frame, text="Reserve Set Point")
+        set_point_lbl.grid(row=grow, column=0, sticky="w", padx=5, pady=2)
+        attach_help(set_point_lbl, "reserve_set_point")
+        grow += 1
+        set_point_rows = [
+            ("  Depth (fall of the member's target, 0-1; empty = none)", "set_point_depth"),
+            ("  Member share (biomass share that defends it, 0-1)", "set_point_member_share"),
+            ("  Onset day length (h, falling days)", "set_point_onset_day_length_h"),
+            ("  Low day length (h, rising days)", "set_point_low_day_length_h"),
+            ("  Top day length (h, rising days; target full again)", "set_point_top_day_length_h"),
+            ("  Observed (room channel; 1 = yes, 0 = no)", "set_point_observed"),
+        ]
+        self.set_point_vars = {}
+        for (label, key) in set_point_rows:
+            self._make_prop_label(self.editor_frame, label, help_key=key).grid(
+                row=grow, column=0, sticky="w", padx=5, pady=2)
+            var = tk.StringVar(value="")
+            entry = ttk.Entry(self.editor_frame, textvariable=var, width=40)
+            entry.grid(row=grow, column=1, sticky="ew", padx=5, pady=2)
+            attach_help(entry, key)
+            self.set_point_vars[key] = var
             grow += 1
         ttk.Separator(self.editor_frame, orient="horizontal").grid(
             row=grow, column=0, columnspan=2, sticky="ew", padx=4, pady=(0, 2))
@@ -4097,7 +4127,7 @@ class FGConfigApp:
             species = self.current_fg_configs.get(fg_id) or species_defs.get(fg_id)
         return growth_budget(fg_id, species_defs, interactions,
                              active_predators=self._active_project_fg_ids(),
-                             species=species)
+                             species=species, latitude_deg=self._site_latitude())
 
     def _build_derived_growth_panel(self, fg_ids):
         """Read-only table of every derived growth_rate, live."""
@@ -4300,7 +4330,8 @@ class FGConfigApp:
             if not has_budget(spec):
                 continue
             budget = growth_budget(fid, species_defs, interactions,
-                                   active_predators=self._active_project_fg_ids())
+                                   active_predators=self._active_project_fg_ids(),
+                                   latitude_deg=self._site_latitude())
             if budget is None or budget.error:
                 continue
             new = float(f"{budget.growth_rate:.6g}")
@@ -4906,6 +4937,8 @@ class FGConfigApp:
                     var.set(str(val))
             self._set_juvenile_fields(config.get("juvenile_stage")
                                       if isinstance(config, dict) else None)
+            self._set_set_point_fields(config.get("reserve_set_point")
+                                       if isinstance(config, dict) else None)
         else:
             self.editor_frame.pack_forget()
             if not self.ndm_editor_frame.winfo_ismapped():
@@ -4982,6 +5015,52 @@ class FGConfigApp:
         self.juvenile_vars["juvenile_recruit_depth_table"].set(", ".join(
             f"{float(r['depth_m']):g}: {float(r['weight']):g}" for r in rows
             if isinstance(r, dict)))
+
+    def _set_set_point_fields(self, block):
+        """Fill the Reserve Set Point rows from a library block (or clear)."""
+        block = block if isinstance(block, dict) else {}
+        for key in ("depth", "member_share", "onset_day_length_h",
+                    "low_day_length_h", "top_day_length_h"):
+            value = block.get(key)
+            self.set_point_vars[f"set_point_{key}"].set(
+                "" if value in (None, "") else f"{float(value):g}")
+        self.set_point_vars["set_point_observed"].set(
+            "" if not block else ("1" if block.get("observed", True) else "0"))
+
+    @staticmethod
+    def _collect_set_point_block(values, appetite):
+        """``(block, error)`` from the Reserve Set Point rows (a dict of
+        strings): ``(None, None)`` = no set point. Checked with the
+        engine's own reader (set_point.settings)."""
+        depth = str(values.get("set_point_depth", "") or "").strip()
+        if depth in ("", "0", "0.0"):
+            return None, None
+        from lib.world import set_point as _set_point
+        try:
+            block = {"member_share": float(str(values.get("set_point_member_share", "")).strip()),
+                     "depth": float(depth)}
+            for key in ("onset_day_length_h", "low_day_length_h", "top_day_length_h"):
+                block[key] = float(str(values.get(f"set_point_{key}", "")).strip())
+        except ValueError:
+            return None, ("Reserve Set Point: depth, member share and the three "
+                          "day lengths must all be numbers")
+        observed = str(values.get("set_point_observed", "") or "").strip().lower()
+        if observed in ("0", "no", "false"):
+            block["observed"] = False
+        try:
+            _set_point.settings({"appetite": appetite, _set_point.KEY: block})
+        except ValueError as exc:
+            return None, f"Reserve Set Point: {exc}"
+        return block, None
+
+    def _site_latitude(self):
+        """The project's daylight latitude, or None (section 271: the
+        growth budget of a reserve set point needs the site)."""
+        try:
+            settings = parse_daylight_settings(self.project_data or {})
+        except (ValueError, TypeError, AttributeError):
+            return None
+        return None if settings is None else settings.get("latitude_deg")
 
     @staticmethod
     def _collect_juvenile_block(values, group_id="?"):
@@ -5435,7 +5514,8 @@ class FGConfigApp:
             budget = growth_budget(
                 fg_id, self.global_library.get("species_definitions", {}) or {},
                 self.global_library.get("interaction_definitions", {}) or {},
-                active_predators=self._active_project_fg_ids(), species=config)
+                active_predators=self._active_project_fg_ids(), species=config,
+                latitude_deg=self._site_latitude())
             if budget is None or budget.error:
                 messagebox.showerror(
                     "Invalid growth budget",
@@ -5678,6 +5758,16 @@ class FGConfigApp:
                                      juvenile_error + "\n\nNo changes were saved.")
                 return
             config.pop("juvenile_stage", None)
+        set_point_block = None
+        if is_dm:
+            set_point_block, set_point_error = self._collect_set_point_block(
+                {k: v.get() for k, v in self.set_point_vars.items()},
+                str(config.get("appetite") or "").strip().lower())
+            if set_point_error:
+                messagebox.showerror("Invalid Reserve Set Point",
+                                     set_point_error + "\n\nNo changes were saved.")
+                return
+            config.pop("reserve_set_point", None)
 
         # Sync remaining fields with global library - in place, so the
         # entry keeps its comments and untouched number formatting.
@@ -5733,6 +5823,14 @@ class FGConfigApp:
                 self._update_mapping(target["juvenile_stage"], juvenile_block)
             else:
                 target["juvenile_stage"] = juvenile_block
+            if set_point_block is None:
+                target.pop("reserve_set_point", None)
+            elif isinstance(target.get("reserve_set_point"), dict):
+                self._update_mapping(target["reserve_set_point"], set_point_block)
+                if "observed" not in set_point_block:
+                    target["reserve_set_point"].pop("observed", None)
+            else:
+                target["reserve_set_point"] = set_point_block
         self.current_fg_configs[fg_id] = target
 
         # ``energy_gain`` är legacy och varken läses av runtime

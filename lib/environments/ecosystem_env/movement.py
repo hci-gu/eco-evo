@@ -413,6 +413,11 @@ def income_growth(env, biomass, reserve, gains, cost, stationary_biomass,
         fill, max_reserve).astype(env.dtype, copy=False)
     ceiling = biomass * growth * np.maximum(fill - maintenance,
                                             np.float32(0.0)) * price
+    if getattr(env, "_has_set_point", False):
+        # Section 271 (form 2): growth only in the reserve set point's
+        # window (the target not falling); 1 for every other DM.
+        ceiling = ceiling * env.set_point_growth[
+            interactions.light_index(env)][:, None, None]
     paid = np.minimum(np.maximum(kappa * gains - cost, np.float32(0.0)),
                       ceiling)
     paid = np.minimum(paid, np.maximum(stationary_reserve, np.float32(0.0)))

@@ -155,8 +155,17 @@ def _active_in_project():
 HAND_SET = {"microzooplankton"}
 
 
+def _site_latitude():
+    """The project's daylight latitude (section 271: a reserve set point's
+    growth budget runs on the site), or None without the calendar."""
+    from lib.world import daylight
+    settings = daylight.parse_settings(load_config(PROJECT))
+    return None if settings is None else settings["latitude_deg"]
+
+
 def _expected(fid, spec, S, I, active, include_m1=True):
-    g = derived_growth_rate(fid, S, I, active, include_m1=include_m1)
+    g = derived_growth_rate(fid, S, I, active, include_m1=include_m1,
+                            latitude_deg=_site_latitude())
     return float(spec["growth_rate"]) if g is None else g
 
 

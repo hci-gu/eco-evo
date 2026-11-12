@@ -191,6 +191,7 @@ from typing import Dict, Iterable, Optional
 from lib.world.energy_balance import (appetite_form, growth_cost,
                                      intake_ceiling, net_assimilation,
                                      prey_energy, sda_fraction, tonne_price)
+from lib.world import set_point
 from lib.world.tick_time import LIBRARY_TICK_HOURS
 
 TICKS_PER_YEAR = 365.0 * 24.0 / LIBRARY_TICK_HOURS
@@ -495,6 +496,7 @@ class GrowthBudget:
     best_prey: Optional[str] = None
     pmax_annual: Optional[float] = None       # (C - cost)/(ec + u ME), /yr
     season_factor: float = 1.0                # 12 / feeding_season_months (184)
+    window_share: Optional[float] = None      # reserve set point's growth window (271)
     material_need: Optional[float] = None     # share of I the material needs (244)
     somatic: Optional[float] = None           # P /yr of an open population (250)
 
@@ -553,12 +555,15 @@ class GrowthBudget:
 
 def growth_budget(prey_id, species_defs, interactions,
                   active_predators: Optional[Iterable[str]] = None,
-                  species=None, include_m1=True):
+                  species=None, include_m1=True, latitude_deg=None):
     """Full budget for one FG, or None when it has no ``r_max``.
 
     ``species`` overrides the FG's own entry in ``species_defs`` (the FG
     editor passes the values currently typed into its fields).
     ``include_m1=False`` leaves M1 out (``--mortality off``).
+    ``latitude_deg`` is the site of the daylight calendar; with it a
+    ``reserve_set_point`` (section 271) caps s* at the annual mean target,
+    without it the block is inert, as on the engines.
     """
     spec = species if species is not None else (species_defs or {}).get(prey_id)
     if not has_budget(spec):
@@ -597,7 +602,7 @@ def growth_budget(prey_id, species_defs, interactions,
             budget.error = "natural_mortality must be below 1"
             return budget
         _ideal_gate(budget, prey_id, spec, species_defs, interactions,
-                    active_predators)
+                    active_predators, latitude_deg)
         if budget.error:
             return budget
         try:
@@ -653,8 +658,12 @@ def budget_mass_balance_ceiling(spec, fill=0.0):
 
 
 def _ideal_gate(budget, prey_id, spec, species_defs, interactions,
-                active_predators):
-    """Set ``budget.gate`` to s* - u (section 160), or leave 1 - u."""
+                active_predators, latitude_deg=None):
+    """Set ``budget.gate`` to s* - u (section 160), or leave 1 - u.
+
+    With a reserve set point (section 271) the reserve cannot settle above
+    the defended level, so s* is at most the annual mean of s_T (the growth
+    law pays g (s - u) every tick)."""
     u = budget.maintenance
     ec = _as_float(spec.get("energy_content"))
     me = _as_float(spec.get("max_energy_reserve"))
@@ -680,6 +689,23 @@ def _ideal_gate(budget, prey_id, spec, species_defs, interactions,
         budget.error = (f"budget {budget.gross_annual:.4g} /yr exceeds the most "
                         f"the energy allows, Pmax {budget.pmax_annual:.4g} /yr "
                         f"(best prey {best})")
+        return
+    try:
+        window = set_point.budget_gate(spec, latitude_deg, s_star, u)
+    except ValueError as error:      # the FG editor, mid-keystroke
+        budget.error = str(error)
+        return
+    if window is not None:
+        # Section 271 (form 2): growth only in the clock's window, at the
+        # target there; P is paid inside it.
+        gate, target, share = window
+        if gate <= 0.0:
+            budget.error = (f"the reserve set point leaves no growth above "
+                            f"maintenance_level {u:.4g} (section 271)")
+            return
+        budget.reference_fill = target
+        budget.gate = gate
+        budget.window_share = share
         return
     budget.reference_fill = s_star
     budget.gate = s_star - u
@@ -709,6 +735,8 @@ def _material_closure(budget, spec, share):
         return
     u = budget.maintenance
     production = budget.gross_annual / TICKS_PER_YEAR * budget.season_factor
+    # Section 271: with a reserve set point P is laid down in its window.
+    production = production / (getattr(budget, "window_share", None) or 1.0)
     appetite = appetite_form(spec)
     s_season = ideal_reserve(u, intake, cost, ec, me, production,
                              appetite=appetite, growth_cost=growth_cost(spec))
@@ -730,11 +758,11 @@ def _material_closure(budget, spec, share):
 
 def derived_growth_rate(prey_id, species_defs, interactions,
                         active_predators: Optional[Iterable[str]] = None,
-                        species=None, include_m1=True):
+                        species=None, include_m1=True, latitude_deg=None):
     """The derived per-tick growth_rate, or None to keep the stored one."""
     budget = growth_budget(prey_id, species_defs, interactions,
                            active_predators, species=species,
-                           include_m1=include_m1)
+                           include_m1=include_m1, latitude_deg=latitude_deg)
     if budget is None or budget.error:
         return None
     return budget.growth_rate

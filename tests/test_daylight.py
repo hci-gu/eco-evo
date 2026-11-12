@@ -159,7 +159,10 @@ def test_disabled_loader_adds_nothing():
 def test_light_channel_is_appended_last_for_every_decision_maker():
     import train
     off, on = _env(_project(enabled=False)), _env(_project())
-    np.testing.assert_array_equal(on.per_dm_in_dim, off.per_dm_in_dim + 1)
+    # Section 271: an observed reserve set point (inert without daylight)
+    # adds its room slot after the light slot.
+    room = on.dm_set_point_obs.astype(int)
+    np.testing.assert_array_equal(on.per_dm_in_dim, off.per_dm_in_dim + 1 + room)
     for env in (off, on):
         dims = train.get_dynamic_policy_params(
             env.fgs, len(env.observable_impact_vars))
@@ -189,6 +192,12 @@ def test_light_channel_is_appended_last_for_every_decision_maker():
                 keep[center + d * (1 + k + m + n_imp) + 1 + k + c] = False
         np.testing.assert_array_equal(on_obs[i, :, :n][:, keep], off_obs[i, :, :n][:, keep])
         np.testing.assert_array_equal(on_obs[i, :, n], level)
+        if room[i]:
+            target = on.set_point_table[interactions.light_index(on), i]
+            np.testing.assert_allclose(
+                on_obs[i, :, n + 1],
+                np.maximum(target - on.fgs[on.dm_ids[i]].energy_level.reshape(-1), 0.0),
+                atol=1e-6)
 
 
 def test_disabled_tick_is_unchanged_by_dormant_pair_values():

@@ -105,14 +105,15 @@ def _sample_total_biomass(min_b, max_b, rng):
     value = math.exp(math.log(lo) + u * (math.log(hi) - math.log(lo)))
     return float(min(hi, max(lo, int(round(value)))))
 
-def _refuse_unpaid_open_population(sid, spec_defs, inter_defs, active, include_m1):
+def _refuse_unpaid_open_population(sid, spec_defs, inter_defs, active, include_m1,
+                                   latitude_deg=None):
     """Section 250: an open-population DM (``somatic_production``) has no
     hand-set fallback - a budget error is an error, not the stored g."""
     spec = (spec_defs or {}).get(sid) or {}
     if spec.get(SOMATIC_KEY) in (None, ""):
         return
     budget = growth_budget(sid, spec_defs, inter_defs, active_predators=active,
-                           include_m1=include_m1)
+                           include_m1=include_m1, latitude_deg=latitude_deg)
     raise ValueError(f"'{sid}': {budget.error if budget is not None else 'no growth budget'}")
 
 
@@ -811,14 +812,19 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
         # checked predation pairs whose predator is active in THIS project
         # (muted FGs are absent, so their predation share is not paid for).
         # See lib/world/growth_budget.py.
+        # Section 271: a reserve set point runs on the site's daylight
+        # calendar, so the budget's s* needs the latitude (inert without).
+        _lat = (daylight_settings["latitude_deg"]
+                if daylight_settings is not None else None)
         _g = derived_growth_rate(sid, spec_defs, inter_defs,
                                  active_predators=project_fg_ids,
-                                 include_m1=apply_natural_mortality)
+                                 include_m1=apply_natural_mortality,
+                                 latitude_deg=_lat)
         if _g is not None:
             params['growth_rate'] = _g
         else:
             _refuse_unpaid_open_population(sid, spec_defs, inter_defs, project_fg_ids,
-                                           apply_natural_mortality)
+                                           apply_natural_mortality, _lat)
         if open_pool.is_open(params) and not params.get('is_decision_maker', False):
             # Section 245: the exchange must hold the open pool (an NDM;
             # a migrating DM's growth is food-limited, section 246).

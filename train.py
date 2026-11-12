@@ -1555,7 +1555,9 @@ def get_dynamic_policy_params(fgs, n_observable_impacts=0):
     plus one juvenile channel (stages.py) per group with a
     ``juvenile_stage`` that the DM observes or is, counted in ``k_i``.
         in_dim_i     = center_dim_i + 4 * nbr_dim_i (+ 1 light channel
-                       when the project enables the daylight calendar)
+                       when the project enables the daylight calendar,
+                       + 1 room channel for an observed reserve set point,
+                       section 271)
 
     Legacy behaviour: when ``params['observes']`` is None (no observability
     matrix in the project YAML) the DM observes all other FGs, recovering
@@ -1598,6 +1600,14 @@ def get_dynamic_policy_params(fgs, n_observable_impacts=0):
         center_dim_i = 2 + k_i + n_obs_imp
         nbr_dim_i = 1 + k_i + n_obs_imp
         in_dim_i = center_dim_i + 4 * nbr_dim_i + n_light
+        # Section 271: an observed reserve set point adds the own room, the
+        # last slot (only with the daylight calendar, the block's site).
+        # Mirrors state._build_set_point.
+        if n_light:
+            from lib.world import set_point as _set_point
+            cfg = _set_point.settings(fg.params)
+            if cfg is not None and cfg["observed"]:
+                in_dim_i += 1
         params[fg_id] = (in_dim_i, out_dim)
     return params
 

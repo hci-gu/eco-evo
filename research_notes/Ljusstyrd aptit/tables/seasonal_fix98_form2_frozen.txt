@@ -1,0 +1,80 @@
+
+planktivorous_fish: realised gain vs need on the field fill cycle (MJ/t/yr); ratio; field fill; realised fill
+ mon fill_f fill_r   gain   need  depos   r/n
+ Jan   0.50   0.85  12506   4615  -9581  2.71
+ Feb   0.36   0.81  11155   6464  -7186  1.73
+ Mar   0.26   0.77  10967   8718  -4790  1.26
+ Apr   0.20   0.74  24971  19043   1796  1.31
+ May   0.32   0.89  40396  41954  18263  0.96
+ Jun   0.81   0.98  33217  48298  18563  0.69
+ Jul   0.94   0.99  32766  36551   4491  0.90
+ Aug   0.96   0.99  31306  29590  -1796  1.06
+ Sep   0.88   0.97  17081  16646  -2395  1.03
+ Oct   0.88   0.93  15572  14675  -3593  1.06
+ Nov   0.76   0.89  14579  10770  -5988  1.35
+ Dec   0.68   0.86  14654   7596  -7784  1.93
+year: gain 22369 need 21645 ratio 1.03
+
+benthivorous_fish: realised gain vs need on the field fill cycle (MJ/t/yr); ratio; field fill; realised fill
+ mon fill_f fill_r   gain   need  depos   r/n
+ Jan   0.76   0.99  10442   9788   -324  1.07
+ Feb   0.76   0.98   9934   8183  -1512  1.21
+ Mar   0.62   0.98   9860   6182  -3132  1.59
+ Apr   0.47   0.97  10176   6054  -3132  1.68
+ May   0.33   0.98  10260   7591  -1512  1.35
+ Jun   0.33   0.99  10923   9551      0  1.14
+ Jul   0.33   0.98  11176  12194   2592  0.92
+ Aug   0.57   0.98  11447  15461   5184  0.74
+ Sep   0.81   0.99  11268  13373   2592  0.84
+ Oct   0.81   0.99  11094  10737      0  1.03
+ Nov   0.81   0.99  11046  10510   -216  1.05
+ Dec   0.79   0.99  11069  10155   -540  1.09
+year: gain 10729 need 9996 ratio 1.07
+
+whiting: realised gain vs need on the field fill cycle (MJ/t/yr); ratio; field fill; realised fill
+ mon fill_f fill_r   gain   need  depos   r/n
+ Jan   0.69   1.00  12235  11641   -240  1.05
+ Feb   0.69   0.99  11643   9735  -1560  1.20
+ Mar   0.56   0.99  11403   7773  -3120  1.47
+ Apr   0.43   1.00  11278   7517  -3120  1.50
+ May   0.30   0.99  11080   8899  -1560  1.24
+ Jun   0.30   0.99  12037  10851      0  1.11
+ Jul   0.30   0.98  12833  13606   2640  0.94
+ Aug   0.52   0.98  12989  16479   5160  0.79
+ Sep   0.73   0.99  12198  14213   2520  0.86
+ Oct   0.73   0.99  12529  12032      0  1.04
+ Nov   0.73   0.99  12501  11976   -240  1.04
+ Dec   0.71   0.99  12689  11816   -480  1.07
+year: gain 12116 need 11369 ratio 1.07
+
+predatory_fish: realised gain vs need on the field fill cycle (MJ/t/yr); ratio; field fill; realised fill
+ mon fill_f fill_r   gain   need  depos   r/n
+ Jan   0.71   1.00  12214  11974      0  1.02
+ Feb   0.71   1.00  11667  11436      0  1.02
+ Mar   0.71   0.99  11470  11035      0  1.04
+ Apr   0.71   0.96  13533  10825      0  1.25
+ May   0.71   0.96  14676  11052      0  1.33
+ Jun   0.71   0.97  14550  11434      0  1.27
+ Jul   0.71   0.98  14051  12040      0  1.17
+ Aug   0.71   0.99  13494  12674      0  1.06
+ Sep   0.71   0.99  14255  13955      0  1.02
+ Oct   0.71   0.99  15236  15037      0  1.01
+ Nov   0.71   0.99  14550  14338      0  1.01
+ Dec   0.71   0.99  13398  13167      0  1.02
+year: gain 14024 need 12993 ratio 1.08
+
+mackerel: realised gain vs need on the field fill cycle (MJ/t/yr); ratio; field fill; realised fill
+ mon fill_f fill_r   gain   need  depos   r/n
+ Jan   0.70   1.00  10066  -2063 -11308   nan
+ Feb   0.58   1.00   9683  -1933 -10470   nan
+ Mar   0.45   0.98  18327   -726  -8795   nan
+ Apr   0.37   0.78  30175  -5797 -13402   nan
+ May   0.13   0.59  32628  13207   5863  2.47
+ Jun   0.51   0.68  35180  27579  18427  1.28
+ Jul   0.57   0.91  28953  27871  16752  1.04
+ Aug   0.91   1.00  14120  31051  18008  0.45
+ Sep   1.00   1.00  13533  17248   3769  0.78
+ Oct   1.00   1.00  12940  10408  -2513  1.24
+ Nov   0.94   1.00  11853   5401  -6282  2.19
+ Dec   0.85   1.00  10894    430 -10051 25.35
+year: gain 20802 need 19540 ratio 1.06
