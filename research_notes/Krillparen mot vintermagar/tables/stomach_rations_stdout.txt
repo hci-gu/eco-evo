@@ -1,0 +1,46 @@
+whiting L-W from 2022 IndWgt: W = 0.00603 L^3.077  (n 1880); 25 cm -> 128 g
+
+Records dropped as implausible (mean content > 15 % BW; likely a whole-fish or pooled-weight artefact):
+
+species | region | season | years | stom | fed% | L | W g | S %BW | krill %W | krillFO% | krill/stom | ration %BW/d 6/7.4/8.5C | krill-only %BW/d @7.4 | kJ/kg/d gross @7.4
+Norway pout | NE NS | Q3 | 1980-91 | 116 | 80 | 15.3 | 40 | 0.17 | 35 | 78 | 2.52 | 0.44/0.49/0.54 | 0.16 | 21
+Norway pout | NE NS | Q3 | all | 116 | 80 | 15.3 | 40 | 0.17 | 35 | 78 | 2.52 | 0.44/0.49/0.54 | 0.16 | 21
+Norway pout | NE NS | winter | 1980-91 | 433 | 67 | 13.2 | 29 | 0.37 | 34 | 71 | 0.69 | 0.53/0.60/0.65 | 0.20 | 24
+Norway pout | NE NS | winter | all | 433 | 67 | 13.2 | 29 | 0.37 | 34 | 71 | 0.69 | 0.53/0.60/0.65 | 0.20 | 24
+whiting | NE NS | Q3 | 2000+ | 51 | 78 | 26.7 | 181 | 0.14 | 0 | 0 | 0.00 | 0.15/0.17/0.19 | 0.00 | 8
+whiting | NE NS | Q3 | all | 51 | 78 | 26.7 | 181 | 0.14 | 0 | 0 | 0.00 | 0.15/0.17/0.19 | 0.00 | 8
+whiting | NE NS | winter | 1980-91 | 676 | 80 | 24.6 | 163 | 0.00 | 0 | 0 | 3.70 | 0.00/0.00/0.00 | 0.00 | 0
+whiting | NE NS | winter | 2000+ | 40 | 90 | 28.1 | 215 | 3.32 | 0 | 0 | 0.00 | 1.34/1.50/1.64 | 0.00 | 73
+whiting | NE NS | winter | all | 716 | 81 | 24.8 | 166 | 0.24 | 0 | 0 | 3.49 | 0.10/0.11/0.12 | 0.00 | 5
+whiting | Sk+Kat | Q3 | 2000+ | 645 | 98 | 18.6 | 83 | 0.16 | 1 | 1 | 0.01 | 0.09/0.10/0.11 | 0.00 | 5
+whiting | Sk+Kat | Q3 | all | 645 | 98 | 18.6 | 83 | 0.16 | 1 | 1 | 0.01 | 0.09/0.10/0.11 | 0.00 | 5
+whiting | Sk+Kat | winter | 1980-91 | 51 | 53 | 21.5 | 83 | 0.00 | 0 | 0 | 0.29 | 0.00/0.00/0.00 | 0.00 | 0
+whiting | Sk+Kat | winter | 2000+ | 506 | 98 | 23.5 | 137 | 0.05 | 0 | 0 | 0.00 | 0.05/0.06/0.07 | 0.00 | 3
+whiting | Sk+Kat | winter | all | 557 | 94 | 23.3 | 132 | 0.04 | 0 | 0 | 0.03 | 0.05/0.06/0.06 | 0.00 | 2
+whiting | box | Q3 | 2000+ | 123 | 100 | 22.1 | 134 | 0.38 | 0 | 1 | 0.01 | 0.19/0.22/0.24 | 0.00 | 11
+whiting | box | Q3 | all | 123 | 100 | 22.1 | 134 | 0.38 | 0 | 1 | 0.01 | 0.19/0.22/0.24 | 0.00 | 11
+whiting | box | winter | 2000+ | 84 | 100 | 28.7 | 212 | 0.00 | 0 | 0 | 0.00 | 0.00/0.00/0.00 | 0.00 | 0
+whiting | box | winter | all | 84 | 100 | 28.7 | 212 | 0.00 | 0 | 0 | 0.00 | 0.00/0.00/0.00 | 0.00 | 0
+
+GER 'Cmax' (intake = evacuation at a satiation fill S), on krill E 5.0 kJ/g:
+  whiting      L 20.5 W    66 g T 6.0: 1.96 (S 2.5 %) / 2.77 (S 5 %) %BW/d
+  whiting      L 20.5 W    66 g T 7.4: 2.19 (S 2.5 %) / 3.10 (S 5 %) %BW/d
+  whiting      L 20.5 W    66 g T 8.5: 2.40 (S 2.5 %) / 3.39 (S 5 %) %BW/d
+  whiting      L 25.5 W   128 g T 6.0: 1.88 (S 2.5 %) / 2.66 (S 5 %) %BW/d
+  whiting      L 25.5 W   128 g T 7.4: 2.10 (S 2.5 %) / 2.98 (S 5 %) %BW/d
+  whiting      L 25.5 W   128 g T 8.5: 2.30 (S 2.5 %) / 3.25 (S 5 %) %BW/d
+  whiting      L 30.5 W   222 g T 6.0: 1.82 (S 2.5 %) / 2.57 (S 5 %) %BW/d
+  whiting      L 30.5 W   222 g T 7.4: 2.04 (S 2.5 %) / 2.88 (S 5 %) %BW/d
+  whiting      L 30.5 W   222 g T 8.5: 2.22 (S 2.5 %) / 3.15 (S 5 %) %BW/d
+  Norway pout  L 12.5 W    20 g T 6.0: 1.84 (S 2.5 %) / 2.60 (S 5 %) %BW/d
+  Norway pout  L 12.5 W    20 g T 7.4: 2.06 (S 2.5 %) / 2.92 (S 5 %) %BW/d
+  Norway pout  L 12.5 W    20 g T 8.5: 2.25 (S 2.5 %) / 3.19 (S 5 %) %BW/d
+  Norway pout  L 17.5 W    57 g T 6.0: 1.70 (S 2.5 %) / 2.40 (S 5 %) %BW/d
+  Norway pout  L 17.5 W    57 g T 7.4: 1.90 (S 2.5 %) / 2.69 (S 5 %) %BW/d
+  Norway pout  L 17.5 W    57 g T 8.5: 2.08 (S 2.5 %) / 2.94 (S 5 %) %BW/d
+
+Count-based krill ration (whiting, records without weights), T 7.4 C:
+  whiting NE NS  winter 1981-91: stomachs 676, fed 80 %, L 24.6, krill/stomach 3.70, krill content 0.34 / 0.52 / 0.68 %BW, krill ration <= 0.34 / 0.42 / 0.48 %BW/d (0.15 / 0.23 / 0.30 g per krill)
+  whiting NW NS  Q3     1981-91: stomachs 178, fed 79 %, L 30.4, krill/stomach 3.46, krill content 0.20 / 0.31 / 0.40 %BW, krill ration <= 0.09 / 0.11 / 0.12 %BW/d (0.15 / 0.23 / 0.30 g per krill)
+  whiting NW NS  winter 1981-91: stomachs 397, fed 61 %, L 28.5, krill/stomach 8.76, krill content 0.58 / 0.88 / 1.15 %BW, krill ration <= 0.36 / 0.45 / 0.52 %BW/d (0.15 / 0.23 / 0.30 g per krill)
+  whiting Sk     winter 1981-91: stomachs 51, fed 53 %, L 21.5, krill/stomach 0.29, krill content 0.05 / 0.08 / 0.11 %BW, krill ration <= 0.11 / 0.14 / 0.16 %BW/d (0.15 / 0.23 / 0.30 g per krill)

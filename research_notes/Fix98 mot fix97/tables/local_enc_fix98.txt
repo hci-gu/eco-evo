@@ -1,0 +1,24 @@
+year 1: cells holding half the benthivores 0.051 of the grid
+                  prey   coloc  enc(G)  enc(L)  +light  +satur  demand roomcap    real
+       benthic_infauna    0.69   0.578   0.629   0.628   0.674   0.676   0.672   0.672
+                 krill    1.20   0.023   0.028   0.027   0.044   0.044   0.039   0.039
+       mobile_epifauna    0.53   0.313   0.260   0.260   0.194   0.193   0.204   0.204
+        norway_lobster    0.88   0.035   0.048   0.048   0.063   0.063   0.063   0.063
+    planktivorous_fish    0.46   0.044   0.033   0.037   0.024   0.023   0.020   0.020
+               whiting    0.09   0.008   0.001   0.001   0.001   0.001   0.001   0.001
+year 2: cells holding half the benthivores 0.038 of the grid
+                  prey   coloc  enc(G)  enc(L)  +light  +satur  demand roomcap    real
+       benthic_infauna    0.43   0.561   0.613   0.611   0.621   0.623   0.633   0.633
+                 krill    0.98   0.028   0.046   0.044   0.170   0.173   0.164   0.164
+       mobile_epifauna    0.31   0.317   0.252   0.251   0.119   0.117   0.126   0.126
+        norway_lobster    0.52   0.033   0.044   0.044   0.049   0.046   0.047   0.047
+    planktivorous_fish    0.37   0.051   0.044   0.049   0.041   0.039   0.029   0.029
+               whiting    0.03   0.011   0.001   0.001   0.001   0.001   0.001   0.001
+year 3: cells holding half the benthivores 0.035 of the grid
+                  prey   coloc  enc(G)  enc(L)  +light  +satur  demand roomcap    real
+       benthic_infauna    0.33   0.545   0.650   0.647   0.630   0.634   0.636   0.636
+                 krill    0.67   0.051   0.064   0.059   0.207   0.211   0.217   0.217
+       mobile_epifauna    0.17   0.297   0.184   0.183   0.071   0.070   0.072   0.073
+        norway_lobster    0.40   0.032   0.046   0.046   0.047   0.042   0.043   0.043
+    planktivorous_fish    0.32   0.061   0.056   0.064   0.044   0.042   0.031   0.031
+               whiting    0.01   0.015   0.001   0.001   0.000   0.001   0.001   0.001

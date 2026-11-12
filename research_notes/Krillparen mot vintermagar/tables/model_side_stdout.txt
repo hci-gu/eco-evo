@@ -1,0 +1,94 @@
+depth map (60, 60): median bed 143 m; class shares <100 0.23, 100-150 0.30, 150-250 0.32, >=250 0.15
+
+=== planktivorous_fish_preys_on_krill: a 0.023, h 57.8 (1/h = 6.92 %BW/d at q 1), ingestion_q10 2.2 on 'mean_0_50m' (T Jan 6.3); q: Jan 0.77 Feb 0.71 Mar 0.70 Apr 0.75 May 0.86 Jun 1.02 Jul 1.21 Aug 1.34 Sep 1.38 Oct 1.28 Nov 1.07 Dec 0.90
+    month  ceiling %BW/d | class: a_eff (x lib a) B_krill t/km2 aB h-sat  encounter-limited I %BW/d
+    Nov     7.38        | <100: 0.0639 (2.78) 2.7 69% 0.90 6.67 | 100-150: 0.0191 (0.83) 6.5 50% 0.87 6.43 | 150-250: 0.0034 (0.15) 7.9 11% 0.59 4.39 | >=250: 0.0015 (0.07) 9.3 6% 0.44 3.22 |
+    Dec     6.26        | <100: 0.0523 (2.28) 2.7 57% 0.90 5.63 | 100-150: 0.0156 (0.68) 6.5 41% 0.87 5.42 | 150-250: 0.0028 (0.12) 7.9 9% 0.59 3.67 | >=250: 0.0013 (0.06) 9.3 5% 0.43 2.68 |
+    Jan     5.30        | <100: 0.0454 (1.97) 2.1 38% 0.88 4.65 | 100-150: 0.0135 (0.59) 5.0 27% 0.84 4.44 | 150-250: 0.0024 (0.11) 6.1 6% 0.53 2.80 | >=250: 0.0011 (0.05) 7.1 3% 0.37 1.97 |
+    Feb     4.94        | <100: 0.0447 (1.94) 2.1 37% 0.88 4.36 | 100-150: 0.0133 (0.58) 5.0 27% 0.84 4.17 | 150-250: 0.0024 (0.10) 6.1 6% 0.54 2.67 | >=250: 0.0011 (0.05) 7.1 3% 0.38 1.90 |
+    Mar     4.86        | <100: 0.0468 (2.03) 2.1 39% 0.89 4.32 | 100-150: 0.0140 (0.61) 5.0 28% 0.85 4.14 | 150-250: 0.0025 (0.11) 6.1 6% 0.56 2.71 | >=250: 0.0011 (0.05) 7.1 3% 0.40 1.94 |
+    Jul     8.37        | <100: 0.0912 (3.97) 2.3 84% 0.91 7.61 | 100-150: 0.0272 (1.18) 5.5 60% 0.88 7.35 | 150-250: 0.0049 (0.21) 6.7 13% 0.61 5.11 | >=250: 0.0022 (0.10) 7.8 7% 0.45 3.79 |
+
+=== whiting_preys_on_krill: a 0.043, h 159.5 (1/h = 2.51 %BW/d at q 1), ingestion_q10 2.25 on 'bottom' (T Jan 7.8); q: Jan 1.03 Feb 0.97 Mar 0.93 Apr 0.93 May 0.94 Jun 0.96 Jul 0.98 Aug 1.00 Sep 1.02 Oct 1.05 Nov 1.08 Dec 1.09
+    month  ceiling %BW/d | class: a_eff (x lib a) B_krill t/km2 aB h-sat  encounter-limited I %BW/d
+    Nov     2.71        | <100: 0.1509 (3.51) 2.7 163% 0.98 2.66 | 100-150: 0.0361 (0.84) 6.5 94% 0.97 2.63 | 150-250: 0.0020 (0.05) 7.9 6% 0.70 1.91 | >=250: 0.0000 (0.00) 9.3 0% 0.00 0.00 |
+    Dec     2.74        | <100: 0.1526 (3.55) 2.7 165% 0.98 2.69 | 100-150: 0.0365 (0.85) 6.5 95% 0.97 2.66 | 150-250: 0.0021 (0.05) 7.9 7% 0.70 1.93 | >=250: 0.0000 (0.00) 9.3 0% 0.00 0.00 |
+    Jan     2.59        | <100: 0.1442 (3.35) 2.1 120% 0.98 2.53 | 100-150: 0.0345 (0.80) 5.0 69% 0.96 2.49 | 150-250: 0.0019 (0.05) 6.1 5% 0.65 1.67 | >=250: 0.0000 (0.00) 7.1 0% 0.00 0.00 |
+    Feb     2.42        | <100: 0.1350 (3.14) 2.1 113% 0.98 2.37 | 100-150: 0.0323 (0.75) 5.0 65% 0.96 2.33 | 150-250: 0.0018 (0.04) 6.1 4% 0.65 1.57 | >=250: 0.0000 (0.00) 7.1 0% 0.00 0.00 |
+    Mar     2.34        | <100: 0.1307 (3.04) 2.1 109% 0.98 2.30 | 100-150: 0.0313 (0.73) 5.0 63% 0.96 2.26 | 150-250: 0.0018 (0.04) 6.1 4% 0.65 1.52 | >=250: 0.0000 (0.00) 7.1 0% 0.00 0.00 |
+    Jul     2.47        | <100: 0.1376 (3.20) 2.3 126% 0.98 2.42 | 100-150: 0.0329 (0.76) 5.5 73% 0.97 2.39 | 150-250: 0.0019 (0.04) 6.7 5% 0.67 1.65 | >=250: 0.0000 (0.00) 7.8 0% 0.00 0.00 |
+
+=== field-implied a against the library a (January, class 100-150 m; x = library / field)
+  planktivorous_fish group central (herring 0.554 x 0.15, pout 0.35 x 0.45) R 0.24 %BW/d: D3 a 2.1e-04 (x65) D8 a 7.9e-05 (x172) D20 a 3.1e-05 (x431) D72 a 8.7e-06 (x1551)
+  planktivorous_fish group low                                            R 0.10 %BW/d: D3 a 8.5e-05 (x159) D8 a 3.2e-05 (x425) D20 a 1.3e-05 (x1063) D72 a 3.5e-06 (x3825)
+  planktivorous_fish group high                                           R 0.46 %BW/d: D3 a 4.2e-04 (x32) D8 a 1.6e-04 (x86) D20 a 6.3e-05 (x215) D72 a 1.7e-05 (x774)
+  planktivorous_fish pout NE North Sea 1980 (ICES DB, GER)                R 0.20 %BW/d: D3 a 1.7e-04 (x78) D8 a 6.5e-05 (x208) D20 a 2.6e-05 (x521) D72 a 7.2e-06 (x1876)
+  planktivorous_fish pout Oslofjord Mar (Onsrud, GER)                     R 0.75 %BW/d: D3 a 7.3e-04 (x19) D8 a 2.7e-04 (x50) D20 a 1.1e-04 (x124) D72 a 3.0e-05 (x446)
+  planktivorous_fish herring Oslofjord Nov-Mar (Onsrud)                   R 0.15 %BW/d: D3 a 1.3e-04 (x105) D8 a 4.8e-05 (x281) D20 a 1.9e-05 (x702) D72 a 5.4e-06 (x2526)
+  planktivorous_fish library a_eff Jan 100-150 m = 0.0135; model krill B there 5.0 t/km2; encounter-limited I 4.44 %BW/d
+  whiting            whiting NE+NW North Sea 1981 Q1 (counts, GER <=)     R 0.45 %BW/d: D3 a 4.5e-04 (x76) D8 a 1.7e-04 (x203) D20 a 6.8e-05 (x506) D72 a 1.9e-05 (x1823)
+  whiting            whiting Skagerrak 1981 Q1 (counts, GER <=)           R 0.14 %BW/d: D3 a 1.2e-04 (x280) D8 a 4.6e-05 (x745) D20 a 1.9e-05 (x1864) D72 a 5.1e-06 (x6709)
+  whiting            whiting Oslofjord Mar (Onsrud, GER)                  R 0.75 %BW/d: D3 a 8.8e-04 (x39) D8 a 3.3e-04 (x104) D20 a 1.3e-04 (x261) D72 a 3.7e-05 (x940)
+  whiting            library a_eff Jan 100-150 m = 0.0345; model krill B there 5.0 t/km2; encounter-limited I 2.49 %BW/d
+
+=== in-layer encounter per fish, section 220 terms (scan 0.5, p_cap 0.5), krill 0.23 g WW
+  C 0.2 ind/m3, R 0.1 m, v 0.1 m/s:      14 krill/d =      3 g/d =     3 %BW/d of a 100 g fish; time in layer for 0.25 %BW/d: 8.01 %
+  C 0.2 ind/m3, R 0.1 m, v 0.15 m/s:      20 krill/d =      5 g/d =     5 %BW/d of a 100 g fish; time in layer for 0.25 %BW/d: 5.34 %
+  C 0.2 ind/m3, R 0.3 m, v 0.1 m/s:     122 krill/d =     28 g/d =    28 %BW/d of a 100 g fish; time in layer for 0.25 %BW/d: 0.89 %
+  C 0.2 ind/m3, R 0.3 m, v 0.15 m/s:     183 krill/d =     42 g/d =    42 %BW/d of a 100 g fish; time in layer for 0.25 %BW/d: 0.59 %
+  C 1.0 ind/m3, R 0.1 m, v 0.1 m/s:      68 krill/d =     16 g/d =    16 %BW/d of a 100 g fish; time in layer for 0.25 %BW/d: 1.60 %
+  C 1.0 ind/m3, R 0.1 m, v 0.15 m/s:     102 krill/d =     23 g/d =    23 %BW/d of a 100 g fish; time in layer for 0.25 %BW/d: 1.07 %
+  C 1.0 ind/m3, R 0.3 m, v 0.1 m/s:     611 krill/d =    140 g/d =   140 %BW/d of a 100 g fish; time in layer for 0.25 %BW/d: 0.18 %
+  C 1.0 ind/m3, R 0.3 m, v 0.15 m/s:     916 krill/d =    211 g/d =   211 %BW/d of a 100 g fish; time in layer for 0.25 %BW/d: 0.12 %
+  C 5.0 ind/m3, R 0.1 m, v 0.1 m/s:     339 krill/d =     78 g/d =    78 %BW/d of a 100 g fish; time in layer for 0.25 %BW/d: 0.32 %
+  C 5.0 ind/m3, R 0.1 m, v 0.15 m/s:     509 krill/d =    117 g/d =   117 %BW/d of a 100 g fish; time in layer for 0.25 %BW/d: 0.21 %
+  C 5.0 ind/m3, R 0.3 m, v 0.1 m/s:    3054 krill/d =    702 g/d =   702 %BW/d of a 100 g fish; time in layer for 0.25 %BW/d: 0.04 %
+  C 5.0 ind/m3, R 0.3 m, v 0.15 m/s:    4580 krill/d =   1054 g/d =  1054 %BW/d of a 100 g fish; time in layer for 0.25 %BW/d: 0.02 %
+
+=== fix97 ledger (years 2-3, per month): ration %BW/d total / krill, krill share of tonnes, assimilated gain and cost kJ/kg/d
+  planktivorous_fish
+    Jan: 1.55 / 1.46  share 0.94  gain 53  cost 39
+    Feb: 1.51 / 1.26  share 0.83  gain 51  cost 37
+    Mar: 1.58 / 0.93  share 0.59  gain 52  cost 37
+    Apr: 1.77 / 0.40  share 0.23  gain 56  cost 39
+    May: 2.03 / 0.24  share 0.12  gain 64  cost 41
+    Jun: 2.09 / 0.32  share 0.15  gain 66  cost 45
+    Jul: 2.03 / 0.55  share 0.27  gain 65  cost 49
+    Aug: 2.03 / 0.94  share 0.46  gain 66  cost 51
+    Sep: 2.02 / 1.26  share 0.63  gain 67  cost 52
+    Oct: 1.95 / 1.37  share 0.70  gain 65  cost 50
+    Nov: 1.80 / 1.52  share 0.84  gain 61  cost 46
+    Dec: 1.67 / 1.58  share 0.95  gain 57  cost 42
+  whiting
+    Jan: 1.00 / 0.88  share 0.88  gain 34  cost 24
+    Feb: 0.95 / 0.81  share 0.85  gain 32  cost 23
+    Mar: 0.92 / 0.76  share 0.83  gain 31  cost 22
+    Apr: 0.92 / 0.73  share 0.80  gain 31  cost 22
+    May: 0.93 / 0.74  share 0.79  gain 31  cost 22
+    Jun: 0.97 / 0.71  share 0.72  gain 33  cost 23
+    Jul: 1.03 / 0.81  share 0.78  gain 35  cost 23
+    Aug: 1.05 / 0.88  share 0.84  gain 36  cost 23
+    Sep: 0.99 / 0.86  share 0.87  gain 34  cost 24
+    Oct: 1.01 / 0.90  share 0.89  gain 34  cost 25
+    Nov: 1.04 / 0.94  share 0.90  gain 35  cost 25
+    Dec: 1.03 / 0.93  share 0.90  gain 35  cost 25
+
+=== krill eaten, t/yr (mean of years 2-3): five groups 19568
+  planktivorous_fish annual   13379  Nov-Mar    6984 (0.52 of its own; 0.357 of the five-group total)
+  benthivorous_fish  annual     423  Nov-Mar     213 (0.50 of its own; 0.011 of the five-group total)
+  whiting            annual    1557  Nov-Mar     683 (0.44 of its own; 0.035 of the five-group total)
+  predatory_fish     annual     977  Nov-Mar     216 (0.22 of its own; 0.011 of the five-group total)
+  mackerel           annual    3233  Nov-Mar     325 (0.10 of its own; 0.017 of the five-group total)
+
+=== Nov-Mar krill intake at the field krill ration (biomass and other months as realised)
+  low    : planktivorous_fish 6984 -> 516 t (x0.07); whiting 683 -> 111 t (x0.16); five-group krill flow 19568 -> 12527 (-36 %)
+  central: planktivorous_fish 6984 -> 1237 t (x0.18); whiting 683 -> 237 t (x0.35); five-group krill flow 19568 -> 13376 (-32 %)
+  high   : planktivorous_fish 6984 -> 2372 t (x0.34); whiting 683 -> 395 t (x0.58); five-group krill flow 19568 -> 14668 (-25 %)
+
+=== planktivore Dec-Mar fill change at the field total ration (krill-equivalent, 35.6 kJ/kg/d per 1 %BW/d), ME 4990 MJ/t
+  model realised cost        ration 0.45 %BW/d: fill change Dec-Mar -0.55  (field start_fill Dec 0.68 -> Apr 0.20: -0.48)
+  model realised cost        ration 0.70 %BW/d: fill change Dec-Mar -0.34  (field start_fill Dec 0.68 -> Apr 0.20: -0.48)
+  model realised cost        ration 1.00 %BW/d: fill change Dec-Mar -0.08  (field start_fill Dec 0.68 -> Apr 0.20: -0.48)
+  field routine 22 kJ/kg/d   ration 0.45 %BW/d: fill change Dec-Mar -0.15  (field start_fill Dec 0.68 -> Apr 0.20: -0.48)
+  field routine 22 kJ/kg/d   ration 0.70 %BW/d: fill change Dec-Mar +0.07  (field start_fill Dec 0.68 -> Apr 0.20: -0.48)
+  field routine 22 kJ/kg/d   ration 1.00 %BW/d: fill change Dec-Mar +0.33  (field start_fill Dec 0.68 -> Apr 0.20: -0.48)

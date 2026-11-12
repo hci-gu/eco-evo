@@ -1,0 +1,6 @@
+             group   gain   cost growth  lostR xR_out    dR | @field fill: growth  lostR xR_out   need | fieldE real/f need/f
+planktivorous_fish  22054  16269   2321   2788    753   -78 |                2321   1971    350  20911 |  20100   1.10   1.04
+ benthivorous_fish  10927   5062   4684    675    366   141 |                4388    425    204  10079 |  10853   1.01   0.93
+           whiting  11977   8529   2132    714    267   335 |                2125    413     52  11119 |  14154   0.85   0.79
+    predatory_fish  14014  10851   1598    546   1024    -5 |                1598    392    150  12992 |  11045   1.27   1.18
+          mackerel  20808   7862   1636   1009  10322   -20 |                1632    826   9468  19788 |   8990   2.31   2.20
