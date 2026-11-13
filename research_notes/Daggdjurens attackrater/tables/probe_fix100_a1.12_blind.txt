@@ -1,0 +1,42 @@
+ARM base
+u 0.5 ME 2800.0 unit 0.05 t  B0 21.000 t  grid 30x30
+ tick mon      B  fill  cells lowF  starv  sweep  M1    edge   rest  eat  move  ration/yr | prey dens in porp cells / grid mean
+planktivore channels ['benthi', 'krill', 'macker', 'porpoi', 'predat', 'seals', 'whitin', 'zoopla', 'benthi', 'plankt', 'whitin'] porpoise slots [5, 17, 29, 41, 53]
+   40 Jun  19.857 0.721   109 0.01 0.4741 0.6911 0.0566 18.593  0.01 0.80 0.19   24.4 h 0.56 r/(51h) 0.86 mvd/B  268.0 | plank 12.09 benth 2.71 whiti 5.71 preda 0.62 | plank:0.71 benth:0.16 whiti:0.12
+   80 Jun  19.577 0.781    74 0.00 0.2488 0.0781 0.0537  0.602  0.00 0.95 0.05   22.5 h 0.44 r/(51h) 1.01 mvd/B   70.5 | plank 16.74 benth 2.45 whiti 3.28 preda 0.70 | plank:0.73 benth:0.20 whiti:0.07
+  120 Jun  19.543 0.807    69 0.00 0.0522 0.0444 0.0536  2.127  0.00 0.96 0.04   19.5 h 0.39 r/(51h) 0.99 mvd/B   48.3 | plank 15.19 benth 2.44 whiti 6.60 preda 0.82 | plank:0.81 benth:0.12 whiti:0.07
+  160 Jul  19.570 0.805    81 0.00 0.0378 0.0000 0.0536  0.545  0.00 0.97 0.03   18.7 h 0.39 r/(51h) 0.94 mvd/B   38.7 | plank 13.42 benth 2.73 whiti 7.98 preda 0.78 | plank:0.76 benth:0.16 whiti:0.09
+  200 Jul  19.412 0.802    77 0.00 0.2228 0.0000 0.0534  0.000  0.00 0.96 0.04   18.6 h 0.39 r/(51h) 0.92 mvd/B   47.5 | plank 9.99 benth 2.97 whiti 5.22 preda 0.52 | plank:0.75 benth:0.17 whiti:0.09
+  240 Jul  19.368 0.801    74 0.01 0.0967 0.0094 0.0532  0.000  0.00 0.96 0.04   19.0 h 0.39 r/(51h) 0.94 mvd/B   50.9 | plank 9.57 benth 2.44 whiti 3.00 preda 0.55 | plank:0.71 benth:0.19 whiti:0.10
+  280 Aug  19.118 0.794    96 0.01 0.2902 0.0191 0.0527  1.567  0.00 0.93 0.07   18.6 h 0.41 r/(51h) 0.88 mvd/B   93.8 | plank 7.51 benth 1.23 whiti 2.23 preda 0.90 | plank:0.72 benth:0.19 whiti:0.09
+  320 Aug  19.041 0.805    74 0.01 0.0871 0.0488 0.0522  0.400  0.00 0.92 0.08   18.2 h 0.39 r/(51h) 0.91 mvd/B  107.5 | plank 8.35 benth 0.87 whiti 4.06 preda 0.86 | plank:0.80 whiti:0.12 benth:0.07
+  360 Aug  19.069 0.797   124 0.00 0.0104 0.0243 0.0522  2.577  0.00 0.94 0.06   18.4 h 0.41 r/(51h) 0.89 mvd/B   79.5 | plank 6.57 benth 0.86 whiti 4.17 preda 1.08 | plank:0.76 whiti:0.18 benth:0.06
+  400 Sep  18.934 0.790   165 0.00 0.1269 0.0630 0.0521  7.176  0.00 0.90 0.10   18.8 h 0.42 r/(51h) 0.88 mvd/B  140.5 | plank 5.59 benth 1.38 whiti 1.94 preda 0.90 | plank:0.70 whiti:0.21 benth:0.09
+  440 Sep  18.540 0.774   111 0.05 0.3145 0.1331 0.0515  2.933  0.00 0.92 0.08   19.3 h 0.45 r/(51h) 0.85 mvd/B  107.9 | plank 5.37 benth 1.78 whiti 3.19 preda 0.96 | plank:0.64 whiti:0.21 benth:0.15
+  480 Sep  17.910 0.766    91 0.01 0.1471 0.5345 0.0492  3.730  0.00 0.91 0.09   19.1 h 0.47 r/(51h) 0.80 mvd/B  129.8 | plank 5.45 benth 2.41 whiti 4.26 preda 0.76 | plank:0.65 whiti:0.25 benth:0.11
+  520 Oct  17.769 0.768   100 0.00 0.1343 0.0539 0.0488  1.560  0.00 0.89 0.11   19.9 h 0.46 r/(51h) 0.84 mvd/B  158.3 | plank 6.26 benth 2.23 whiti 3.80 preda 0.84 | plank:0.60 whiti:0.25 benth:0.15
+  560 Oct  17.662 0.754    89 0.00 0.1123 0.0385 0.0486  5.279  0.00 0.88 0.12   20.0 h 0.49 r/(51h) 0.80 mvd/B  169.3 | plank 5.00 benth 1.14 whiti 3.06 preda 0.94 | plank:0.58 whiti:0.24 benth:0.18
+  600 Oct  17.550 0.750   119 0.01 0.0998 0.0544 0.0483  4.052  0.00 0.89 0.11   20.6 h 0.50 r/(51h) 0.81 mvd/B  148.5 | plank 4.31 benth 2.28 whiti 2.79 preda 1.01 | plank:0.55 whiti:0.24 benth:0.22
+  640 Nov  17.171 0.746    85 0.01 0.3432 0.0744 0.0478  5.675  0.00 0.89 0.11   21.3 h 0.50 r/(51h) 0.83 mvd/B  154.1 | plank 4.67 benth 2.55 whiti 4.09 preda 0.77 | plank:0.51 benth:0.27 whiti:0.22
+  680 Nov  16.889 0.739    86 0.00 0.2822 0.0344 0.0466  3.832  0.00 0.91 0.09   22.2 h 0.52 r/(51h) 0.83 mvd/B  128.6 | plank 3.87 benth 4.95 whiti 3.54 preda 0.81 | plank:0.41 benth:0.34 whiti:0.25
+  720 Nov  16.639 0.734    81 0.00 0.2443 0.0388 0.0461  2.122  0.00 0.90 0.10   22.5 h 0.53 r/(51h) 0.83 mvd/B  140.3 | plank 3.91 benth 3.51 whiti 3.26 preda 0.53 | plank:0.40 benth:0.36 whiti:0.24
+  760 Dec  16.603 0.746    82 0.03 0.0717 0.0000 0.0455  0.557  0.00 0.93 0.07   23.1 h 0.51 r/(51h) 0.89 mvd/B   91.8 | plank 4.50 benth 2.84 whiti 3.43 preda 0.72 | plank:0.38 benth:0.37 whiti:0.25
+  800 Dec  16.450 0.755    89 0.00 0.1672 0.0199 0.0451  1.796  0.00 0.94 0.06   23.1 h 0.49 r/(51h) 0.93 mvd/B   83.7 | plank 4.42 benth 2.94 whiti 4.45 preda 0.77 | plank:0.37 benth:0.36 whiti:0.27
+  840 Dec  16.356 0.753    91 0.00 0.0864 0.0443 0.0450  1.909  0.00 0.95 0.05   23.2 h 0.49 r/(51h) 0.92 mvd/B   67.5 | plank 4.07 benth 6.34 whiti 4.44 preda 0.80 | plank:0.37 benth:0.36 whiti:0.27
+  880 Jan  16.320 0.753    92 0.00 0.0695 0.0049 0.0447  0.342  0.00 0.96 0.04   23.2 h 0.49 r/(51h) 0.92 mvd/B   57.7 | plank 3.49 benth 2.60 whiti 4.25 preda 0.80 | plank:0.37 benth:0.36 whiti:0.27
+  920 Jan  16.274 0.751    98 0.00 0.0684 0.0149 0.0446  3.509  0.00 0.97 0.03   23.3 h 0.50 r/(51h) 0.92 mvd/B   42.8 | plank 2.81 benth 2.50 whiti 4.07 preda 1.02 | benth:0.36 plank:0.36 whiti:0.28
+  960 Jan  15.855 0.741    91 0.01 0.4393 0.0127 0.0440  0.043  0.00 0.95 0.05   23.5 h 0.52 r/(51h) 0.89 mvd/B   69.8 | plank 3.63 benth 2.90 whiti 3.92 preda 0.83 | benth:0.38 plank:0.34 whiti:0.29
+ 1000 Feb  15.843 0.750   106 0.00 0.0269 0.0199 0.0434  2.214  0.00 0.98 0.02   23.9 h 0.50 r/(51h) 0.94 mvd/B   30.7 | plank 3.62 benth 3.27 whiti 4.15 preda 0.98 | benth:0.37 plank:0.35 whiti:0.28
+ 1040 Feb  15.857 0.750   102 0.00 0.0211 0.0000 0.0434  0.951  0.00 0.97 0.03   24.0 h 0.50 r/(51h) 0.94 mvd/B   38.6 | plank 3.56 benth 2.92 whiti 4.82 preda 1.20 | benth:0.38 plank:0.33 whiti:0.29
+ 1080 Feb  15.867 0.742    99 0.00 0.0150 0.0098 0.0435  0.000  0.00 0.97 0.03   24.0 h 0.51 r/(51h) 0.91 mvd/B   37.1 | plank 3.10 benth 2.27 whiti 4.87 preda 1.15 | benth:0.38 plank:0.33 whiti:0.29
+ 1120 Mar  15.876 0.751   105 0.00 0.0248 0.0000 0.0435  0.000  0.00 0.97 0.03   24.2 h 0.50 r/(51h) 0.95 mvd/B   47.6 | plank 2.99 benth 2.19 whiti 4.67 preda 1.54 | benth:0.38 plank:0.34 whiti:0.28
+ 1160 Mar  15.910 0.743   101 0.00 0.0000 0.0000 0.0435  0.000  0.00 0.98 0.02   24.2 h 0.51 r/(51h) 0.92 mvd/B   29.5 | plank 2.75 benth 1.97 whiti 4.74 preda 1.43 | benth:0.39 plank:0.32 whiti:0.29
+ 1200 Mar  15.937 0.746   110 0.00 0.0005 0.0049 0.0436  2.104  0.00 0.97 0.03   24.4 h 0.51 r/(51h) 0.94 mvd/B   48.6 | plank 3.36 benth 2.37 whiti 3.82 preda 0.99 | benth:0.37 plank:0.32 whiti:0.30
+ 1240 Apr  15.907 0.745   123 0.00 0.0438 0.0198 0.0436  3.068  0.00 0.96 0.04   24.1 h 0.51 r/(51h) 0.93 mvd/B   54.6 | plank 2.73 benth 2.43 whiti 4.83 preda 1.33 | benth:0.35 plank:0.35 whiti:0.30
+ 1280 Apr  15.888 0.736   111 0.00 0.0256 0.0248 0.0435  1.800  0.00 0.96 0.04   24.3 h 0.53 r/(51h) 0.90 mvd/B   56.8 | plank 2.48 benth 3.16 whiti 3.96 preda 1.16 | benth:0.40 plank:0.33 whiti:0.27
+ 1320 Apr  15.919 0.739    99 0.00 0.0007 0.0000 0.0436  0.142  0.00 0.97 0.03   24.6 h 0.52 r/(51h) 0.92 mvd/B   49.6 | plank 2.90 benth 2.48 whiti 3.67 preda 1.52 | benth:0.41 plank:0.33 whiti:0.26
+ 1360 May  15.761 0.746   118 0.00 0.1647 0.0246 0.0435  1.949  0.00 0.94 0.06   23.7 h 0.51 r/(51h) 0.92 mvd/B   82.8 | plank 3.58 benth 2.42 whiti 3.17 preda 1.02 | plank:0.38 benth:0.37 whiti:0.25
+ 1400 May  15.639 0.743   104 0.01 0.1421 0.0142 0.0430  1.330  0.00 0.94 0.06   22.8 h 0.51 r/(51h) 0.87 mvd/B   87.4 | plank 4.32 benth 2.62 whiti 2.77 preda 0.92 | plank:0.40 benth:0.37 whiti:0.23
+ 1440 May  15.508 0.750   103 0.01 0.1273 0.0388 0.0427  2.797  0.00 0.93 0.07   22.4 h 0.50 r/(51h) 0.88 mvd/B   89.9 | plank 4.81 benth 3.51 whiti 2.64 preda 0.75 | plank:0.42 benth:0.41 whiti:0.17
+ 1460 May  15.512 0.760    88 0.00 0.0098 0.0043 0.0212  0.000  0.00 0.94 0.06   11.1 h 0.48 r/(51h) 0.45 mvd/B   40.8 | plank 4.65 benth 4.57 whiti 2.45 preda 0.93 | plank:0.42 benth:0.38 whiti:0.20
+totals (t): {'starv': 4.83, 'sweep': 2.198, 'm1': 1.731, 'edge': 87.279} B end 15.512

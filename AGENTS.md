@@ -160,7 +160,16 @@ fabricates mass.
 -> `_apply_movement` -> `_apply_growth`
 
 - Decisions: batched `torch.bmm` over all DMs; per-DM compact observation layout
-  driven by the Observability matrix; `Rest` doubles as a hide action.
+  driven by the Observability matrix; `Rest` doubles as a hide action. Since
+  section 273 an observation pair may carry `neighbour_weight` w in [0, 1]
+  (absent = 1): each neighbour input shows c + w (n - c), c the same channel
+  in the own cell (both engines, FG editor matrix; widths unchanged). w is
+  reading B, the share of the observer's 6 h tracks that met the target in a
+  neighbour (no fish or mammal sense reaches 0.5-1.5 km): 0.19-0.48 for
+  diffuse targets and the own biomass, planktivores -> porpoises 0.10, fish
+  -> seals and mackerel schools ~0, zooplankton 0; a soft blend is a
+  learnability prior, not an information cut. research_notes/
+  Observabilitetsparen design.md.
 - Impacts: linear interpolation in `impact_table`, clipped to endpoints.
   `biomass_factor` is a loss per tick, `energy_factor` multiplies every
   action cost by `1 + sum`. Training: an impact with a `baseline_map`
@@ -365,9 +374,10 @@ fabricates mass.
   others proportionally (`decisions.merge_subunit_fractions`, on by
   default, `unit_splits=False` on the env reverts; section 159).
   A spawned cell holds at least `spawn_floor_units` (default 5) units
-  (zero-or-floor allocator, both engines); porpoises 30 since section
-  272, so a cell's 1/N move threshold is ~0.03 (start geometry, not
-  biology; the porpoise start is SCANS-IV 84 t, spawn range 42-168 t).
+  (zero-or-floor allocator, both engines; section 272.3). No library
+  group sets it: the porpoises' 30 dissolved within the first day,
+  inside the unscored warm-up (272.4). The porpoise start is SCANS-IV
+  84 t, spawn range 42-168 t (272.1).
   With `simulation_settings.temperature` (section 143) the cost of a DM
   with `metabolism_q10` is `resting_metabolism * q10**((T - t_ref)/10)`,
   T from its layer's monthly table on the daylight calendar; herring
@@ -474,7 +484,10 @@ fabricates mass.
   epifauna (corner policies on the old pairs; the retrained long-run
   probe is the check after 243.4). Mackerel has no K (228, user: the most mobile window group). Porpoises have no K; their
   attack rates are x1.5 since section 206 (they fell to ~0.3 of the
-  start in 15-20 years at the old rates).
+  start in 15-20 years at the old rates), except porpoises ->
+  planktivores, a 1.12 from encounter theory since section 273 (was
+  0.0225, a fit; research_notes/"Daggdjurens attackrater", a-umlaut; the
+  bed pairs and seals -> planktivores are open there).
   With the daylight calendar a producer with `light_saturation` grows at
   `growth_rate * P(t)/P_ref` (section 138; 0 at night, needs the site's
   light climate in the manifest). The old `seasonal_amplitude` /

@@ -1,0 +1,14 @@
+ARM base
+u 0.5 ME 2800.0 unit 0.05 t  B0 21.000 t  grid 30x30
+ tick mon      B  fill  cells lowF  starv  sweep  M1    edge   rest  eat  move  ration/yr | prey dens in porp cells / grid mean
+    8 May  21.002 0.620   119 0.00 0.0000 0.0000 0.0115  3.932  0.04 0.56 0.40   15.7 h 0.76 r/(51h) 0.41 mvd/B  554.7 | plank 3.93 benth 3.10 whiti 4.67 preda 0.64 | plank:0.72 benth:0.19 whiti:0.08
+   16 Jun  19.446 0.546   145 0.32 1.0610 0.4913 0.0113  6.990  0.01 0.47 0.52   16.7 h 0.85 r/(51h) 0.38 mvd/B  779.2 | plank 3.35 benth 2.66 whiti 6.85 preda 0.58 | plank:0.57 benth:0.29 whiti:0.14
+   24 Jun  17.177 0.577    80 0.13 2.0055 0.2600 0.0100  1.200  0.00 0.71 0.28   28.6 h 0.81 r/(51h) 0.69 mvd/B  421.6 | plank 3.72 benth 3.04 whiti 10.58 preda 0.76 | plank:0.45 whiti:0.32 benth:0.23
+   32 Jun  15.586 0.571   145 0.28 1.5553 0.0318 0.0091  2.286  0.01 0.63 0.36   24.1 h 0.80 r/(51h) 0.59 mvd/B  533.8 | plank 5.99 benth 3.91 whiti 9.46 preda 0.88 | plank:0.43 whiti:0.31 benth:0.25
+   40 Jun  14.307 0.596    91 0.14 1.1934 0.0843 0.0082  0.241  0.00 0.74 0.25   27.1 h 0.78 r/(51h) 0.68 mvd/B  365.4 | plank 5.08 benth 4.04 whiti 7.97 preda 0.79 | plank:0.44 benth:0.28 whiti:0.26
+   48 Jun  13.605 0.631    78 0.09 0.6252 0.0766 0.0076  0.335  0.01 0.78 0.22   27.4 h 0.72 r/(51h) 0.74 mvd/B  293.4 | plank 7.31 benth 4.95 whiti 4.02 preda 0.46 | plank:0.46 benth:0.29 whiti:0.24
+   56 Jun  13.242 0.651   111 0.10 0.3532 0.0095 0.0074  2.390  0.00 0.80 0.20   25.8 h 0.68 r/(51h) 0.74 mvd/B  278.1 | plank 9.09 benth 3.84 whiti 2.86 preda 0.38 | plank:0.50 benth:0.30 whiti:0.20
+   64 Jun  12.992 0.684    81 0.02 0.2332 0.0188 0.0072  0.162  0.01 0.87 0.12   26.8 h 0.63 r/(51h) 0.84 mvd/B  171.4 | plank 9.64 benth 5.53 whiti 3.26 preda 0.40 | plank:0.51 benth:0.36 whiti:0.13
+   72 Jun  12.980 0.704    82 0.00 0.0152 0.0000 0.0071  0.507  0.00 0.90 0.09   26.4 h 0.59 r/(51h) 0.87 mvd/B  132.2 | plank 7.10 benth 6.81 whiti 2.78 preda 0.48 | plank:0.45 benth:0.40 whiti:0.14
+   80 Jun  12.963 0.699    71 0.01 0.0051 0.0148 0.0071  0.000  0.00 0.86 0.14   23.8 h 0.60 r/(51h) 0.77 mvd/B  194.7 | plank 7.46 benth 5.90 whiti 2.67 preda 0.41 | plank:0.43 benth:0.41 whiti:0.17
+totals (t): {'starv': 7.047, 'sweep': 0.987, 'm1': 0.086, 'edge': 18.042} B end 12.963

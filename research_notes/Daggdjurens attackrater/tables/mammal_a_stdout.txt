@@ -1,0 +1,64 @@
+====================================================================================================
+Derived a (km2 / t predator / tick of foraging), equal-cell box mean over maps/depth.npz
+pair                                  today   central     MC p5    MC p50    MC p95  x today   east3rd
+porpoises->planktivorous_fish        0.0225    1.1236    0.1961    0.9402    3.0475     49.9    1.1151
+porpoises->benthivorous_fish         0.1200    0.1352    0.0271    0.1090    0.3526      1.1    0.1596
+porpoises->whiting                   0.2000    0.4468    0.0681    0.3266    0.9810      2.2    0.5598
+porpoises->predatory_fish            0.2000    0.1807    0.0358    0.1434    0.4642      0.9    0.2133
+seals->benthivorous_fish             0.1000    0.0707    0.0196    0.0450    0.0989      0.7    0.0903
+seals->whiting                       0.0500    0.0472    0.0090    0.0265    0.0738      0.9    0.0603
+seals->predatory_fish                0.0500    0.0984    0.0213    0.0531    0.1273      2.0    0.1257
+seals->planktivorous_fish            0.0020    0.0857    0.0204    0.0471    0.1075     42.8    0.1009
+
+Per bed-depth class (central a; class mean), and the depth_access_table (class / equal-cell mean)
+pair                                share    0-100   100-125   125-150   150-200   200-250   250-1000
+(cell share)                                  0.232     0.162     0.137     0.192     0.132     0.146
+porpoises->planktivorous_fish           a    1.1396    1.0909    1.0610    1.1452    1.1452    1.1452
+                                    table     1.014     0.971     0.944     1.019     1.019     1.019
+porpoises->benthivorous_fish            a    0.3863    0.2351    0.0549    0.0000    0.0000    0.0000
+                                    table     2.858     1.740     0.406     0.000     0.000     0.000
+porpoises->whiting                      a    1.0649    0.8059    0.4563    0.0359    0.0000    0.0000
+                                    table     2.383     1.804     1.021     0.080     0.000     0.000
+porpoises->predatory_fish               a    0.5165    0.3144    0.0734    0.0000    0.0000    0.0000
+                                    table     2.858     1.740     0.406     0.000     0.000     0.000
+seals->benthivorous_fish                a    0.1421    0.1180    0.0871    0.0352    0.0000    0.0000
+                                    table     2.009     1.668     1.231     0.497     0.000     0.000
+seals->whiting                          a    0.0949    0.0788    0.0582    0.0235    0.0000    0.0000
+                                    table     2.009     1.668     1.231     0.497     0.000     0.000
+seals->predatory_fish                   a    0.1977    0.1641    0.1212    0.0489    0.0000    0.0000
+                                    table     2.009     1.668     1.231     0.497     0.000     0.000
+seals->planktivorous_fish               a    0.1608    0.1335    0.0985    0.0296    0.0275    0.0275
+                                    table     1.876     1.558     1.150     0.345     0.321     0.321
+
+Porpoises -> planktivores, central parts (box mean): day_her 0.0833, day_pout 0.0697, night_her 2.0766, night_pout 0.0174
+  night/day ratio central 13.7; MC p5-p95 [ 4.16934915 20.85828369]
+  school factor S (day) central 0.0048; MC p5-p95 [0.0004452  0.01913099]
+Seals -> planktivores school factor S central 0.001
+Seal trail swath (benthivore gadoids) central 2.10 m
+
+Saturation at the box start densities (B_vis = density x stage access; floors ignored, rest shares ~0.02)
+pair                                 B_vis  aHB today  aHB deriv   aHB p5  aHB p95 knee today knee deriv
+porpoises->planktivorous_fish        4.722      3.039     151.74    26.48   411.58      1.554     0.0311
+porpoises->benthivorous_fish         1.047      3.594       4.05     0.81    10.56      0.291     0.2587
+porpoises->whiting                   0.427      2.444       5.46     0.83    11.99      0.175     0.0783
+porpoises->predatory_fish            0.033      0.190       0.17     0.03     0.44      0.175     0.1935
+seals->benthivorous_fish             0.878      1.862       1.32     0.36     1.84      0.472     0.6667
+seals->whiting                       0.387      0.437       0.41     0.08     0.64      0.885     0.9367
+seals->predatory_fish                0.018      0.021       0.04     0.01     0.05      0.837     0.4252
+seals->planktivorous_fish            4.722      1.362      12.36     2.94    15.50      4.046     0.3822 (Type III today; derived read as Type II)
+
+Implied ration at T = 1 (whole tick foraging), hunger 1, every prey attacked, box start densities
+porpoises: today 12.6 %BM/d, derived central 13.9, derived p5 13.5; ceiling ~14.0; field 7-10 (Rojano-Donate 2024 ~10 at 40 kg; Kastelein captive 4-9.5)
+   diet shares today: planktivorous_fish 0.33, benthivorous_fish 0.39, whiting 0.26, predatory_fish 0.02
+   diet shares derived: planktivorous_fish 0.94, benthivorous_fish 0.03, whiting 0.03, predatory_fish 0.00
+seals: today 13.0 %BM/d, derived central 12.9, derived p5 10.7; ceiling ~18.9; field 4-6 (Harkonen & Heide-Jorgensen 1991 5.1; routine 3-8)
+   diet shares today: benthivorous_fish 0.58, whiting 0.13, predatory_fish 0.01, planktivorous_fish 0.29
+   diet shares derived: benthivorous_fish 0.13, whiting 0.04, predatory_fish 0.00, planktivorous_fish 0.83
+
+Porpoise cell on few planktivores (fix99 episodes: 0.03-0.3 t in a 1 km2 cell), single prey, T = 1
+  B  0.03 t/km2: today  0.26 %BM/d (0.02 of ceiling); derived central  6.86 (0.49); p5  2.01 (0.14)
+  B  0.10 t/km2: today  0.85 %BM/d (0.06 of ceiling); derived central 10.67 (0.76); p5  5.03 (0.36)
+  B  0.30 t/km2: today  2.26 %BM/d (0.16 of ceiling); derived central 12.67 (0.91); p5  8.77 (0.63)
+  B  1.00 t/km2: today  5.48 %BM/d (0.39 of ceiling); derived central 13.56 (0.97); p5 11.87 (0.85)
+  B  4.72 t/km2: today 10.52 %BM/d (0.75 of ceiling); derived central 13.89 (0.99); p5 13.48 (0.96)
+  break-even on planktivores (eat cost 90 MJ/t/tick, 6495 x 0.9 per t): 0.0154 t/t/tick = 6.16 %BM/d

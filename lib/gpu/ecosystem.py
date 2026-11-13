@@ -579,6 +579,11 @@ class TensorEcosystem:
         # per-species tensor stacking and transposes during every tick.
         obs_indices = np.zeros((self.D, self.C, self.F), dtype=np.int64)
         obs_valid = np.zeros_like(obs_indices, dtype=np.float32)
+        # Section 273: each neighbour slot's own-cell twin and its weight w;
+        # the slot reads c + w (n - c) where w < 1 (``observations``).
+        obs_centre = np.zeros_like(obs_indices)
+        obs_weight = np.ones_like(obs_valid)
+        nbr_w = getattr(env, "obs_nbr_w", None)
         cells = np.arange(self.C)
         # Channel layout of the bank assembled in ``observations``:
         #   [biomass (G)] [visible] [energy_level (G)]
@@ -613,10 +618,15 @@ class TensorEcosystem:
                 obs_indices[d, :, k] = channel * self.C + cells
                 obs_valid[d, :, k] = 1.0
             offset = len(channels)
+            weights = (list(nbr_w[d]) if nbr_w is not None
+                       else [1.0] * (1 + len(visible)))
+            weights = weights + [1.0] * len(impacts)
             for direction in range(4):
-                for channel in [own] + visible + impacts:
+                for k, channel in enumerate([own] + visible + impacts):
                     obs_indices[d, :, offset] = channel * self.C + neighbors[direction]
                     obs_valid[d, :, offset] = valid[direction]
+                    obs_centre[d, :, offset] = channel * self.C + cells
+                    obs_weight[d, :, offset] = weights[k]
                     offset += 1
             if self.daylight:
                 # One broadcast light channel after the energy block, read
@@ -630,6 +640,11 @@ class TensorEcosystem:
                 obs_valid[d, :, offset] = 1.0
         self.obs_indices = self.tensor(obs_indices, torch.long)
         self.obs_valid = self.tensor(obs_valid)
+        self.nbr_blend = bool((obs_weight < 1.0).any())
+        if self.nbr_blend:
+            self.obs_centre = self.tensor(obs_centre, torch.long)
+            self.obs_weight = self.tensor(obs_weight)
+            self.obs_blend_mask = self.tensor(obs_weight < 1.0, torch.bool)
 
         # Match the reference's edge tie order, including NumPy's argsort
         # behavior. This is immutable metadata, computed only once.
@@ -826,8 +841,15 @@ class TensorEcosystem:
             target = self.set_point[light_index.reshape(-1)][:, :, None]
             own = energy[:, self.dm_index]
             parts.append((target - own).clamp_min(0.0).expand(biomass.shape[0], self.D, self.C))
-        bank = torch.cat(parts, dim=1)
-        return bank.flatten(1)[:, self.obs_indices] * self.obs_valid
+        bank = torch.cat(parts, dim=1).flatten(1)
+        raw = bank[:, self.obs_indices]
+        if self.nbr_blend:
+            # Section 273: c + w (n - c) on the weighted neighbour slots,
+            # in the reference's operation order (float parity).
+            centre = bank[:, self.obs_centre]
+            raw = torch.where(self.obs_blend_mask,
+                              centre + self.obs_weight * (raw - centre), raw)
+        return raw * self.obs_valid
 
     def action_mask(self, biomass):
         batch = biomass.shape[0]

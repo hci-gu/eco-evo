@@ -23,6 +23,7 @@ MATRIX_KEYS = (
     "handling_time", "visibility_floor", "dark_ratio", "light_threshold_deg",
     "impact_affects", "impact_table", "stage_access", "max_intake_rate",
     "functional_response", "mixed_layer_reference_m", "accessible_fraction",
+    "neighbour_weight",
 )
 
 FIXED_KEYS = (

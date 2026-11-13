@@ -95,3 +95,7 @@ own trajectory are.
 - 2026-11-13: option A applied as section 272 (porpoise start 84 t, spawn range 42-168 t,
   booked M2 x7) together with a denser spawn (`spawn_floor_units: 30`, 30 animals per cell).
   B not applied.
+- 2026-11-13: the 30-animal spawn floor dissolved within a day and was removed again (272.4).
+  fix100 (warm-started at 84 t) crashes to 0.42-0.51 within 16 days of a probe start; with the
+  planktivores blind to porpoises the first year ends at 0.60 instead of 0.34
+  (`tables/fix100_u830_*`, `scripts/porp_blind.py`; resume 272.4).

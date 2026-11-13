@@ -1211,6 +1211,19 @@ FIELD_HELP = {
         "learn to flee or hide. Any change alters the input size: "
         "existing checkpoints become invalid."
     ),
+    "matrix:neighbour_weight": (
+        "Neighbour Weight w in [0, 1] (empty = 1): how much of the column "
+        "group's density in the 4 neighbour cells the row sees.\n\n"
+        "Each neighbour input shows c + w (n - c), c the column's value in "
+        "the row's own cell and n its value in the neighbour: w = 1 is the "
+        "full view, w = 0 says nothing beyond the own cell. Reading B "
+        "(section 273): w is the share of the row's 6 h tracks that met the "
+        "column in a given neighbour, derived from the row's path and net "
+        "displacement and the encounter radius (research_notes/"
+        "Observabilitetsparen design.md). On the diagonal it weights the "
+        "row's own biomass in the neighbours. The input size is unchanged, "
+        "but the inputs mean something new: retrain."
+    ),
     "matrix:assimilation_factor": (
         "Assimilation Factor (0-1; default 1): share of the prey's "
         "Energy Content the predator actually absorbs. The prey biomass "

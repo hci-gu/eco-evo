@@ -25408,3 +25408,92 @@ remain open exactly as described in 71.9 / 71.11.
     to move at that floor). The FG editor has no field for the key and keeps it on Apply.
     Tests: test_gpu_spawn.py (the key reaches both engines, porpoise cells >= the floor),
     test_fgconfig_preserves_library.py (kept on save); suite 1922 passed. Retrain.
+272.4 The porpoises' start crash in fix100 (user: why do the porpoises dive at the start of a
+    probe and then level out; then: remove the 30 floor, test planktivores blind to porpoises).
+    fix100 = fix99 policies warm-started (--init-from) at 84 t, 30x30, warm-up 60 days. Its
+    probes (update 830-840): porpoises 1.00 -> 0.42-0.51 in ~16 days, then ~0.2 by year 3.
+    Frozen update-830 policies, probe world, CPU (research_notes/"Tumlarna i fix99" tables
+    fix100_u830_*):
+    - Days 1-4: porpoises start on planktivore patches (4.9x the grid mean, 2.6x by day 2),
+      move 0.40-0.69 of the ticks, spread 12 -> 134-190 cells; ration 9-12 /yr, fill 0.70 ->
+      0.51. Days 4-16 starvation (starve_rate 0.5) and the sweep take 10 t; then move 0.1-0.2,
+      fill 0.70-0.74, ration 22-27, B ~11-13 t.
+    - The start placement is not the cause: floor 5, floor 3 on planktivores and floor 3
+      uniform all fall to 12-13 t (0.57-0.62); the old 3 t start falls to 0.8 t (0.27).
+    - The 30-animal floor of 272.3 dissolves in the first day (~3 animals per cell again), in
+      training inside the unscored warm-up (whose observations are not in the normalisation
+      statistics, 200.2): it never reaches the scored window. REMOVED from the porpoises
+      (spawn_floor_units stays as a key, default 5; the test uses a library copy).
+    - Planktivores blind to porpoises (raw observation 0 on the porpoise channel, own cell and
+      four neighbours; scripts/porp_blind.py), one year: B 21 -> 18.5 at day 30 (base 14.3 at
+      day 10), 12.6 at year end (base 7.06); starvation 6.5 t (12.5), fill 0.72-0.80 (0.60-
+      0.75), move 0.03-0.12 (0.36 in the first window), ration 17.5-19.9 in summer (field Q/B
+      19.5), planktivores 0.68-0.86 of the diet Jun-Sep (0.38-0.51). The remaining decline is
+      from October, when the planktivore share falls to 0.28-0.45 and benthivores and whiting
+      carry the diet.
+    Reading: the start crash and most of the first-year loss come from the planktivores
+    avoiding the porpoises (since 270 moving is their only defence and they observe
+    porpoises); the porpoises chase, eat little while moving, and starve. Open (user):
+    whether the planktivores should sense porpoises at km scale at all - herring, sprat and
+    Norway pout do not hear the porpoises' ~130 kHz clicks (section 270 floor note), so the
+    cue would be vision or the lateral line at close range. Changing the Observability matrix
+    invalidates checkpoints.
+
+273 Observation pairs: own cell and neighbours; porpoise attack rate (user: find out what should
+    observe what in the own cell and in the four neighbours; then: design the neighbour weight
+    and the swimming speed, derive the mammal attack rates; then: build).
+    research_notes/Observabilitetsparen (summary.md, design.md, fish.md, mammals.md, code.md,
+    mackerel_0group.md; scripts/neighbour_weight.py, tables/neighbour_weight_*.txt) and
+    research_notes/"Daggdjurens attackrater" (a-umlaut; summary.md, scripts/mammal_a.py).
+    - Senses: no fish or mammal sense reaches a neighbour cell (0.5-1.5 km) for the model's
+      targets. Vision and lateral line are metres; porpoise sonar 20-65 m on single fish,
+      140-360 m on schools; seal vibrissae tens of m. Porpoise clicks are inaudible to every
+      model fish (the ~2 kHz by-product ~60 m, herring only). Masked fish sounds carry metres
+      to ~20 m and seal roars ~50-140 m against the box's ship noise (+15-20 dB, DCE 2024).
+      The km-scale "blend of senses" premise of "Gom och sinnen" does not hold for fish
+      targets: at 1 km only the downstream food odour of bed prey is left. So a neighbour
+      channel is read as reading B: what the group met there while ranging during the 6 h.
+    - Neighbour weight (APPLIED, user: soft blend): a pair key neighbour_weight w in [0, 1] on
+      <obs>_observes_<target> (absent = 1). Each neighbour input shows c + w (n - c), c the
+      same channel in the own cell, 0 off the grid as before; the own biomass and own J take
+      the self pair's w, another group's J that group's w; impacts keep 1 (none is observable
+      in mareld2). Input widths unchanged. Loader (config_loader: params['neighbour_weight'],
+      range checked), state.py (env.obs_nbr_w, _has_nbr_w), observations.py, GPU
+      ecosystem.py (_build_indices: obs_centre / obs_weight; observations: one more gather,
+      same operation order as the reference); FG editor: a Neighbour Weight matrix (empty =
+      1, active while observed), help text. The soft blend does not remove information for
+      w > 0 (the policy sees c and can invert it): it is a learnability prior; only w = 0
+      blinds (design.md 1.1; user chose it knowing this).
+    - w = P(a 6 h track enters a given neighbour) x E[1 - exp(-n)]: tracks are correlated
+      random walks with each member's path and net displacement (fish.md 2, 7; mammals.md
+      1); n the encounters there, the observer's search or, where the target preys on the
+      observer, the predator's swath (the prey learns of it by being found). Values (66
+      pairs, tables/neighbour_weight_library.txt): diffuse targets and own biomass 0.19
+      benthivores, 0.31 whiting, 0.38 planktivores, 0.42 mackerel, 0.48 water column, 0.37
+      porpoises, 0.30 seals; planktivores -> porpoises 0.10; every fish -> seals <= 0.004 and
+      -> mackerel schools <= 0.005; porpoises -> planktivores 0.24, -> gadoids 0.37; seals ->
+      fish 0.16-0.31; zooplankton 0 (movement_speed 0). No w exceeds ~0.55: a track enters at
+      most about half of the four neighbours. Seabird pairs have no key (muted).
+    - Porpoises -> planktivorous_fish a 0.0225 -> 1.12 (APPLIED, user: only this pair):
+      encounter theory (sonar cone, dive cycle, capture p 0.85; night-dispersed herring
+      carry 93 %), MC 0.20-3.0. The 0.0225 was an Ecopath-diet fit (151) x1.5 on model
+      output (206); its knee 1/(a h) 1.55 t/km2 is ~50x the derived 0.031. The ration at the
+      box mean is unchanged (saturated either way, 13-14 % BM/d); a porpoise in a 0.03-0.3
+      t/km2 cell gets 7-13 % instead of 0.3-2.3 % (break-even 6.2). Left for later (user):
+      the porpoise bed pairs (derived a near today's but zero over beds > ~145 m; derived
+      diet 0.94 planktivores vs the coastal booking 0.65) and seals -> planktivores (derived
+      x40, Norway pout; first: do the Skagerrak seal "gadids" include pout). budget_gate now
+      marks porpoises -> benthivores (enc 0.023 vs booked 0.159), -> whiting (0.016 vs 0.137)
+      and, prey side, -> water column OFF: the expected consequence, the booking question.
+    - Frozen fix100 probes (porpoises from 21 t, one year): base 0.34, a 1.12 alone 0.38,
+      planktivores blind to porpoises 0.60, both 0.74 (19.9 t at day 10, move 0.19 in the
+      first window vs 0.36-0.43). Under fixed behaviour the knee alone does not stop the
+      start fall; the start loss is time spent moving (a moving share eats nothing).
+    - Not applied: movement_speed stays 1 (a capacity; every member exceeds 1 km per 6 h;
+      lower values would hard-code residency). The time a move takes (tau = 1 km / (U x
+      tick), 0.03-0.07 for mackerel, saithe, porpoises, seals, ~0.2 for the slow groups) is
+      the place swimming speed belongs: design.md 2.2, built only if the retrained porpoises
+      still move heavily and starve at the start. The pairs without a booked predation link
+      keep their switches (indirect use; summary.md 4); mackerel eat ~0.3 % pelagic 0-group
+      gadoids, before settlement, so inside the recruit import (mackerel_0group.md).
+    Observations and porpoise payoffs change: every checkpoint is invalid, retrain.

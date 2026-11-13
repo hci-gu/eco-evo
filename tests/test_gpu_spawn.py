@@ -96,12 +96,20 @@ def test_a_library_only_world_keeps_its_colony_count():
     assert spec.biomass_scale == 1.0
 
 
-def test_spawn_floor_units_reach_both_engines():
-    # Section 272: a group's spawn_floor_units (default 5) times its unit is
-    # the per-cell spawn floor on both engines; porpoises 30 animals.
+def test_spawn_floor_units_reach_both_engines(tmp_path):
+    # Section 272.3: a group's spawn_floor_units (default 5) times its unit is
+    # the per-cell spawn floor on both engines. The library sets none since
+    # 272.4; a copy with porpoises at 30 animals checks the key.
+    import yaml
     from lib.world.functional_group import FunctionalGroup
     assert FunctionalGroup("x", {"min_split_biomass": 50.0}).spawn_floor_units == 5.0
-    spec = ProjectSpec(EnvironmentBuilder(project_path="mareld2.yaml", grid=(30, 30)))
+    root = Path(__file__).resolve().parents[1]
+    library = yaml.safe_load((root / "fgconfig" / "fg_library.yaml").read_text())
+    library["species_definitions"]["porpoises"]["spawn_floor_units"] = 30
+    lib_path = tmp_path / "library.yaml"
+    lib_path.write_text(yaml.safe_dump(library))
+    spec = ProjectSpec(EnvironmentBuilder(project_path=str(root / "mareld2.yaml"),
+                                          library_path=str(lib_path), grid=(30, 30)))
     model = TensorEcosystem(spec.env, "cpu")
     spawner = WorldSpawner(spec, model)
     for fid in model.ids:
@@ -117,6 +125,3 @@ def test_spawn_floor_units_reach_both_engines():
     # the CPU env built by the same builder spawns at the same floor
     b = np.asarray(porp.biomass, dtype=np.float64)
     assert (b[b > 0] >= floor - 1e-6).all()
-    # report-only numbers for the resume: cells per training world
-    print("porpoise cells per world:", (biomass > 0).sum(-1).tolist(),
-          "totals:", [round(float(t), 1) for t in biomass.sum(-1)])

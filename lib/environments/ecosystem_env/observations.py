@@ -54,6 +54,11 @@ def build_observation_batch(env):
         for direction in DIRECTIONS
     }
 
+    # Section 273: in-grid mask per direction for the neighbour blend.
+    inside = ({d: shift_field(np.ones((H, W), dtype=env.dtype), d)
+               for d in DIRECTIONS}
+              if getattr(env, "_has_nbr_w", False) else None)
+
     max_dim = int(env.max_in_dim)
     light = (interactions.light_level(env) if env._has_daylight
              else None)
@@ -109,13 +114,18 @@ def build_observation_batch(env):
         for k, layer in enumerate(impact_layers):
             obs[i, 2 + n_other + k] = layer
 
+        nbr_w = env.obs_nbr_w[i] if getattr(env, "_has_nbr_w", False) else None
         for direction_index, direction in enumerate(DIRECTIONS):
             base = center_dim + direction_index * neighbor_dim
-            obs[i, base] = shift_field(own_biomass, direction)
-            if n_other > 0:
-                for k in range(n_other):
-                    obs[i, base + 1 + k] = shift_field(
-                        observed_biomass[k], direction)
+            channels = [own_biomass] + [observed_biomass[k] for k in range(n_other)]
+            for k, field in enumerate(channels):
+                shifted = shift_field(field, direction)
+                if nbr_w is not None and nbr_w[k] < 1.0:
+                    # Section 273: c + w (n - c) on in-grid neighbours, 0
+                    # outside the grid as before.
+                    shifted = inside[direction] * (
+                        field + nbr_w[k] * (shifted - field))
+                obs[i, base + k] = shifted
             for k, layer_shift in enumerate(impact_shifts[direction]):
                 obs[i, base + 1 + n_other + k] = layer_shift
 

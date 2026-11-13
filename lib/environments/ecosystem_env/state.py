@@ -347,6 +347,25 @@ def build_static_caches(env):
             [int(j) for j in getattr(env, "stage_rows", []) if int(j) in seen],
             dtype=np.int64))
 
+    # Section 273: neighbour weight w per neighbour channel, aligned with
+    # the neighbour block [B_own, observed others (k_i), J (m_i)] (impacts
+    # keep 1). The neighbour slot shows c + w (n - c), c the same channel
+    # in the own cell; w = 1 (no key) is today's observation. The own
+    # biomass and the own J take the self pair's weight.
+    env.obs_nbr_w = []
+    for i, fid in enumerate(env.dm_ids):
+        weights = env.fgs[fid].params.get("neighbour_weight") or {}
+        own_idx = int(env.dm_index_in_all[i])
+        w_own = float(weights.get(fid, 1.0))
+        row = [w_own]
+        row += [float(weights.get(env.global_fg_order[int(j)], 1.0))
+                for j in env.obs_others_idx[i]]
+        row += [w_own if int(j) == own_idx
+                else float(weights.get(env.global_fg_order[int(j)], 1.0))
+                for j in env.obs_juvenile_idx[i]]
+        env.obs_nbr_w.append(np.asarray(row, dtype=env.dtype))
+    env._has_nbr_w = any(bool(np.any(w < 1.0)) for w in env.obs_nbr_w)
+
     # Number of impact observation channels. Stored here so observation
     # dim calculations stay consistent in one place.
     n_obs_imp = len(env.observable_impact_vars)

@@ -1619,13 +1619,10 @@
     # frozen fix53 policies 50 kg ended the year at 4.5 t vs 2.9 t
     # (section 152). With spawn_floor_units it sets the spawn floor.
     min_split_biomass: 50.0
-    # Section 272: spawn floor 30 animals (1.5 t) per cell, was the default
-    # 5. A cell of N animals moves only if one direction's probability is
-    # >= 1/N (merge_subunit_fractions); at 5-10 animals a small move
-    # probability is merged away and the policy gets no move gradient
-    # (research_notes/"Tumlarna i fix99"). 30 gives 1/N ~0.03. Start and
-    # training-world geometry, not biology (the box total stays SCANS-IV).
-    spawn_floor_units: 30
+    # No spawn_floor_units (default 5): the 30 of section 272.3 dissolved
+    # within the first day (12 -> 134 cells, ~3 animals per cell again),
+    # inside the unscored warm-up, and only steepened the probe's start
+    # (272.4).
     energy_content: 8500.0
     # growth_rate is DERIVED by lib/world/growth_budget.py and recomputed
     # by the loader for every run; the number stored here is what the
@@ -2162,7 +2159,12 @@ interaction_definitions:
     # Section 272: x7 with the porpoise start 12 -> 84 t (SCANS-IV; the booked
     # flow Q/B 19.5 x 84 t); was 0.00946.
     predation_mortality: 0.0662
-    max_intake_rate: 0.0225
+    # Section 273: a from encounter theory (sonar cone, dive cycle, capture
+    # p 0.85; night-dispersed herring carry 93 %), 1.12 (MC 0.20-3.0); was
+    # 0.0225, an Ecopath-diet fit (151) x1.5 on model output (206), its knee
+    # 1.55 t/km2 ~50x too high. research_notes/"Daggdjurens attackrater"
+    # (a-umlaut) summary.md.
+    max_intake_rate: 1.12
     assimilation_factor: 0.9
     handling_time: 28.6
     # Section 270: floor 0.95 -> 1.0: biosonar sees through a school and depth (> 90 % capture on
@@ -3737,8 +3739,13 @@ interaction_definitions:
   zooplankton_impacted_by_windfarm_noise:
     impact_affects: false
     impact_table: []
+  # Section 273: neighbour_weight w = the share of the observer's 6 h
+  # tracks that met the column group in a given neighbour (reading B;
+  # research_notes/Observabilitetsparen design.md 1.3, tables/
+  # neighbour_weight_library.txt). Absent = 1.
   benthivorous_fish_observes_benthic_infauna:
     observes: true
+    neighbour_weight: 0.19
   predatory_fish_observes_benthic_infauna:
     observes: false
   mackerel_observes_benthic_infauna:
@@ -3747,6 +3754,7 @@ interaction_definitions:
     observes: false
   benthivorous_fish_observes_mobile_epifauna:
     observes: true
+    neighbour_weight: 0.19
   # Section 223.26: the water-column group has no epifauna pair any more.
   predatory_fish_observes_mobile_epifauna:
     observes: false
@@ -3754,10 +3762,12 @@ interaction_definitions:
     observes: false
   whiting_observes_mobile_epifauna:
     observes: true
+    neighbour_weight: 0.312
   # E1: the benthivores see both benthic crustacean groups; the predators
   # only the exposed one (no pair on Nephrops).
   benthivorous_fish_observes_norway_lobster:
     observes: true
+    neighbour_weight: 0.19
   predatory_fish_observes_norway_lobster:
     observes: false
   mackerel_observes_norway_lobster:
@@ -3767,54 +3777,79 @@ interaction_definitions:
   # Section 245: the five krill predators observe the krill pool.
   planktivorous_fish_observes_krill:
     observes: true
+    neighbour_weight: 0.378
   benthivorous_fish_observes_krill:
     observes: true
+    neighbour_weight: 0.19
   predatory_fish_observes_krill:
     observes: true
+    neighbour_weight: 0.48
   mackerel_observes_krill:
     observes: true
+    neighbour_weight: 0.423
   whiting_observes_krill:
     observes: true
+    neighbour_weight: 0.312
   benthivorous_fish_observes_benthivorous_fish:
     observes: true
+    neighbour_weight: 0.19
   benthivorous_fish_observes_predatory_fish:
     observes: true
+    neighbour_weight: 0.186
   benthivorous_fish_observes_mackerel:
     observes: true
+    neighbour_weight: 0.001
   benthivorous_fish_observes_whiting:
     observes: true
+    neighbour_weight: 0.185
   predatory_fish_observes_benthivorous_fish:
     observes: true
+    neighbour_weight: 0.479
   mackerel_observes_benthivorous_fish:
     observes: true
+    neighbour_weight: 0.423
   whiting_observes_benthivorous_fish:
     observes: true
+    neighbour_weight: 0.309
   predatory_fish_observes_predatory_fish:
     observes: true
+    neighbour_weight: 0.48
   predatory_fish_observes_mackerel:
     observes: true
+    neighbour_weight: 0.003
   mackerel_observes_predatory_fish:
     observes: true
+    neighbour_weight: 0.399
   mackerel_observes_mackerel:
     observes: true
+    neighbour_weight: 0.423
   predatory_fish_observes_whiting:
     observes: true
+    neighbour_weight: 0.477
   mackerel_observes_whiting:
     observes: true
+    neighbour_weight: 0.421
   whiting_observes_predatory_fish:
     observes: true
+    neighbour_weight: 0.306
   whiting_observes_mackerel:
     observes: true
+    neighbour_weight: 0.001
   whiting_observes_whiting:
     observes: true
+    neighbour_weight: 0.312
   benthivorous_fish_observes_planktivorous_fish:
     observes: true
+    neighbour_weight: 0.096
   predatory_fish_observes_planktivorous_fish:
     observes: true
+    neighbour_weight: 0.248
   mackerel_observes_planktivorous_fish:
     observes: true
+    neighbour_weight: 0.215
   whiting_observes_planktivorous_fish:
     observes: true
+    neighbour_weight: 0.159
   benthivorous_fish_observes_phytoplankton:
     observes: false
   predatory_fish_observes_phytoplankton:
@@ -3825,12 +3860,16 @@ interaction_definitions:
     observes: false
   benthivorous_fish_observes_porpoises:
     observes: true
+    neighbour_weight: 0.04
   predatory_fish_observes_porpoises:
     observes: true
+    neighbour_weight: 0.047
   mackerel_observes_porpoises:
     observes: true
+    neighbour_weight: 0.004
   whiting_observes_porpoises:
     observes: true
+    neighbour_weight: 0.065
   benthivorous_fish_observes_seabirds:
     observes: false
   predatory_fish_observes_seabirds:
@@ -3841,63 +3880,85 @@ interaction_definitions:
     observes: false
   benthivorous_fish_observes_seals:
     observes: true
+    neighbour_weight: 0.003
   predatory_fish_observes_seals:
     observes: true
+    neighbour_weight: 0.002
   mackerel_observes_seals:
     observes: true
+    neighbour_weight: 0.0
   whiting_observes_seals:
     observes: true
+    neighbour_weight: 0.004
   # Section 209: no zooplankton pair.
   benthivorous_fish_observes_zooplankton:
     observes: false
   predatory_fish_observes_zooplankton:
     observes: true
+    neighbour_weight: 0.48
   mackerel_observes_zooplankton:
     observes: true
+    neighbour_weight: 0.423
   whiting_observes_zooplankton:
     observes: true
+    neighbour_weight: 0.312
   planktivorous_fish_observes_benthic_infauna:
     observes: false
   planktivorous_fish_observes_benthivorous_fish:
     observes: true
+    neighbour_weight: 0.376
   planktivorous_fish_observes_predatory_fish:
     observes: true
+    neighbour_weight: 0.36
   planktivorous_fish_observes_mackerel:
     observes: true
+    neighbour_weight: 0.005
   planktivorous_fish_observes_whiting:
     observes: true
+    neighbour_weight: 0.373
   planktivorous_fish_observes_planktivorous_fish:
     observes: true
+    neighbour_weight: 0.378
   planktivorous_fish_observes_phytoplankton:
     observes: false
   planktivorous_fish_observes_porpoises:
     observes: true
+    neighbour_weight: 0.104
   planktivorous_fish_observes_seabirds:
     observes: true
   planktivorous_fish_observes_seals:
     observes: true
+    neighbour_weight: 0.002
   planktivorous_fish_observes_zooplankton:
     observes: true
+    neighbour_weight: 0.378
   porpoises_observes_benthic_infauna:
     observes: false
   porpoises_observes_benthivorous_fish:
     observes: true
+    neighbour_weight: 0.373
   porpoises_observes_predatory_fish:
     observes: true
+    neighbour_weight: 0.372
   porpoises_observes_mackerel:
     observes: true
+    neighbour_weight: 0.017
   porpoises_observes_whiting:
     observes: true
+    neighbour_weight: 0.373
   porpoises_observes_planktivorous_fish:
     observes: true
+    neighbour_weight: 0.239
   porpoises_observes_phytoplankton:
     observes: false
   porpoises_observes_porpoises:
     observes: true
+    neighbour_weight: 0.373
   porpoises_observes_seabirds:
     observes: false
   porpoises_observes_seals:
     observes: true
+    neighbour_weight: 0.005
   porpoises_observes_zooplankton:
     observes: false
   seabirds_observes_benthic_infauna:
@@ -3926,22 +3987,29 @@ interaction_definitions:
     observes: false
   seals_observes_benthivorous_fish:
     observes: true
+    neighbour_weight: 0.305
   seals_observes_predatory_fish:
     observes: true
+    neighbour_weight: 0.297
   seals_observes_mackerel:
     observes: true
+    neighbour_weight: 0.003
   seals_observes_whiting:
     observes: true
+    neighbour_weight: 0.304
   seals_observes_planktivorous_fish:
     observes: true
+    neighbour_weight: 0.16
   seals_observes_phytoplankton:
     observes: false
   seals_observes_porpoises:
     observes: true
+    neighbour_weight: 0.008
   seals_observes_seabirds:
     observes: true
   seals_observes_seals:
     observes: true
+    neighbour_weight: 0.305
   seals_observes_zooplankton:
     observes: false
   zooplankton_observes_benthic_infauna:
@@ -3958,10 +4026,13 @@ interaction_definitions:
     observes: false
   zooplankton_observes_phytoplankton:
     observes: true
+    neighbour_weight: 0.0
   zooplankton_observes_microzooplankton:
     observes: true
+    neighbour_weight: 0.0
   zooplankton_observes_subsurface_phytoplankton:
     observes: true
+    neighbour_weight: 0.0
   zooplankton_observes_porpoises:
     observes: false
   zooplankton_observes_seabirds:
@@ -3970,6 +4041,7 @@ interaction_definitions:
     observes: false
   zooplankton_observes_zooplankton:
     observes: true
+    neighbour_weight: 0.0
 impact_definitions:
   bottom_trawling:
     display_name: "Bottom Trawling"

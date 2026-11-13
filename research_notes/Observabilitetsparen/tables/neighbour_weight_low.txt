@@ -1,0 +1,38 @@
+case low
+planktivores  -> diffuse       w 0.356
+planktivores  -> benthivores   w 0.321
+planktivores  -> whiting       w 0.298
+planktivores  -> water column  w 0.317
+planktivores  -> mackerel      w 0.000
+planktivores  -> porpoises     w 0.090
+planktivores  -> seals         w 0.001
+mackerel      -> diffuse       w 0.538
+mackerel      -> planktivores  w 0.269
+mackerel      -> water column  w 0.436
+water column  -> diffuse       w 0.405
+water column  -> planktivores  w 0.203
+water column  -> benthivores   w 0.401
+water column  -> whiting       w 0.394
+water column  -> mackerel      w 0.000
+water column  -> porpoises     w 0.083
+water column  -> seals         w 0.002
+whiting       -> diffuse       w 0.167
+whiting       -> planktivores  w 0.083
+whiting       -> benthivores   w 0.157
+whiting       -> water column  w 0.156
+whiting       -> porpoises     w 0.036
+whiting       -> seals         w 0.001
+benthivores   -> diffuse       w 0.105
+benthivores   -> planktivores  w 0.052
+benthivores   -> whiting       w 0.094
+benthivores   -> water column  w 0.097
+benthivores   -> porpoises     w 0.022
+benthivores   -> seals         w 0.001
+porpoises     -> planktivores  w 0.233
+porpoises     -> benthivores   w 0.453
+porpoises     -> whiting       w 0.453
+porpoises     -> water column  w 0.452
+seals         -> planktivores  w 0.153
+seals         -> benthivores   w 0.305
+seals         -> whiting       w 0.303
+seals         -> water column  w 0.290

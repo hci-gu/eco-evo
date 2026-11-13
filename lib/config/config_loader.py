@@ -800,6 +800,15 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
                     observes_seen_any = True
                 if idef.get('observes', False):
                     observes_list.append(obs_id)
+                    # Section 273: the pair's weight on the neighbour cells
+                    # (reading B; absent = 1, today's full view).
+                    nw = idef.get('neighbour_weight')
+                    if nw is not None:
+                        nw = float(nw)
+                        if not 0.0 <= nw <= 1.0:
+                            raise ValueError(
+                                f"{iid}: neighbour_weight must be in [0, 1], got {nw}")
+                        params.setdefault('neighbour_weight', {})[obs_id] = nw
             elif iid.startswith(f"{sid}_impacted_by_"):
                 impact_id = iid.replace(f"{sid}_impacted_by_", "")
                 # Skip impacts that are muted or not in the project.

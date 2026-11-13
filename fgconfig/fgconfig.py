@@ -42,7 +42,8 @@ from lib.world.growth_budget import (  # noqa: E402
 # empty cell removes the key so the engine default applies (the predator's
 # own attack rate, Holling type by diet breadth, a constant a, f = 1).
 PAIR_OPTIONAL_KEYS = ("max_intake_rate", "functional_response",
-                      "mixed_layer_reference_m", "accessible_fraction")
+                      "mixed_layer_reference_m", "accessible_fraction",
+                      "neighbour_weight")
 
 # Hover help for every input field (sibling module in fgconfig/).
 _FGCONFIG_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -3747,6 +3748,19 @@ class FGConfigApp:
             "Observability (row observes column)", "observes",
             dm_fgs, fgs, cell_type="bool", parent=self.matrix_container)
 
+        # Section 273: the observation pair's weight on the four neighbour
+        # cells (reading B: what the row met there while ranging). Stored on
+        # the ``_observes_`` pair; active only while Observability is checked.
+        nbr_frame = self.create_matrix_section(
+            "Neighbour Weight (row's view of column in the 4 neighbours, [0, 1])",
+            "neighbour_weight", dm_fgs, fgs,
+            cell_type="number_optional", parent=self.matrix_container)
+        self._add_matrix_note(
+            nbr_frame,
+            "Empty = 1 (the full neighbour view). Each neighbour input shows "
+            "c + w (n - c), c the own cell's value. The diagonal weights the "
+            "row's own biomass in the neighbours.")
+
         # Assimilation Factor matrix: fraktion av bytets energiinnehåll
         # som faktiskt tas upp vid predation. Värden i [0, 1], default 1.0.
         # Dynamiskt kopplad till predationsmatrisen: en cell är aktiv
@@ -3991,6 +4005,24 @@ class FGConfigApp:
             obs_updater = make_obs_updater()
             preys_var.trace_add("write", obs_updater)
             obs_updater()
+
+        # Section 273: a Neighbour Weight cell is active only while its pair
+        # is observed.
+        for key, data in self.matrix_entries.items():
+            obs_var = data.get("observes")
+            nbr_widget = self.matrix_widgets.get(key, {}).get("neighbour_weight")
+            if obs_var is None or nbr_widget is None:
+                continue
+            def make_nbr_updater(var=obs_var, cell=nbr_widget):
+                def update(*_):
+                    try:
+                        cell.configure(state="normal" if var.get() else "disabled")
+                    except tk.TclError:
+                        pass
+                return update
+            nbr_updater = make_nbr_updater()
+            obs_var.trace_add("write", nbr_updater)
+            nbr_updater()
 
         # Link impact_affects checkboxes to impact_table button enable-state
         for key, data in self.matrix_entries.items():
@@ -4385,7 +4417,7 @@ class FGConfigApp:
                 # Unique key for storage
                 if data_key in impact_keys:
                     key = f"{row_id}_impacted_by_{col_id}"
-                elif data_key == "observes":
+                elif data_key in ("observes", "neighbour_weight"):
                     key = f"{row_id}_observes_{col_id}"
                 else:
                     key = f"{row_id}_preys_on_{col_id}"
@@ -6001,6 +6033,8 @@ class FGConfigApp:
             return None, ">= 0 (empty = the predator's own Max Intake Rate)"
         if data_key == "accessible_fraction" and not 0.0 < value <= 1.0:
             return None, "in (0, 1] (empty = 1)"
+        if data_key == "neighbour_weight" and not 0.0 <= value <= 1.0:
+            return None, "in [0, 1] (empty = 1)"
         if data_key == "mixed_layer_reference_m" and value <= 0.0:
             return None, "> 0 m (empty = a constant attack rate)"
         return value, None
