@@ -425,7 +425,8 @@ def apply_spawn_overrides(env, spawn_overrides, spawn_templates, seed=None):
         env_fields = {sid: np.asarray(f.biomass, dtype=np.float64)
                       for sid, f in env.fgs.items()}
         rng = np.random.default_rng(seed) if seed is not None else None
-        min_per_cell = 5.0 * float(getattr(fg, 'min_split_biomass', 0.0))
+        min_per_cell = (float(getattr(fg, 'spawn_floor_units', 5.0))
+                        * float(getattr(fg, 'min_split_biomass', 0.0)))
         try:
             new_arr = _spawn_biomass_distribution(
                 arr.shape, total_b, min_per_cell,

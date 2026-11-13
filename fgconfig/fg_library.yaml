@@ -1617,8 +1617,15 @@
     # every porpoise cell one-hot, so the argmax hid a ~25 % move
     # probability and a moving cell gave up a whole tick of food; on
     # frozen fix53 policies 50 kg ended the year at 4.5 t vs 2.9 t
-    # (section 152). Also sets the spawn floor (5x = 250 kg per cell).
+    # (section 152). With spawn_floor_units it sets the spawn floor.
     min_split_biomass: 50.0
+    # Section 272: spawn floor 30 animals (1.5 t) per cell, was the default
+    # 5. A cell of N animals moves only if one direction's probability is
+    # >= 1/N (merge_subunit_fractions); at 5-10 animals a small move
+    # probability is merged away and the policy gets no move gradient
+    # (research_notes/"Tumlarna i fix99"). 30 gives 1/N ~0.03. Start and
+    # training-world geometry, not biology (the box total stays SCANS-IV).
+    spawn_floor_units: 30
     energy_content: 8500.0
     # growth_rate is DERIVED by lib/world/growth_budget.py and recomputed
     # by the loader for every run; the number stored here is what the
@@ -2152,7 +2159,9 @@ interaction_definitions:
     # [J] (stomach saithe are coastal ~18 cm juveniles the offshore box
     # lacks), the freed share pro rata to the other pairs; was 0.0127.
     # research_notes/"Tumlarens byten" (Swedish letters) summary.md.
-    predation_mortality: 0.00946
+    # Section 272: x7 with the porpoise start 12 -> 84 t (SCANS-IV; the booked
+    # flow Q/B 19.5 x 84 t); was 0.00946.
+    predation_mortality: 0.0662
     max_intake_rate: 0.0225
     assimilation_factor: 0.9
     handling_time: 28.6
@@ -3196,7 +3205,9 @@ interaction_definitions:
     # [J] (stomach saithe are coastal ~18 cm juveniles the offshore box
     # lacks), the freed share pro rata to the other pairs; was 0.0064.
     # research_notes/"Tumlarens byten" (Swedish letters) summary.md.
-    predation_mortality: 0.0068
+    # Section 272: x7 with the porpoise start 12 -> 84 t (SCANS-IV; the booked
+    # flow Q/B 19.5 x 84 t); was 0.0068.
+    predation_mortality: 0.0476
     max_intake_rate: 0.12
     assimilation_factor: 0.84
     handling_time: 28.6
@@ -3223,7 +3234,9 @@ interaction_definitions:
     # [J] (stomach saithe are coastal ~18 cm juveniles the offshore box
     # lacks), the freed share pro rata to the other pairs; was 0.0077.
     # research_notes/"Tumlarens byten" (Swedish letters) summary.md.
-    predation_mortality: 0.0021
+    # Section 272: x7 with the porpoise start 12 -> 84 t (SCANS-IV; the booked
+    # flow Q/B 19.5 x 84 t); was 0.0021.
+    predation_mortality: 0.0147
     assimilation_factor: 0.84
     handling_time: 28.6
     visibility_floor: 0.9
@@ -3245,7 +3258,9 @@ interaction_definitions:
     # [J] (stomach saithe are coastal ~18 cm juveniles the offshore box
     # lacks), the freed share pro rata to the other pairs; was 0.019.
     # research_notes/"Tumlarens byten" (Swedish letters) summary.md.
-    predation_mortality: 0.0201
+    # Section 272: x7 with the porpoise start 12 -> 84 t (SCANS-IV; the booked
+    # flow Q/B 19.5 x 84 t); was 0.0201.
+    predation_mortality: 0.1407
     assimilation_factor: 0.84
     handling_time: 28.6
     # Section 270: floor 0.75 -> 0.9: whiting neither bury nor leave the sonar's reach on the bed.

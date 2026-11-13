@@ -405,7 +405,8 @@ def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60
         # FG.__init__) so newly spawned cells start safely above the
         # sub-threshold mask. For FGs with min_split == 0 this collapses
         # to the legacy uniform spread.
-        min_per_cell = 5.0 * float(getattr(fg, 'min_split_biomass', 0.0))
+        min_per_cell = (float(getattr(fg, 'spawn_floor_units', 5.0))
+                        * float(getattr(fg, 'min_split_biomass', 0.0)))
         # Opt-in: if the species defines a ``spawn:`` block (mode + params),
         # use the new strategy-driven path; otherwise fall back to the
         # legacy cluster-spawn so existing projects are bit-for-bit
@@ -969,7 +970,8 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
         # the sub-threshold mask (which lock-in previously affected
         # seals/porpoises). When an inference/API caller supplies an
         # allowed_mask, spawning is restricted to those cells.
-        min_per_cell = 5.0 * float(getattr(fg, 'min_split_biomass', 0.0))
+        min_per_cell = (float(getattr(fg, 'spawn_floor_units', 5.0))
+                        * float(getattr(fg, 'min_split_biomass', 0.0)))
         # Opt-in strategy-driven spawn: project override > library spec.
         # Missing block on both sides -> legacy cluster-spawn (unchanged).
         spawn_cfg = override.get('spawn') if isinstance(override, dict) else None

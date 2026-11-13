@@ -78,7 +78,8 @@ class WorldSpawner:
         self.filters = {}
         # The grid factor the CPU spawn applies to n_colonies (section 258).
         self.biomass_scale = float(getattr(spec, "biomass_scale", 1.0))
-        self.floors = {f: 5.0 * spec.env.fgs[f].min_split_biomass for f in model.ids}
+        self.floors = {f: spec.env.fgs[f].spawn_floor_units * spec.env.fgs[f].min_split_biomass
+                       for f in model.ids}
         # Section 207: the depth map as a reference field and the
         # equilibrium patterns, fixed per project (no randomness).
         depth = getattr(spec, "depth", None)

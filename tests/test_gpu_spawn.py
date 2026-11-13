@@ -94,3 +94,29 @@ def test_colony_count_scales_with_the_grid_as_on_the_cpu_engine(grid):
 def test_a_library_only_world_keeps_its_colony_count():
     spec = ProjectSpec(EnvironmentBuilder(project_path=None, grid=(8, 9)))
     assert spec.biomass_scale == 1.0
+
+
+def test_spawn_floor_units_reach_both_engines():
+    # Section 272: a group's spawn_floor_units (default 5) times its unit is
+    # the per-cell spawn floor on both engines; porpoises 30 animals.
+    from lib.world.functional_group import FunctionalGroup
+    assert FunctionalGroup("x", {"min_split_biomass": 50.0}).spawn_floor_units == 5.0
+    spec = ProjectSpec(EnvironmentBuilder(project_path="mareld2.yaml", grid=(30, 30)))
+    model = TensorEcosystem(spec.env, "cpu")
+    spawner = WorldSpawner(spec, model)
+    for fid in model.ids:
+        fg = spec.env.fgs[fid]
+        assert spawner.floors[fid] == pytest.approx(fg.spawn_floor_units * fg.min_split_biomass)
+    porp = spec.env.fgs["porpoises"]
+    assert porp.spawn_floor_units == 30.0
+    assert spec.env.fgs["seals"].spawn_floor_units == 5.0
+    j = model.ids.index("porpoises")
+    biomass = spawner.biomass(fold_in(torch.zeros(8, dtype=torch.int64), torch.arange(8)))[:, j].double()
+    floor = 30 * porp.min_split_biomass
+    assert ((biomass == 0) | (biomass >= floor - 1e-6)).all()
+    # the CPU env built by the same builder spawns at the same floor
+    b = np.asarray(porp.biomass, dtype=np.float64)
+    assert (b[b > 0] >= floor - 1e-6).all()
+    # report-only numbers for the resume: cells per training world
+    print("porpoise cells per world:", (biomass > 0).sum(-1).tolist(),
+          "totals:", [round(float(t), 1) for t in biomass.sum(-1)])

@@ -142,3 +142,11 @@ def test_a_juvenile_stage_block_survives_a_save():
     out = _merge(text, {"is_decision_maker": True, "r_max": 0.12})
     assert "juvenile_stage:" in out and "growth_ratio: 5.3" in out
     assert "r_max: 0.12" in out
+
+
+def test_a_key_without_an_editor_field_survives_a_save():
+    # Section 272: spawn_floor_units has no editor field; Apply must keep it.
+    text = LIBRARY + "    spawn_floor_units: 30\n"
+    config = {"is_decision_maker": True, "r_max": 0.1,
+              "natural_mortality": 7e-05, "max_intake_rate": 0.035}
+    assert "spawn_floor_units: 30" in _merge(text, config)

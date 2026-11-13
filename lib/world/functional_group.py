@@ -97,6 +97,12 @@ class FunctionalGroup:
         # convert kg -> tonnes here at the input boundary.
         # 0 = continuous biomass (no threshold).
         self.min_split_biomass = float(params.get('min_split_biomass', 0.0)) / 1000.0
+        # Spawn floor in units (section 272): every spawned cell holds at
+        # least spawn_floor_units * min_split_biomass (zero-or-floor in the
+        # allocator, both engines). Start/training geometry, not biology.
+        self.spawn_floor_units = float(params.get('spawn_floor_units', 5.0) or 0.0)
+        if self.spawn_floor_units < 0.0:
+            raise ValueError(f"{group_id}: spawn_floor_units must be >= 0")
         # Per-cell extinction threshold: cells with biomass below
         # extinction_threshold_factor * min_split_biomass are cleared and
         # recorded in starvation diagnostics. A value of 0 disables the

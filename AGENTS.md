@@ -364,6 +364,10 @@ fabricates mass.
   of a split holds less than one unit - sub-unit fractions go to the
   others proportionally (`decisions.merge_subunit_fractions`, on by
   default, `unit_splits=False` on the env reverts; section 159).
+  A spawned cell holds at least `spawn_floor_units` (default 5) units
+  (zero-or-floor allocator, both engines); porpoises 30 since section
+  272, so a cell's 1/N move threshold is ~0.03 (start geometry, not
+  biology; the porpoise start is SCANS-IV 84 t, spawn range 42-168 t).
   With `simulation_settings.temperature` (section 143) the cost of a DM
   with `metabolism_q10` is `resting_metabolism * q10**((T - t_ref)/10)`,
   T from its layer's monthly table on the daylight calendar; herring

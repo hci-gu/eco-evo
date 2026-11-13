@@ -1,0 +1,19 @@
+events 1179 loss (approx, t) 2.068 u 0.5 starve_rate 0.5
+cell (18, 6) ticks 156-300 n   41 loss 0.220 | first: B 0.122 s 0.47 preMove B 0.058 s 0.53 | plank 0.00 benth 0.14 whit 0.01 | mean s 0.39 mean plank 0.07 benth 0.56 whit 0.01
+cell (18, 5) ticks 248-271 n   24 loss 0.098 | first: B 0.102 s 0.49 preMove B 0.102 s 0.50 | plank 0.01 benth 0.16 whit 0.01 | mean s 0.26 mean plank 0.02 benth 0.11 whit 0.01
+cell (29,15) ticks 35-46 n   12 loss 0.097 | first: B 0.143 s 0.48 preMove B 0.143 s 0.50 | plank 0.06 benth 0.00 whit 0.01 | mean s 0.32 mean plank 0.05 benth 0.00 whit 0.01
+cell ( 3,17) ticks 204-1347 n   34 loss 0.070 | first: B 0.022 s 0.31 preMove B 0.000 s 0.00 | plank 0.24 benth 0.02 whit 3.26 | mean s 0.32 mean plank 0.23 benth 0.04 whit 1.06
+cell (16, 6) ticks 297-1348 n   30 loss 0.068 | first: B 0.058 s 0.47 preMove B 0.000 s 0.00 | plank 0.00 benth 0.28 whit 0.00 | mean s 0.33 mean plank 0.11 benth 0.23 whit 0.00
+cell (11,14) ticks 195-210 n   16 loss 0.063 | first: B 0.044 s 0.36 preMove B 0.000 s 0.00 | plank 0.39 benth 2.40 whit 0.01 | mean s 0.40 mean plank 0.10 benth 7.36 whit 0.01
+cell (22,14) ticks 411-434 n   24 loss 0.062 | first: B 0.067 s 0.50 preMove B 0.067 s 0.50 | plank 0.11 benth 0.07 whit 0.00 | mean s 0.30 mean plank 0.32 benth 0.20 whit 0.01
+cell (28,13) ticks 22-45 n   24 loss 0.062 | first: B 0.066 s 0.50 preMove B 0.066 s 0.51 | plank 0.12 benth 0.00 whit 0.00 | mean s 0.29 mean plank 0.22 benth 0.00 whit 0.03
+cell (14, 4) ticks 403-466 n   34 loss 0.061 | first: B 0.088 s 0.36 preMove B 0.000 s 0.00 | plank 0.22 benth 6.49 whit 0.00 | mean s 0.43 mean plank 0.21 benth 1.32 whit 0.00
+cell (13,14) ticks 63-199 n    8 loss 0.054 | first: B 0.041 s 0.48 preMove B 0.041 s 0.51 | plank 7.14 benth 0.00 whit 0.07 | mean s 0.38 mean plank 7.25 benth 0.01 whit 0.02
+cell (11,15) ticks 188-216 n   22 loss 0.043 | first: B 0.056 s 0.46 preMove B 0.000 s 0.00 | plank 0.02 benth 11.13 whit 0.00 | mean s 0.38 mean plank 0.02 benth 9.16 whit 0.00
+cell (19, 6) ticks 154-162 n    9 loss 0.038 | first: B 0.188 s 0.48 preMove B 0.188 s 0.50 | plank 0.02 benth 0.02 whit 0.07 | mean s 0.42 mean plank 0.13 benth 0.04 whit 0.11
+cell ( 0,15) ticks 1156-1299 n    8 loss 0.038 | first: B 0.071 s 0.37 preMove B 0.000 s 0.00 | plank 0.00 benth 0.00 whit 0.08 | mean s 0.33 mean plank 0.24 benth 0.00 whit 0.70
+cell (13,15) ticks 183-198 n   11 loss 0.037 | first: B 0.061 s 0.44 preMove B 0.000 s 0.00 | plank 3.30 benth 0.01 whit 0.01 | mean s 0.40 mean plank 1.57 benth 0.01 whit 0.00
+cell ( 2,14) ticks 97-104 n    8 loss 0.031 | first: B 0.057 s 0.42 preMove B 0.000 s 0.00 | plank 0.00 benth 0.00 whit 0.03 | mean s 0.31 mean plank 0.01 benth 0.00 whit 0.05
+planktivorous_fish grid mean t/cell 3.909
+benthivorous_fish grid mean t/cell 1.597
+whiting grid mean t/cell 0.444

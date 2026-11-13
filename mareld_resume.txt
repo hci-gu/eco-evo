@@ -25353,3 +25353,58 @@ remain open exactly as described in 71.9 / 71.11.
     in the session that 249.1 cause (1) survives in mackerel was wrong. Converting it to the
     250 P form needs a field somatic P/B for the box's mackerel (not in the library); growth is
     ~8 % of its energy budget, so the item is small.
+272 Porpoises in fix99 and the SCANS start (user: find out why the porpoises struggle in fix99;
+    then "run A, put the porpoises at the SCANS level, update the spawn range").
+    Diagnosis (frozen fix99 update-454 policies, probe world, CPU, 2 yr; research_notes/
+    "Tumlarna i fix99" summary.md, scripts and tables there):
+    - The loss is starvation: 2.12 t catabolism + 0.93 t extinction sweep of 3.0 t, M1 0.14 t.
+      Not the energetics (appetite reserve_room on porpoises: fill 0.88-0.97, still 0.38 left),
+      not the edge (edge closed: 0 left); continuous fractions (unit_splits off) 0.05 left.
+    - Cells of 2-6 animals sit on empty water: raw policy eat 0.88-0.97, move 0.01-0.10, and
+      merge_subunit_fractions removes the move (p N < 1 unit). Porpoise move share 0.00-0.04
+      in fix96-99 alike (seals learned 0.06-0.18; why porpoises did not is not resolved).
+    - New since 270: the planktivores leave the porpoise cells (0.1-0.7x the grid mean against
+      2-8x in fix97; diet planktivores 0.05-0.19 vs 0.56-0.82), after the fish -> planktivore
+      floors 0.25 -> 1.0. The porpoises then eat benthivores at ration 24-30 /yr, fill 0.65-0.70,
+      and starve all year (fix97 stopped after the first summer).
+    - Effect: ~0.1 % of the fish biomass, booked M2 on any prey <= 0.02 /yr; the web is not
+      touched, the porpoises' viability is.
+272.1 APPLIED (user, option A): mareld2.yaml porpoises inference_initial_biomass 12 -> 84 t
+    (SCANS-IV 2022 NS-L 0.519 /km2 x 45 kg; 95 % 33-191 t; 199.3, 264.11), spawn range 6-18 ->
+    42-168 t (x/2-2x as the other groups, 200.1). Library unchanged. Retrain (the policies
+    were trained at 12 t). Measured at spawn (fix99 probe config, inference start): the extra
+    animals mostly become more cells, not denser ones (env_driven on planktivores, 5-unit
+    floor): 30x30 10 -> 41 cells, animals per cell median 5.2 -> 9.1 (max 8.6 -> 23.4); 60x60
+    33 -> 142 cells, median 6.7 -> 10.4 (max 12 -> 34). The 1/N move threshold of a median cell
+    falls only ~0.15-0.19 -> ~0.10, not the ~0.03 assumed when A was proposed. 264.11 found,
+    with fix94 policies, that the box fed ~40-50 t on 60x60 and the excess died in the first
+    year; the retrained probe is the check.
+    Test: tests/test_viability.py colocation test asserted that no single pair's overlap falls;
+    colocate_spawn places a predator on its whole menu and runs bottom up, so it guarantees
+    only the overlap with any menu prey, and only for a predator whose prey were all placed
+    before it. At 84 t the porpoises (spawned on planktivores, placed before whiting and the
+    water column by the cycle fallback) broke the old form; the test now asserts the
+    guarantee. Suite 1920 passed.
+272.2 APPLIED (user: "fix M2"): the porpoise pairs' booked M2 were the 12 t flow (Q/B 19.5 x
+    12 t); x7 to the 84 t flow: planktivores 0.00946 -> 0.0662, benthivores 0.0068 -> 0.0476,
+    water column 0.0021 -> 0.0147, whiting 0.0201 -> 0.1407. All four prey are open
+    populations (g from somatic_production), so no g moves; the bookings feed the prey-side
+    diagnostics (budget_gate implied M2, probe_diets booked M2) and the diet gate's shares
+    (unchanged, a common factor). budget_gate prey side: porpoise pairs implied/booked 0.48 /
+    2.44 / 1.04 / 1.92, all ok; the porpoises now carry 0.16 / 0.19 / 0.82 / 0.29 of the
+    booked M2 on planktivores / benthivores / water column / whiting; no new OFF pair.
+272.3 APPLIED (user: "spawn denser"): a species key spawn_floor_units (default 5, the old
+    hard-coded factor) sets the per-cell spawn floor spawn_floor_units x min_split_biomass on
+    every spawn path (FunctionalGroup; config_loader both spawn sites, inference.py's
+    re-spawn, GPU WorldSpawner.floors). Porpoises 30 (1.5 t per cell): the zero-or-floor
+    allocator then keeps fewer, fuller cells, and a cell's 1/N move threshold is ~0.03.
+    Start and training-world geometry, not biology (cf. --depleted-patches, 223.12); the
+    inference start uses the same loader, so it starts the same way. The edge immigration
+    concentrator (movement.py) uses the extinction threshold, not this floor: unchanged.
+    Measured at 84 t (inference start): 30x30 probe 12 cells, animals per cell min 30.1,
+    median 31.3, max 51.6 (5 units: 41 cells, median 9.1); 60x60 38 cells, median 42.3, max
+    76.5 (142, 10.4). GPU training worlds 30x30 (fix99's grid, totals 10.5-42 t after the
+    area scale): 6-15 cells per world, every cell >= 30 animals. Seals keep 5 (they learned
+    to move at that floor). The FG editor has no field for the key and keeps it on Apply.
+    Tests: test_gpu_spawn.py (the key reaches both engines, porpoise cells >= the floor),
+    test_fgconfig_preserves_library.py (kept on save); suite 1922 passed. Retrain.
