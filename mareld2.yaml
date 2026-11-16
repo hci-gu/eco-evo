@@ -6,6 +6,18 @@ simulation_settings:
   # Section 207: mean depth per cell (m), tools/make_depth_map.py; drives
   # the benthos capacity table and is the spawn reference field 'depth'.
   depth_map: maps/depth.npz
+  # Section 274: after a warm-up (train --warmup-days, the probes and
+  # inference.py --warmup-days) these groups are scaled back to their start
+  # totals on the settled layout, fill and juvenile share kept. Only groups
+  # whose level no outside exchange sets (the loader refuses an open pool or
+  # a migrating window: planktivores, water column, mackerel, krill); the
+  # plankton keep what the warm-up gave them.
+  warmup:
+    reanchor:
+      - benthivorous_fish
+      - whiting
+      - porpoises
+      - seals
   daylight:
     enabled: true
     latitude_deg: 58.15

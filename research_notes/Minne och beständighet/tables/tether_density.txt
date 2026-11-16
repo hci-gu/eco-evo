@@ -1,0 +1,10 @@
+NOTE: the tether rows are INVALID as a sensitivity: the pull broke the 6 h displacement calibration (2.9 km vs 5.5). Only the own-cell density rows are used (summary.md section 4).
+tether  0.0 km: net 6h 5.5 24h 10.8 48h 15.5 96h 21.7 km | diffuse T=inf M1/4/8/16 0.38 0.45 0.49 0.51 | plankt T=72h 0.24 0.29 0.30 0.31
+tether  8.0 km: net 6h 2.9 24h 2.9 48h 2.9 96h 2.9 km | diffuse T=inf M1/4/8/16 0.47 0.67 0.80 0.89 | plankt T=72h 0.30 0.43 0.52 0.56
+tether  4.0 km: net 6h 2.0 24h 2.0 48h 2.0 96h 2.0 km | diffuse T=inf M1/4/8/16 0.50 0.79 0.88 0.93 | plankt T=72h 0.32 0.54 0.61 0.66
+tether  2.0 km: net 6h 1.5 24h 1.4 48h 1.5 96h 1.4 km | diffuse T=inf M1/4/8/16 0.58 0.83 0.90 0.94 | plankt T=72h 0.38 0.61 0.69 0.72
+planktivores -> porpoises own cell, M=1, rho=1, by local porpoise density factor
+  x1: own 0.424  neighbour 0.108
+  x3: own 0.622  neighbour 0.201
+  x6: own 0.744  neighbour 0.267
+  x20: own 0.908  neighbour 0.349

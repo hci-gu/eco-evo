@@ -251,7 +251,11 @@ class _EnvBuilder:
                  migration=None,
                  impact_spawn_specs=None,
                  observable_impact_vars=None, currents=None,
-                 tick_hours=None):
+                 tick_hours=None, spawn_configs=None):
+        # The viewer's spawn dropdowns as spawn blocks ({fid: block},
+        # inference.spawn_override_configs): the training worlds spawn
+        # with them in place of the manifest's. Empty = the manifest.
+        self.spawn_configs = dict(spawn_configs or {})
         # ``--tick-length``. Resolved HERE, in the parent process, so the
         # value is baked into the pickled builder: a spawn-worker
         # re-imports train.py and gets the module default back.
@@ -360,6 +364,7 @@ class _EnvBuilder:
             observable_impact_vars=self.observable_impact_vars,
             currents=self.currents,
             tick_hours=self.tick_hours,
+            spawn_configs=self.spawn_configs,
         )
 
     def __call__(self, seed=None):
@@ -367,10 +372,16 @@ class _EnvBuilder:
         grid_size = (H, W)
         impact_ranges = {}
         if self.project_path:
+            project_kwargs = {}
+            if getattr(self, "spawn_configs", None):
+                from inference import project_with_spawn
+                project_kwargs["project_config"] = project_with_spawn(
+                    load_config(self.project_path), self.spawn_configs)
             fgs, impact_vars, impact_ranges, observable_impact_vars = load_project_config(
                 self.project_path, grid_size=grid_size, seed=seed,
                 spawn_seed=self.spawn_seed, tick_hours=self.tick_hours,
-                apply_natural_mortality=self.apply_natural_mortality)
+                apply_natural_mortality=self.apply_natural_mortality,
+                **project_kwargs)
         else:
             fgs = setup_full_mareld_mvp(grid_size=grid_size, seed=seed,
                                         spawn_seed=self.spawn_seed,
@@ -447,6 +458,9 @@ class _ProbeEnvBuilder:
                  migration=None, currents=None, library_path=None,
                  mortality_multiplier=None, mass_balance=None,
                  tick_hours=None):
+        # Section 274: ticks of the run's training warm-up, run by
+        # ``_probe_biomass`` (with the re-anchoring) before the probe scores.
+        self.warmup_ticks = 0
         self.tick_hours = (TICK_HOURS if tick_hours is None
                            else int(tick_hours))
         self.currents = currents
@@ -784,6 +798,13 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
             env.obs_mean = mean
             env.obs_var = var
 
+    # Section 274: the run's training warm-up, the listed groups re-anchored
+    # to their start totals; the probe scores from the settled state.
+    _warm = int(getattr(probe_builder, 'warmup_ticks', 0) or 0)
+    if _warm > 0:
+        from lib.runners.warmup import settle as _settle
+        _settle(env, _warm, seed=getattr(probe_builder, 'PROBE_SEED', None))
+
     fg_ids = list(env.fgs.keys())
     b0 = {fid: float(env.fgs[fid].biomass.sum()) for fid in fg_ids}
     e0 = {fid: (float(env.fgs[fid].energy_reserve.sum())
@@ -822,6 +843,13 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                 use ``trainer.policies``. Frozen obs-norm from main env."""
                 e = rnd_builder()
                 e.build_static_caches()
+                if _warm > 0:
+                    # The same warm-up as the main env (same builder, seed
+                    # and trained policies), so the baseline starts from the
+                    # same settled state; then its random DMs take over.
+                    _settle(e, _warm, seed=getattr(rnd_builder, 'PROBE_SEED', None),
+                            policies=trainer.policies,
+                            obs=(getattr(env, 'obs_mean', None), getattr(env, 'obs_var', None)))
                 # ``--local_reward``: the baseline curve must be produced
                 # by the same formula as the trained policy's reward.
                 if getattr(trainer, 'local_reward', None) is not None:
@@ -1513,7 +1541,7 @@ def _make_env_builder(impact_maps_snapshot=None, grid_size=None,
                       migration=None,
                       impact_spawn_specs=None,
                       observable_impact_vars=None, currents=None,
-                      tick_hours=None):
+                      tick_hours=None, spawn_configs=None):
     """Factory kept for call-site compatibility; returns a picklable
     ``_EnvBuilder`` instance with an explicit ``grid_size`` and
     ``project_path`` baked in so 'spawn' workers don't fall back to the
@@ -1535,7 +1563,7 @@ def _make_env_builder(impact_maps_snapshot=None, grid_size=None,
                       migration=migration,
                       impact_spawn_specs=impact_spawn_specs,
                       observable_impact_vars=observable_impact_vars, currents=currents,
-                      tick_hours=tick_hours)
+                      tick_hours=tick_hours, spawn_configs=spawn_configs)
 
 
 def get_dynamic_policy_params(fgs, n_observable_impacts=0):
@@ -1935,6 +1963,8 @@ def main(argv=None, *, on_step=None, confirm=True):
                     "cappa": getattr(args, "cappa", None),
                     "survival_bonus": getattr(args, "survival_bonus", None),
                     "n_eval_ticks": int(getattr(args, "n_eval_ticks", 0) or 0),
+                    # Section 274: inference.py starts after the same warm-up.
+                    "warmup_days": float(getattr(args, "warmup_days", 0.0) or 0.0),
                     "mortality": getattr(args, "mortality", None),
                     "mortality_multiplier": float(
                         getattr(args, "mortality_multiplier",
@@ -2247,6 +2277,8 @@ def main(argv=None, *, on_step=None, confirm=True):
     # Create the trainer with all relevant policy dimensions
     # Section 200: world warm-up before each scored rollout.
     _warmup_ticks = warmup_ticks(args.warmup_days, TICK_HOURS)
+    # Section 274: the viewer's probe starts after the same warm-up.
+    probe_builder.warmup_ticks = _warmup_ticks
     if _warmup_ticks and not args.coevolution:
         raise SystemExit("--warmup-days needs co-evolution (drop --no_coevolution)")
     if _warmup_ticks:
@@ -2389,6 +2421,32 @@ def main(argv=None, *, on_step=None, confirm=True):
     _current_world_list = []  # list[tuple[int, int]]
     _last_world_gen = [-1]    # mutable holder so closure can write to it
 
+    # The viewer's spawn dropdowns on the training worlds: ``configs`` the
+    # spawn blocks every training builder carries, ``templates`` the
+    # manifest's spawn templates (read once).
+    _training_spawn = {"configs": {}, "templates": None}
+
+    def _follow_viewer_spawn(gen_idx):
+        """Re-install the training worlds when the viewer's spawn dropdowns
+        changed (between iterations, like the rollout-length slider). Only
+        the spawn pattern; the start-biomass sliders stay probe-only."""
+        if viz is None or not PROJECT_PATH:
+            return
+        try:
+            from inference import _load_spawn_templates, spawn_override_configs
+            if _training_spawn["templates"] is None:
+                _training_spawn["templates"] = _load_spawn_templates(PROJECT_PATH)
+            configs = spawn_override_configs(viz.get_spawn_overrides() or {},
+                                             _training_spawn["templates"])
+        except Exception:
+            return
+        if configs == _training_spawn["configs"]:
+            return
+        _training_spawn["configs"] = configs
+        label = ", ".join(sorted(configs)) or "none (the manifest's spawn)"
+        print(f"    [viz] Training worlds follow the viewer's spawn for: {label}")
+        _install_generation_worlds(gen_idx)
+
     def _refresh_world_list_if_needed(gen_idx):
         """Refresh ``_current_world_list`` according to the configured
         policy. iteration -> always refresh; generation -> once per
@@ -2458,6 +2516,7 @@ def main(argv=None, *, on_step=None, confirm=True):
             impact_spawn_specs=_impact_spawn_specs_global,
             observable_impact_vars=_observable_impact_vars_global,
             currents=currents,
+            spawn_configs=_training_spawn["configs"],
         )
         trainer.env_builder = new_builder
         # PRESTANDA: tidigare rev vi hela ``ctx.Pool`` här och byggde om
@@ -2662,6 +2721,7 @@ def main(argv=None, *, on_step=None, confirm=True):
                 for i in range(args.iter_per_gen):
                     if i > 0 and _refresh_world_list_if_needed(gen):
                         _install_generation_worlds(gen)
+                    _follow_viewer_spawn(gen)
                     # Läs n_eval_ticks-slidern (om sliz finns). Värdet
                     # tillämpas mellan iterationer för att hålla
                     # rollout-budgeten konsistent inom samma iteration.
@@ -2730,6 +2790,7 @@ def main(argv=None, *, on_step=None, confirm=True):
                     for i in range(args.iter_per_gen):
                         if i > 0 and _refresh_world_list_if_needed(gen):
                             _install_generation_worlds(gen)
+                        _follow_viewer_spawn(gen)
                         # Läs n_eval_ticks-slidern (säkert mellan iter).
                         _neval = int(args.n_eval_ticks)
                         if viz is not None:

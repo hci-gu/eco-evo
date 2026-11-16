@@ -76,7 +76,7 @@ def _monitor(tmp_path, every, override):
     monitor = TrainingProgress("gpu", every, 5, 0.3, 3.0, 100, 1.0, tmp_path, visualizer=viz)
     monitor.config, monitor.records = {}, []
     monitor.history = tmp_path / "survival.jsonl"
-    monitor.evaluate = lambda trainer: {"ticks_run": 5}
+    monitor.evaluate = lambda trainer, spawn_overrides=None: {"ticks_run": 5}
     return monitor
 
 

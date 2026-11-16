@@ -353,6 +353,13 @@ class TensorEcosystem:
             (not fg.is_decision_maker) and getattr(fg, "capacity_map", None) is not None
             for fg in groups], torch.bool)[None, :, None]
         self.refuge_on = bool(refuge_rows)
+        # Section 274: groups scaled back to their start totals after the
+        # warm-up (``lib/runners/warmup.py``), and which of them carry a
+        # tissue reserve that scales with the tonnes.
+        from lib.runners.warmup import carries_tissue_reserve
+        self.reanchor_mask = tensor([bool(getattr(fg, "warmup_reanchor", False)) for fg in groups],
+                                    torch.bool)
+        self.reanchor_tissue = tensor([carries_tissue_reserve(fg) for fg in groups], torch.bool)
         self.refuge_mask = tensor([j in refuge_rows for j in range(self.G)],
                                   torch.bool)[None, :, None]
         self.refuge_phi = tensor([float(fg.exposed_share) if j in refuge_rows else 0.5

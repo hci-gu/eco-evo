@@ -194,6 +194,8 @@ def main(argv=None, *, on_step=None):
                 for iteration in range(within if gen == generation else 0, args.iter_per_gen):
                     epoch = gen if args.worlds_refresh == "generation" else None
                     ticks = args.ticks if visual is None else visual.training_ticks(args.ticks)
+                    # The viewer's spawn dropdowns reach the training worlds.
+                    spawn = {} if visual is None else visual.training_spawn(trainer)
                     batches = [targets] if args.coevolution else [[species] for species in targets]
                     for batch in batches:
                         if visual is None:
@@ -213,6 +215,9 @@ def main(argv=None, *, on_step=None):
                                       elapsed_seconds=now - started,
                                       seconds_per_update=(now - last_log_time) / (trainer.iterations_completed - last_log_update),
                                       worlds=count, **metrics)
+                        if spawn:
+                            # Absent = the project's spawn.
+                            record["spawn_overrides"] = spawn
                         last_log_time, last_log_update = now, trainer.iterations_completed
                         log.write(json.dumps(record, allow_nan=False) + "\n")
                         log.flush()

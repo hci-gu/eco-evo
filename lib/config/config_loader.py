@@ -1036,4 +1036,38 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
                             start_day=start_day)
         fgs[sid] = fg
 
+    mark_warmup_reanchor(project, fgs, spec_defs)
     return fgs, impact_vars, impact_ranges, observable_impact_vars
+
+
+def warmup_reanchor_ids(project):
+    """``simulation_settings.warmup.reanchor`` as a list of group ids."""
+    settings = (project or {}).get("simulation_settings") or {}
+    block = settings.get("warmup") if isinstance(settings, dict) else None
+    if block is None:
+        return []
+    if not isinstance(block, dict):
+        raise ValueError("simulation_settings.warmup must be a mapping")
+    ids = block.get("reanchor") or []
+    if not isinstance(ids, (list, tuple)) or not all(isinstance(i, str) for i in ids):
+        raise ValueError("simulation_settings.warmup.reanchor must be a list of group ids")
+    return list(ids)
+
+
+def mark_warmup_reanchor(project, fgs, spec_defs):
+    """Section 274: mark the groups re-anchored to their start totals after
+    a warm-up. An unknown id is an error, a muted group is skipped, and a
+    group whose level an outside exchange sets (``outside_density``: an
+    open pool or a migrating window) is refused - re-anchoring it would
+    restart its relaxation at every scored start."""
+    for gid in warmup_reanchor_ids(project):
+        if gid not in spec_defs:
+            raise ValueError(f"simulation_settings.warmup.reanchor: unknown group {gid!r}")
+        fg = fgs.get(gid)
+        if fg is None:
+            continue
+        if getattr(fg, "open_pool", None) is not None:
+            raise ValueError(
+                f"simulation_settings.warmup.reanchor: {gid} has an outside exchange "
+                "(outside_density) that sets its level; it cannot be re-anchored")
+        fg.warmup_reanchor = True

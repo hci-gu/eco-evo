@@ -59,6 +59,34 @@ def legacy_clusters(keys, total, floor, cells):
     return torch.zeros_like(amounts).scatter(1, order, amounts)
 
 
+def spawn_order(order, configs):
+    """Stable topological order of ``order`` so each env_driven group comes
+    after the groups its refs name (the loader's Kahn sort; a cycle keeps
+    the rest in the given order, the unmet refs ignored as on the CPU)."""
+    order = list(order)
+    present = set(order)
+    deps = {}
+    for fid in order:
+        cfg = configs.get(fid) or {}
+        refs = (cfg.get("refs") or []) if str(cfg.get("mode", "")).strip().lower() == "env_driven" else []
+        deps[fid] = [r.get("name") for r in refs
+                     if isinstance(r, dict) and r.get("name") in present and r.get("name") != fid]
+    done, out, remaining = set(), [], order
+    while remaining:
+        rest = []
+        for fid in remaining:
+            if all(d in done for d in deps[fid]):
+                out.append(fid)
+                done.add(fid)
+            else:
+                rest.append(fid)
+        if len(rest) == len(remaining):
+            out.extend(rest)
+            break
+        remaining = rest
+    return tuple(out)
+
+
 class WorldSpawner:
     def __init__(self, spec, model):
         self.spec, self.model = spec, model
@@ -94,22 +122,48 @@ class WorldSpawner:
         # Constants and FFT filters are allocated during startup, never during
         # a captured tick. Reset itself can run eagerly on CUDA.
         for fid in spec.spawn_order:
-            cfg = spec.spawn[fid] or {}
-            mode = str(cfg.get("mode", "")).strip().lower()
-            if mode == "perlin":
-                scale = float(cfg.get("scale", 10))
-                lacunarity = float(cfg.get("lacunarity", 2))
-                if lacunarity <= 0:
-                    raise ValueError("Spawn lacunarity must be positive")
-                for _ in range(max(1, int(cfg.get("octaves", 4)))):
-                    self._filter(max(1.0, scale))
-                    scale /= lacunarity
-            if mode == "env_driven":
-                for ref in cfg.get("refs", []) or []:
-                    if ref.get("transform") == "gauss_smooth":
-                        self._filter(max(1.0, float(ref.get("sigma", 2))))
-                if float(cfg.get("noise_amp", 0)) > 0:
-                    self._filter(float(cfg.get("noise_scale", 5)))
+            self._prepare(spec.spawn[fid] or {})
+        # The viewer's spawn dropdowns: {fid: spawn block}
+        # replacing the project's block on the training worlds.
+        self.overrides = {}
+        self.order = tuple(spec.spawn_order)
+
+    def _prepare(self, cfg):
+        mode = str(cfg.get("mode", "")).strip().lower()
+        if mode == "perlin":
+            scale = float(cfg.get("scale", 10))
+            lacunarity = float(cfg.get("lacunarity", 2))
+            if lacunarity <= 0:
+                raise ValueError("Spawn lacunarity must be positive")
+            for _ in range(max(1, int(cfg.get("octaves", 4)))):
+                self._filter(max(1.0, scale))
+                scale /= lacunarity
+        if mode == "env_driven":
+            for ref in cfg.get("refs", []) or []:
+                if ref.get("transform") == "gauss_smooth":
+                    self._filter(max(1.0, float(ref.get("sigma", 2))))
+            if float(cfg.get("noise_amp", 0)) > 0:
+                self._filter(float(cfg.get("noise_scale", 5)))
+
+    def config(self, fid):
+        """The spawn block a training world uses for ``fid``."""
+        return self.overrides.get(fid, self.spec.spawn[fid])
+
+    def set_overrides(self, configs):
+        """Spawn the training worlds with ``configs`` ({fid: spawn block},
+        ``inference.spawn_override_configs``) in place of the project's
+        blocks; {} restores them. Returns True when anything changed (the
+        caller then re-draws its worlds)."""
+        configs = {fid: dict(cfg) for fid, cfg in (configs or {}).items()
+                   if fid in self.spec.spawn and isinstance(cfg, dict)}
+        if configs == self.overrides:
+            return False
+        for cfg in configs.values():
+            self._prepare(cfg)
+        self.overrides = configs
+        self.order = spawn_order(self.spec.spawn_order,
+                                 {fid: self.config(fid) or {} for fid in self.spec.spawn_order})
+        return True
 
     def _filter(self, sigma):
         if sigma not in self.filters:
@@ -210,7 +264,7 @@ class WorldSpawner:
 
     def biomass(self, world_keys):
         fields = {}
-        for fid in self.spec.spawn_order:
+        for fid in self.order:
             index = self.model.ids.index(fid)
             keys = fold_in(world_keys, index + 1000)
             lo, hi = self.spec.ranges[fid]
@@ -222,7 +276,7 @@ class WorldSpawner:
                 total = torch.round(total).clamp(lo, hi)
             else:
                 total = torch.floor(u * (hi - lo + 1)) + lo
-            cfg = self.spec.spawn[fid]
+            cfg = self.config(fid)
             if cfg and str(cfg.get("mode", "uniform")).strip():
                 if cfg.get("seed") is not None:
                     keys = torch.full_like(keys, int(cfg["seed"]))

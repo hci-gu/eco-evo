@@ -377,6 +377,77 @@ def _load_spawn_defaults(project_path):
     return out
 
 
+def spawn_override_configs(spawn_overrides, spawn_templates):
+    """The viewer's spawn dropdowns as spawn blocks: ``{fid: {"mode": m,
+    **template parameters}}`` for every entry naming a known template.
+
+    ``spawn_overrides`` is ``{fid: {"mode": <m>, "template": <name>}}``;
+    an entry without a template, or with an unknown one, is the project's
+    own spawn and is left out. The same blocks serve the probe worlds
+    (:func:`apply_spawn_overrides`) and the training worlds (the GPU
+    ``WorldSpawner`` and :func:`project_with_spawn` on the CPU trainer).
+    """
+    out = {}
+    for fid, ov in (spawn_overrides or {}).items():
+        if not isinstance(ov, dict):
+            continue
+        name, mode = ov.get("template"), ov.get("mode")
+        if not name or not mode:
+            continue
+        params = (spawn_templates.get(mode, {}) or {}).get(name)
+        if not isinstance(params, dict):
+            continue
+        cfg = {"mode": mode}
+        cfg.update(params)
+        out[str(fid)] = cfg
+    return out
+
+
+def project_with_spawn(project, spawn_configs):
+    """A copy of the project manifest with each group's ``spawn`` block
+    replaced by ``spawn_configs[fid]`` (training worlds, train.py)."""
+    import copy as _copy
+    project = _copy.deepcopy(project or {})
+    if not spawn_configs:
+        return project
+    seen = set()
+    for section in ("decision_makers", "non_decision_makers", "functional_groups"):
+        for entry in project.get(section, []) or []:
+            if isinstance(entry, dict) and entry.get("group_id") in spawn_configs:
+                entry["spawn"] = _copy.deepcopy(spawn_configs[entry["group_id"]])
+                seen.add(entry["group_id"])
+    missing = sorted(set(spawn_configs) - seen)
+    if missing:
+        raise ValueError("Spawn override for groups not in the project: " + ", ".join(missing))
+    return project
+
+
+def _carries_tissue_reserve(fg):
+    """See :func:`lib.runners.warmup.carries_tissue_reserve`."""
+    from lib.runners.warmup import carries_tissue_reserve
+    return carries_tissue_reserve(fg)
+
+
+def _start_reserve(fg, biomass, fill):
+    """The reserve for ``biomass`` at ``fill`` (share of ME), or the
+    refuge's equilibrium accessible part."""
+    share = getattr(fg, "exposed_share", None)
+    if share is not None and not getattr(fg, "is_decision_maker", False):
+        return biomass * float(share)
+    return biomass * (float(fill) * float(fg.max_energy_reserve))
+
+
+def _mean_fill(fg):
+    """The group's tonne-weighted reserve fill, or its start fill (0.7
+    without a table) for an empty field."""
+    b = float(np.asarray(fg.biomass, dtype=np.float64).sum())
+    me = float(getattr(fg, "max_energy_reserve", 0.0) or 0.0)
+    if b > 0.0 and me > 0.0 and getattr(fg, "energy_reserve", None) is not None:
+        return float(np.asarray(fg.energy_reserve, dtype=np.float64).sum()) / (b * me)
+    centre = fg.start_fill_centre() if hasattr(fg, "start_fill_centre") else None
+    return 0.7 if centre is None else float(centre)
+
+
 def apply_spawn_overrides(env, spawn_overrides, spawn_templates, seed=None):
     """Respawn each FG's biomass field according to user-chosen templates.
 
@@ -395,28 +466,16 @@ def apply_spawn_overrides(env, spawn_overrides, spawn_templates, seed=None):
     """
     if not spawn_overrides:
         return
-    H, W = None, None
-    for fid, ov in spawn_overrides.items():
-        if not isinstance(ov, dict):
-            continue
-        name = ov.get("template")
-        mode = ov.get("mode")
-        if not name or not mode:
-            continue  # (default) → leave projektfilens spawn untouched
-        params = (spawn_templates.get(mode, {}) or {}).get(name)
-        if not isinstance(params, dict):
-            continue
+    for fid, spawn_cfg in spawn_override_configs(spawn_overrides, spawn_templates).items():
+        name = spawn_overrides[fid].get("template")
+        mode = spawn_cfg["mode"]
         fg = env.fgs.get(fid)
         if fg is None:
             continue
         arr = np.asarray(fg.biomass, dtype=np.float64)
-        if H is None:
-            H, W = arr.shape
         total_b = float(arr.sum())
         if total_b <= 0.0:
             continue
-        spawn_cfg = {"mode": mode}
-        spawn_cfg.update(params)
         spec = _build_spawn_spec(spawn_cfg, default_seed=seed)
         if spec is None:
             continue
@@ -437,7 +496,15 @@ def apply_spawn_overrides(env, spawn_overrides, spawn_templates, seed=None):
             print(f"  [spawn override] {fid}: failed to apply "
                   f"template '{name}' ({mode}): {e!r}")
             continue
+        # The reserve moves with the tonnes (it is MJ per cell): left on
+        # the old layout, every respawned cell started near-empty and the
+        # group starved in its first days (fix101's mammals, 2026-11-15).
+        # Each new cell gets the group's mean fill; the probe's inference
+        # start is uniform per tonne, so the mean is the start fill.
+        fill = _mean_fill(fg) if _carries_tissue_reserve(fg) else None
         fg.biomass[...] = np.asarray(new_arr, dtype=np.float32)
+        if fill is not None:
+            fg.energy_reserve[...] = _start_reserve(fg, np.asarray(fg.biomass, dtype=np.float64), fill)
     _restart_juveniles(env)
 
 
@@ -481,10 +548,17 @@ def apply_b0_overrides(env, b0_overrides):
             # Tom karta: sprid jämnt över hela griden.
             H, W = arr.shape
             new_arr = np.full((H, W), target_t / float(H * W), dtype=np.float32)
-        # Skriv tillbaka till FG. ``biomass`` är en ndarray; vi
-        # ersätter innehållet in-place så övriga referenser i env
-        # (caches osv) följer med.
+        # Write back in place so other references in the env (caches)
+        # follow. The reserve is scaled with the tonnes, so each cell keeps
+        # its fill (an unscaled reserve starved a raised group and overfilled
+        # a lowered one); an empty field starts at the group's start fill.
+        fill = _mean_fill(fg) if _carries_tissue_reserve(fg) else None
         fg.biomass[...] = new_arr
+        if fill is not None:
+            if cur > 0.0 and target_t > 0.0:
+                fg.energy_reserve[...] = np.asarray(fg.energy_reserve, dtype=np.float64) * (target_t / cur)
+            else:
+                fg.energy_reserve[...] = _start_reserve(fg, np.asarray(new_arr, dtype=np.float64), fill)
     _restart_juveniles(env)
 
 
@@ -902,6 +976,31 @@ def _wait_to_continue(viz, envs, base_impact_maps, t, verbose,
         return max(1, int(viz.get_ticks()))
     # Anything else: the caller waits and decides, as before section 225.
     return None
+
+
+def run_warmup_days(checkpoint_dir):
+    """The training warm-up of the run in ``checkpoint_dir`` (days):
+    ``gpu_run.json``'s ``warmup_days`` (train_gpu.py), else the
+    ``biomass.jsonl`` meta header's (train.py), else 0 (section 274)."""
+    import json as _json
+    try:
+        with open(os.path.join(checkpoint_dir, "gpu_run.json")) as f:
+            return float(_json.load(f).get("warmup_days", 0.0) or 0.0)
+    except (OSError, ValueError, AttributeError):
+        pass
+    try:
+        with open(os.path.join(checkpoint_dir, "biomass.jsonl")) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                meta = (_json.loads(line) or {}).get("__meta__")
+                if isinstance(meta, dict):
+                    return float(meta.get("warmup_days", 0.0) or 0.0)
+                break
+    except (OSError, ValueError, AttributeError):
+        pass
+    return 0.0
 
 
 def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
@@ -1350,6 +1449,15 @@ def main():
                              "'month 0.5'. A month is 1/12 of a 365-day year. "
                              "Default: every 1000 ticks.")
 
+    parser.add_argument("--warmup-days", "--warmup_days", dest="warmup_days", type=float,
+                        default=None,
+                        help=("Days the world runs with the trained policies before the "
+                              "recorded rollout starts, the groups in the manifest's "
+                              "simulation_settings.warmup.reanchor scaled back to their "
+                              "start totals (section 274). Default: the run's training "
+                              "--warmup-days (gpu_run.json or the biomass.jsonl header), "
+                              "else 0. The recorded start is the start day plus the "
+                              "warm-up, as in training."))
     parser.add_argument("--engine", choices=["cpu", "gpu"], default=None,
                         help="Simulation engine. 'gpu' (default when torch "
                              "sees a CUDA device, else 'cpu') steps the world "
@@ -1426,6 +1534,14 @@ def main():
     if not os.path.isdir(args.checkpoints):
         print(f"Error: checkpoint directory does not exist: {args.checkpoints}", file=sys.stderr)
         return 1
+
+    if args.warmup_days is None:
+        args.warmup_days = run_warmup_days(args.checkpoints)
+    from lib.runners.warmup import settle, warmup_ticks as _warmup_ticks
+    warm_ticks = _warmup_ticks(args.warmup_days, int(args.tick_length))
+    if verbose and warm_ticks:
+        print(f"Warm-up:      {args.warmup_days:g} days = {warm_ticks} ticks before the "
+              f"recorded rollout (re-anchored: simulation_settings.warmup.reanchor)")
 
     env = build_env(args.project, args.grid, seed=args.seed,
                     tick_hours=args.tick_length, verbose=verbose,
@@ -1590,7 +1706,15 @@ def main():
                     apply_spawn_overrides(e, spawn_overrides,
                                           spawn_tpls_now, seed=args.seed)
                 apply_impact_scales(e, base_impact_maps, impact_scales)
+                # The same warm-up as the trained world (same seed, the
+                # trained policies), then its random DMs take over.
+                settle(e, warm_ticks, seed=args.seed, policies=policies, obs=(mean, var))
                 return e
+
+            # Section 274: settle the world (overrides and impact scales
+            # already applied, so the re-anchoring honours the b0 sliders);
+            # the recorded rollout starts from the settled state.
+            settle(env, warm_ticks, seed=args.seed, policies=policies, obs=(mean, var))
 
             rnd_env = None
             rnd_solo_envs = None

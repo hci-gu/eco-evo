@@ -146,6 +146,9 @@ class FunctionalGroup:
         # centre of the start reserve; a migrating DM falls back to its
         # arrival fill (the box composite's fat by month).
         self.start_fill = parse_start_fill(params, group_id)
+        # Section 274: re-anchored to its start total after a warm-up; set
+        # by the loader from ``simulation_settings.warmup.reanchor``.
+        self.warmup_reanchor = False
         if self.start_fill is None and self.open_pool is not None and self.open_pool.get("fill"):
             self.start_fill = [float(v) for v in self.open_pool["fill"]]
 

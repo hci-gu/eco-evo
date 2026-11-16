@@ -28,6 +28,34 @@ def ars_update(weights, deltas, positive, negative, lr, top_deltas):
     return updated, sigma_f
 
 
+def reanchor_worlds(target, biomass, reserve, juvenile, start, mask, tissue):
+    """Section 274, the tensor mirror of ``lib.runners.warmup.reanchor``.
+
+    ``target`` [W, G] the start totals, ``biomass`` / ``reserve`` /
+    ``juvenile`` [W, G, C] the warmed state (``juvenile`` may be None),
+    ``start`` = (biomass, reserve, juvenile) at the warm-up's start (for a
+    group that died out), ``mask`` / ``tissue`` [G] bool. Each masked group
+    with a positive target takes target / current on its tonnes, its
+    juveniles and (``tissue``) its reserve; a dead one gets its start
+    fields back. Returns (biomass, reserve, juvenile).
+    """
+    current = biomass.double().sum(-1)
+    target = target.double()
+    on = mask[None, :] & (target > 0)
+    dead = (on & (current <= 0))[..., None]
+    k = torch.where(on & (current > 0), target / current.clamp_min(1e-30),
+                    torch.ones_like(current))[..., None]
+    b = torch.where(dead, start[0].to(biomass.dtype), (biomass.double() * k).to(biomass.dtype))
+    scaled_r = torch.where(tissue[None, :, None], reserve.double() * k, reserve.double())
+    r = torch.where(dead, start[1].to(reserve.dtype), scaled_r.to(reserve.dtype))
+    j = None
+    if juvenile is not None:
+        j = (juvenile.double() * k).to(juvenile.dtype)
+        if start[2] is not None:
+            j = torch.where(dead, start[2].to(juvenile.dtype), j)
+    return b, r, j
+
+
 class TensorARSTrainer:
     def __init__(self, spec, device="cuda", *, n_deltas=10, worlds=1,
                  top_deltas=None, sigma=0.1, lr=0.03, seed=0,
@@ -148,6 +176,16 @@ class TensorARSTrainer:
             self.worlds = int(worlds)
             self._allocate_worlds()
 
+    def set_spawn_overrides(self, configs):
+        """Spawn the training worlds with the viewer's spawn blocks
+        (``WorldSpawner.set_overrides``). A change re-draws the worlds at
+        the next update, also within a ``--worlds_refresh generation``
+        epoch. Returns True when anything changed."""
+        changed = self.spawner.set_overrides(configs)
+        if changed:
+            self.last_world_epoch = None
+        return changed
+
     def set_temperature(self, temperature):
         if temperature <= 0 or not math.isfinite(temperature):
             raise ValueError("Temperature must be positive and finite")
@@ -249,12 +287,22 @@ class TensorARSTrainer:
         impact_obs = self.world_impact_obs if m.n_obs_imp else None
         runner.reset(b, r, keys, self.warmup_ticks, self.obs_mean, self.obs_var, self.temperature,
                      light_start=self.world_light_start, impacts=impacts, impact_obs=impact_obs)
+        reanchoring = bool(m.reanchor_mask.any())
+        start_j = runner.juvenile.clone() if (reanchoring and m.stages_on) else None
         runner.run(self.warmup_ticks)
-        self.world_warm_biomass.copy_(runner.biomass)
-        self.world_warm_reserve.copy_(runner.reserve)
+        warm_b, warm_r = runner.biomass, runner.reserve
+        warm_j = runner.juvenile if m.stages_on else None
+        if reanchoring:
+            # Section 274: the listed groups start the scored rollout at the
+            # world's drawn totals, on the settled layout.
+            warm_b, warm_r, warm_j = reanchor_worlds(
+                self.world_biomass.double().sum(-1), warm_b, warm_r, warm_j,
+                (b, r, start_j), m.reanchor_mask, m.reanchor_tissue)
+        self.world_warm_biomass.copy_(warm_b)
+        self.world_warm_reserve.copy_(warm_r)
         self.world_warm_hidden.copy_(runner.hidden)
         if m.stages_on:
-            self.world_warm_juvenile.copy_(runner.juvenile)
+            self.world_warm_juvenile.copy_(warm_j)
         if m.calendar:
             self.world_scored_light.copy_(torch.remainder(self.world_light_start + self.warmup_ticks,
                                                           m.light_period))

@@ -33,6 +33,7 @@ from lib.environments.ecosystem_env.population_change import (
     LEGACY_MASS_BALANCE)
 from lib.world.impact_maps import active_baseline_signature, training_probe_impact_maps
 from lib.world.tick_time import LIBRARY_TICK_HOURS, ticks_per_day, ticks_per_year
+from lib.runners.warmup import settle
 
 # Length of the progress probe (section 223.12).
 PROBE_YEARS = 3
@@ -410,21 +411,56 @@ def _unpack_policies(packed):
     return torch.load(io.BytesIO(packed), map_location="cpu", weights_only=False)
 
 
+def apply_viewer_overrides(env, project, overrides, seed):
+    """Apply the viewer's start-biomass sliders and spawn dropdowns.
+
+    The same calls, in the same order, as the viewer's one-year probe
+    (``train._ProbeEnvBuilder``): each ``b0_overrides`` group is scaled to
+    its tonnes with its layout kept, then each ``spawn_overrides`` group
+    keeps its total and takes the template's layout, drawn with ``seed``.
+    No overrides leaves the project's start.
+    """
+    overrides = overrides or {}
+    b0, spawn = overrides.get("b0_overrides"), overrides.get("spawn_overrides")
+    if not b0 and not spawn:
+        return
+    from inference import _load_spawn_templates, apply_b0_overrides, apply_spawn_overrides
+    if b0:
+        apply_b0_overrides(env, b0)
+    if spawn:
+        apply_spawn_overrides(env, spawn, _load_spawn_templates(project), seed=seed)
+
+
+def _overrides_note(overrides):
+    """' with the viewer's ...' for the progress lines, '' without overrides."""
+    parts = []
+    if (overrides or {}).get("b0_overrides"):
+        parts.append("start biomass for " + ", ".join(sorted(overrides["b0_overrides"])))
+    if (overrides or {}).get("spawn_overrides"):
+        parts.append("spawn for " + ", ".join(sorted(overrides["spawn_overrides"])))
+    return (" with the viewer's " + "; ".join(parts)) if parts else ""
+
+
 def _probe_in_process(config, seed, temperature, ticks, lower, upper,
-                      policies, obs_mean, obs_var, threads):
+                      policies, obs_mean, obs_var, threads, overrides=None):
     """Worker: the same probe as ``TrainingProgress.evaluate``, in a
     separate process (the live viewer, section 223.12). ``policies`` is
-    the ``_pack_policies`` payload."""
+    the ``_pack_policies`` payload; ``overrides`` the viewer's start
+    overrides at submission (``TrainingProgress.viewer_overrides``)."""
     torch.set_num_threads(max(1, int(threads)))
     policies = _unpack_policies(policies)
     with evaluation_randomness(seed):
         env = build_inference_env(config, seed)
+        apply_viewer_overrides(env, config.get("project"), overrides, seed)
     with evaluation_randomness(seed):
         env.policies = policies
         env.rebuild_batched_weights()
         if obs_mean is not None:
             env.obs_mean, env.obs_var = obs_mean, obs_var
         env.softmax_temperature = temperature
+        # Section 274: the training warm-up, re-anchored; the probe scores
+        # from the settled state.
+        settle(env, config.get("warmup_ticks", 0), seed=seed)
         return run_probe(env, ticks, lower, upper)
 
 
@@ -459,7 +495,18 @@ def inference_config(trainer, backend):
                 # Which fishing this run has; the training worlds keep it
                 # for the whole run (section 259).
                 baseline_maps=active_baseline_signature(builder.project_path),
-                currents=builder.currents.metadata() if getattr(builder, "currents", None) else None)
+                currents=builder.currents.metadata() if getattr(builder, "currents", None) else None,
+                # Section 274: the probe starts after the training warm-up,
+                # with these groups re-anchored to their start totals.
+                warmup_ticks=int(getattr(trainer, "warmup_ticks", 0) or 0),
+                warmup_reanchor=sorted(_reanchor_ids(builder.project_path)))
+
+
+def _reanchor_ids(project_path):
+    if not project_path:
+        return []
+    from lib.config.config_loader import load_config, warmup_reanchor_ids
+    return warmup_reanchor_ids(load_config(project_path))
 
 
 def comparable_config(config):
@@ -481,6 +528,11 @@ def comparable_config(config):
     # library's tick length, whatever the run used.
     normalised.setdefault("tick_hours", LIBRARY_TICK_HOURS)
     normalised["tick_hours"] = int(normalised["tick_hours"])
+    # Histories written before section 274 probed the fresh start.
+    normalised["warmup_ticks"] = int(normalised.get("warmup_ticks", 0) or 0)
+    # Without a warm-up nothing is re-anchored, whatever the manifest lists.
+    normalised["warmup_reanchor"] = (sorted(normalised.get("warmup_reanchor") or [])
+                                     if normalised["warmup_ticks"] else [])
     return normalised
 
 
@@ -616,12 +668,40 @@ class TrainingProgress:
         override = getter() if callable(getter) else None
         return int(override) if override is not None else int(self.every)
 
+    def viewer_overrides(self):
+        """The viewer's start overrides the long-run probe follows, as the
+        viewer's one-year probe does: ``b0_overrides`` (start biomass
+        sliders, t) and ``spawn_overrides`` (spawn dropdowns). Only the ones
+        set are present; {} without a viewer. Each record keeps the
+        overrides it ran with. The viewer's tick sliders are not followed:
+        the long run always runs the run's cap (three years by default).
+        """
+        def read(name):
+            getter = getattr(self.visualizer, name, None)
+            try:
+                return getter() if callable(getter) else None
+            except Exception:
+                return None
+
+        overrides = {}
+        b0 = {fid: float(t) for fid, t in (read("get_b0_overrides") or {}).items()
+              if t is not None}
+        if b0:
+            overrides["b0_overrides"] = b0
+        spawn = {fid: dict(ov) for fid, ov in (read("get_spawn_overrides") or {}).items()}
+        if spawn:
+            overrides["spawn_overrides"] = spawn
+        return overrides
+
     @torch.no_grad()
-    def evaluate(self, trainer):
+    def evaluate(self, trainer, overrides=None):
         with evaluation_randomness(self.seed):
             env = copy.deepcopy(self.template)
+            apply_viewer_overrides(env, (self.config or {}).get("project"), overrides,
+                                   self.seed)
             install_current_policies(env, trainer, self.backend)
             env.softmax_temperature = self.temperature
+            settle(env, (self.config or {}).get("warmup_ticks", 0), seed=self.seed)
             pump = self.visualizer.pump_events if self.visualizer is not None else None
             return run_probe(env, self.ticks, self.lower, self.upper, pump_events=pump)
 
@@ -643,11 +723,14 @@ class TrainingProgress:
                   "marked baseline_maps_changed in probe.jsonl; restart to compare.", flush=True)
         return changed
 
-    def _record(self, number, step, seconds, result):
+    def _record(self, number, step, seconds, result, overrides=None):
         """Append one probe to the history and publish it."""
         trajectory = result.pop("trajectory", None)
         self.records.append(dict(evaluation=number, step=step,
                                  evaluation_seconds=seconds, **result))
+        # The viewer's overrides this probe ran with (viewer_overrides);
+        # an absent key = the project's start.
+        self.records[-1].update(overrides or {})
         if self._baseline_maps_changed():
             self.records[-1]["baseline_maps_changed"] = True
         if "viability" in result:
@@ -677,12 +760,14 @@ class TrainingProgress:
         if not first and step % self.interval():
             return
         number = len(self.records) + 1
-        print(f"[progress] probe={number}, step={step}: {self.ticks} inference ticks on CPU...", flush=True)
+        overrides = self.viewer_overrides()
+        print(f"[progress] probe={number}, step={step}: {self.ticks} inference ticks on CPU"
+              f"{_overrides_note(overrides)}...", flush=True)
         started = time.perf_counter()
         try:
-            result = self.evaluate(trainer)
+            result = self.evaluate(trainer, overrides)
             ticks_run = result["ticks_run"]
-            self._record(number, step, time.perf_counter() - started, result)
+            self._record(number, step, time.perf_counter() - started, result, overrides)
         except Exception as error:
             # Monitoring failures must not discard a completed training update.
             print(f"[progress] WARNING: probe failed at step {step}: {error}", flush=True)
@@ -709,11 +794,13 @@ class LiveTrainingProgress(TrainingProgress):
         super().__init__(*a, **kw)
         self._pool = None
         self._pending = None
+        self._pending_overrides = None
 
     def _collect(self, block=False):
         if self._pending is None:
             return
         future, number, step, started = self._pending
+        overrides = self._pending_overrides
         if not block and not future.done():
             return
         try:
@@ -726,7 +813,7 @@ class LiveTrainingProgress(TrainingProgress):
         self._pending = None
         try:
             ticks_run = result["ticks_run"]
-            self._record(number, step, time.perf_counter() - started, result)
+            self._record(number, step, time.perf_counter() - started, result, overrides)
             print(f"[progress] probe {number} (update {step}) done: "
                   f"{ticks_run}/{self.ticks} ticks, {time.perf_counter() - started:.0f}s", flush=True)
         except Exception as error:
@@ -744,14 +831,16 @@ class LiveTrainingProgress(TrainingProgress):
         obs_mean = getattr(env, "obs_mean", None)
         obs_var = getattr(env, "obs_var", None)
         number = len(self.records) + 1
+        overrides = self.viewer_overrides()
         with _sigint_ignored_by_children():  # the first submit spawns the worker
             future = self._pool.submit(_probe_in_process, self.config_ecology(), self.seed,
                                        self.temperature, self.ticks, self.lower, self.upper,
                                        _pack_policies(env.policies), obs_mean, obs_var,
-                                       self.worker_threads)
+                                       self.worker_threads, overrides)
         self._pending = (future, number, step, time.perf_counter())
+        self._pending_overrides = overrides
         print(f"[progress] probe={number}, step={step}: {self.ticks} ticks submitted "
-              f"(separate process)", flush=True)
+              f"(separate process){_overrides_note(overrides)}", flush=True)
 
     def config_ecology(self):
         keys = ("project", "library", "grid", "mortality", "migration",

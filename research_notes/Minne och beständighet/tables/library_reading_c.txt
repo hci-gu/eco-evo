@@ -1,0 +1,83 @@
+persistence fits rho at 6 h / 1 d / 3 d / 1 wk / 1 mo:
+  planktivores  a 0.65 T1 2 h T2 575 h: 0.38 0.34 0.31 0.26 0.10
+  mackerel      a 0.88 T1 4 h T2 48 h: 0.30 0.07 0.03 0.00 0.00
+  water column  a 0.70 T1 4 h T2 600 h: 0.45 0.29 0.27 0.23 0.09
+  whiting       a 0.35 T1 6 h T2 350 h: 0.77 0.61 0.53 0.40 0.08
+  benthivores   a 0.25 T1 12 h T2 600 h: 0.89 0.75 0.67 0.57 0.23
+  porpoises     a 0.80 T1 3 h T2 720 h: 0.31 0.19 0.18 0.16 0.07
+  seals         a 0.75 T1 3 h T2 1000 h: 0.35 0.24 0.23 0.21 0.12
+  zooplankton   a 0.80 T1 12 h T2 2500 h: 0.68 0.31 0.20 0.19 0.15
+  krill         a 0.25 T1 12 h T2 900 h: 0.90 0.76 0.69 0.62 0.34
+  bed           a 0.00 T1 1e+09 h T2 1e+09 h: 1.00 1.00 1.00 1.00 1.00
+
+pair                                          lib     B   C_nbr  C_own  M  rho
+benthivorous_fish_observes_benthic_infauna     0.190  0.190  0.535  1.000 28  bed
+benthivorous_fish_observes_benthivorous_fish   0.190  0.190  0.436  1.000 28  benthivores
+benthivorous_fish_observes_krill               0.190  0.190  0.443  1.000 28  krill
+benthivorous_fish_observes_mackerel            0.001  0.001  0.001  0.011 28  mackerel
+benthivorous_fish_observes_mobile_epifauna     0.190  0.190  0.535  1.000 28  bed
+benthivorous_fish_observes_norway_lobster      0.190  0.190  0.535  1.000 28  bed
+benthivorous_fish_observes_planktivorous_fish  0.096  0.096  0.127  0.538 28  planktivores
+benthivorous_fish_observes_porpoises           0.040  0.040  0.051  0.541  4  porpoises
+benthivorous_fish_observes_predatory_fish      0.186  0.186  0.185  0.994  4  water column
+benthivorous_fish_observes_seals               0.003  0.003  0.005  0.062  4  seals
+benthivorous_fish_observes_whiting             0.185  0.185  0.262  0.995  4  whiting
+mackerel_observes_benthivorous_fish            0.423  0.423  0.475  1.000  8  benthivores
+mackerel_observes_krill                        0.423  0.423  0.476  1.000  8  krill
+mackerel_observes_mackerel                     0.423  0.423  0.359  1.000  8  mackerel
+mackerel_observes_planktivorous_fish           0.215  0.215  0.191  0.507  8  planktivores
+mackerel_observes_porpoises                    0.004  0.004  0.004  0.008  8  porpoises
+mackerel_observes_predatory_fish               0.399  0.399  0.335  0.911  1  water column
+mackerel_observes_seals                        0.000  0.000  0.000  0.001  8  seals
+mackerel_observes_whiting                      0.421  0.421  0.450  0.999  8  whiting
+mackerel_observes_zooplankton                  0.423  0.423  0.422  1.000  8  zooplankton
+planktivorous_fish_observes_benthivorous_fish  0.376  0.376  0.370  0.999  1  benthivores
+planktivorous_fish_observes_krill              0.378  0.378  0.526  1.000  8  krill
+planktivorous_fish_observes_mackerel           0.005  0.005  0.004  0.026  1  mackerel
+planktivorous_fish_observes_planktivorous_fish  0.378  0.378  0.352  1.000  8  planktivores
+planktivorous_fish_observes_porpoises          0.104  0.104  0.073  0.376  1  porpoises
+planktivorous_fish_observes_predatory_fish     0.360  0.360  0.300  0.947  1  water column
+planktivorous_fish_observes_seabirds           1.000     -      -      -
+planktivorous_fish_observes_seals              0.002  0.002  0.002  0.011  1  seals
+planktivorous_fish_observes_whiting            0.373  0.373  0.352  0.994  1  whiting
+planktivorous_fish_observes_zooplankton        0.378  0.378  0.431  1.000  8  zooplankton
+porpoises_observes_benthivorous_fish           0.373  0.373  0.450  1.000  8  benthivores
+porpoises_observes_mackerel                    0.017  0.017  0.015  0.033  8  mackerel
+porpoises_observes_planktivorous_fish          0.239  0.239  0.222  0.608  8  planktivores
+porpoises_observes_porpoises                   0.373  0.373  0.334  1.000  8  porpoises
+porpoises_observes_predatory_fish              0.372  0.372  0.363  0.998  8  water column
+porpoises_observes_seals                       0.005  0.005  0.005  0.010  8  seals
+porpoises_observes_whiting                     0.373  0.373  0.426  1.000  8  whiting
+predatory_fish_observes_benthivorous_fish      0.479  0.479  0.598  1.000 28  benthivores
+predatory_fish_observes_krill                  0.480  0.480  0.601  1.000 28  krill
+predatory_fish_observes_mackerel               0.003  0.003  0.002  0.009 28  mackerel
+predatory_fish_observes_planktivorous_fish     0.248  0.248  0.226  0.527 28  planktivores
+predatory_fish_observes_porpoises              0.047  0.047  0.032  0.134  1  porpoises
+predatory_fish_observes_predatory_fish         0.480  0.480  0.462  1.000 28  water column
+predatory_fish_observes_seals                  0.002  0.002  0.001  0.006  1  seals
+predatory_fish_observes_whiting                0.477  0.477  0.556  0.997 28  whiting
+predatory_fish_observes_zooplankton            0.480  0.480  0.507  1.000 28  zooplankton
+seabirds_observes_planktivorous_fish           1.000     -      -      -
+seabirds_observes_seabirds                     1.000     -      -      -
+seals_observes_benthivorous_fish               0.305  0.305  0.462  1.000 28  benthivores
+seals_observes_mackerel                        0.003  0.003  0.004  0.022 28  mackerel
+seals_observes_planktivorous_fish              0.160  0.160  0.183  0.563 28  planktivores
+seals_observes_porpoises                       0.008  0.008  0.019  0.072 28  porpoises
+seals_observes_predatory_fish                  0.297  0.297  0.331  0.982 28  water column
+seals_observes_seabirds                        1.000     -      -      -
+seals_observes_seals                           0.305  0.305  0.315  1.000 28  seals
+seals_observes_whiting                         0.304  0.304  0.423  1.000 28  whiting
+whiting_observes_benthivorous_fish             0.309  0.309  0.297  0.996  1  benthivores
+whiting_observes_krill                         0.312  0.312  0.575  1.000 28  krill
+whiting_observes_mackerel                      0.001  0.001  0.001  0.006 28  mackerel
+whiting_observes_mobile_epifauna               0.312  0.312  0.670  1.000 28  bed
+whiting_observes_planktivorous_fish            0.159  0.159  0.170  0.523 28  planktivores
+whiting_observes_porpoises                     0.065  0.065  0.041  0.261  1  porpoises
+whiting_observes_predatory_fish                0.306  0.306  0.229  0.989  1  water column
+whiting_observes_seals                         0.004  0.004  0.003  0.017  1  seals
+whiting_observes_whiting                       0.312  0.312  0.500  1.000 28  whiting
+whiting_observes_zooplankton                   0.312  0.312  0.403  1.000 28  zooplankton
+zooplankton_observes_microzooplankton          0.000     -      -      -
+zooplankton_observes_phytoplankton             0.000     -      -      -
+zooplankton_observes_subsurface_phytoplankton  0.000     -      -      -
+zooplankton_observes_zooplankton               0.000     -      -      -

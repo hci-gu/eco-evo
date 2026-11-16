@@ -61,6 +61,9 @@ class GPUTrainingVisualizer:
         self.executor = None
         self.directory = directory
         self.probed = False
+        # The viewer's spawn dropdowns as the training worlds use them.
+        self.spawn_templates = {}
+        self.training_spawn_overrides = {}
         self.probe_engine, self.probe_device = "cpu", "cpu"
         self.rnd_mode = str(getattr(args, "rnd_baseline", "none") or "none").lower()
         # The status row shows T only when a temperature schedule is set;
@@ -88,6 +91,8 @@ class GPUTrainingVisualizer:
                 mass_balance=builder.mass_balance,
                 tick_hours=getattr(builder, "tick_hours", LIBRARY_TICK_HOURS),
             )
+            # Section 274: the viewer's probe starts after the run's warm-up.
+            self.builder.warmup_ticks = int(getattr(trainer, "warmup_ticks", 0) or 0)
             with evaluation_randomness(self.builder.PROBE_SEED):
                 env = self.builder()
             dm_ids = list(env.dm_ids)
@@ -110,7 +115,8 @@ class GPUTrainingVisualizer:
             self.viz.set_b0_defaults({fid: float(fg.biomass.sum()) for fid, fg in env.fgs.items()})
             self.viz.set_ticks_default(args.ticks)
             self.viz.set_neval_ticks_default(args.ticks)
-            self.viz.set_spawn_templates(_load_spawn_templates(builder.project_path))
+            self.spawn_templates = _load_spawn_templates(builder.project_path)
+            self.viz.set_spawn_templates(self.spawn_templates)
             self.viz.set_spawn_defaults(_load_spawn_defaults(builder.project_path))
             self.viz.set_save_dir(str(directory))
             self.viz.update_biomass(env.fgs, tick=0)
@@ -170,6 +176,35 @@ class GPUTrainingVisualizer:
             print(f"[viz] Viewer disabled: {error}", flush=True)
             self._disable()
             return default
+
+    def training_spawn(self, trainer):
+        """Hand the viewer's spawn dropdowns to the training worlds (the
+        perturbation rollouts and their warm-up) and return the active ones
+        as ``{fid: {"mode", "template"}}``, {} for the project's spawn.
+
+        Only the spawn pattern: the start-biomass sliders have no training
+        meaning (training draws each total from the manifest's range).
+        In memory only, as the viewer's other settings: a ``--resume``
+        starts on the project's spawn until the dropdowns are set again.
+        """
+        self.pump()
+        if self.viz is None:
+            return self.training_spawn_overrides
+        try:
+            from inference import spawn_override_configs
+            chosen = self.viz.get_spawn_overrides() or {}
+            configs = spawn_override_configs(chosen, self.spawn_templates)
+            if trainer.set_spawn_overrides(configs):
+                self.training_spawn_overrides = {
+                    fid: {"mode": chosen[fid].get("mode"), "template": chosen[fid].get("template")}
+                    for fid in sorted(configs)}
+                label = (", ".join(f"{fid} {ov['template']}"
+                                   for fid, ov in self.training_spawn_overrides.items())
+                         or "the project's spawn")
+                print(f"[viz] Training worlds now spawn with {label}.", flush=True)
+        except Exception as error:
+            print(f"[viz] Spawn override for training failed: {error!r}", flush=True)
+        return self.training_spawn_overrides
 
     def train_step(self, trainer, targets, ticks, epoch):
         if self.executor is None:

@@ -494,3 +494,133 @@ def test_the_viewer_probe_gets_the_runs_tick_length():
     source = inspect.getsource(visual.GPUTrainingVisualizer.__init__)
     start = source.index("_ProbeEnvBuilder(")
     assert "tick_hours=" in source[start:source.index(")\n", source.index("mass_balance=", start))]
+
+
+# ---- The long-run probe follows the viewer's start overrides --------------
+
+_SPAWN = {"porpoises": {"mode": "uniform", "template": "Uniform"},
+          "seals": {"mode": "uniform", "template": "Uniform"}}
+_B0 = {"porpoises": 2.5, "planktivorous_fish": 40.0}
+
+
+def _worker_env(monkeypatch, overrides, ticks=10):
+    """The env (and tick count) the probe worker runs, on a small mareld2 grid."""
+    import lib.runners.training_progress as tp
+    seen = {}
+    real = tp.build_inference_env
+
+    def build(config, seed):
+        env = real(config, seed)
+        env.rebuild_batched_weights = lambda: None
+        return env
+
+    def probe(env, ticks, lower, upper):
+        seen["env"], seen["ticks"] = env, ticks
+        return "probed"
+
+    monkeypatch.setattr(tp, "build_inference_env", build)
+    monkeypatch.setattr(tp, "run_probe", probe)
+    threads = torch.get_num_threads()
+    try:
+        tp._probe_in_process(_eco(), 3, 1.0, ticks, 0.3, 3.0, tp._pack_policies(_policy_nets()),
+                             None, None, threads, overrides)
+    finally:
+        torch.set_num_threads(threads)
+    return seen["env"]
+
+
+def _viewer_probe_env(overrides):
+    from train import _ProbeEnvBuilder
+    builder = _ProbeEnvBuilder(project_path="mareld2.yaml", grid_size=(6, 7),
+                               apply_natural_mortality=True, migration=True, mass_balance=True)
+    builder.PROBE_SEED = 3
+    builder.b0_overrides = overrides.get("b0_overrides", {})
+    builder.spawn_overrides = overrides.get("spawn_overrides", {})
+    return builder()
+
+
+def test_the_worker_respawns_the_viewers_overrides_as_the_viewer_probe_does(monkeypatch):
+    plain = _worker_env(monkeypatch, None)
+    spawned = _worker_env(monkeypatch, {"spawn_overrides": _SPAWN})
+    for fid in _SPAWN:
+        before, after = plain.fgs[fid].biomass, spawned.fgs[fid].biomass
+        assert after.sum() == pytest.approx(before.sum(), rel=1e-5)
+        assert not np.allclose(after, before)
+    # Groups without an override keep the project's spawn.
+    assert np.array_equal(plain.fgs["planktivorous_fish"].biomass,
+                          spawned.fgs["planktivorous_fish"].biomass)
+    # The layout is the viewer probe's (same template call, same seed).
+    viewer = _viewer_probe_env({"spawn_overrides": _SPAWN})
+    for fid in _SPAWN:
+        share = spawned.fgs[fid].biomass / spawned.fgs[fid].biomass.sum()
+        expected = viewer.fgs[fid].biomass / viewer.fgs[fid].biomass.sum()
+        assert np.allclose(share, expected, atol=1e-6)
+
+
+def test_the_worker_takes_the_viewers_start_biomass_before_its_spawn(monkeypatch):
+    plain = _worker_env(monkeypatch, None)
+    both = {"b0_overrides": _B0, "spawn_overrides": _SPAWN}
+    env = _worker_env(monkeypatch, both)
+    for fid, tonnes in _B0.items():
+        assert env.fgs[fid].biomass.sum() == pytest.approx(tonnes, rel=1e-5)
+    # A b0-only group keeps its layout; seals keep their total.
+    fish = env.fgs["planktivorous_fish"].biomass
+    assert np.allclose(fish / fish.sum(), plain.fgs["planktivorous_fish"].biomass
+                       / plain.fgs["planktivorous_fish"].biomass.sum(), atol=1e-6)
+    assert env.fgs["seals"].biomass.sum() == pytest.approx(
+        plain.fgs["seals"].biomass.sum(), rel=1e-5)
+    viewer = _viewer_probe_env(both)
+    for fid in ("porpoises", "seals", "planktivorous_fish"):
+        assert np.allclose(env.fgs[fid].biomass, viewer.fgs[fid].biomass, rtol=1e-5, atol=1e-6)
+
+
+class _Pool:
+    def __init__(self):
+        self.sent = {}
+
+    def submit(self, fn, *args):
+        self.sent["args"] = args
+        return SimpleNamespace(done=lambda: True, result=lambda: {"ticks_run": args[3]})
+
+
+def _live(monkeypatch, tmp_path, viz):
+    import lib.runners.training_progress as tp
+    monkeypatch.setattr(tp, "install_current_policies",
+                        lambda env, trainer, backend: setattr(env, "policies", _policy_nets()))
+    viz.set_training_progress = lambda *a: None
+    progress = tp.LiveTrainingProgress("cpu", 1, 4380, 0.3, 3.0, 0, 1.0, visualizer=viz)
+    progress.template, progress._pool, progress.config = SimpleNamespace(), _Pool(), {}
+    progress.history = tmp_path / "probe.jsonl"
+    progress.latest_path = tmp_path / "probe_latest.json"
+    return progress
+
+
+def test_the_viewers_overrides_reach_the_worker_and_the_record(monkeypatch, tmp_path):
+    viz = SimpleNamespace(get_spawn_overrides=lambda: copy.deepcopy(_SPAWN),
+                          get_b0_overrides=lambda: {"porpoises": 2.5, "seals": None},
+                          get_ticks_override=lambda: 1460)
+    progress = _live(monkeypatch, tmp_path, viz)
+    progress._submit(None, 20)
+    args = progress._pool.sent["args"]
+    expected = {"b0_overrides": {"porpoises": 2.5}, "spawn_overrides": _SPAWN}
+    # The "Probe ticks" slider does not shorten the long run: always the cap.
+    assert args[3] == 4380 and args[-1] == expected
+    progress._collect()
+    stored = json.loads(progress.history.read_text())
+    assert stored["step"] == 20 and stored["ticks_run"] == 4380
+    assert "ticks_override" not in stored
+    assert {k: stored[k] for k in expected} == expected
+    # Without overrides: the run's cap and no override keys.
+    viz.get_spawn_overrides = lambda: {}
+    viz.get_b0_overrides = lambda: {}
+    progress._submit(None, 30)
+    args = progress._pool.sent["args"]
+    assert args[3] == 4380 and args[-1] == {}
+    progress._collect()
+    last = json.loads(progress.history.read_text().splitlines()[-1])
+    assert last["step"] == 30 and not set(expected) & set(last)
+
+
+def test_a_viewer_without_override_getters_changes_nothing(monkeypatch, tmp_path):
+    progress = _live(monkeypatch, tmp_path, SimpleNamespace())
+    assert progress.viewer_overrides() == {} and progress.ticks == 4380

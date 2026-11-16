@@ -25497,3 +25497,94 @@ remain open exactly as described in 71.9 / 71.11.
       keep their switches (indirect use; summary.md 4); mackerel eat ~0.3 % pelagic 0-group
       gadoids, before settlement, so inside the recruit import (mackerel_0group.md).
     Observations and porpoise payoffs change: every checkpoint is invalid, retrain.
+274 Fix101 porpoises: memory, the viewer's start overrides, warm-up with re-anchoring (user:
+    find out why fix101's porpoises fall; then a series of follow-ups, 2026-11-14..16).
+274.1 Research only: research_notes/"Minne och bestandighet" (a-umlaut; summary.md,
+    memory_mammals.md, memory_fish.md, persistence.md, scripts/, tables/). Reading C (memory of
+    earlier visits x the target's persistence) raises the neighbour weights on STATIONARY targets
+    (bed fauna 0.19 -> 0.54, krill 0.31-0.48 -> 0.53-0.60) and leaves the mobile pelagic pairs
+    where 273 put them (porpoises -> planktivores 0.24 -> 0.22, planktivores -> porpoises 0.10 ->
+    0.07). Own cell (273 open point 1.6): planktivores know the porpoises in their own cell with
+    0.38-0.71, not the engine's 1; would need an own-cell weight in both engines. Section 7 of
+    the note: the unit merge (272 option B) and the move time tau (273 design 2.2) on frozen
+    fix101 u1080 policies, porpoise year ends: library merge 0.31 / 0.15 / 0.11, continuous
+    splits 0.34 / 0.13 / 0.06, stochastic rounding 0.29 / 0.12 / 0.07, whole animals 0.32 /
+    0.12 / 0.07 (the moves are unaimed: honouring them spreads the animals, it does not reach
+    food). Tau: a moved porpoise tonne gives up ~81 MJ/t/tick today, ~7 under tau 0.071; the
+    design's gate (4.5) is not met and tau is one rule for every DM (the planktivores' flight
+    gets cheaper too). Nothing applied.
+274.2 Viewer probe vs long run (user: why 16.5 % porpoises at the start of year 2 in the long
+    run but 0.40 t in the viewer probe). From update 2150 the viewer probe (biomass.jsonl)
+    showed porpoises 0.001-0.02 while the long run stayed at 0.09-0.29: the user had changed the
+    heatmap spawn dropdowns (in memory only), which only the viewer probe read. APPLIED (user):
+    the long-run probe follows the viewer's start-biomass sliders and spawn dropdowns
+    (training_progress.viewer_overrides / apply_viewer_overrides; record keys b0_overrides,
+    spawn_overrides, absent = the project's start) and never the tick sliders (user: the long
+    run is always 3 years).
+274.3 BUG (fixed): inference.apply_spawn_overrides and apply_b0_overrides rewrote fg.biomass and
+    left fg.energy_reserve (MJ per cell) on the old layout. With the fish on Perlin12 the
+    respawned porpoises started at fill 0.12 and the seals at 0.00 (default 0.70); porpoises lost
+    61 % on day 1, nearly all starvation. Both probes (and inference.py's dropdowns) measured
+    this from evaluation 236 of fix101. Fix: a respawned decision maker keeps its group's mean
+    fill in every new cell, a rescaled one its per-cell fill (an emptied one starts at its start
+    fill); a refuge's accessible part follows its share; a nutrient producer's pool (water, not
+    tissue) is left alone (lib/runners/warmup.carries_tissue_reserve). With the reserve moved,
+    the same spawn gave porpoises 0.29 / 0.13 / 0.08 against the default spawn's 0.28 / 0.18 /
+    0.08. Retracted: "the mammals survive only when spawned on their prey" (the earlier
+    mammal-template A/B runs had the bug); a real mismatch remains (fish moved, mammals on the
+    old colonies: porpoises 0.03 at year 3).
+274.4 APPLIED (user): the spawn dropdowns (not the start-biomass sliders: training draws its
+    totals from the manifest ranges) reach the training worlds, warm-up and perturbation
+    rollouts. inference.spawn_override_configs turns the dropdowns into spawn blocks. GPU:
+    WorldSpawner.set_overrides (blocks, FFT filters prepared, a stable topological spawn order
+    for env_driven refs), TensorARSTrainer.set_spawn_overrides (a change re-draws the worlds,
+    also within a --worlds_refresh generation epoch), GPUTrainingVisualizer.training_spawn
+    before each update; training.jsonl records spawn_overrides while set. CPU: _EnvBuilder
+    spawn_configs -> load_project_config(project_config=inference.project_with_spawn(...)),
+    kept by with_world; train.py's _follow_viewer_spawn re-installs the worlds on a change. In
+    memory only: a --resume starts on the project's spawn. tests/test_viewer_spawn_overrides.py.
+274.5 The start crash after the fix (user: restarted fix101 from generation 43, the porpoises
+    still dive at the start of year 1). Frozen policies (update ~2110), CPU long-run probe:
+    - The crash is on any spawn: porpoises 0.48 (viewer spawn) / 0.54 (project spawn) at day
+      15-20, starvation from day 5 (fill 0.62; the buffer above u is 0.2 ME = 560 MJ/t, 2-3
+      days of cost). Per-capita starvation 3.5-8 %/day on days 6-15, 0.1-0.8 %/day after day 30.
+    - The planktivores leave the start porpoise cells: share kept at day 5 0.09 with porpoises
+      vs 0.44 without (project spawn; viewer spawn 0.25 vs 0.43). The porpoises eat ~1 t/day of
+      ~3000 t, so this is flight, not depletion. With the planktivore moves masked the
+      porpoises do not starve at all (B 1.02, fill 0.82-0.84 at day 60); porpoises forced to
+      stay do worse than the trained ones (which chase, moving 30-45 %).
+    - It is a START TRANSIENT: at day 366 (same calendar day) porpoises x4 in their cells, x4
+      with the fill reset to 0.70, or a fresh Followfish respawn of the full 21 t on the
+      settled planktivore field lost only 3-10 % in 25-55 days; the settled planktivores keep
+      0.97-1.0 of a porpoise cell per day. The 272.4 blind-pair result (0.60 vs 0.34 at year 1)
+      is probably mostly this transient too.
+    - The chronic decline is separate: from 21 t on the settled world (day 366) 0.45 after a
+      year and 0.29 after two (-55 %, -35 %/yr), in spring-summer pulses.
+    - Rejected (user): starting the probe after the warm-up alone would score the porpoises
+      from ~0.4 of the start (the level training already re-bases to).
+274.6 APPLIED (user, step 1): warm-up with re-anchoring. mareld2.yaml simulation_settings.warmup
+    .reanchor: benthivorous_fish, whiting, porpoises, seals - the groups no outside exchange
+    sets; the loader (config_loader.mark_warmup_reanchor, fg.warmup_reanchor) refuses an unknown
+    id and a group with outside_density (planktivores, water column, mackerel, krill: their
+    relaxation would restart at every scored start), skips a muted one. After the warm-up each
+    listed group is scaled back to its start total: the settled layout, each cell's fill and
+    the juvenile share kept; a group that died out gets its start fields back
+    (lib/runners/warmup.reanchor in run_warmup, so both CPU training paths; GPU
+    lib/gpu/trainer.reanchor_worlds in _warm_up against the world's drawn totals). The plankton
+    keep what the warm-up gave them (section 200's purpose). The probes and inference.py run
+    the same warm-up with the trained policies (warmup.settle: re-anchor, the settled state
+    made tick 0 - light_start moves on, tick_count 0, so the tensor engine uploads the same day;
+    the currents' phase jumps once - and the loss, exchange and intake books cleared): the
+    viewer probe (_ProbeEnvBuilder.warmup_ticks; its random baselines settle with the trained
+    policies and seed, so they start from the main env's state), the long-run probe (config
+    keys warmup_ticks, warmup_reanchor; an older history compares equal without a warm-up, a
+    resume of one with a warm-up is refused as for any changed probe setting), and
+    inference.py --warmup-days (default the run's: gpu_run.json, else the biomass.jsonl header,
+    where train.py now writes warmup_days). The scored start is the start day plus the warm-up,
+    as in training. Frozen fix101 policies, long run after 60 days: porpoises at day 20 0.95-
+    0.99 (were 0.48-0.54), year ends 0.33-0.36 / 0.21-0.25 / 0.14 (were 0.12-0.17 / 0.06-0.10 /
+    0.03-0.05), seals ~1.0-1.1. tests/test_warmup_reanchor.py.
+274.7 OPEN: the chronic porpoise decline from 21 t on a settled world (274.5); step 2 of the
+    start design (a randomised warm-up length per world, an archive of states from recent
+    rollouts re-anchored to new totals); the own-cell weight (274.1).
+    Training worlds change (re-anchoring; the dropdowns when set): retrain in a new run.
