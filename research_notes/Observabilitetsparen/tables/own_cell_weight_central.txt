@@ -1,0 +1,40 @@
+case central
+planktivores  path in the own cell (track)  1.40 km of  10.7
+planktivores  -> benthivores   track: mean 0.981 unit 0.027   confined: mean 1.000 unit 0.185
+planktivores  -> whiting       track: mean 0.974 unit 0.027   confined: mean 1.000 unit 0.185
+planktivores  -> water column  track: mean 0.929 unit 0.096   confined: mean 1.000 unit 0.292
+planktivores  -> mackerel      track: mean 0.030 unit 0.149   confined: mean 0.094 unit 0.440
+planktivores  -> porpoises     track: mean 0.416 unit 0.530   confined: mean 0.945 unit 0.996   track at 6/km2 0.819
+planktivores  -> seals         track: mean 0.012 unit 0.187   confined: mean 0.040 unit 0.539
+mackerel      path in the own cell (track)  0.67 km of  29.0
+mackerel      -> planktivores  track: mean 0.467 unit 0.467   confined: mean 0.711 unit 0.720
+mackerel      -> water column  track: mean 0.812 unit 0.013   confined: mean 1.000 unit 0.440
+water column  path in the own cell (track)  1.63 km of  17.3
+water column  -> planktivores  track: mean 0.504 unit 0.505   confined: mean 0.637 unit 0.644
+water column  -> benthivores   track: mean 0.976 unit 0.032   confined: mean 1.000 unit 0.287
+water column  -> whiting       track: mean 0.970 unit 0.032   confined: mean 1.000 unit 0.287
+water column  -> mackerel      track: mean 0.006 unit 0.032   confined: mean 0.057 unit 0.287
+water column  -> porpoises     track: mean 0.150 unit 0.236   confined: mean 0.687 unit 0.894   track at 6/km2 0.597
+water column  -> seals         track: mean 0.007 unit 0.109   confined: mean 0.040 unit 0.539
+whiting       path in the own cell (track)  1.51 km of   3.0
+whiting       -> planktivores  track: mean 0.512 unit 0.513   confined: mean 0.528 unit 0.529
+whiting       -> benthivores   track: mean 0.992 unit 0.030   confined: mean 1.000 unit 0.058
+whiting       -> water column  track: mean 0.987 unit 0.155   confined: mean 1.000 unit 0.292
+whiting       -> porpoises     track: mean 0.307 unit 0.481   confined: mean 0.543 unit 0.780   track at 6/km2 0.878
+whiting       -> seals         track: mean 0.020 unit 0.304   confined: mean 0.040 unit 0.539
+benthivores   path in the own cell (track)  1.19 km of   1.9
+benthivores   -> planktivores  track: mean 0.510 unit 0.511   confined: mean 0.518 unit 0.519
+benthivores   -> whiting       track: mean 0.992 unit 0.041   confined: mean 1.000 unit 0.058
+benthivores   -> water column  track: mean 0.993 unit 0.211   confined: mean 1.000 unit 0.292
+benthivores   -> porpoises     track: mean 0.403 unit 0.604   confined: mean 0.543 unit 0.780   track at 6/km2 0.932
+benthivores   -> seals         track: mean 0.028 unit 0.400   confined: mean 0.040 unit 0.539
+porpoises     path in the own cell (track)  0.62 km of  14.0
+porpoises     -> planktivores  track: mean 0.579 unit 0.584   confined: mean 0.997 unit 0.998
+porpoises     -> benthivores   track: mean 0.963 unit 0.063   confined: mean 1.000 unit 0.780
+porpoises     -> whiting       track: mean 0.963 unit 0.063   confined: mean 1.000 unit 0.780
+porpoises     -> water column  track: mean 0.957 unit 0.091   confined: mean 1.000 unit 0.894
+seals         path in the own cell (track)  1.69 km of  15.5
+seals         -> planktivores  track: mean 0.517 unit 0.519   confined: mean 0.745 unit 0.754
+seals         -> benthivores   track: mean 0.961 unit 0.077   confined: mean 1.000 unit 0.509
+seals         -> whiting       track: mean 0.961 unit 0.077   confined: mean 1.000 unit 0.509
+seals         -> water column  track: mean 0.934 unit 0.077   confined: mean 1.000 unit 0.509

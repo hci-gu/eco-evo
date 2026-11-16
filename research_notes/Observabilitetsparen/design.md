@@ -226,3 +226,160 @@ unchanged; the move actions mean something new: retrain.
 
 Frozen fix100 probes behind the order (research_notes/"Daggdjurens attackrater" section 10): porpoises after
 one year 0.34 (base), 0.38 (a 1.12), 0.60 (planktivores blind to porpoises), 0.74 (both).
+
+## 5. Own cell and neighbours under one rule (2026-11-16)
+
+Design note for review. Nothing in code or library changed. It answers open point 1.6.3 (the same-cell channel)
+and the user's request that what a group may know about other groups, in its own cell and in the von Neumann
+neighbours, follows ONE method for every group: from movement (swimming speed), senses and whatever else
+bears on it. Script: `scripts/own_cell_weight.py` (imports `neighbour_weight.py`); tables:
+`tables/own_cell_weight_{central,low,high}.txt`.
+
+### 5.1 What fix102 showed
+
+fix102 is the first run after section 274 (30 x 30 grid, warm-up 60 d with re-anchoring). The test froze its
+policies at update 524 and ran the long-run probe world on the CPU engine. Porpoise biomass is given at the
+year ends, two seeds:
+
+| arm (all other policies current) | porpoises yr 1 / 2 / 3 |
+|---|---|
+| all current | 0.34 / 0.15 / 0.09; 0.27 / 0.16 / 0.07 |
+| all untrained (PolicyBank seed 0; reproduces probe 1 exactly) | 1.03 / 1.06 / 1.07 |
+| planktivores untrained | yr 3 0.50; 0.62 |
+| every fish group untrained | 0.88 / 0.86 / 0.91 |
+| seals untrained | 0.31 / 0.20 / 0.13 |
+| porpoises untrained | 0 by year 2 |
+| planktivores blind to porpoises (own cell and neighbours zeroed) | 1.02 / 1.09 / 1.12; 0.66 / 0.67 / 0.70 |
+| planktivores blind in the own-cell slot only | yr 3 0.21; 0.18 |
+| planktivores blind in the four neighbour slots only | yr 3 0.41; 0.30 |
+| neighbour slots set to the own-cell value (presence kept, gradient removed) | yr 3 0.06; 0.06 |
+
+What this shows:
+- **Food is not the limit.** With untrained fish, the porpoises hold the SCANS level in a closed box, even with
+  fewer planktivores (0.67). Their fill stays at 0.7-0.8 in every arm.
+- **The decline is learned flight by the planktivores.** They leave cells where they see porpoises. Being blind
+  to porpoises costs the planktivores only about 3 % of their biomass.
+- **Presence in the own cell is enough.** The gradient towards a neighbour adds nothing.
+- **The neighbour weight 0.10 did not limit the information.** Each neighbour slot read 0.9 c + 0.1 n, so it
+  repeated the own-cell signal four more times.
+- **The porpoises hardly move.** Their executed move share is 1-6 % over the whole training, the same in fix101.
+  Their reward falls as the planktivores' move share rises (fix101: 0.24 -> 0.37 near update 900).
+
+### 5.2 A deterministic weight does not limit information
+
+- **Own cell.** A weight towards a fixed value, m + w (c - m), is affine in c. The per-slot observation
+  normalisation (ARS-V2) removes any affine map exactly, so the policy sees what it saw before.
+- **Neighbours.** The blend c + w (n - c) can be inverted, given c, for any w > 0 (1.1). The fix102 test shows
+  the practical side: with a small w, the slots carry the own-cell value instead.
+
+So the forms that limit information are binary (a pair off) or stochastic. The stochastic form below is the one
+that follows from reading B.
+
+### 5.3 The rule (one rule for every pair, own cell and neighbours)
+
+For each tick, cell and observation pair, the group met the target with probability
+
+    p = 1 - exp(-n),   n = expected encounters at the LOCAL visible density (not the box mean).
+
+| region | met | not met |
+|---|---|---|
+| own cell | the target's density c | 0 (searched there, found nothing) |
+| neighbour | the neighbour's density n | the own-cell reading (never there) |
+
+- In a neighbour, p includes P(enter) from the CRW (1.2).
+- A diffuse target (plankton and krill layers, bed fauna) has p ~ 1 and is read exactly. Rare point targets
+  read as noisy.
+- The local density replaces the box-mean approximation of 1.5: a dense cell is noticed, an empty one reads 0.
+- n is the same encounter count the pair's attack rate is built from (searcher swath; the predator's swath where
+  the target hunts the observer), so information and predation share their inputs.
+
+Costs:
+- **CPU/GPU parity** needs the same draws on both engines: a counter-based hash of (seed, tick, world, cell,
+  pair) evaluated identically in numpy and torch, not either library's generator.
+- **Training noise** rises: every observation of a rare target is noisy. ARS sees that as variance.
+- **Checkpoints:** the channels change meaning, so every checkpoint is invalid.
+
+### 5.4 What n depends on, and what is in the derivation
+
+| factor | status |
+|---|---|
+| path L and net displacement D per 6 h (speed, tortuosity) | in (CRW, 1.2) |
+| detection radius per sense and target: fish vision and lateral line ~10 m; porpoise sonar 200 m on schools, 54 m on gadoids, 80 m on saithe; seal vibrissae 25 m | in (1.2 table) |
+| hearing: porpoise clicks are inaudible to every model fish; seal roars 50-140 m against ship noise | in (gives no range; summary.md 2) |
+| the predator's swath: the prey learns of a predator by being found | in |
+| detectable unit: pelagic schools by day, single fish by night; animal masses | in |
+| hide floor: the observed density is the visible one | in (engine) |
+| light: vision radius with light at depth | engine (rule A, section 269), not linked; the same R(E) should serve capture and information |
+| vertical overlap: band profiles f_m(z) | engine (section 269), not linked; an encounter needs a shared depth band |
+| pooling between units (chained senses, Pednekar 2024) | out; ~1 school per cell at box densities, so small |
+| memory across ticks (porpoises return after ~2 d; Iorio-Merlo 2022 for seals) | out; the policy is feed-forward |
+| directional odour plumes downstream of bed prey | out; neighbours are isotropic |
+| consequences: own losses as a cue | out; losses are not an input |
+| the target's own spatial layout | see 5.6 |
+
+### 5.5 The own cell in numbers (central case)
+
+P(met in the own cell during 6 h). There are two frames:
+- **"track":** the real path leaves the cell. A herring spends 1.4 of 17 km there, a porpoise 0.6 of 14 km.
+- **"confined":** the observer searches its own cell all tick. The engine keeps a cell's biomass in place and
+  computes a whole tick's encounters there.
+
+"unit" is one detectable unit per km2: a lone animal, school or fish (for fish targets a very low density).
+
+| observer -> target | track, box mean | track, one unit | confined, box mean | confined, one unit |
+|---|---|---|---|---|
+| planktivores -> porpoises | 0.42 (0.82 at 6 per km2) | 0.53 | 0.95 (0.87-0.98) | 1.00 |
+| planktivores -> seals | 0.01 | 0.19 | 0.04 (0.02-0.06) | 0.54 |
+| planktivores -> mackerel | 0.03 | 0.15 | 0.09 | 0.44 |
+| planktivores -> benthivores, whiting, water column | 0.93-0.98 | 0.03-0.10 | 1.00 | 0.19-0.29 |
+| water column -> porpoises | 0.15 | 0.24 | 0.69 | 0.89 |
+| whiting, benthivores -> porpoises | 0.31-0.40 | 0.48-0.60 | 0.54 | 0.78 |
+| every fish -> seals | 0.01-0.03 | 0.11-0.40 | 0.04 | 0.54 |
+| water column -> mackerel | 0.006 | 0.03 | 0.06 | 0.29 |
+| mackerel -> planktivores | 0.47 | 0.47 | 0.71 | 0.72 |
+| porpoises -> planktivores | 0.58 | 0.58 | 1.00 | 1.00 |
+| seals -> planktivores | 0.52 | 0.52 | 0.75 | 0.75 |
+| mammals -> demersal fish groups | 0.93-0.96 | 0.06-0.09 | 1.00 | 0.51-0.89 |
+
+Recommendation:
+- **Own cell: the confined frame.** Information then follows exactly the encounters the engine computes for
+  predation in that cell. It is the same tick of search, and the prey meets the predation there.
+- **Neighbours: the CRW as in 1.2.** The engine computes no encounters there, and the cell is a coarse grain of
+  the real ranging.
+
+The two frames count some path twice (a whole tick in the own cell plus the neighbour visits). That is accepted
+as the price of matching the engine's predation.
+
+### 5.6 What the rule does to the porpoise question
+
+- **The rule mostly limits rare targets.** That means fish -> seals (0.04), -> mackerel (0.06-0.09) and rare
+  targets in the neighbours.
+- **Planktivores -> porpoises stays informative** at 0.95 at the box mean in the confined frame. In the trained
+  runs the porpoises sit 4-6 per km2 in 75-100 cells, so a herring in a porpoise cell is found with p ~ 1.
+- **Expected effect on the fix102 decline: about none.** This is computed, not run. A frozen run with the
+  stochastic mask would measure it.
+- **The model's porpoise layout is the anomaly.** Real porpoises are solitary or in groups of 1-3 at ~0.5 per
+  km2 and range 14 km per 6 h. In the model they clump and stay put. This is open, not a finding: how much the
+  clumping comes from the spawn and how much from the learned staying.
+
+### 5.7 Speed has two places
+
+Speed enters in two places:
+1. **Information:** the path L above.
+2. **The time a move takes:** tau (2.2). Today every group pays a whole tick of foraging for a 1 km move.
+   - It takes a porpoise ~7 % of the tick (tau 0.071) and a slow fish ~20 % (planktivores 0.20, whiting 0.23,
+     benthivores 0.20).
+   - tau comes from each group's measured U, so it is the same rule for all.
+
+fix102 inverts the trigger in section 4 item 5. The porpoises do not "move heavily and starve"; they hardly move.
+Prey flight works because the predator never follows. tau is the speed lever that could change that. It cannot
+be tested on frozen policies, only by a retrain.
+
+### 5.8 Open points for the user
+
+1. **Frame for the own cell:** confined (recommended) or track.
+2. **Form:** the stochastic rule of 5.3 for every pair, or a binary cut by a threshold on p.
+3. **tau (2.2):** in the same retrain as 5.3, or separately. If trained together, their effects cannot be told
+   apart; two runs would separate them.
+4. **Light and vertical overlap in n (5.4):** link them now, or later.
+5. **The porpoise layout (5.6):** investigate the spawn and the staying, separately from this note.
