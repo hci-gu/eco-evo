@@ -25588,3 +25588,9 @@ remain open exactly as described in 71.9 / 71.11.
     start design (a randomised warm-up length per world, an archive of states from recent
     rollouts re-anchored to new totals); the own-cell weight (274.1).
     Training worlds change (re-anchoring; the dropdowns when set): retrain in a new run.
+274.8 FG editor (user: sync fgconfig): a "Re-anchor after warm-up" checkbox under the Initial
+    Total Biomass Range in both editors (DM and NDM). It shows and edits the project's
+    simulation_settings.warmup.reanchor list (in place, comments kept; an emptied list removes
+    the block; written with Save Project), is refused on Apply for a group with an Outside
+    Density, and a removed group leaves the list. Help text warmup_reanchor (field_help.py).
+    tests/test_fgconfig_reanchor.py.

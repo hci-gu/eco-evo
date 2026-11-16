@@ -755,7 +755,9 @@ groups in the manifest's `simulation_settings.warmup.reanchor` -
 benthivores, whiting, porpoises, seals - are scaled back to the drawn
 totals after it, settled layout, each cell's fill and the juvenile share
 kept (`lib/runners/warmup.py`, GPU `reanchor_worlds`; the loader refuses an
-id an outside exchange sets: planktivores, water column, mackerel, krill);
+id an outside exchange sets: planktivores, water column, mackerel, krill;
+FG editor: a Re-anchor checkbox under the Initial Total Biomass Range edits
+the list, refused with an Outside Density);
 the viewer probe, the long-run probe and inference.py (`--warmup-days`,
 default the run's) run the same warm-up and score from the settled state,
 start day + warm-up as in training; fix101's porpoises then kept 0.95-0.99

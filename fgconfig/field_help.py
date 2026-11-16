@@ -683,6 +683,26 @@ FIELD_HELP = {
         "Reference Grid and scaled with the grid's area. Inference "
         "uses the fixed value in the Inference tab instead."
     ),
+    "warmup_reanchor": (
+        "Re-anchor after warm-up (project setting, section 274; stored in "
+        "the manifest's simulation_settings.warmup.reanchor, written with "
+        "Save Project).\n\n"
+        "After the warm-up (train --warmup-days, the viewer and long-run "
+        "probes, inference.py --warmup-days) a checked group is scaled "
+        "back to the total it started with: the settled layout, each "
+        "cell's reserve fill and the juvenile share are kept, only the "
+        "level is restored. So the reward and the probes score it from "
+        "its drawn (training) or manifest (inference) total instead of "
+        "the level the start transient left. A group that died out in the "
+        "warm-up gets its start fields back.\n\n"
+        "Unchecked groups keep what the warm-up gave them - the plankton "
+        "should, since the warm-up exists to settle them from season-blind "
+        "totals. Not allowed for a group with an Outside Density (open "
+        "pool or migrating window): the exchange sets its level, and "
+        "re-anchoring would restart its relaxation at every scored start. "
+        "No effect without a warm-up. Changing it changes the training "
+        "worlds: retrain."
+    ),
     "action_costs": (
         "Action Costs: multipliers of Resting Metabolism for the Eat and "
         "Move actions (Rest costs 1 x RM). Each tick, the share of the "

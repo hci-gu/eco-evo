@@ -880,6 +880,9 @@ class FGConfigApp:
                 row=grow, column=0, columnspan=2, sticky="ew", padx=4, pady=(0, 2))
             grow += 1
 
+        # Section 274: re-anchored after the warm-up (a project setting).
+        grow = self._build_reanchor_row(self.editor_frame, grow, "dm")
+
         # Action Costs: header on its own row, Eat and Move each on their
         # own row matching the standard ranged-entry column layout. No
         # separators between the three sub-rows.
@@ -1058,6 +1061,8 @@ class FGConfigApp:
             ttk.Separator(self.ndm_editor_frame, orient="horizontal").grid(
                 row=grow, column=0, columnspan=2, sticky="ew", padx=4, pady=(0, 2))
             grow += 1
+
+        grow = self._build_reanchor_row(self.ndm_editor_frame, grow, "ndm")
 
         # Capacity by depth (capacity_depth_table, section 207): rows of
         # depth (m) -> K (t/cell) read on the project's depth map; the
@@ -1703,6 +1708,61 @@ class FGConfigApp:
     def _format_tick_label(self, template):
         """Expand ``{tick}`` in a label template to the tick duration."""
         return template.replace("{tick}", tick_label(self.get_tick_hours()))
+
+    def _build_reanchor_row(self, frame, grow, kind):
+        """The Re-anchor checkbox row under the Initial Total Biomass Range
+        (section 274); the box edits the project's
+        ``simulation_settings.warmup.reanchor`` list, not the library."""
+        self._make_prop_label(frame, "Re-anchor after warm-up (back to its start total)",
+                              help_key="warmup_reanchor").grid(
+            row=grow, column=0, sticky="w", padx=5, pady=2)
+        var = tk.BooleanVar(value=False)
+        box = ttk.Checkbutton(frame, variable=var)
+        box.grid(row=grow, column=1, sticky="w", padx=5, pady=2)
+        attach_help(box, "warmup_reanchor")
+        if not hasattr(self, "reanchor_vars"):
+            self.reanchor_vars = {}
+        self.reanchor_vars[kind] = var
+        grow += 1
+        ttk.Separator(frame, orient="horizontal").grid(
+            row=grow, column=0, columnspan=2, sticky="ew", padx=4, pady=(0, 2))
+        return grow + 1
+
+    def _reanchor_ids(self):
+        """The project's ``simulation_settings.warmup.reanchor`` list."""
+        sim = (getattr(self, "project_data", None) or {}).get("simulation_settings")
+        block = sim.get("warmup") if isinstance(sim, dict) else None
+        ids = block.get("reanchor") if isinstance(block, dict) else None
+        return [str(i) for i in (ids or [])]
+
+    def _set_reanchor(self, fg_id, on):
+        """Add ``fg_id`` to the reanchor list or drop it, in place (ruamel
+        keeps the block's comments); an emptied list leaves the manifest.
+        Returns True when the list changed."""
+        if bool(on) == (fg_id in self._reanchor_ids()):
+            return False
+        sim = self.project_data.get("simulation_settings")
+        if not isinstance(sim, dict):
+            sim = {}
+            self.project_data["simulation_settings"] = sim
+        block = sim.get("warmup")
+        if not isinstance(block, dict):
+            block = {}
+            sim["warmup"] = block
+        ids = block.get("reanchor")
+        if not isinstance(ids, list):
+            ids = []
+            block["reanchor"] = ids
+        if on:
+            ids.append(fg_id)
+        else:
+            while fg_id in ids:
+                ids.remove(fg_id)
+            if not ids:
+                block.pop("reanchor", None)
+            if not block:
+                sim.pop("warmup", None)
+        return True
 
     def _make_prop_label(self, parent, template, help_key=None):
         """Create an FG-editor property label, tick-aware if templated."""
@@ -4913,6 +4973,9 @@ class FGConfigApp:
         # Read min/max from the project FG entry, with backward compatibility for
         # legacy scalar `initial_biomass` (treated as min == max).
         init_min_val, init_max_val = self._read_initial_biomass_range(fg_entry, fg_id)
+        # Section 274: the project's re-anchor list.
+        self.reanchor_vars["dm" if category == "decision_makers" else "ndm"].set(
+            fg_id in self._reanchor_ids())
 
         # Show the editor matching the FG category, hide the other.
         if category == "decision_makers":
@@ -5520,6 +5583,16 @@ class FGConfigApp:
                 "Outside Exchange Rate: above 0 for an open pool (Outside "
                 "Density > 0). No changes were saved.")
             return
+        # Section 274: a group whose level an outside exchange sets cannot
+        # be re-anchored (the loader refuses it).
+        reanchor_on = bool(self.reanchor_vars["dm" if is_dm else "ndm"].get())
+        if reanchor_on and open_pool_on:
+            messagebox.showerror(
+                "Invalid value",
+                "Re-anchor after warm-up: not for a group with an Outside Density "
+                "(its level is set by the exchange; re-anchoring would restart the "
+                "relaxation at every scored start). No changes were saved.")
+            return
         if open_pool_on:
             # Sections 245, 246: the runtime's own checks (season mean,
             # arrival fills, entry edges, a migrating DM's exclusions).
@@ -5787,6 +5860,8 @@ class FGConfigApp:
         else:
             fg_entry["initial_biomass_min"] = int(initial_biomass_min_val)
             fg_entry["initial_biomass_max"] = int(initial_biomass_max_val)
+        # Section 274: the project's re-anchor list (written with Save Project).
+        self._set_reanchor(fg_id, reanchor_on)
 
         # Juvenile Stage (stages.py): checked here, written after the merge
         # (in place, so the block keeps its comments).
@@ -6452,6 +6527,7 @@ class FGConfigApp:
             return
         fg_id = fgs[idx]['group_id']
         self.project_data[category] = [fg for fg in fgs if fg['group_id'] != fg_id]
+        self._set_reanchor(fg_id, False)
         if fg_id in self.current_fg_configs:
             del self.current_fg_configs[fg_id]
         if self.active_fg_category == category:
