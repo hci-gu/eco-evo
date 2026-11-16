@@ -155,10 +155,15 @@ def test_names_and_codes_follow_the_language(viz):
     assert viz._fg_abbrev("planktivorous_fish") == "plf"
     viz._lang = "sv"
     assert viz._display_name("planktivorous_fish") == "Planktonätande fisk"
-    assert viz._display_name("seals_rnd") == "Sälar rnd"
+    assert viz._display_name("seals_rnd") == "Knubbsäl rnd"
     assert viz._fg_abbrev("planktivorous_fish") == "pf"
+    viz._lang = "it"
+    assert viz._display_name("seals") == "Foche comuni"
     viz._lang = "en"
     assert viz._fg_abbrev("planktivorous_fish") == "plf"
+    # Section 275.9: an English name where the id is kept (harbour seals).
+    assert viz._display_name("seals") == "Harbour seals"
+    assert viz._display_name("seals_rnd") == "Harbour seals rnd"
 
 
 def test_member_lines_in_each_language():

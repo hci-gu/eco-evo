@@ -9,7 +9,7 @@ from lib.world.growth_budget import (SOMATIC_KEY, capacity_loss_rate, derived_gr
 from lib.world import daylight, nutrients, temperature
 from lib.spawn import StrategySpec, distribute_with_floor, make_weights
 from lib.world import habitat
-from lib.environments.ecosystem_env import open_pool
+from lib.environments.ecosystem_env import encounter, open_pool
 
 def load_config(path):
     # The editor writes UTF-8 with a BOM. Using the host encoding on Windows
@@ -809,6 +809,15 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
                             raise ValueError(
                                 f"{iid}: neighbour_weight must be in [0, 1], got {nw}")
                         params.setdefault('neighbour_weight', {})[obs_id] = nw
+                    # Section 275: encounter components per region (reading B
+                    # in the own cell and the neighbours, design.md 5).
+                    enc = _encounter_entry(iid, idef, tick_hours)
+                    if enc is not None:
+                        if nw is not None:
+                            raise ValueError(
+                                f"{iid}: neighbour_weight (section 273) and the "
+                                "encounter components (section 275) exclude each other")
+                        params.setdefault('encounter', {})[obs_id] = enc
             elif iid.startswith(f"{sid}_impacted_by_"):
                 impact_id = iid.replace(f"{sid}_impacted_by_", "")
                 # Skip impacts that are muted or not in the project.
@@ -1037,7 +1046,85 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
         fgs[sid] = fg
 
     mark_warmup_reanchor(project, fgs, spec_defs)
+    check_encounter_complete(fgs)
     return fgs, impact_vars, impact_ranges, observable_impact_vars
+
+
+ENCOUNTER_KEYS = ("encounter_own", "encounter_neighbour")
+
+
+def _encounter_entry(iid, idef, tick_hours):
+    """Section 275: an observation pair's encounter components, validated and
+    converted to the run's tick length, or None without them. Both regions
+    are required together."""
+    present = [k for k in ENCOUNTER_KEYS if idef.get(k) is not None]
+    if not present:
+        return None
+    if len(present) != 2:
+        raise ValueError(f"{iid}: encounter_own and encounter_neighbour go together "
+                         f"(section 275), only {present[0]} is set")
+    entry = {}
+    for key, region in (("encounter_own", "own"), ("encounter_neighbour", "neighbour")):
+        shares, kappas = encounter.parse_components(idef[key], f"{iid}.{key}")
+        if region == "own" and abs(sum(shares) - 1.0) > 1e-6:
+            raise ValueError(f"{iid}.encounter_own: the own cell is always entered, "
+                             f"the shares must sum to 1 (got {sum(shares):.6f})")
+        entry[region] = (shares, encounter.rescale_kappas(kappas, tick_hours,
+                                                          LIBRARY_TICK_HOURS))
+    return entry
+
+
+def check_encounter_complete(fgs):
+    """Section 275: the encounter rule is one method for every group. Once any
+    active observation pair carries it, every observation pair between active
+    groups must (self pairs included: they carry the own biomass in the
+    neighbours), or the project is refused."""
+    if not any(fg.params.get('encounter') for fg in fgs.values()):
+        return
+    missing = []
+    for sid, fg in fgs.items():
+        if not fg.params.get('is_decision_maker', False):
+            continue
+        observed = fg.params.get('observes')
+        if observed is None:
+            missing.append(f"{sid} (no observation pairs: sees everything)")
+            continue
+        enc = fg.params.get('encounter') or {}
+        for target in [sid] + [t for t in observed if t != sid]:
+            if target in fgs and target not in enc:
+                missing.append(f"{sid}_observes_{target}")
+    if missing:
+        raise ValueError(
+            "The encounter observation (section 275) applies to every observation "
+            "pair once one carries it; missing encounter_own / encounter_neighbour on: "
+            + ", ".join(sorted(missing)))
+
+
+def missing_encounter_pairs(inter_defs, dm_ids, active_ids):
+    """Library-level twin of check_encounter_complete for the FG editor: the
+    observation pairs that lack the encounter components while another
+    observed pair of an active decision maker carries them ([] when none
+    does). ``dm_ids`` are the active decision makers, ``active_ids`` every
+    active group; the pairs are read as the loader reads them."""
+    def carries(idef):
+        return isinstance(idef, dict) and any(
+            idef.get(k) is not None for k in ENCOUNTER_KEYS)
+
+    active = set(active_ids)
+    carried, missing = False, []
+    for sid in dm_ids:
+        prefix = f"{sid}_observes_"
+        pairs = {iid[len(prefix):]: idef for iid, idef in (inter_defs or {}).items()
+                 if iid.startswith(prefix) and isinstance(idef, dict)}
+        observed = [t for t, idef in pairs.items() if idef.get('observes', False)]
+        carried = carried or any(carries(pairs[t]) for t in observed)
+        if not any('observes' in idef for idef in pairs.values()):
+            missing.append(f"{sid} (no observation pairs: sees everything)")
+            continue
+        for target in [sid] + [t for t in observed if t != sid]:
+            if target in active and not carries(pairs.get(target)):
+                missing.append(f"{sid}_observes_{target}")
+    return sorted(missing) if carried else []
 
 
 def warmup_reanchor_ids(project):

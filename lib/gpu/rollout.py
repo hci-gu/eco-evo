@@ -218,7 +218,8 @@ class RolloutRunner:
         light = m.light_index(self.light_start, self.tick)
         obs = m.observations(self.biomass, self.reserve, self.hidden, light,
                              self.impact_obs if m.n_obs_imp else None,
-                             self.juvenile if m.stages_on else None)
+                             self.juvenile if m.stages_on else None,
+                             tick=self.tick, keys=self.keys)
         if self.normalize:
             raw = obs.double()
             if self.population_stability is not None:

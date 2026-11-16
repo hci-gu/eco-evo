@@ -1231,18 +1231,37 @@ FIELD_HELP = {
         "learn to flee or hide. Any change alters the input size: "
         "existing checkpoints become invalid."
     ),
-    "matrix:neighbour_weight": (
-        "Neighbour Weight w in [0, 1] (empty = 1): how much of the column "
-        "group's density in the 4 neighbour cells the row sees.\n\n"
-        "Each neighbour input shows c + w (n - c), c the column's value in "
-        "the row's own cell and n its value in the neighbour: w = 1 is the "
-        "full view, w = 0 says nothing beyond the own cell. Reading B "
-        "(section 273): w is the share of the row's 6 h tracks that met the "
-        "column in a given neighbour, derived from the row's path and net "
-        "displacement and the encounter radius (research_notes/"
-        "Observabilitetsparen design.md). On the diagonal it weights the "
-        "row's own biomass in the neighbours. The input size is unchanged, "
-        "but the inputs mean something new: retrain."
+    "matrix:encounter_own": (
+        "Encounter, own cell (section 275): what the row MEETS of the column "
+        "in its own cell during a tick, as components 'share:kappa, ...'.\n\n"
+        "Each tick one draw per pair decides whether the row met the column: "
+        "P(met) = sum share (1 - exp(-kappa n)), n the column's visible "
+        "density (t/km2). Met: the input shows n; not met: 0. kappa is "
+        "encounters per 6 h tick per t/km2 (the library's tick; the loader "
+        "rescales it to --tick-length); inf = a diffuse target (plankton and "
+        "krill layers, bed fauna, the row's own biomass) met wherever "
+        "present. One component per observer member and target unit (e.g. "
+        "day schools and night singles). The own cell is always entered, so "
+        "the shares sum to 1.\n\n"
+        "Derived from detection radii, swim paths and target units by "
+        "research_notes/Observabilitetsparen/scripts/encounter_components.py "
+        "(apply_encounter.py writes the library); not a fit. Once one pair "
+        "carries the rule, every observed pair must, the diagonal included: "
+        "Apply refuses otherwise, as the loader does. Both Encounter "
+        "matrices go together. Changing them changes what the inputs mean: "
+        "retrain."
+    ),
+    "matrix:encounter_neighbour": (
+        "Encounter, neighbours (section 275): the same components for each "
+        "of the 4 neighbour cells, 'share:kappa, ...'.\n\n"
+        "The shares sum to P(enter), the share of the row's 6 h tracks "
+        "(correlated random walk) that enter a given neighbour: 0 for a row "
+        "that does not move (zooplankton). Per neighbour one draw: met shows "
+        "the density, entered but not met shows 0, not entered shows the "
+        "row's own-cell reading after its own draw, so nothing leaks through "
+        "the neighbours. The path inside an entered neighbour is split in two "
+        "equal-count bins (one component each). Replaces the section 273 "
+        "Neighbour Weight, which the editor no longer edits."
     ),
     "matrix:assimilation_factor": (
         "Assimilation Factor (0-1; default 1): share of the prey's "
@@ -1726,6 +1745,109 @@ FIELD_HELP = {
         "impact, and the file stays stored. The training tool, its probes "
         "included, reads only the baseline map."
     ),
+    # ---- Section 275.9: fields made editable -------------------------------
+    "member_species": (
+        "Member species (display only): the species or taxa the group "
+        "stands for, shown when the live viewer's mouse rests on the "
+        "group.\n\n"
+        "Entries separated by ';' (names may hold commas): 'name' or "
+        "'name = share', the share a fraction of the group's biomass "
+        "(biomass-weighted, e.g. herring = 0.554). A remainder of several "
+        "species is 'others[n] = share', n the number of species. The "
+        "shares sum to at most 1 (1 % rounding allowed). Names are "
+        "translated where the viewer knows them (lib/viz/i18n.py SPECIES); "
+        "an unknown name is shown as written. Nothing in the simulation "
+        "reads it."
+    ),
+    "reserve_reference_fill": (
+        "Reserve eaten with the prey (section 140): empty = a predator gains "
+        "only the lean body (Energy Content) per tonne eaten. A value turns "
+        "it on (prey_includes_reserve): the predator also gets the prey's "
+        "energy reserve with each tonne, as a fish's fat and liver are "
+        "eaten with it.\n\n"
+        "The value is the reserve fill (0-1) at which the static prey "
+        "quality is taken - the gates, the predators' ideal reserve s* and "
+        "their derived growth (Energy Content + fill x Max Energy Reserve). "
+        "Take the field fill at the season the prey is mostly eaten "
+        "(planktivores 0.5, the gadoids 0.45, mackerel its reference fill "
+        "0.672). Changing it re-derives the predators' growth_rate."
+    ),
+    "matrix:food_threshold": (
+        "Food Threshold F0 of a grazing non decision maker's pair (section "
+        "177; t/km2 at the pair's reference depth, empty = none).\n\n"
+        "ERSEM's food-perception term: the grazer perceives F F / (F + F0) "
+        "of the prey F, so the response turns sigmoid at low prey and the "
+        "prey keeps a refuge. With a Mixed-Layer Reference Depth it is "
+        "scaled with the mixed layer like the half-saturation. Rows: the "
+        "non decision makers that graze (microzooplankton)."
+    ),
+    "matrix:edibility_floor": (
+        "Edibility Floor e0 of a grazing pair (section 182; [0, 1]): the "
+        "edible share of a producer whose nutrient pool is empty.\n\n"
+        "The grazer sees e = e0 + (1 - e0) N/(N + K) of the producer, N "
+        "its nutrient pool as a concentration and K the Edibility "
+        "Half-Saturation: as the pool runs dry the community shifts to "
+        "cells (forms) the grazer cannot take - the late-summer Ceratium "
+        "layer at the pycnocline. Given together with the half-saturation "
+        "or both empty (no edibility term). Needs the project's Nutrients."
+    ),
+    "matrix:edibility_half_saturation_umol_l": (
+        "Edibility Half-Saturation K of a grazing pair (section 182; umol "
+        "N/l, > 0): the pool concentration at which half of the producer "
+        "above the floor is edible. Given together with the Edibility Floor "
+        "or both empty."
+    ),
+    "nutrients_enabled": (
+        "Nutrient pool (simulation_settings.nutrients, sections 172, 174): "
+        "the producers with a Nutrient Half-Saturation grow on a per-cell "
+        "nitrate pool, r L(t) B N/(N + k_N Y M), instead of logistically, "
+        "supplied from below the mixed layer (Evans & Parslow) and by the "
+        "regeneration shares. Needs the Daylight calendar's light climate "
+        "(the monthly mixed layer). Adds no input channel."
+    ),
+    "nutrients_surface_umol_l": (
+        "Surface nitrate (umol/l), 12 monthly values Jan..Dec: the mixed-layer "
+        "pool's initial concentration, taken at the start day's month "
+        "(SHARK A17)."
+    ),
+    "nutrients_sub_mixed_layer_umol_l": (
+        "Nitrate just below the mixed layer (umol/l), 12 monthly values: "
+        "N0(t), the water the exchange mixes into the pool (Evans & "
+        "Parslow). With the subsurface layer on it is that layer's initial "
+        "concentration instead; the reservoir then supplies the new "
+        "nitrogen."
+    ),
+    "nutrients_exchange_m_per_day": (
+        "Exchange across the pycnocline (m/day): one number or 12 monthly "
+        "values (stratified summer vs winter storms; mareld2: 1.0 Nov-Feb, "
+        "0.05 in summer, section 203). With the subsurface layer on it is "
+        "the exchange between the two layers; entrainment and detrainment "
+        "as the mixed layer moves come on top."
+    ),
+    "nutrients_subsurface_layer": (
+        "Subsurface layer (section 180): a second producer and pool in the "
+        "layer between the mixed layer and Bottom (the A17 subsurface "
+        "chlorophyll maximum), chained reservoir -> subsurface -> mixed "
+        "layer, with entrainment and detrainment moving water and algae as "
+        "the mixed layer moves. Off = one layer (the fields are kept)."
+    ),
+    "nutrients_bottom_m": (
+        "Bottom of the subsurface layer (m): must lie below the deepest "
+        "monthly mixed layer of the light climate."
+    ),
+    "nutrients_light_attenuation_per_m": (
+        "Light attenuation Kd(PAR) inside the subsurface layer (1/m, > 0); "
+        "the light reaching its top comes from the Daylight light climate."
+    ),
+    "nutrients_reservoir_umol_l": (
+        "Nitrate of the deep reservoir under the subsurface layer (umol/l), "
+        "12 monthly values."
+    ),
+    "nutrients_reservoir_exchange_m_per_day": (
+        "Exchange between the reservoir and the subsurface layer (m/day): "
+        "one number or 12 monthly values."
+    ),
+
 }
 
 

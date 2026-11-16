@@ -232,7 +232,8 @@ def _assert_parity(env, device, ticks=12, base_tol=1e-6):
     for tick in range(ticks):
         tol = _parity_tol(tick, base_tol)
         light = model.light_index(starts, torch.tensor(tick, device=model.device))
-        obs = model.observations(b, r, hidden, light, impact_obs, juv)
+        obs = model.observations(b, r, hidden, light, impact_obs, juv,
+                                 tick=torch.tensor(tick, device=model.device))
         observation = env.get_observation()
         np.testing.assert_allclose(numpy(obs[0]), observation.features, atol=tol, rtol=tol)
         logits = bank.forward(obs, *packed)

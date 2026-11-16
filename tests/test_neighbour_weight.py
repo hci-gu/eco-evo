@@ -102,6 +102,11 @@ def _library():
 def test_loader_reads_and_checks_the_key():
     lib = _library()
     inter = lib["interaction_definitions"]
+    # The library carries the section 275 encounter components, which
+    # exclude the weight: the legacy key is checked on a library without them.
+    for entry in inter.values():
+        for k in config_loader.ENCOUNTER_KEYS:
+            (entry or {}).pop(k, None)
     key = "planktivorous_fish_observes_porpoises"
     inter[key] = dict(inter.get(key, {}), observes=True, neighbour_weight=0.25)
     result = config_loader.load_project_config(

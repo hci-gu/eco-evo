@@ -43,7 +43,7 @@ fabricates mass.
 | `inference.py` | Runs trained policies from `results/<run-name>/policy_<fg>.pth`. |
 | `run_mareld_mvp.py`, `compare_scenarios.py` | Old smoke scripts on the library-only world (random actions, not `mareld2.yaml`); `compare_scenarios.py` compares two seeds. |
 | `mareld2.yaml` | Project manifest (`--project` value). An optional top-level `library:` key (relative to the manifest) replaces `fgconfig/fg_library.yaml` for every run built from it; an explicit library path (probes, `train_gpu.py --library`) still wins (section 232.5). |
-| `fgconfig/fgconfig.py` | Tkinter GUI for FGs, impacts, matrices, spawn strategies. |
+| `fgconfig/fgconfig.py` | Tkinter GUI for FGs, impacts, matrices, spawn strategies. Edits every library and manifest key the engines read (275.8-275.9: encounter lists, member species, the reserve eaten with the prey, the grazing non decision makers' pairs, the nutrient block); Apply refuses what the loader refuses. |
 | `fgconfig/fg_library.yaml` | Central biological library (species/interaction/impact definitions). |
 | `lib/environments/ecosystem.py` | Re-exports `EcosystemEnvironment` - "The Tick" pipeline, heavily optimised, in `lib/environments/ecosystem_env/environment.py`. |
 | `lib/runners/trainer.py`, `parallel_worker.py` | ARS trainer (CRN, ARS-V2 obs-norm, top-b) + multiprocessing worker. |
@@ -69,7 +69,8 @@ fabricates mass.
 
 - Decision makers (have a policy net): `zooplankton`, `planktivorous_fish`,
   `benthivorous_fish`, `predatory_fish`, `whiting`, `mackerel`,
-  `porpoises`, `seals`, `seabirds`.
+  `porpoises`, `seals` (harbour seals: "Harbour seals" / "Knubbsäl" /
+  "Foche comuni" since 275.9, id kept), `seabirds`.
   `mareld2.yaml` mutes only `seabirds`. Since section 209 the fish are
   three feeding groups (were `pelagic_fish` + `gadoids`; every value a
   biomass-weighted species value, research_notes/"Fiskgrupper i rutan"):
@@ -163,13 +164,30 @@ fabricates mass.
   driven by the Observability matrix; `Rest` doubles as a hide action. Since
   section 273 an observation pair may carry `neighbour_weight` w in [0, 1]
   (absent = 1): each neighbour input shows c + w (n - c), c the same channel
-  in the own cell (both engines, FG editor matrix; widths unchanged). w is
+  in the own cell (both engines; widths unchanged; the FG editor no longer
+  edits it since 275.8). w is
   reading B, the share of the observer's 6 h tracks that met the target in a
   neighbour (no fish or mammal sense reaches 0.5-1.5 km): 0.19-0.48 for
   diffuse targets and the own biomass, planktivores -> porpoises 0.10, fish
   -> seals and mackerel schools ~0, zooplankton 0; a soft blend is a
   learnability prior, not an information cut. research_notes/
-  Observabilitetsparen design.md.
+  Observabilitetsparen design.md. Since section 275 (design.md 5) the
+  library replaces it with the ENCOUNTER rule on every pair: the group sees
+  what it MET in the tick. Per pair and region (own cell, neighbour) a list
+  `encounter_own` / `encounter_neighbour` of [share, kappa] (kappa per tick
+  per t/km2 visible, `.inf` diffuse; own shares sum 1 = the confined frame,
+  neighbour shares sum P(enter) of the CRW; derived by
+  scripts/encounter_components.py, two path bins). One hashed uniform per
+  (tick, observer, target, region, cell): u < P(met) = sum s (1 -
+  exp(-kappa n)) shows n, u < P(entered) shows 0, else (neighbours) the
+  own-cell reading after its draw; J follows its group's draw
+  (`encounter.py`, GPU `encounter_view`, bit-identical uniforms). The loader
+  refuses a project where only some pairs carry it, and either key with
+  `neighbour_weight`. FG editor (275.8): two Encounter matrices edit the lists
+  ("share:kappa, ...", inf = diffuse); Apply refuses what the loader refuses
+  (`config_loader.missing_encounter_pairs`) and restores the library.
+  Planktivores -> porpoises stays informative (own 0.95):
+  frozen fix102 porpoises unchanged. Cost +28 % train_gpu, +57-74 % CPU tick.
 - Impacts: linear interpolation in `impact_table`, clipped to endpoints.
   `biomass_factor` is a loss per tick, `energy_factor` multiplies every
   action cost by `1 + sum`. Training: an impact with a `baseline_map`
@@ -777,7 +795,8 @@ default since section 120 and the library is calibrated for it -
 `--engine cpu|gpu` (inference.py, default gpu when CUDA is there, else
 cpu; section 238: gpu runs the rollout on
 the tensor engine as CUDA graphs, ~7x at 60x60 headless, float-noise
-equal to the CPU engine; with `--visual` the state and books are
+equal to the CPU engine (since section 275 statistically equal over long
+runs: an encounter draw flips where the float noise straddles it); with `--visual` the state and books are
 mirrored into the CPU envs each tick, and `--rnd_baseline` worlds ride
 in the same batch as zero-weight candidates; sections 234, 235),
 `--policynetwork LAYERS NODES [ACTIVATION]` (default 2 24 tanh since section

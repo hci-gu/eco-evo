@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import os
 import codecs
+import copy
 import math
 import sys
 try:
@@ -43,7 +44,17 @@ from lib.world.growth_budget import (  # noqa: E402
 # own attack rate, Holling type by diet breadth, a constant a, f = 1).
 PAIR_OPTIONAL_KEYS = ("max_intake_rate", "functional_response",
                       "mixed_layer_reference_m", "accessible_fraction",
-                      "neighbour_weight")
+                      "food_threshold", "edibility_floor",
+                      "edibility_half_saturation_umol_l")
+
+# Section 275: an observation pair's encounter components per region, edited
+# as "share:kappa, ..." on the FG Interactions tab (kappa per 6 h tick per
+# t/km2 visible, inf = a diffuse target met wherever present).
+ENCOUNTER_KEYS = ("encounter_own", "encounter_neighbour")
+
+# Section 182: a grazing pair's edible share, both keys or neither.
+EDIBILITY_KEYS = ("edibility_floor", "edibility_half_saturation_umol_l")
+
 
 # Hover help for every input field (sibling module in fgconfig/).
 _FGCONFIG_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -125,7 +136,10 @@ class FGConfigApp:
                          self.daylight_start_var, self.daylight_kd_var,
                          self.daylight_zmix_var, self.daylight_cloud_var,
                          self.temperature_enabled_var,
-                         self.temperature_groups_var):
+                         self.temperature_groups_var,
+                         self.nutrients_enabled_var,
+                         self.nutrients_sub_enabled_var,
+                         *self.nutrients_vars.values()):
                 _var.trace_add("write", lambda *_: self._mark_dirty())
             self.temperature_layers_text.bind(
                 "<<Modified>>", self._on_temperature_layers_modified)
@@ -681,6 +695,53 @@ class FGConfigApp:
         attach_help([depth_lbl, depth_zone, depth_status, depth_clear], "depth_map")
         self._update_depth_map_view()
 
+        # Nutrient pool (simulation_settings.nutrients, sections 172, 174,
+        # 180): the light-limited producers grow on a per-cell nitrate pool
+        # fed from below the mixed layer; optionally a subsurface layer with
+        # its own producer between the mixed layer and Bottom, fed from a
+        # deep reservoir. Needs the Daylight light climate (mixed layer).
+        # Adds no input channel.
+        self.nutrients_vars = {}
+        self.nutrients_enabled_var = tk.BooleanVar(value=False)
+        self.nutrients_sub_enabled_var = tk.BooleanVar(value=False)
+        nut_lbl = ttk.Label(info_frame, text="Nutrients:")
+        nut_lbl.grid(row=9, column=0, sticky="w", padx=5, pady=(4, 0))
+        nut_cb = ttk.Checkbutton(info_frame, text="on",
+                                 variable=self.nutrients_enabled_var)
+        nut_cb.grid(row=9, column=1, sticky="w", padx=(0, 8), pady=(4, 0))
+        attach_help([nut_lbl, nut_cb], "nutrients_enabled")
+        sub_lbl = ttk.Label(info_frame, text="    Subsurface layer:")
+        sub_lbl.grid(row=13, column=0, sticky="w", padx=5, pady=(4, 0))
+        sub_cb = ttk.Checkbutton(info_frame, text="on",
+                                 variable=self.nutrients_sub_enabled_var)
+        sub_cb.grid(row=13, column=1, sticky="w", padx=(0, 8), pady=(4, 0))
+        attach_help([sub_lbl, sub_cb], "nutrients_subsurface_layer")
+        sub_frame = ttk.Frame(info_frame)
+        sub_frame.grid(row=13, column=2, columnspan=3, sticky="w", pady=(4, 0))
+        for key, text, width in (("bottom_m", "Bottom (m):", 8),
+                                 ("light_attenuation_per_m", "Kd(PAR) in the layer (1/m):", 8)):
+            var = tk.StringVar(value="")
+            self.nutrients_vars[key] = var
+            lbl = ttk.Label(sub_frame, text=text)
+            lbl.pack(side="left")
+            ent = ttk.Entry(sub_frame, textvariable=var, width=width)
+            ent.pack(side="left", padx=(2, 10))
+            attach_help([lbl, ent], f"nutrients_{key}")
+        for row, key, text in (
+                (10, "surface_umol_l", "    Surface nitrate (umol/l, Jan..Dec):"),
+                (11, "sub_mixed_layer_umol_l", "    Below the mixed layer (umol/l, Jan..Dec):"),
+                (12, "exchange_m_per_day", "    Exchange (m/day, one or Jan..Dec):"),
+                (14, "reservoir_umol_l", "    Reservoir nitrate (umol/l, Jan..Dec):"),
+                (15, "reservoir_exchange_m_per_day", "    Reservoir exchange (m/day, one or Jan..Dec):")):
+            var = tk.StringVar(value="")
+            self.nutrients_vars[key] = var
+            lbl = ttk.Label(info_frame, text=text)
+            lbl.grid(row=row, column=0, columnspan=2, sticky="w", padx=5, pady=(4, 0))
+            ent = ttk.Entry(info_frame, textvariable=var)
+            ent.grid(row=row, column=2, columnspan=3, sticky="ew", padx=(0, 8),
+                     pady=(4, 0))
+            attach_help([lbl, ent], f"nutrients_{key}")
+
         # tk.Entry supports a 'background' option that ttk.Entry does not.
         # We toggle a ttk style instead.
         try:
@@ -783,8 +844,12 @@ class FGConfigApp:
         # changes, so a per-tick input always states the duration it is
         # per. "{tick}" expands to e.g. "6 h" / "7 d". Section 97.
         main_props = [
+            # Display only (viewer hover): the member species and shares.
+            ("Member species (name = share; ...; others[n] = share; empty = none)", "member_species", "entry", 0.0, 0.0),
             ("Max Energy Reserve (ME_X MJ/ton)", "max_energy_reserve", "entry", 0.0, 10000.0),
             ("Energy Content (MJ/ton)", "energy_content", "entry", 0.0, 10000.0),
+            # Section 140: a predator eats the reserve with each tonne.
+            ("  Reserve eaten with the prey: reference fill (0-1; empty = lean body only)", "reserve_reference_fill", "entry", 0.0, 1.0),
             ("Resting Metabolism (MJ/ton/{tick})", "resting_metabolism", "entry", 0.0, 1000.0),
             # Water temperature (section 143; only with the project's
             # Water temperature on): Resting Metabolism x Q10^((T - t_ref)/10).
@@ -992,6 +1057,8 @@ class FGConfigApp:
         self.ndm_prop_vars = {}
         # (label, key, type, lo, hi)
         ndm_props = [
+            # Display only (viewer hover): the member taxa and shares.
+            ("Member species (name = share; ...; others[n] = share; empty = none)", "member_species", "entry", 0.0, 0.0),
             ("Net Growth r_max (1/yr, literature; 0 = set Max Growth by hand, or derived for an open pool)", "r_max", "entry", 0.0, 100.0),
             ("Max Growth (fraction/{tick}; derived when r_max > 0)", "growth_rate", "entry", 0.0, 1.0),
             # Own losses of the producer (section 173).
@@ -3780,10 +3847,16 @@ class FGConfigApp:
         self.matrix_col_headers = {}
         self.matrix_row_headers = {}
         
+        # Section 177: non decision makers that graze (microzooplankton) are
+        # rows of the matrices their grazing reads - Predation, M2, handling
+        # time, attack rate, mixed-layer depth and the grazer-only keys.
+        grazer_fgs = self._grazer_ids(fgs, dm_ids)
+        pred_fgs = sorted(dm_fgs + grazer_fgs, key=lambda f: self.fg_display(f).lower())
+
         # FG Interactions tab. The predator's own ``max_intake_rate`` (FG
         # Editor, "Project & FGs" tab) is the default attack rate; the
         # "Attack Rate a" matrix below overrides it per pair (section 134).
-        self.create_matrix_section("Predation (row eats column)", "preys_on", dm_fgs, fgs, cell_type="bool",
+        self.create_matrix_section("Predation (row eats column)", "preys_on", pred_fgs, fgs, cell_type="bool",
                                    parent=self.matrix_container)
 
         # Literature predation mortality M2 (1/yr) of the column FG caused
@@ -3794,7 +3867,7 @@ class FGConfigApp:
         # (section 250). Cell active only if preys_on=True.
         self.create_matrix_section(
             "Predation Mortality M2 (1/yr; row's predation on column, added to column's growth unless it has Somatic production)",
-            "predation_mortality", dm_fgs, fgs, cell_type="nonneg_float",
+            "predation_mortality", pred_fgs, fgs, cell_type="nonneg_float",
             parent=self.matrix_container)
         self._build_derived_growth_panel(fgs)
 
@@ -3808,18 +3881,37 @@ class FGConfigApp:
             "Observability (row observes column)", "observes",
             dm_fgs, fgs, cell_type="bool", parent=self.matrix_container)
 
-        # Section 273: the observation pair's weight on the four neighbour
-        # cells (reading B: what the row met there while ranging). Stored on
-        # the ``_observes_`` pair; active only while Observability is checked.
+        # Section 275: the encounter components of each observation pair
+        # (what the row MET of the column in the tick, own cell and the four
+        # neighbours). Stored on the ``_observes_`` pair; active only while
+        # Observability is checked (the diagonal always).
+        own_frame = self.create_matrix_section(
+            "Encounter, own cell (row meets column: share:kappa, ...; shares sum to 1)",
+            "encounter_own", dm_fgs, fgs,
+            cell_type="encounter_list", parent=self.matrix_container)
+        self._add_matrix_note(
+            own_frame,
+            "Components 'share:kappa' separated by commas, e.g. 0.5:1.12, "
+            "0.5:56000: kappa = encounters per 6 h tick per t/km2 of the "
+            "column's visible density (the editor stores the library's 6 h "
+            "value; the loader rescales it to --tick-length), inf = a diffuse "
+            "target met wherever present. Each tick the row sees the density "
+            "with P = sum share (1 - exp(-kappa n)), else 0. Own-cell shares "
+            "sum to 1. Derived from detection radii, swim paths and target "
+            "units by research_notes/Observabilitetsparen/scripts/"
+            "encounter_components.py (write with apply_encounter.py). Once "
+            "one pair carries the rule every observed pair must, the "
+            "diagonal included; Apply refuses otherwise, as the loader does.")
         nbr_frame = self.create_matrix_section(
-            "Neighbour Weight (row's view of column in the 4 neighbours, [0, 1])",
-            "neighbour_weight", dm_fgs, fgs,
-            cell_type="number_optional", parent=self.matrix_container)
+            "Encounter, neighbours (share:kappa, ...; shares sum to P(enter))",
+            "encounter_neighbour", dm_fgs, fgs,
+            cell_type="encounter_list", parent=self.matrix_container)
         self._add_matrix_note(
             nbr_frame,
-            "Empty = 1 (the full neighbour view). Each neighbour input shows "
-            "c + w (n - c), c the own cell's value. The diagonal weights the "
-            "row's own biomass in the neighbours.")
+            "As the own cell, per neighbour: the shares sum to the share of "
+            "the row's tracks that enter it (P(enter), 0 for a row that does "
+            "not move). A neighbour not entered shows the own cell's reading. "
+            "Both matrices are given together or both left empty.")
 
         # Assimilation Factor matrix: fraktion av bytets energiinnehåll
         # som faktiskt tas upp vid predation. Värden i [0, 1], default 1.0.
@@ -3833,21 +3925,23 @@ class FGConfigApp:
         # default 0.0 (= pure Type I). Cell aktiv endast om preys_on=True.
         self.create_matrix_section(
             "Handling time (row eats column)", "handling_time",
-            dm_fgs, fgs, cell_type="nonneg_float", parent=self.matrix_container)
+            pred_fgs, fgs, cell_type="nonneg_float", parent=self.matrix_container)
 
         # Pair attack rate a (section 134; per-pair values from encounter
         # theory since section 220). Empty = the row's own Max Intake Rate.
         attack_frame = self.create_matrix_section(
             self._format_tick_label(
                 "Attack Rate a (row's max_intake_rate on column, per {tick})"),
-            "max_intake_rate", dm_fgs, fgs,
+            "max_intake_rate", pred_fgs, fgs,
             cell_type="number_optional", parent=self.matrix_container)
         self._add_matrix_note(
             attack_frame,
             "Empty cell = the row's own Max Intake Rate (FG Editor). Type II: "
             "per tonne of prey per cell, half-saturation 1/(a h). Type III: "
             "per (t/cell)^2, half-saturation 1/sqrt(a h). The library is "
-            "calibrated at a 6 h tick; other tick lengths rescale a at load.")
+            "calibrated at a 6 h tick; other tick lengths rescale a at load. "
+            "A grazing non decision maker (section 177) grazes only on pairs "
+            "with an a here (Holling II per tonne of grazer).")
 
         # Holling type per pair (section 141).
         response_frame = self.create_matrix_section(
@@ -3898,7 +3992,7 @@ class FGConfigApp:
         # Grazers feed on concentration (section 177): a(t) = a M_ref/M(t).
         mixed_frame = self.create_matrix_section(
             "Mixed-Layer Reference Depth (m; grazer pairs)",
-            "mixed_layer_reference_m", dm_fgs, fgs,
+            "mixed_layer_reference_m", pred_fgs, fgs,
             cell_type="number_optional", parent=self.matrix_container)
         self._add_matrix_note(
             mixed_frame,
@@ -3906,8 +4000,39 @@ class FGConfigApp:
             "a M_ref / M(t), M(t) the month's mixed-layer depth (a prey in "
             "the subsurface layer: M_ref / H(t), H the layer thickness), so "
             "a grazer feeds on concentration. Needs the Daylight calendar's "
-            "light climate. Grazing pairs of non decision makers "
-            "(microzooplankton) are edited in the library file.")
+            "light climate.")
+
+        if grazer_fgs:
+            # Section 177: ERSEM's food-perception threshold of a grazing
+            # non decision maker's pair.
+            food_frame = self.create_matrix_section(
+                "Food Threshold (grazer pairs: F0, t/km2 at the reference depth)",
+                "food_threshold", grazer_fgs, fgs,
+                cell_type="number_optional", parent=self.matrix_container)
+            self._add_matrix_note(
+                food_frame,
+                "Empty = none. The grazer perceives F F / (F + F0) of the prey "
+                "F, a sigmoid response at low prey that leaves it a refuge; "
+                "scaled with the mixed layer like the half-saturation.")
+            # Section 182: the edible share of a producer with a nutrient pool.
+            pool_cols = [fid for fid in fgs if (self.global_library.get(
+                "species_definitions", {}).get(fid) or {}).get(
+                    "nutrient_half_saturation") not in (None, "", 0, 0.0)]
+            if pool_cols:
+                edible_frame = self.create_matrix_section(
+                    "Edibility Floor (grazer pairs: edible share e0 at an empty pool, [0, 1])",
+                    "edibility_floor", grazer_fgs, pool_cols,
+                    cell_type="number_optional", parent=self.matrix_container)
+                self.create_matrix_section(
+                    "Edibility Half-Saturation (grazer pairs: K, umol N/l)",
+                    "edibility_half_saturation_umol_l", grazer_fgs, pool_cols,
+                    cell_type="number_optional", parent=self.matrix_container)
+                self._add_matrix_note(
+                    edible_frame,
+                    "Both or neither. The grazer sees e = e0 + (1 - e0) N/(N + K) "
+                    "of the producer, N its nutrient pool: as the pool runs dry the "
+                    "community shifts to cells the grazer cannot take. Columns: "
+                    "producers with a Nutrient Half-Saturation.")
 
         # Share of the prey within the predator's reach (section 208).
         access_frame = self.create_matrix_section(
@@ -4066,23 +4191,26 @@ class FGConfigApp:
             preys_var.trace_add("write", obs_updater)
             obs_updater()
 
-        # Section 273: a Neighbour Weight cell is active only while its pair
-        # is observed.
+        # Section 275: an encounter cell is active only while its pair is
+        # observed (the diagonal is always observed).
         for key, data in self.matrix_entries.items():
             obs_var = data.get("observes")
-            nbr_widget = self.matrix_widgets.get(key, {}).get("neighbour_weight")
-            if obs_var is None or nbr_widget is None:
+            if obs_var is None:
                 continue
-            def make_nbr_updater(var=obs_var, cell=nbr_widget):
-                def update(*_):
-                    try:
-                        cell.configure(state="normal" if var.get() else "disabled")
-                    except tk.TclError:
-                        pass
-                return update
-            nbr_updater = make_nbr_updater()
-            obs_var.trace_add("write", nbr_updater)
-            nbr_updater()
+            for enc_key in ENCOUNTER_KEYS:
+                enc_widget = self.matrix_widgets.get(key, {}).get(enc_key)
+                if enc_widget is None:
+                    continue
+                def make_enc_updater(var=obs_var, cell=enc_widget):
+                    def update(*_):
+                        try:
+                            cell.configure(state="normal" if var.get() else "disabled")
+                        except tk.TclError:
+                            pass
+                    return update
+                enc_updater = make_enc_updater()
+                obs_var.trace_add("write", enc_updater)
+                enc_updater()
 
         # Link impact_affects checkboxes to impact_table button enable-state
         for key, data in self.matrix_entries.items():
@@ -4428,11 +4556,7 @@ class FGConfigApp:
                 continue
             new = float(f"{budget.growth_rate:.6g}")
             old = spec.get("growth_rate")
-            try:
-                same = old is not None and abs(float(old) - new) < 1e-12
-            except (TypeError, ValueError):
-                same = False
-            if not same:
+            if not self._same_derived(old, new):
                 spec["growth_rate"] = new
                 changed.append(f"{fid}: {old} -> {new:.6g}")
             if fid in self.current_fg_configs and self.current_fg_configs[fid] is not spec:
@@ -4477,7 +4601,7 @@ class FGConfigApp:
                 # Unique key for storage
                 if data_key in impact_keys:
                     key = f"{row_id}_impacted_by_{col_id}"
-                elif data_key in ("observes", "neighbour_weight"):
+                elif data_key in ("observes",) + ENCOUNTER_KEYS:
                     key = f"{row_id}_observes_{col_id}"
                 else:
                     key = f"{row_id}_preys_on_{col_id}"
@@ -4494,7 +4618,8 @@ class FGConfigApp:
                 elif cell_type == "nonneg_float":
                     _default = 0.0
                 elif cell_type in ("unit_optional", "signed_optional", "pair_optional",
-                                   "number_optional", "response_optional", "depth_table"):
+                                   "number_optional", "response_optional", "depth_table",
+                                   "encounter_list"):
                     # Empty = inherit the column FG's own species-level
                     # value; do NOT materialise an explicit default here
                     # (that would silently override every prey default).
@@ -4625,6 +4750,18 @@ class FGConfigApp:
                     vcmd = (frame.register(_validate_depth), "%P")
 
                     widget = ttk.Entry(frame, textvariable=var, width=30,
+                                       validate="key", validatecommand=vcmd)
+                    widget.grid(row=i+1, column=j+1, padx=2, pady=2)
+                elif cell_type == "encounter_list":
+                    # Section 275: "share:kappa, ..." (kappa may be inf);
+                    # checked when the matrix is applied.
+                    var = tk.StringVar(value=self._encounter_text(val))
+
+                    def _validate_encounter(proposed):
+                        return all(ch in "0123456789.,:eE-+ inf" for ch in proposed)
+                    vcmd = (frame.register(_validate_encounter), "%P")
+
+                    widget = ttk.Entry(frame, textvariable=var, width=22,
                                        validate="key", validatecommand=vcmd)
                     widget.grid(row=i+1, column=j+1, padx=2, pady=2)
                 elif cell_type == "pair_optional":
@@ -4796,6 +4933,35 @@ class FGConfigApp:
 
     def _impact_unit(self, impact_id):
         return self.IMPACT_UNITS.get(impact_id, "undefined")
+
+    def _grazer_ids(self, fgs, dm_ids):
+        """Section 177: the non decision makers among ``fgs`` that graze -
+        a checked ``<id>_preys_on_`` pair or a Growth Efficiency."""
+        species = self.global_library.get("species_definitions", {}) or {}
+        inter = self.global_library.get("interaction_definitions", {}) or {}
+        out = []
+        for fid in fgs:
+            if fid in dm_ids:
+                continue
+            spec = species.get(fid) or {}
+            if spec.get("growth_efficiency") not in (None, "", 0, 0.0) or any(
+                    k.startswith(f"{fid}_preys_on_") and isinstance(d, dict)
+                    and d.get("preys_on") for k, d in inter.items()):
+                out.append(fid)
+        return out
+
+    def _missing_encounter_pairs(self):
+        """Section 275: the observation pairs the loader would refuse for a
+        missing encounter rule (config_loader.missing_encounter_pairs on the
+        project's active groups)."""
+        from lib.config.config_loader import missing_encounter_pairs
+        active = [fg.get("group_id") for cat in ("decision_makers", "non_decision_makers")
+                  for fg in self.project_data.get(cat, []) or []
+                  if isinstance(fg, dict) and not self._is_fg_muted(fg)]
+        dms = [fg.get("group_id") for fg in self.project_data.get("decision_makers", []) or []
+               if isinstance(fg, dict) and not self._is_fg_muted(fg)]
+        return missing_encounter_pairs(
+            self.global_library.get("interaction_definitions") or {}, dms, active)
 
     def _is_fg_muted(self, fg_entry):
         return bool(isinstance(fg_entry, dict) and fg_entry.get("muted"))
@@ -5022,6 +5188,18 @@ class FGConfigApp:
                     # Section 246: edge segments as "west, north:0-0.5".
                     var.set(self._entry_text(config.get(key)))
                     continue
+                if key == "member_species":
+                    var.set(self._members_text(config.get(key)))
+                    continue
+                if key == "reserve_reference_fill":
+                    # Section 140: shown only while the reserve is eaten
+                    # (prey_includes_reserve); the engine's default fill 0.5.
+                    if config.get("prey_includes_reserve", False):
+                        fill = config.get(key)
+                        var.set("0.5" if fill in (None, "") else str(fill))
+                    else:
+                        var.set("")
+                    continue
                 val = config.get(key, "")
                 if isinstance(var, tk.BooleanVar):
                     var.set(bool(val))
@@ -5056,6 +5234,9 @@ class FGConfigApp:
                     continue
                 if key == "current_response":
                     var.set(f"{self._effective_current_response(config, False):g}")
+                    continue
+                if key == "member_species":
+                    var.set(self._members_text(config.get(key)))
                     continue
                 val = config.get(key, "")
                 if isinstance(val, (list, tuple)):
@@ -5235,6 +5416,16 @@ class FGConfigApp:
     })
 
     @staticmethod
+    def _same_derived(old, new):
+        """True when a stored derived growth_rate shows as ``new`` at the
+        editor's 6 digits: the loader re-derives it, so a value written with
+        more digits is kept rather than rounded on every Apply."""
+        try:
+            return old is not None and float(f"{float(old):.6g}") == new
+        except (TypeError, ValueError):
+            return False
+
+    @staticmethod
     def _same_value(old, new):
         """True when writing ``new`` over ``old`` would change nothing.
 
@@ -5373,6 +5564,37 @@ class FGConfigApp:
                         f"Field '{key}' is not a valid number: {val!r}. "
                         "No changes were saved.")
                     return
+            elif key == "member_species":
+                members, error = self._parse_members(val)
+                if error:
+                    messagebox.showerror(
+                        "Invalid value", f"Member species: {error}. No changes were saved.")
+                    return
+                if members is None:
+                    config.pop(key, None)
+                elif not (isinstance(config.get(key), (list, tuple))
+                          and self._same_members(config[key], members)):
+                    config[key] = self._flow_members(members)
+            elif key == "reserve_reference_fill":
+                # Section 140: empty = the lean body only (no reserve eaten).
+                text = str(val or "").strip()
+                if not text:
+                    config.pop("prey_includes_reserve", None)
+                    config.pop(key, None)
+                    continue
+                try:
+                    fill = float(text)
+                except ValueError:
+                    fill = float("nan")
+                if not 0.0 <= fill <= 1.0:
+                    messagebox.showerror(
+                        "Invalid value",
+                        "Reserve eaten with the prey: a reference fill in [0, 1], "
+                        "or empty for the lean body only. No changes were saved.")
+                    return
+                config["prey_includes_reserve"] = True
+                if not self._same_value(config.get(key), fill):
+                    config[key] = fill
             elif key == "appetite":
                 # Section 240: 'gate' is the default and is not written.
                 form = str(val or "").strip().lower()
@@ -5488,6 +5710,12 @@ class FGConfigApp:
                 config[key] = values
             else:
                 raw_val = val
+                if (raw_val in (None, "") and key != "current_response"
+                        and (not isinstance(existing, dict) or existing.get(key) is None)):
+                    # An empty field on a key the library leaves unset keeps
+                    # it unset: 0.0 would replace the engine's own default
+                    # (an open pool had max_carrying_capacity 0.0 written).
+                    continue
                 if raw_val in (None, ""):
                     # Empty field → treat as 0.0 (legacy behaviour for
                     # optional numeric fields), but External Forces has a
@@ -5506,6 +5734,11 @@ class FGConfigApp:
                             "No changes were saved.",
                         )
                         return
+                # The field shows growth_rate at 6 digits; an untouched field
+                # keeps the stored value instead of rounding it.
+                if (key == "growth_rate" and isinstance(existing, dict)
+                        and self._same_derived(existing.get(key), config[key])):
+                    config[key] = existing[key]
                 # Clamp movement_speed to a physical maximum of 1.0 cell/tick
                 if key == "movement_speed":
                     if config[key] > 1.0:
@@ -5636,8 +5869,10 @@ class FGConfigApp:
                     (budget.describe() if budget is not None else fg_id)
                     + "\n\nNo changes were saved.")
                 return
-            config["growth_rate"] = float(f"{budget.growth_rate:.6g}")
-            prop_vars["growth_rate"].set(f"{config['growth_rate']:.6g}")
+            new_g = float(f"{budget.growth_rate:.6g}")
+            if not self._same_derived(config.get("growth_rate"), new_g):
+                config["growth_rate"] = new_g
+            prop_vars["growth_rate"].set(f"{new_g:.6g}")
             if open_pool_on and not is_dm:
                 from lib.environments.ecosystem_env import open_pool
                 error = open_pool.stability_error(
@@ -5929,6 +6164,9 @@ class FGConfigApp:
                 target.pop(key, None)
         if is_dm and "start_fill" not in config:
             target.pop("start_fill", None)              # section 247: emptied
+        for key in ("member_species", "prey_includes_reserve", "reserve_reference_fill"):
+            if key not in config:
+                target.pop(key, None)                   # emptied fields
         if refuge_off:
             target.pop("exposed_share", None)
             target.pop("refuge_exchange_rate", None)
@@ -6016,6 +6254,99 @@ class FGConfigApp:
         if not staged and values[1] <= 0.0:
             return None, "the share must be above 0"
         return values, None
+
+    @staticmethod
+    def _members_text(members):
+        """``member_species`` as 'name = share; ...; others[n] = share'
+        (names may hold commas, so ';' separates the entries)."""
+        parts = []
+        for m in members or ():
+            if not isinstance(m, dict):
+                m = {"name": m}
+            text = str(m.get("name", "")).strip()
+            if m.get("count") is not None:
+                text += f"[{int(m['count'])}]"
+            if m.get("share") is not None:
+                text += f" = {float(m['share'])!r}"
+            parts.append(text)
+        return "; ".join(parts)
+
+    @staticmethod
+    def _parse_members(text):
+        """``(members, error)`` of the Member species field: a list of
+        {name[, count][, share]}, ``(None, None)`` when empty. Shares are
+        fractions of the group's biomass in [0, 1], at most 1 in all (1 %
+        rounding allowed)."""
+        text = str(text or "").strip()
+        if not text:
+            return None, None
+        members, total = [], 0.0
+        for item in text.split(";"):
+            item = item.strip()
+            if not item:
+                continue
+            name, sep, share = item.partition("=")
+            name = name.strip()
+            entry = {}
+            if name.endswith("]") and "[" in name:
+                name, _, count = name[:-1].rpartition("[")
+                name = name.strip()
+                try:
+                    entry_count = int(count)
+                except ValueError:
+                    return None, f"'{item}': the count in [n] is a whole number"
+                if entry_count < 1:
+                    return None, f"'{item}': the count in [n] is at least 1"
+            else:
+                entry_count = None
+            if not name:
+                return None, f"'{item}' has no name"
+            entry["name"] = name
+            if entry_count is not None:
+                entry["count"] = entry_count
+            if sep:
+                try:
+                    value = float(share)
+                except ValueError:
+                    return None, f"'{item}': the share is not a number"
+                if not 0.0 <= value <= 1.0:
+                    return None, f"'{item}': the share is a fraction in [0, 1]"
+                entry["share"] = value
+                total += value
+            members.append(entry)
+        if total > 1.01:
+            return None, f"the shares sum to {total:.3g} > 1"
+        return members, None
+
+    @staticmethod
+    def _same_members(old, new):
+        """True when two member lists say the same."""
+        if len(old) != len(new):
+            return False
+        for o, n in zip(old, new):
+            o = o if isinstance(o, dict) else {"name": o}
+            if str(o.get("name", "")).strip() != n["name"]:
+                return False
+            for k in ("count", "share"):
+                if (o.get(k) is None) != (n.get(k) is None):
+                    return False
+                if o.get(k) is not None and float(o[k]) != float(n[k]):
+                    return False
+        return True
+
+    @staticmethod
+    def _flow_members(members):
+        """The library's one-line style per member, {name: ..., share: ...}."""
+        try:
+            from ruamel.yaml.comments import CommentedMap, CommentedSeq
+        except ImportError:
+            return members
+        seq = CommentedSeq()
+        for m in members:
+            item = CommentedMap(m)
+            item.fa.set_flow_style()
+            seq.append(item)
+        return seq
 
     @staticmethod
     def _entry_text(rows):
@@ -6108,17 +6439,94 @@ class FGConfigApp:
             return None, ">= 0 (empty = the predator's own Max Intake Rate)"
         if data_key == "accessible_fraction" and not 0.0 < value <= 1.0:
             return None, "in (0, 1] (empty = 1)"
-        if data_key == "neighbour_weight" and not 0.0 <= value <= 1.0:
-            return None, "in [0, 1] (empty = 1)"
         if data_key == "mixed_layer_reference_m" and value <= 0.0:
             return None, "> 0 m (empty = a constant attack rate)"
+        if data_key == "food_threshold" and value < 0.0:
+            return None, ">= 0 t/km2 (empty = none)"
+        if data_key == "edibility_floor" and not 0.0 <= value <= 1.0:
+            return None, "in [0, 1] (empty = no edibility term)"
+        if data_key == "edibility_half_saturation_umol_l" and value <= 0.0:
+            return None, "> 0 umol/l (empty = no edibility term)"
         return value, None
+
+    @staticmethod
+    def _encounter_text(value):
+        """Section 275: a component list [[share, kappa], ...] as
+        'share:kappa, ...' (inf for a diffuse target); '' when absent. The
+        numbers round-trip exactly, so an untouched cell is not rewritten."""
+        if not isinstance(value, (list, tuple)):
+            return ""
+        parts = []
+        for item in value:
+            try:
+                s, k = float(item[0]), float(item[1])
+            except (TypeError, ValueError, IndexError):
+                return ""
+            parts.append(f"{s!r}:{'inf' if math.isinf(k) else repr(k)}")
+        return ", ".join(parts)
+
+    @staticmethod
+    def _parse_encounter(data_key, text):
+        """``(components, error)`` of an encounter cell: a list of
+        [share, kappa], ``(None, None)`` for an empty cell, or
+        ``(None, message)``. Checked with the runtime's parser; the own
+        cell's shares must sum to 1 (lib/config/config_loader.py)."""
+        from lib.environments.ecosystem_env import encounter
+        text = str(text or "").strip()
+        if not text:
+            return None, None
+        rows = []
+        for item in text.split(","):
+            item = item.strip()
+            if not item:
+                continue
+            parts = item.split(":")
+            try:
+                if len(parts) != 2:
+                    raise ValueError
+                rows.append([float(parts[0]), float(parts[1])])
+            except ValueError:
+                return None, f"'{item}' is not share:kappa"
+        try:
+            shares, _ = encounter.parse_components(rows, data_key)
+        except ValueError as exc:
+            return None, str(exc)
+        if data_key == "encounter_own" and abs(sum(shares) - 1.0) > 1e-6:
+            return None, (f"the own cell is always entered, the shares must sum "
+                          f"to 1 (got {sum(shares):.6g})")
+        return rows, None
+
+    @staticmethod
+    def _same_components(old, new):
+        """True when two component lists hold the same numbers."""
+        if not isinstance(old, (list, tuple)) or len(old) != len(new):
+            return False
+        try:
+            return all(len(o) == 2 and float(o[0]) == n[0] and float(o[1]) == n[1]
+                       for o, n in zip(old, new))
+        except (TypeError, ValueError):
+            return False
+
+    @staticmethod
+    def _flow_components(rows):
+        """The library's flow style for a new component list."""
+        try:
+            from ruamel.yaml.comments import CommentedSeq
+        except ImportError:
+            return rows
+        seq = CommentedSeq([CommentedSeq(r) for r in rows])
+        seq.fa.set_flow_style()
+        for item in seq:
+            item.fa.set_flow_style()
+        return seq
 
     def apply_matrix_changes(self):
         if "interaction_definitions" not in self.global_library:
             self.global_library["interaction_definitions"] = {}
         stage_errors = []
         pair_errors = []
+        # Section 275: restored if the result would be refused by the loader.
+        before = copy.deepcopy(self.global_library["interaction_definitions"])
 
         for key, data in self.matrix_entries.items():
             if key not in self.global_library["interaction_definitions"]:
@@ -6128,11 +6536,43 @@ class FGConfigApp:
             stage_text = str(stage_var.get() if stage_var is not None else "").strip()
             for data_key, var in data.items():
                 entry = self.global_library["interaction_definitions"][key]
+                if data_key == "encounter_own":
+                    # Section 275: both regions together or neither.
+                    parsed, errors = {}, []
+                    for enc_key in ENCOUNTER_KEYS:
+                        enc_var = data.get(enc_key)
+                        rows, error = self._parse_encounter(
+                            enc_key, enc_var.get() if enc_var is not None else "")
+                        if error:
+                            errors.append(f"{enc_key}: {error}")
+                        parsed[enc_key] = rows
+                    if not errors and (parsed["encounter_own"] is None) != (
+                            parsed["encounter_neighbour"] is None):
+                        errors.append("encounter_own and encounter_neighbour go together")
+                    if errors:
+                        pair_errors.extend(f"{key}: {e}" for e in errors)
+                        continue
+                    for enc_key, rows in parsed.items():
+                        if rows is None:
+                            entry.pop(enc_key, None)
+                        elif not self._same_components(entry.get(enc_key), rows):
+                            entry[enc_key] = self._flow_components(rows)
+                    continue
+                if data_key == "encounter_neighbour":
+                    continue
                 if data_key in PAIR_OPTIONAL_KEYS:
                     value, error = self._parse_pair_value(data_key, var.get())
                     if (error is None and data_key == "accessible_fraction"
                             and value is not None and stage_text):
                         error = "the pair has a Stage Access; give either it or an accessible fraction"
+                    if error is None and data_key in EDIBILITY_KEYS:
+                        # Section 182: the floor and K go together.
+                        other = EDIBILITY_KEYS[1 - EDIBILITY_KEYS.index(data_key)]
+                        other_var = data.get(other)
+                        other_set = bool(str(other_var.get() if other_var is not None
+                                             else entry.get(other) or "").strip())
+                        if (value is not None) != other_set:
+                            error = "edibility_floor and edibility_half_saturation_umol_l go together"
                     if error:
                         pair_errors.append(f"{key}: {data_key}: {error}")
                     elif value is None:
@@ -6206,6 +6646,20 @@ class FGConfigApp:
                 }
                 for row in table
             ]
+
+        missing = self._missing_encounter_pairs()
+        if missing:
+            self.global_library["interaction_definitions"] = before
+            messagebox.showerror(
+                "Encounter observation incomplete",
+                "The encounter observation (section 275) applies to every "
+                "observation pair once one carries it, the diagonal included; "
+                "the loader would refuse this library. Fill both Encounter "
+                "matrices on (derive with research_notes/Observabilitetsparen/"
+                "scripts/encounter_components.py):\n  "
+                + "\n  ".join(missing)
+                + "\n\nNothing was saved.")
+            return
 
         changed = self._sync_derived_growth_rates()
         self.save_yaml(self.global_library, self.library_path)
@@ -6759,6 +7213,8 @@ class FGConfigApp:
                              if isinstance(_vals, (list, tuple)) else "")
             if hasattr(self, 'temperature_enabled_var'):
                 self._load_temperature_settings()
+            if hasattr(self, 'nutrients_enabled_var'):
+                self._load_nutrient_settings()
             self._update_depth_map_view()
             # Tick length. Out-of-range / missing falls back to the
             # historical 6 h, so projects predating the field load
@@ -6901,6 +7357,117 @@ class FGConfigApp:
         self.project_data["simulation_settings"] = sim
         return True
 
+    # Section 172: the keys of simulation_settings.nutrients the header
+    # edits; (key, monthly-only) - the others take one number or 12.
+    NUTRIENT_SERIES = (("surface_umol_l", True), ("sub_mixed_layer_umol_l", True),
+                       ("exchange_m_per_day", False))
+    SUBSURFACE_SERIES = (("reservoir_umol_l", True),
+                         ("reservoir_exchange_m_per_day", False))
+
+    @staticmethod
+    def _series_text(value):
+        if isinstance(value, (list, tuple)):
+            return ", ".join(f"{v:g}" if isinstance(v, (int, float)) else str(v)
+                             for v in value)
+        return "" if value is None else (f"{value:g}" if isinstance(value, (int, float))
+                                         else str(value))
+
+    def _load_nutrient_settings(self):
+        """Fill the header's Nutrients fields from the project."""
+        sim = self.project_data.get("simulation_settings") or {}
+        block = sim.get("nutrients") if isinstance(sim, dict) else None
+        block = block if isinstance(block, dict) else {}
+        self.nutrients_enabled_var.set(bool(block.get("enabled", False)))
+        for key, _monthly in self.NUTRIENT_SERIES:
+            self.nutrients_vars[key].set(self._series_text(block.get(key)))
+        sub = block.get("subsurface_layer")
+        sub = sub if isinstance(sub, dict) else {}
+        self.nutrients_sub_enabled_var.set(bool(sub) and bool(sub.get("enabled", True)))
+        for key in ("bottom_m", "light_attenuation_per_m"):
+            self.nutrients_vars[key].set(self._series_text(sub.get(key)))
+        for key, _monthly in self.SUBSURFACE_SERIES:
+            self.nutrients_vars[key].set(self._series_text(sub.get(key)))
+
+    @staticmethod
+    def _parse_series(text, what, monthly):
+        """One number or 12 (``monthly``: exactly 12), or None when empty."""
+        text = str(text or "").strip()
+        if not text:
+            return None
+        try:
+            values = [float(v) for v in text.replace(";", ",").split(",") if v.strip()]
+        except ValueError:
+            raise ValueError(f"{what}: numbers separated by commas")
+        if len(values) == 1 and not monthly:
+            return values[0]
+        if len(values) != 12:
+            raise ValueError(f"{what}: " + ("12 monthly values (Jan..Dec)" if monthly
+                                            else "one number or 12 monthly values"))
+        return values
+
+    def _nutrient_block(self):
+        """(block, keep) from the header's Nutrients fields: the
+        simulation_settings.nutrients mapping, and whether to write one at
+        all (a project that never had the block and leaves it empty gets
+        none). Raises ValueError on a malformed field."""
+        sim = self.project_data.get("simulation_settings") or {}
+        enabled = bool(self.nutrients_enabled_var.get())
+        block = {"enabled": enabled}
+        for key, monthly in self.NUTRIENT_SERIES:
+            value = self._parse_series(self.nutrients_vars[key].get(), key, monthly)
+            if value is not None:
+                block[key] = value
+        sub = {}
+        for key in ("bottom_m", "light_attenuation_per_m"):
+            value = self._parse_series(self.nutrients_vars[key].get(),
+                                       f"subsurface_layer {key}", False)
+            if isinstance(value, list):
+                raise ValueError(f"subsurface_layer {key}: one number")
+            if value is not None:
+                sub[key] = value
+        for key, monthly in self.SUBSURFACE_SERIES:
+            value = self._parse_series(self.nutrients_vars[key].get(),
+                                       f"subsurface_layer {key}", monthly)
+            if value is not None:
+                sub[key] = value
+        sub_on = bool(self.nutrients_sub_enabled_var.get())
+        if sub or sub_on:
+            if not sub_on:
+                sub["enabled"] = False
+            block["subsurface_layer"] = sub
+        keep = (enabled or len(block) > 1
+                or isinstance(sim, dict) and "nutrients" in sim)
+        return block, keep
+
+    def _store_nutrient_settings(self):
+        """Write the header's Nutrients fields into simulation_settings.
+
+        Validated with the loader's own parser (section 172), together
+        with the Daylight block whose light climate it needs.
+        """
+        from lib.world import nutrients
+        if not hasattr(self, "nutrients_enabled_var"):
+            return True
+        sim = self.project_data.get("simulation_settings")
+        if not isinstance(sim, dict):
+            sim = {}
+        try:
+            block, keep = self._nutrient_block()
+            if block["enabled"]:
+                nutrients.parse_settings({"simulation_settings": dict(sim, nutrients=block)})
+        except ValueError as exc:
+            messagebox.showerror("Nutrients", str(exc))
+            return False
+        if not keep:
+            return True
+        if isinstance(sim.get("nutrients"), dict):
+            # In place, so the comments in the manifest's block survive.
+            self._update_mapping(sim["nutrients"], block)
+        else:
+            sim["nutrients"] = block
+        self.project_data["simulation_settings"] = sim
+        return True
+
     def _store_daylight_settings(self):
         """Write the header's Daylight fields into simulation_settings.
 
@@ -6998,6 +7565,8 @@ class FGConfigApp:
             if not self._store_daylight_settings():
                 return False
             if not self._store_temperature_settings():
+                return False
+            if not self._store_nutrient_settings():
                 return False
             self.save_yaml(self.project_data, self.project_path)
             self.add_to_recent(self.project_path)

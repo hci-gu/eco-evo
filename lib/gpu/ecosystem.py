@@ -9,9 +9,11 @@ import math
 
 import numpy as np
 import torch
+from lib.environments.ecosystem_env import encounter
 from lib.environments.ecosystem_env.constants import MAX_HARVEST_FRAC
 from lib.environments.ecosystem_env.currents import direction_fractions
 from lib.environments.ecosystem_env.impacts import extract_impact_table, interp_impact
+from lib.gpu.random import fold_in, uniform_bits_i32
 from lib.world import nutrients
 from lib.world.energy_balance import tonne_price
 
@@ -652,6 +654,7 @@ class TensorEcosystem:
             self.obs_centre = self.tensor(obs_centre, torch.long)
             self.obs_weight = self.tensor(obs_weight)
             self.obs_blend_mask = self.tensor(obs_weight < 1.0, torch.bool)
+        self._build_encounter(env)
 
         # Match the reference's edge tie order, including NumPy's argsort
         # behavior. This is immutable metadata, computed only once.
@@ -663,6 +666,125 @@ class TensorEcosystem:
         self.edge_weights = self.tensor(edge_weights[edge_indices])
         self.edge_cumsum = self.edge_weights.cumsum(0)
         self.edge_ranks = torch.arange(1, len(edge_indices) + 1, device=self.device)
+
+    def _build_encounter(self, env):
+        """Section 275: the encounter draws in the compact layout.
+
+        One draw per (observer d, drawing channel s, region r): read at the
+        slot holding the channel's density in that region, keyed by the
+        counter ((d G + j) 5 + r) C + cell (``encounter``). Every slot then
+        follows a draw (``enc_follow``: its channel's source in its region,
+        -1 = none, shown as read), and a neighbour slot not entered falls back
+        to its channel's own-cell slot (``enc_fallback``)."""
+        self.encounter_on = bool(getattr(env, "_has_encounter", False))
+        if not self.encounter_on:
+            return
+        n_imp = self.n_obs_imp
+        follow = np.full((self.D, self.F), -1, dtype=np.int64)
+        fallback = np.tile(np.arange(self.F, dtype=np.int64), (self.D, 1))
+        draws = []
+        slot_draw = []          # (d, slot, draw key) to resolve after ordering
+        for d in range(self.D):
+            enc = env.obs_encounter[d]
+            n_ch = len(enc["targets"])
+            centre_len = 2 + (n_ch - 1) + n_imp
+            nbr_len = n_ch + n_imp
+
+            def slot(k, r):
+                if r == 0:
+                    return 0 if k == 0 else 1 + k
+                return centre_len + (r - 1) * nbr_len + k
+
+            kind = {}
+            for s, comp in enumerate(enc["components"]):
+                if comp is None:
+                    continue
+                for r in range(encounter.REGIONS):
+                    if r == 0 and s == 0:
+                        continue
+                    sh, ka = comp["own" if r == 0 else "neighbour"]
+                    entered = encounter.entered_share(sh)
+                    finite = [(x, k) for x, k in zip(sh, ka) if not np.isinf(k)]
+                    if r == 0 and not finite:
+                        continue        # diffuse in the own cell: shown as read
+                    if entered == 0.0:
+                        kind[(s, r)] = "away"      # never there: the own reading
+                        continue
+                    kind[(s, r)] = ("draw", len(draws))
+                    draws.append({"d": d, "f": slot(s, r), "finite": finite,
+                                  "diffuse": encounter.diffuse_share(sh, ka),
+                                  "entered": entered,
+                                  "base": encounter.counter_base(
+                                      d, enc["targets"][s], r, self.G, self.C)})
+            for k in range(n_ch):
+                for r in range(encounter.REGIONS):
+                    how = kind.get((enc["source"][k], r))
+                    if how is None:
+                        continue
+                    slot_draw.append((d, slot(k, r), how))
+                    if r > 0:
+                        fallback[d, slot(k, r)] = slot(k, 0)
+        # Order the draws by their number of finite components so the
+        # component loop runs over slices of equal width.
+        order = sorted(range(len(draws)), key=lambda i: len(draws[i]["finite"]))
+        position = {old: new for new, old in enumerate(order)}
+        draws = [draws[i] for i in order]
+        P = len(draws)
+        for d, f, how in slot_draw:
+            follow[d, f] = P + 1 if how == "away" else position[how[1]]
+        follow[follow < 0] = P          # shown as read
+        self.enc_P = P
+        self.enc_groups = []
+        start = 0
+        while start < P:
+            width = len(draws[start]["finite"])
+            end = start
+            while end < P and len(draws[end]["finite"]) == width:
+                end += 1
+            if width:
+                share = np.array([[x for x, _ in dr["finite"]] for dr in draws[start:end]], np.float32)
+                kappa = np.array([[k for _, k in dr["finite"]] for dr in draws[start:end]], np.float32)
+                self.enc_groups.append((start, end, self.tensor(share[None, :, None, :]),
+                                        self.tensor(kappa[None, :, None, :])))
+            start = end
+        self.enc_draw_d = self.tensor([dr["d"] for dr in draws], torch.long)
+        self.enc_draw_f = self.tensor([dr["f"] for dr in draws], torch.long)
+        counters = (np.asarray([dr["base"] for dr in draws], dtype=np.int64)[:, None]
+                    + np.arange(self.C, dtype=np.int64)[None])
+        # The per-cell half of the hash is fixed: computed once (int32 bits).
+        self.enc_cell_hash = self.tensor(
+            encounter.hash32(counters.reshape(-1) + 1).astype(np.uint32).view(np.int32)
+            .reshape(counters.shape), torch.int32)
+        self.enc_diffuse = self.tensor(np.asarray([dr["diffuse"] for dr in draws],
+                                                  np.float32)[None, :, None])
+        self.enc_entered = self.tensor(np.asarray([dr["entered"] for dr in draws],
+                                                  np.float32)[None, :, None])
+        self.enc_follow = self.tensor(follow, torch.long)
+        self.enc_fallback = self.tensor(fallback, torch.long)
+
+    def encounter_view(self, raw, keys, tick):
+        """Apply the encounter rule to the raw compact observation [E, D, C, F]."""
+        E = raw.shape[0]
+        density = raw.permute(0, 1, 3, 2)[:, self.enc_draw_d, self.enc_draw_f]   # [E, P, C]
+        key = fold_in(fold_in(keys, tick), encounter.STREAM).to(torch.int32)
+        u = uniform_bits_i32(key[:, None, None] ^ self.enc_cell_hash[None])
+        p = self.enc_diffuse * (density > 0).to(density.dtype)
+        for start, end, share, kappa in self.enc_groups:
+            n = density[:, start:end, :, None]
+            part = p[:, start:end]
+            for k in range(share.shape[-1]):
+                part = part + share[..., k] * -torch.expm1(-kappa[..., k] * n[..., 0])
+            p[:, start:end] = part
+        p = torch.minimum(p, self.enc_entered)
+        # 0 met, 1 entered and met nothing, 2 never there; two constant rows
+        # for slots shown as read (0) and never entered (2).
+        code = (u >= p).to(torch.uint8) + (u >= self.enc_entered).to(torch.uint8)
+        code = torch.cat((code, torch.zeros((E, 1, self.C), dtype=torch.uint8, device=raw.device),
+                          torch.full((E, 1, self.C), 2, dtype=torch.uint8, device=raw.device)), 1)
+        code = code[:, self.enc_follow].permute(0, 1, 3, 2)                       # [E, D, C, F]
+        seen = raw * (code == 0).to(raw.dtype)
+        back = torch.gather(seen, 3, self.enc_fallback[None, :, None, :].expand_as(seen))
+        return torch.where(code == 2, back, seen)
 
     def import_state(self, environments):
         """Explicit host boundary for reference fixtures or initial uploads."""
@@ -795,12 +917,14 @@ class TensorEcosystem:
         return torch.remainder(light_start + tick, self.light_period)
 
     def observations(self, biomass, reserve, hidden, light_index=None,
-                     impact_obs=None, juvenile=None):
+                     impact_obs=None, juvenile=None, tick=None, keys=None):
         """Compact per-DM observations [E, D, C, F].
 
         ``impact_obs`` [E, n_obs_imp, C] holds the observable impact fields
         (``impact_observations``); None reads them as zero, as the
-        reference does for a missing map.
+        reference does for a missing map. With the encounter observation
+        (section 275) ``tick`` is required and ``keys`` [E] are the worlds'
+        keys (default: the reference env's ``current_world_seed``).
         """
         if self.pair_visibility is None:
             visible = biomass * (1.0 - hidden * (1.0 - self.visibility))
@@ -856,6 +980,13 @@ class TensorEcosystem:
             centre = bank[:, self.obs_centre]
             raw = torch.where(self.obs_blend_mask,
                               centre + self.obs_weight * (raw - centre), raw)
+        if self.encounter_on:
+            if tick is None:
+                raise ValueError("tick is required with the encounter observation")
+            if keys is None:
+                keys = torch.full((raw.shape[0],), int(self.current_world_seed),
+                                  dtype=torch.int64, device=self.device)
+            raw = self.encounter_view(raw, keys, tick)
         return raw * self.obs_valid
 
     def action_mask(self, biomass):

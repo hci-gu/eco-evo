@@ -23,7 +23,8 @@ MATRIX_KEYS = (
     "handling_time", "visibility_floor", "dark_ratio", "light_threshold_deg",
     "impact_affects", "impact_table", "stage_access", "max_intake_rate",
     "functional_response", "mixed_layer_reference_m", "accessible_fraction",
-    "neighbour_weight",
+    "encounter_own", "encounter_neighbour", "food_threshold",
+    "edibility_floor", "edibility_half_saturation_umol_l",
 )
 
 FIXED_KEYS = (
@@ -31,6 +32,11 @@ FIXED_KEYS = (
     "daylight_start_day", "light_climate", "daylight_kd",
     "daylight_mixed_layer", "daylight_cloud", "temperature_enabled",
     "temperature_group_layers", "temperature_layers",
+    "nutrients_enabled", "nutrients_surface_umol_l",
+    "nutrients_sub_mixed_layer_umol_l", "nutrients_exchange_m_per_day",
+    "nutrients_subsurface_layer", "nutrients_bottom_m",
+    "nutrients_light_attenuation_per_m", "nutrients_reservoir_umol_l",
+    "nutrients_reservoir_exchange_m_per_day",
     "impact_value_range", "impact_observable",
     "spawn_mode", "impact_spawn_mode", "spawn_templates", "spawn_refs",
     "spawn_ref_name", "spawn_ref_weight", "spawn_ref_transform",
@@ -73,7 +79,7 @@ def bound_keys():
         app.project_data["decision_makers"] = [
             {"group_id": "zooplankton"}, {"group_id": "planktivorous_fish"}]
         app.project_data["non_decision_makers"] = [
-            {"group_id": "phytoplankton"}]
+            {"group_id": "phytoplankton"}, {"group_id": "microzooplankton"}]
         app.project_data["impact_variables"] = [
             {"impact_id": "windfarm_noise"}]
         app.refresh_matrix()

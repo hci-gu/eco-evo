@@ -54,7 +54,8 @@ def rollout(trainer, runner, world, ticks, H, W):
     counted = 0
     for tick in range(ticks):
         obs = m.observations(runner.biomass, runner.reserve, runner.hidden,
-                             m.light_index(runner.light_start, runner.tick))
+                             m.light_index(runner.light_start, runner.tick),
+                             tick=runner.tick, keys=runner.keys)
         if runner.normalize:
             obs = ((obs - runner.obs_mean[None, :, None]) /
                    runner.obs_var.clamp_min(1e-2).sqrt()[None, :, None]).clamp(-10, 10)

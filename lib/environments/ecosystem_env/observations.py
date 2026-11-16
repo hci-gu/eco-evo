@@ -1,6 +1,6 @@
 import numpy as np
 
-from lib.environments.ecosystem_env import impacts, interactions, refuge
+from lib.environments.ecosystem_env import encounter, impacts, interactions, refuge
 from lib.environments.ecosystem_env.constants import DIRECTIONS
 
 
@@ -15,6 +15,53 @@ def shift_field(field, direction):
     elif direction == "W":
         out[:, 1:] = field[:, :-1]
     return out
+
+
+def _encounter_view(env, i, enc, channels, inside):
+    """Section 275: the own-cell and neighbour readings of DM ``i``'s
+    [B_own, observed others, J] channels under the encounter rule.
+
+    Returns (seen, neighbour): seen[k] the own-cell reading of channel k,
+    neighbour[q][k] its reading in direction q (0 off the grid)."""
+    plans = getattr(env, "_encounter_plans", None)
+    if plans is None:
+        plans = env._encounter_plans = {}
+    plan = plans.get(i)
+    if plan is None:
+        plan = plans[i] = encounter.build_plan(
+            enc, i, len(env.global_fg_order), (env.H, env.W))
+    key = encounter.tick_key(int(getattr(env, "current_world_seed", 0) or 0),
+                             int(env.tick_count))
+    shifted = [[shift_field(f, d) for f in channels] for d in DIRECTIONS]
+    densities = (np.stack([channels[s] if r == 0 else shifted[r - 1][s]
+                           for s, r in plan["draws"]]).astype(np.float32, copy=False)
+                 if plan["draws"] else None)
+    met_all, entered_all = encounter.plan_outcomes(plan, key, densities)
+    false = np.zeros((env.H, env.W), dtype=bool)
+    draws = {}
+    for key_sr, how in plan["kind"].items():
+        if how == "away":
+            draws[key_sr] = (false, false)
+        else:
+            draws[key_sr] = (met_all[how[1]], entered_all[how[1]])
+    zero = np.float32(0.0)
+    seen = []
+    for k, field in enumerate(channels):
+        d = draws.get((enc["source"][k], 0))
+        seen.append(field if d is None else np.where(d[0], field, zero))
+    neighbour = []
+    for q, direction in enumerate(DIRECTIONS):
+        row = []
+        for k in range(len(channels)):
+            n = shifted[q][k]
+            d = draws.get((enc["source"][k], q + 1))
+            if d is not None:
+                met, entered = d
+                n = inside[direction] * np.where(
+                    met, n, np.where(entered, zero, seen[k]))
+            row.append(n.astype(env.dtype, copy=False))
+        neighbour.append(row)
+    return seen, neighbour
 
 
 def build_observation_batch(env):
@@ -57,7 +104,8 @@ def build_observation_batch(env):
     # Section 273: in-grid mask per direction for the neighbour blend.
     inside = ({d: shift_field(np.ones((H, W), dtype=env.dtype), d)
                for d in DIRECTIONS}
-              if getattr(env, "_has_nbr_w", False) else None)
+              if (getattr(env, "_has_nbr_w", False)
+                  or getattr(env, "_has_encounter", False)) else None)
 
     max_dim = int(env.max_in_dim)
     light = (interactions.light_level(env) if env._has_daylight
@@ -114,10 +162,24 @@ def build_observation_batch(env):
         for k, layer in enumerate(impact_layers):
             obs[i, 2 + n_other + k] = layer
 
+        channels = [own_biomass] + [observed_biomass[k] for k in range(n_other)]
+        enc = env.obs_encounter[i] if getattr(env, "_has_encounter", False) else None
+        if enc is not None:
+            # Section 275: what the group met (encounter.py).
+            seen, neighbour = _encounter_view(env, i, enc, channels, inside)
+            if n_other > 0:
+                obs[i, 2:2 + n_other] = np.stack(seen[1:])
+            for direction_index in range(len(DIRECTIONS)):
+                base = center_dim + direction_index * neighbor_dim
+                for k in range(len(channels)):
+                    obs[i, base + k] = neighbour[direction_index][k]
+                for k, layer_shift in enumerate(impact_shifts[DIRECTIONS[direction_index]]):
+                    obs[i, base + 1 + n_other + k] = layer_shift
+            channels = None
+
         nbr_w = env.obs_nbr_w[i] if getattr(env, "_has_nbr_w", False) else None
-        for direction_index, direction in enumerate(DIRECTIONS):
+        for direction_index, direction in enumerate(DIRECTIONS if channels is not None else ()):
             base = center_dim + direction_index * neighbor_dim
-            channels = [own_biomass] + [observed_biomass[k] for k in range(n_other)]
             for k, field in enumerate(channels):
                 shifted = shift_field(field, direction)
                 if nbr_w is not None and nbr_w[k] < 1.0:

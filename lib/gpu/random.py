@@ -31,6 +31,38 @@ def uniform(keys, shape, stream=0, dtype=torch.float32):
     return result.reshape(keys.numel(), *shape)
 
 
+def uniform_at(keys, counters):
+    """Uniforms at explicit integer ``counters`` under per-row ``keys``.
+
+    ``keys`` [E] (already folded with tick and stream), ``counters`` any
+    int64 shape; returns [E, *counters.shape] in float32, bit-identical to
+    ``lib.environments.ecosystem_env.encounter.uniform_at`` (section 275).
+    """
+    bits = hash32(keys.reshape(-1, *([1] * counters.dim())) ^ hash32(counters + 1)[None])
+    return ((bits >> 9).to(torch.float32) + 0.5) * (1.0 / 8388608.0)
+
+
+_C2_I32 = 0x846CA68B - (1 << 32)      # the second constant as a signed int32
+
+
+def hash32_i32(x):
+    """``hash32`` on int32 tensors (half the memory traffic): the multiplies
+    wrap modulo 2^32 and each right shift is masked to a logical shift, so
+    the bits equal ``hash32`` of the same 32-bit value."""
+    x = x ^ ((x >> 16) & 0xFFFF)
+    x = x * 0x7FEB352D
+    x = x ^ ((x >> 15) & 0x1FFFF)
+    x = x * _C2_I32
+    return x ^ ((x >> 16) & 0xFFFF)
+
+
+def uniform_bits_i32(x):
+    """Uniforms in (0, 1) from int32 ``x`` = key ^ hash32(counter + 1), as
+    ``uniform_at`` builds them (section 275)."""
+    bits = hash32_i32(x)
+    return (((bits >> 9) & 0x7FFFFF).to(torch.float32) + 0.5) * (1.0 / 8388608.0)
+
+
 def normal(keys, shape, stream=0, dtype=torch.float32):
     u = uniform(keys, shape, stream * 2 + 1, dtype)
     v = uniform(keys, shape, stream * 2 + 2, dtype)

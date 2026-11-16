@@ -25594,3 +25594,123 @@ remain open exactly as described in 71.9 / 71.11.
     the block; written with Save Project), is refused on Apply for a group with an Outside
     Density, and a removed group leaves the list. Help text warmup_reanchor (field_help.py).
     tests/test_fgconfig_reanchor.py.
+275 Encounter observation: what a group knows of another is what it met (user: "the change
+    must be consistent so that a new method does not apply to ONE group only... depend on
+    swimming speed, senses and anything else... everything defensible"; decisions: the
+    confined frame for the own cell, the stochastic rule, tau in a separate run).
+    research_notes/Observabilitetsparen design.md section 5 (5.1 evidence, 5.9 the build).
+275.1 Evidence (fix102 = first run after 274, frozen at update 524): with all policies untrained
+    the porpoises held 1.03-1.07 for three years; planktivores blind to porpoises held them at
+    0.70-1.12 at year 3 against 0.07-0.09; presence in the own cell alone drives the flight
+    (neighbour slots set to the own-cell value: 0.06). A deterministic weight cannot cut
+    information: an affine own-cell weight is removed by the obs normalisation, and 273's
+    neighbour blend at w 0.10 repeated the own-cell value in four more slots. Porpoises move
+    1-6 % of the time in training (fix101 the same); the 30-45 % in the 272.4 notes was the
+    aim column, not executed moves.
+275.2 The rule (lib/environments/ecosystem_env/encounter.py; observations._encounter_view; GPU
+    TensorEcosystem._build_encounter / encounter_view). Per pair and region a list of
+    [share, kappa] (library keys encounter_own, encounter_neighbour; kappa = encounters per
+    6 h tick per t/km2 of visible density, .inf = diffuse). One uniform u per (tick,
+    observer, target, region, cell): u < P(met) = sum s (1 - exp(-kappa n)) shows n;
+    P(met) <= u < P(entered) = sum s shows 0 (there, met nothing); u >= P(entered) shows the
+    own-cell reading of the channel after its own draw (never there; neighbours only; own
+    shares sum to 1). A staged target's J channel follows the target's draw; the own biomass,
+    energy and own J in the own cell are never drawn; a diffuse pair in the own cell is shown
+    as read and a never-entered region (zooplankton's neighbours) reads the own cell, both
+    without a draw. Uniforms: the counter-based hash of lib/gpu/random.py (int32 form
+    hash32_i32 / uniform_bits_i32 on the GPU, uint32 / uint64 numpy twins), key
+    fold_in(fold_in(world key, tick), 7001), counter ((d G + j) 5 + r) C + cell: both engines
+    draw the same bits; the observations from one state agree to the ulp of expm1. Loader
+    (config_loader._encounter_entry, check_encounter_complete): both keys together, own shares
+    sum 1, shares in [0, 1] summing <= 1, kappa >= 0, no neighbour_weight on the same pair;
+    once one active pair carries the rule every observation pair between active groups must
+    (self pairs carry the own biomass in the neighbours), or the project is refused; kappa x
+    tick hours / 6 (exact for the own cell; the neighbour P(enter) kept at 6 h).
+275.3 Values (research_notes/Observabilitetsparen/scripts/encounter_components.py, tables/
+    encounter_components_*.txt; apply_encounter.py wrote 66 pairs into fg_library.yaml,
+    replacing neighbour_weight; seabird pairs not derived, seabirds muted). Own: one component
+    per member x unit, kappa = max(2 R_obs L / m, the predator's swath 2 R_pred L_pred / m).
+    Neighbour: share x P(enter), the same rate per km x the path inside an entered neighbour,
+    in two equal-count path bins (the mean path alone over-stated P by up to 14 %, Jensen;
+    two bins 4.4 %). At the box mean, own cell: planktivores -> porpoises 0.95, -> seals 0.04,
+    -> mackerel 0.09; fish -> other fish groups 1.0; porpoises -> planktivores ~1.
+275.4 Effect on today's policies: frozen fix102 with the rule, porpoises 0.35 / 0.18 / 0.04 and
+    0.27 / 0.12 / 0.075 (without 0.34 / 0.15 / 0.09, 0.27 / 0.16 / 0.07): none, as computed -
+    the model's porpoises sit 4-6 per km2, so a herring in their cell meets them. Whiting fell
+    to 0.42-0.44 at year 3 (full-information policies on noisy inputs; no forecast for a
+    retrain). The porpoise lever left is tau (design.md 2.2, separate run) and the layout.
+275.5 Cost: train_gpu 30 x 30, 16 deltas, cuda-graph 14.6 against 11.4 s per update (+28 %;
+    the first int64 / 12-component form +150 %); CPU tick +57 % (30 x 30), +74 % (60 x 60).
+    CPU-GPU trajectories agree statistically over long runs (a draw flips where float noise
+    straddles u); the fixture parity tests hold over 12 ticks.
+275.6 FG editor (revised in 275.8): the lists survive a save. Tests:
+    tests/test_encounter_observation.py (hash twins, outcomes, frequency, J, GPU parity, exact
+    observation, loader, library = listing, neighbour P vs the 273 w within 5 %, editor round
+    trip); tests/test_neighbour_weight.py's loader test runs on a library without the rule.
+275.7 OPEN: tau (design.md 2.2) in its own run; light and vertical overlap in kappa (5.4);
+    the porpoise layout (4-6 per km2, the spawn or the learned staying). Every checkpoint is
+    invalid: retrain in a new run.
+275.8 FG editor synced with 275 (user: "Ar fgconfig synkad? Obsoleta falt och mekanismer
+    borttagna? Nya tillagda?"). Audit: a load - Apply every FG and the matrix - diff of
+    mareld2 + the library; every library and manifest key checked against the editor.
+    - The Neighbour Weight matrix is gone (no library pair carries it; the loader refuses it
+      beside the rule). The engines and the loader keep section 273's mechanism for a library
+      without the rule, as with other unused mechanisms; the editor no longer edits it.
+    - Two matrices replace it, "Encounter, own cell" and "Encounter, neighbours": cells
+      "share:kappa, ..." (inf = diffuse; kappa at the library's 6 h), active while the pair is
+      observed, the diagonal always. Apply checks each cell with encounter.parse_components
+      (own sum 1), both regions together, and then the whole library with
+      config_loader.missing_encounter_pairs, the library-level twin of
+      check_encounter_complete: a project the loader would refuse (e.g. a newly ticked
+      Observability cell without components) is restored and not saved, with the pairs
+      named. Values are derived outside the editor (encounter_components.py); a new pair
+      needs that script's inputs (radii, paths, units). Help matrix:encounter_own /
+      matrix:encounter_neighbour.
+    - Two silent writes fixed: an empty field on a key the library leaves unset stays unset
+      (krill, an open pool, got max_carrying_capacity 0.0 on Apply; inert, the open pool
+      skips the logistic on both engines, but not the library's value), and a derived
+      growth_rate equal at the editor's 6 digits is kept instead of rounded (the loader
+      re-derives it). The round trip is now clean apart from stub entries {observes / preys_on
+      / impact_affects: False} for unchecked cells, as before.
+    - Not edited in the editor, kept on save (no change in this section): prey_includes_reserve
+      and reserve_reference_fill (5 fish, 140), the grazing keys food_threshold,
+      edibility_floor and edibility_half_saturation_umol_l (177, 182),
+      simulation_settings.nutrients, member_species (names only).
+    Tests: tests/test_encounter_observation.py (cell text round trip on all 66 pairs, the
+    parse errors, the editor check = the loader on the live library, a removed pair, a removed
+    self pair and a newly observed pair; Apply refuses and restores, one region is a cell
+    error, both regions write).
+275.9 FG editor: the remaining library and manifest keys made editable (user: "Gor det
+    redigerbart"), and the seal group renamed (user: "byta funktionsgruppsnamnet Salar till
+    Knubbsal (med oversattningar)").
+    - Name: the id stays `seals` (checkpoints, manifests, pair keys). Viewer and editor:
+      English "Harbour seals" (new i18n.EN_FG_NAMES, the only English name not read off the
+      id; library display_name), Swedish "Knubbsal" (s-a-ring-l, a-umlaut), Italian "Foche
+      comuni". Viewer codes stay unique in each language (hs / kn / fc).
+    - Member species (both FG editors): 'name = share; ...; others[n] = share', ';' between
+      entries since names hold commas; shares in [0, 1], at most 1 in all (1 % rounding).
+      Display only. Written one line per member, as the library has them.
+    - Reserve eaten with the prey (DM editor, section 140): one field, the reference fill;
+      empty = the lean body only (both keys leave the entry), a value in [0, 1] sets
+      prey_includes_reserve and reserve_reference_fill. A key set without a fill shows the
+      engine's 0.5. Apply re-derives the predators' growth_rate (their s* reads it).
+    - Grazing non decision makers (section 177; microzooplankton: a checked _preys_on_ pair
+      or a Growth Efficiency) are rows of Predation, M2, Handling time, Attack Rate a and
+      Mixed-Layer Reference Depth (the keys its grazing reads), never of Observability or
+      the fish-only matrices. Two pair keys it alone reads get matrices with those rows:
+      Food Threshold F0 (>= 0) and Edibility Floor / Half-Saturation (section 182; columns:
+      producers with a Nutrient Half-Saturation; both or neither, else a cell error). The
+      old note "edited in the library file" is gone.
+    - Nutrients (project header, sections 172, 180): on, surface and below-mixed-layer
+      nitrate (12 values), exchange (one or 12), subsurface layer on / bottom / its Kd /
+      reservoir nitrate (12) / reservoir exchange (one or 12). Saved in place
+      (_update_mapping, comments kept), validated with nutrients.parse_settings when on; a
+      project without the block that leaves the panel empty gets none; the subsurface
+      layer switched off with values kept writes enabled: false.
+    Round trip on mareld2 (Apply every FG, the matrix, the daylight, temperature and
+    nutrient blocks): no change apart from the unchecked-cell stubs. Help texts for every
+    new field. Tests: tests/test_fgconfig_editable_keys.py (member text on every library
+    group and the parse errors; the reserve field writes, empties and refuses; the member
+    field; the grazer's rows, writes and the edibility pairing; the nutrient panel round
+    trip, its refusals and the subsurface switch; no block from an empty panel);
+    test_viz_i18n (the three seal names), test_fgconfig_field_help (the new keys bound).

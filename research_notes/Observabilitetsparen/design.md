@@ -383,3 +383,62 @@ be tested on frozen policies, only by a retrain.
    apart; two runs would separate them.
 4. **Light and vertical overlap in n (5.4):** link them now, or later.
 5. **The porpoise layout (5.6):** investigate the spawn and the staying, separately from this note.
+
+### 5.9 Decisions and the build (user, 2026-11-16; resume section 275)
+
+Decisions:
+1. **Own cell:** the confined frame.
+2. **Form:** the stochastic rule of 5.3, for every pair.
+3. **tau:** in a separate run.
+4. **Light and vertical overlap (5.8.4) and the porpoise layout (5.8.5):** not decided, not built.
+
+The rule has three outcomes, one uniform u per tick, observer, target, region and cell:
+
+| u | the observer shows |
+|---|---|
+| u < P(met) | the density |
+| P(met) <= u < P(entered) | 0: it was there and met nothing |
+| u >= P(entered) | the own-cell reading of that channel after its own draw: it was never there (neighbours only) |
+
+P(entered) is 1 in the own cell, so there the outcome is met or 0. The juvenile channel of a staged target follows the
+target's draw. The own biomass, the energy and the own juveniles in the own cell are never drawn.
+
+Library form (each `<obs>_observes_<target>` pair): `encounter_own` and `encounter_neighbour`, lists of [share, kappa].
+- kappa is in encounters per 6 h tick per t/km2 of visible density; `.inf` marks a diffuse target.
+- The own shares sum to 1; the neighbour shares sum to P(enter).
+- P(met) = sum_k share_k (1 - exp(-kappa_k n)).
+- `scripts/encounter_components.py` derives every pair from the inputs of 1.2:
+  - own: one component per member x unit;
+  - neighbour: the same rate per km of path, with the entered path split into two equal-count bins.
+- The bins matter. With the mean path alone the neighbour P(met) at the box mean over-stated the 1.3 w by up to
+  14 % (planktivores -> porpoises 0.119 against 0.104), because of Jensen's inequality. With two bins the largest
+  error is 4.4 %, and a test holds it within 5 %.
+- `scripts/apply_encounter.py` writes the listing into the library (66 pairs, replacing `neighbour_weight`). The
+  seabird pairs are not derived; seabirds are muted.
+- Inherited approximation (1.3): porpoise sonar is taken at the school radius by night too, so porpoises ->
+  planktivores own reads [[0.5, 1.12], [0.5, 56000]].
+
+Rules in code:
+- **Loader.** Both keys are required together, and the own shares must sum to 1. The pair may not also carry
+  `neighbour_weight`. Once one active pair carries the rule, every observation pair between active groups must,
+  self pairs included, or the project is refused.
+- **Tick length.** kappa scales with tick hours / 6. That is exact for the confined own cell; for the neighbours the
+  6 h P(enter) is kept, an approximation.
+- **Random numbers.** They come from the counter-based hash of `lib/gpu/random.py`, with a numpy twin in
+  `lib/environments/ecosystem_env/encounter.py`, keyed by (world key = `current_world_seed` / rollout keys, tick,
+  observer, target, region, cell). Both engines draw bit-identical uniforms. Observations from the same state agree
+  up to the ulp of expm1, and a test checks this.
+- **Parity.** The engines' state differs by float noise, so a draw can flip where u lies within that noise of P.
+  Over many ticks the CPU and GPU trajectories therefore agree statistically, not to float noise. The fixture parity
+  tests pass over 12 ticks.
+- **Cost.**
+  - Training (train_gpu, 30 x 30, 16 deltas, cuda-graph): 14.6 against 11.4 s per update, +28 %. The first form,
+    which hashed int64 and looped over 12 components, cost +150 %.
+  - CPU engine: +57 % per tick at 30 x 30 and +74 % at 60 x 60.
+- **FG editor.** It keeps the lists on save. It locks the Neighbour Weight cell of a pair with the components and
+  refuses a weight there; the components themselves are not edited in the editor.
+
+Frozen fix102 policies with the rule (two seeds, as in 5.1): porpoises 0.35 / 0.18 / 0.04 and 0.27 / 0.12 / 0.075.
+That is no change from 0.34 / 0.15 / 0.09 and 0.27 / 0.16 / 0.07, as 5.6 computed. Whiting fell to 0.42-0.44 at
+year 3: policies trained on full information now see noisy inputs, which says nothing about a retrained run.
+Every checkpoint is invalid: retrain.

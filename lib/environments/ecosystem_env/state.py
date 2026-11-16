@@ -366,6 +366,29 @@ def build_static_caches(env):
         env.obs_nbr_w.append(np.asarray(row, dtype=env.dtype))
     env._has_nbr_w = any(bool(np.any(w < 1.0)) for w in env.obs_nbr_w)
 
+    # Section 275: encounter observation (encounter.py). Per DM and channel
+    # of [B_own, observed others, J]: the target's global index, the channel
+    # whose draw it follows (a J channel follows its group's biomass
+    # channel) and, per drawing channel, the pair's components per region,
+    # or None for a pair without them (always met, today's full view).
+    env.obs_encounter = []
+    env._encounter_plans = None      # observations' draw plans, rebuilt lazily
+    for i, fid in enumerate(env.dm_ids):
+        table = env.fgs[fid].params.get("encounter") or {}
+        own_idx = int(env.dm_index_in_all[i])
+        bio = [own_idx] + [int(j) for j in env.obs_others_idx[i]]
+        juv = [int(j) for j in env.obs_juvenile_idx[i]]
+        targets = bio + juv
+        source = list(range(len(bio))) + [bio.index(j) for j in juv]
+        comps = [table.get(env.global_fg_order[j]) for j in bio]
+        env.obs_encounter.append({"targets": targets, "source": source,
+                                  "components": comps})
+    env._has_encounter = any(any(c is not None for c in e["components"])
+                             for e in env.obs_encounter)
+    if env._has_encounter and env._has_nbr_w:
+        raise ValueError("neighbour_weight (section 273) and the encounter "
+                         "observation (section 275) exclude each other")
+
     # Number of impact observation channels. Stored here so observation
     # dim calculations stay consistent in one place.
     n_obs_imp = len(env.observable_impact_vars)

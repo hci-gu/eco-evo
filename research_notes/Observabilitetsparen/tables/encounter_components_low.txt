@@ -1,0 +1,40 @@
+case low
+observer      -> target        P(nbr) comp / exact 1.3 w   P(own) comp / exact 5.5
+planktivores  -> diffuse       0.356 / 0.356            1.000 / 1.000
+planktivores  -> benthivores   0.356 / 0.351            1.000 / 1.000
+planktivores  -> whiting       0.355 / 0.345            1.000 / 1.000
+planktivores  -> water column  0.343 / 0.317            1.000 / 1.000
+planktivores  -> mackerel      0.000 / 0.000            0.005 / 0.005
+planktivores  -> porpoises     0.094 / 0.090            0.869 / 0.869
+planktivores  -> seals         0.001 / 0.001            0.024 / 0.024
+mackerel      -> diffuse       0.538 / 0.538            1.000 / 1.000
+mackerel      -> planktivores  0.269 / 0.269            0.514 / 0.514
+mackerel      -> water column  0.506 / 0.481            1.000 / 1.000
+water column  -> diffuse       0.405 / 0.405            1.000 / 1.000
+water column  -> planktivores  0.203 / 0.203            0.508 / 0.508
+water column  -> benthivores   0.405 / 0.401            1.000 / 1.000
+water column  -> whiting       0.404 / 0.394            1.000 / 1.000
+water column  -> mackerel      0.000 / 0.000            0.003 / 0.003
+water column  -> porpoises     0.085 / 0.083            0.687 / 0.687
+water column  -> seals         0.002 / 0.002            0.024 / 0.024
+whiting       -> diffuse       0.167 / 0.167            1.000 / 1.000
+whiting       -> planktivores  0.083 / 0.083            0.501 / 0.501
+whiting       -> benthivores   0.167 / 0.158            1.000 / 1.000
+whiting       -> water column  0.166 / 0.156            1.000 / 1.000
+whiting       -> porpoises     0.037 / 0.036            0.543 / 0.543
+whiting       -> seals         0.001 / 0.001            0.024 / 0.024
+benthivores   -> diffuse       0.105 / 0.105            1.000 / 1.000
+benthivores   -> planktivores  0.053 / 0.052            0.501 / 0.501
+benthivores   -> whiting       0.104 / 0.096            1.000 / 1.000
+benthivores   -> water column  0.105 / 0.097            1.000 / 1.000
+benthivores   -> porpoises     0.023 / 0.022            0.543 / 0.543
+benthivores   -> seals         0.001 / 0.001            0.024 / 0.024
+porpoises     -> planktivores  0.233 / 0.233            0.655 / 0.655
+porpoises     -> benthivores   0.453 / 0.453            1.000 / 1.000
+porpoises     -> whiting       0.453 / 0.453            1.000 / 1.000
+porpoises     -> water column  0.453 / 0.452            1.000 / 1.000
+seals         -> planktivores  0.153 / 0.153            0.521 / 0.521
+seals         -> benthivores   0.305 / 0.305            1.000 / 1.000
+seals         -> whiting       0.305 / 0.303            1.000 / 1.000
+seals         -> water column  0.303 / 0.290            1.000 / 1.000
+largest relative neighbour error 0.087

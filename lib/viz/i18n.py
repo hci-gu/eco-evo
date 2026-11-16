@@ -32,8 +32,14 @@ MONTHS = {
 }
 
 # Functional-group names. English comes from the FG id ("planktivorous_fish"
-# -> "Planktivorous fish"), so it has no table. The Swedish names are the
-# FG editor's ``sv_mapping`` (fgconfig.py imports this table).
+# -> "Planktivorous fish") except where EN_FG_NAMES names it (an id kept for
+# checkpoints and manifests while the group's name changed). The Swedish
+# names are the FG editor's ``sv_mapping`` (fgconfig.py imports this table).
+EN_FG_NAMES = {
+    # Section 166: harbour seals only (Phoca vitulina); id ``seals`` kept.
+    "seals": "Harbour seals",
+}
+
 FG_NAMES = {
     "sv": {
         "phytoplankton": "Växtplankton",
@@ -50,7 +56,7 @@ FG_NAMES = {
         "whiting": "Vitling",
         "mackerel": "Makrill",
         "porpoises": "Tumlare",
-        "seals": "Sälar",
+        "seals": "Knubbsäl",
         "seabirds": "Sjöfåglar",
     },
     "it": {
@@ -68,7 +74,7 @@ FG_NAMES = {
         "whiting": "Merlano",
         "mackerel": "Sgombro",
         "porpoises": "Focene",
-        "seals": "Foche",
+        "seals": "Foche comuni",
         "seabirds": "Uccelli marini",
     },
 }
@@ -451,6 +457,8 @@ def translate(lang: str, text: str, **fields) -> str:
 
 def fg_name(lang: str, fid: str) -> Optional[str]:
     """The FG's name in ``lang``, or None where the id itself is the name."""
+    if lang == "en":
+        return EN_FG_NAMES.get(fid)
     return FG_NAMES.get(lang, {}).get(fid)
 
 
