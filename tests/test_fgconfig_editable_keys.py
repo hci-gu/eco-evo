@@ -151,6 +151,48 @@ def test_the_grazer_is_a_row_of_its_matrices(app):
     assert "edibility_half_saturation_umol_l" not in inter[key]
 
 
+def test_relocation_speed_text_round_trips_on_the_library():
+    """Section 276: a speed or 'share:speed, ...' members."""
+    seen = 0
+    for fid, spec in _library()["species_definitions"].items():
+        value = spec.get("relocation_speed")
+        if value is None:
+            continue
+        seen += 1
+        parsed, error = App._parse_speed(App._speed_text(value))
+        assert error is None and App._same_speed(value, parsed), fid
+    assert seen == 7
+    assert App._parse_speed("") == (None, None)
+    assert App._parse_speed("0.65") == (0.65, None)
+    assert App._parse_speed("0.55:0.6, 0.45:0.13") == ([[0.55, 0.6], [0.45, 0.13]], None)
+    for text, match in (("0", "> 0"), ("0.5:0.6", "sum"), ("fast", "not a speed"),
+                        ("0.5:0.6, 0.5", "share:speed")):
+        assert App._parse_speed(text)[0] is None, text
+        assert match in App._parse_speed(text)[1], text
+
+
+def test_the_relocation_speed_field_writes_and_empties(app):
+    species = app.global_library["species_definitions"]
+    variables = _select(app, "planktivorous_fish")
+    assert variables["relocation_speed"].get() == "0.55:0.6, 0.45:0.13"
+    before = [list(m) for m in species["planktivorous_fish"]["relocation_speed"]]
+    app.apply_fg_changes()
+    assert [list(m) for m in species["planktivorous_fish"]["relocation_speed"]] == before
+    variables = _select(app, "porpoises")
+    variables["relocation_speed"].set("0.8")
+    app.apply_fg_changes()
+    assert species["porpoises"]["relocation_speed"] == 0.8
+    variables = _select(app, "porpoises")
+    variables["relocation_speed"].set("-1")
+    app.apply_fg_changes()
+    assert app._shown[-1][0] == "showerror"
+    assert species["porpoises"]["relocation_speed"] == 0.8
+    variables = _select(app, "porpoises")
+    variables["relocation_speed"].set("")
+    app.apply_fg_changes()
+    assert "relocation_speed" not in species["porpoises"]
+
+
 def test_the_nutrient_panel_round_trips_and_checks(app):
     block = yaml.safe_load(open(PROJECT, encoding="utf-8-sig"))[
         "simulation_settings"]["nutrients"]

@@ -43,7 +43,7 @@ FIXED_KEYS = (
     "impact_table_value", "impact_table_biomass_factor",
     "impact_table_energy_factor",
     "inference_initial_biomass", "inference_impact_map",
-    "action_costs", "feeding_cost", "movement_cost",
+    "action_costs", "feeding_cost", "movement_cost", "relocation_speed",
     "initial_biomass_range",
 )
 

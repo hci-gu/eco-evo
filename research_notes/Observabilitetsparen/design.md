@@ -157,6 +157,13 @@ neither outruns the other in reality either. Kept at 1.
 
 ### 2.2 Where speed belongs: the time a move takes
 
+> **Built in section 276** (both engines, `lib/world/relocation.py`, library key `relocation_speed`). Decisions
+> taken there: the moving share forages in the cell it leaves; its prey choice is the policy's eat preference
+> read before a sub-unit cell collapses to one action; the cell's growth stays a cell-level law and the moving
+> share takes its foraging share of the intake net of new tissue and of the new tonnes. `movement_cost` is kept
+> and paid for the tau share only; re-reading it from the swimming cost at U is open. Why it was built: fix103's
+> porpoises could not afford to follow the moving planktivores (resume 276).
+
 Today a DM's action shares are biomass shares, and the moving share eats nothing in the tick: it pays
 `movement_cost` x RM and gets no food (`movement.py:289-306`; gains go to the eating share only). A move of
 1 km takes a herring ~25 min, a cod ~50 min, a pout ~2 h: the rest of the tick a real fish forages. So the

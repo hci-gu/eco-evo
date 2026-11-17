@@ -237,15 +237,20 @@ def _assert_parity(env, device, ticks=12, base_tol=1e-6):
         observation = env.get_observation()
         np.testing.assert_allclose(numpy(obs[0]), observation.features, atol=tol, rtol=tol)
         logits = bank.forward(obs, *packed)
-        probs = model.action_probabilities(logits, b, model.tensor(1.0))
+        probs, forage = model.action_probabilities(logits, b, model.tensor(1.0), forage=True)
         cpu_actions = env.policy_controller.forward(observation)
         ours = manual_actions(probs, env)
         # Probabilities are recomputed from the state each tick, so their
         # difference does not accumulate; it stays at the ULP scale.
         for field in ("move", "rest", "eat"):
             np.testing.assert_allclose(getattr(ours, field), getattr(cpu_actions, field), atol=2e-6, rtol=2e-5)
+        if forage is not None:
+            # Section 276: the moving share's foraging shares.
+            np.testing.assert_allclose(
+                numpy(forage[0]).reshape(env.N_dm, env.N_all, env.H, env.W),
+                cpu_actions.forage, atol=2e-6, rtol=2e-5)
         out = model.step(b, r, probs, model.tensor(tick), torch.zeros_like(b),
-                         light_index=light, impacts=impacts, juvenile=juv)
+                         light_index=light, impacts=impacts, juvenile=juv, forage=forage)
         b, r, hidden = out[:3]
         env.step(cpu_actions)
         expected = model.import_state([env])

@@ -745,6 +745,9 @@
     # in it ("SDA + hunt"). Same note as sda_fraction.
     feeding_cost: 1.65
     movement_cost: 1.75
+    # Section 276: sustained directed speed (m/s; [share, U] members), the time a
+    # 1 km move takes (design.md 2.2, research_notes/Observabilitetsparen): herring 0.6; pout, sprat, blue whiting 0.13 (Onsrud 2005) -> tau 0.20.
+    relocation_speed: [[0.55, 0.6], [0.45, 0.13]]
     energy_content: 4000.0
     prey_includes_reserve: true
     reserve_reference_fill: 0.5
@@ -968,6 +971,9 @@
     # 1.32, plaice active/rest 2.4-2.8: 1.6 x RM (judgement for the pool).
     feeding_cost: 1.02
     movement_cost: 1.6
+    # Section 276: sustained directed speed (m/s; [share, U] members), the time a
+    # 1 km move takes (design.md 2.2, research_notes/Observabilitetsparen): cod 0.35, haddock 0.2, flatfish 0.2 -> tau 0.20.
+    relocation_speed: [[0.31, 0.35], [0.39, 0.2], [0.30, 0.2]]
     # Section 223.9: LEAN body 3600 (weighted 3628, 3400-3850: haddock and
     # cod 3.8 kJ/g without the liver store, long rough dab 2.6, dab and
     # plaice 3.6) plus the reserve (liver/lipid, ME 1800), eaten with the
@@ -1176,6 +1182,9 @@
     # research_notes/"Bioenergetik for alla fiskgrupper" (o-umlaut).
     feeding_cost: 2.14
     movement_cost: 2.0
+    # Section 276: sustained directed speed (m/s; [share, U] members), the time a
+    # 1 km move takes (design.md 2.2, research_notes/Observabilitetsparen): saithe 0.9, spurdog 0.5, hake / ling / anglerfish 0.2 -> tau 0.073.
+    relocation_speed: [[0.8, 0.9], [0.1, 0.5], [0.1, 0.2]]
     # Lean tissue as eaten (saithe 4.0, hake 3.7, spurdog 6.0 kJ/g) = 4180;
     # the liver is eaten with the fish: at the reference fill 0.45 (mean
     # reserve 900 / 2000) the static quality is 4180 + 0.45 x 2000 = 5080 MJ/t.
@@ -1323,6 +1332,9 @@
     # 2 x SMR. research_notes/"Bioenergetik for alla fiskgrupper" (o-umlaut).
     feeding_cost: 1.50
     movement_cost: 2.0
+    # Section 276: sustained directed speed (m/s; [share, U] members), the time a
+    # 1 km move takes (design.md 2.2, research_notes/Observabilitetsparen): 0.13 juveniles measured - 0.3 adults -> tau 0.23.
+    relocation_speed: 0.2
     # Lean 3.9 kJ/g; the liver is eaten with the fish: at the reference
     # fill 0.45 (mean reserve 900 / 2000) the static quality is 4800 MJ/t.
     energy_content: 3900.0
@@ -1500,6 +1512,9 @@
     # alla fiskgrupper" (o-umlaut).
     feeding_cost: 1.02
     movement_cost: 1.03
+    # Section 276: sustained directed speed (m/s; [share, U] members), the time a
+    # 1 km move takes (design.md 2.2, research_notes/Observabilitetsparen): Diaz 2013 -> tau 0.035.
+    relocation_speed: 1.33
     # Lean tissue as eaten (mackerel 4.7, horse mackerel 4.2 kJ/g) = 4670; the
     # fat is eaten with the fish. Section 246: reference fill 0.672 = the
     # presence-weighted mean reserve of the box's fish / 6980 (was 0.55 of
@@ -1611,6 +1626,9 @@
     # porpoise measurement separates travel from foraging; 1.3 is a
     # judgement between rest and eat.
     movement_cost: 1.3
+    # Section 276: sustained directed speed (m/s; [share, U] members), the time a
+    # 1 km move takes (design.md 2.2, research_notes/Observabilitetsparen): van Beest 2018 -> tau 0.071.
+    relocation_speed: 0.65
     # Indivisible unit = one porpoise (~50-60 kg; Rojano-Donate et al.
     # 2018 imply ~62 kg). Cells below it take one action per tick. 250 kg
     # (2026-09-14, a proxy for coherent movement, section 71.11) made
@@ -1689,6 +1707,9 @@
     # via Olesiuk 1993). The porpoise order; was eat 1.3 / move 1.5.
     feeding_cost: 1.5
     movement_cost: 1.3
+    # Section 276: sustained directed speed (m/s; [share, U] members), the time a
+    # 1 km move takes (design.md 2.2, research_notes/Observabilitetsparen): -> tau 0.033.
+    relocation_speed: 1.4
     # Indivisible unit = one seal of the population mean mass: 0-3 year
     # olds are ~half the population, so ~55 kg (Olesiuk 44.7, Haerkoenen &
     # Heide-Joergensen 41.8 for younger, growing populations). Was 80 kg,

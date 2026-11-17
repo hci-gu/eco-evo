@@ -1,6 +1,6 @@
 import numpy as np
 
-from lib.environments.ecosystem_env import interactions, refuge
+from lib.environments.ecosystem_env import decisions, interactions, refuge
 from lib.environments.ecosystem_env.constants import MAX_HARVEST_FRAC
 
 
@@ -62,7 +62,8 @@ def apply_predation(env, actions):
     # Section 242: with a saturating response the eat shares are the
     # foraging time T and the attack probabilities p (shared handling);
     # ``shared_handling=False`` on the env is the per-pair response.
-    eat = actions.eat
+    # Section 276: the moving share forages 1 - tau of the tick too.
+    eat = decisions.forage_shares(env, actions)
     shared = (bool(getattr(env, "shared_handling", True))
               and (env._has_holling2 or env._has_holling3))
     if shared:

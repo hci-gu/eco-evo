@@ -298,6 +298,12 @@ def apply_energy_costs(env, actions):
     # Charge only the fraction choosing movement. Movement speed is
     # applied later when the settled population moves between cells.
     move_fraction = actions.move.sum(axis=1)
+    tau_on = bool(getattr(env, "_has_tau", False))
+    if tau_on:
+        # Section 276: the moving share travels for tau of the tick and
+        # forages for the rest (``decisions.forage_shares``).
+        tau = env.dm_tau[:, None, None]
+        cost_move = tau * cost_move + (np.float32(1.0) - tau) * cost_eat
     move_cost = (
         biomass * move_fraction * resting_metabolism * cost_move * cost_factor)
     move_reserve_pool = np.maximum(
@@ -316,6 +322,9 @@ def apply_energy_costs(env, actions):
         # Juvenile compartments (stages.py) settle with the biomass.
         stationary_juvenile = juvenile * (actions.rest + eat_fraction)
         moving_juvenile = actions.move * juvenile[:, None, :, :]
+    base_biomass, base_reserve = stationary_biomass, stationary_reserve
+    if juvenile is not None:
+        base_juvenile = stationary_juvenile
     if getattr(env, "_has_income_growth", False):
         before = stationary_biomass
         stationary_biomass, stationary_reserve = income_growth(
@@ -326,6 +335,30 @@ def apply_energy_costs(env, actions):
             # New tonnes go to J in the share w_J of the cell's start state.
             stationary_juvenile = stationary_juvenile + _juvenile_growth(
                 env, biomass, juvenile, stationary_biomass - before)
+    if tau_on:
+        # Section 276: the intake landed in the stationary reserve and the
+        # cell's growth (if any) was laid down there; the moving share
+        # takes its foraging share of both - the tick's intake net of the
+        # energy that became tissue, and that tissue's tonnes (and J).
+        travel = (np.float32(1.0) - tau) * move_fraction
+        forage = eat_fraction + travel
+        share = np.where(forage > 0, travel / np.where(forage > 0, forage, np.float32(1.0)),
+                         np.float32(0.0))
+        paid = np.maximum(base_reserve - stationary_reserve, np.float32(0.0))
+        energy = np.minimum(share * np.maximum(temp_gains - paid, np.float32(0.0)),
+                            np.maximum(stationary_reserve, np.float32(0.0)))
+        tonnes = share * (stationary_biomass - base_biomass)
+        stationary_reserve = (stationary_reserve - energy).astype(env.dtype, copy=False)
+        stationary_biomass = (stationary_biomass - tonnes).astype(env.dtype, copy=False)
+        move_reserve_choices = (move_reserve_choices
+                                + direction_fraction * energy[:, None]).astype(env.dtype, copy=False)
+        move_biomass_choices = (move_biomass_choices
+                                + direction_fraction * tonnes[:, None]).astype(env.dtype, copy=False)
+        if juvenile is not None:
+            grown = share * (stationary_juvenile - base_juvenile)
+            stationary_juvenile = (stationary_juvenile - grown).astype(env.dtype, copy=False)
+            moving_juvenile = (moving_juvenile
+                               + direction_fraction * grown[:, None]).astype(env.dtype, copy=False)
 
     return ActionSettlement(
         stationary_biomass=stationary_biomass,

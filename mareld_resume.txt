@@ -25714,3 +25714,91 @@ remain open exactly as described in 71.9 / 71.11.
     field; the grazer's rows, writes and the edibility pairing; the nutrient panel round
     trip, its refusals and the subsurface switch; no block from an empty panel);
     test_viz_i18n (the three seal names), test_fgconfig_field_help (the new keys bound).
+276 The time a move takes: tau (user: "Bygg tau i bada motorerna med dina
+    rekommendationer"; design note research_notes/Observabilitetsparen design.md 2.2).
+    Why. fix103 (the 275 rule, train_gpu from scratch on 349a38f) had porpoises at
+    0.85 of start at year 3 over probes 120-260 (fix102 0.43), then fell again from
+    update ~270 (0.07-0.41). Frozen tests on its update-300 policies (scratchpad
+    cross103.py; porpoise year 3, two seeds):
+    - baseline 0.16 / 0.21;
+    - planktivores blind to porpoises 0.21 / 0.16 (no effect any more);
+    - the planktivores' moves masked 0.99 / 0.90;
+    - the update-250 planktivores swapped in 0.82 / 1.04.
+    The planktivores now gather and move (moves toward higher planktivore density 1.2x
+    the random-direction share, none toward zooplankton or krill), and the porpoises,
+    which move < 1 % of their tonnes per tick, do not follow. Porpoise follower rules:
+    - one that reads the TRUE neighbour biomass gives 1.33 / 1.33;
+    - one that reads its own encounter-rule observation gives 0.14-0.47, about 61-64 %
+      of its moves toward the truly richest neighbour;
+    - area-restricted search (leave a poor cell in a random direction, or leave when
+      hungry) gives 0-0.07, starvation 93-99 %.
+    Cause: a moving share ate nothing for the whole 6 h tick, while the porpoise
+    reserve above u lasts 2-3 days and its intake at the ceiling barely pays the
+    cost; their half-saturation 1/(a h) is 0.03 t per cell, so almost every cell
+    with prey feeds them fully. With the design note's tau as a scratch patch
+    (tau_patch.py; tau 1 bit-identical) the observation follower held them: 0.82 /
+    1.04 (trained policies 0.34 / 0.44, true-information follower 1.48 / 1.46).
+    The rule (both engines; lib/world/relocation.py):
+    - Library key relocation_speed U (m/s; tick-independent): a number, or a list of
+      [share, U] members. tau = sum share x min(1, 1 km / (U x tick length)), the
+      member-weighted tau - the slow members' long moves dominate, so it is not the
+      tau of the mean speed (planktivores: 0.20, not 0.12). The loader derives
+      relocation_tau at the run's --tick-length (config_loader._with_relocation_tau,
+      both paths); absent = tau 1 = the old rule, bit for bit (checked: a frozen
+      probe run without the key reproduces x103f_base line by line).
+    - A cell is 1 km in every grid (30 x 30 is a 30 km box at the same densities).
+    - Foraging: the moving share M forages for 1 - tau of the tick in the cell it
+      leaves (predation runs before movement), with the prey choice q of the policy's
+      eat actions READ BEFORE a sub-unit cell collapses to one action or a split is
+      merged, so a one-animal porpoise cell that moves still forages with the prey it
+      wanted. Predation sees eat + (1 - tau) M q: T = sum eat + (1 - tau) M, attack
+      p = forage_j / max (decisions.forage_shares, ActionProbabilities.forage, GPU
+      action_probabilities(..., forage=True) -> step(forage=)). An ActionProbabilities
+      built without it (tests, viability rig) uses the eat shares' own q, so a cell
+      with no eat share then forages nothing while it moves.
+    - Cost: the moving share pays tau x movement_cost + (1 - tau) x feeding_cost
+      (x RM, Q10, impact factor); the income / material growth law sees that cost.
+    - Gains: the cell's intake lands in the stationary reserve and the cell's growth
+      (income / material law, at the cell level as before) is laid down there; the
+      moving share then takes its foraging share (1 - tau) M / (eat + (1 - tau) M) of
+      the intake net of the energy that became tissue, and the same share of the new
+      tonnes and their J. Continuous in tau, zero at tau 1.
+    - GPU: the emigration cancel moved after the transfer (it reads the final
+      outflow); same ops, so tau 1 stays identical.
+    Values (design.md 2.2, member-weighted, tau at 6 h): planktivores herring 0.6 /
+    pout, sprat, blue whiting 0.13 (0.55 / 0.45) -> 0.20; benthivores cod 0.35,
+    haddock 0.2, flatfish 0.2 -> 0.20; whiting 0.2 -> 0.23; water column saithe 0.9,
+    spurdog 0.5, hake / ling / anglerfish 0.2 -> 0.073; mackerel 1.33 -> 0.035;
+    porpoises 0.65 -> 0.071; seals 1.4 -> 0.033. Zooplankton never moves (speed 0);
+    seabirds (muted) have no speed (tau 1).
+    Recommendations taken (276 decisions): forage in the origin cell (the destination
+    would need the tick reordered; it makes blind search cheaper, a follower barely
+    gains); q before the collapse (no "move without eating" action: the appetite caps
+    intake anyway; four more actions would change the network shape); movement_cost
+    kept, now read as the cost of the travelling share - effect bound: tau <= 0.23,
+    so the transit term is <= 0.23 x 2 RM of a moving share's cost (porpoises <= 0.09
+    RM). OPEN: re-read movement_cost from the swimming cost at U per group.
+    FG editor: "Relocation speed (m/s, or share:speed, ...)" under Movement Speed,
+    checked by relocation.parse_speed; empty removes the key; help text; the Move
+    cost's help names tau. Round trip on mareld2: no change apart from the
+    unchecked-cell stubs.
+    Frozen fix103 update-300 policies on the built engine (CPU, porpoise year 1 / 3):
+    trained 0.66 / 0.33 (seed 0), 0.63 / 0.28 (seed 1); the observation follower
+    0.86 / 0.72 (seed 0); the patch gave 0.66 / 0.34, 0.58 / 0.44 and 0.89 / 0.82.
+    The patch kept the fish's intake at the origin; the engine moves it with the
+    movers, probably the source of the difference (not tested further).
+    Checkpoints: the move actions mean something new for every group with a speed
+    (shapes unchanged): every checkpoint is invalid, retrain. fix103 keeps running on
+    the pre-276 code: its probe worker is one long-lived spawned process that imported
+    it, and that code ignores the new library key. A restarted worker would load 276.
+    Tests: tests/test_relocation_tau.py (tau from a speed and members, the parse errors;
+    the library's speeds give design.md's taus; the loader at 6 h and 3 h; a moving
+    cell forages exactly 1 - tau of an eating cell with the policy's preference, none
+    without it; the moving share's cost and intake share; tau 1 forced through the
+    new path is bit-identical over 4 ticks with migration and mortality; CPU/GPU
+    parity with tau, with sub-unit cells collapsing, with the material law and with
+    juvenile stages), test_gpu_ecosystem's parity harness carries the foraging
+    shares, test_fgconfig_editable_keys (the field round trip on the library, writes,
+    refuses, empties), test_fgconfig_field_help (bound).
+    Validation: full pytest 2005 passed, 12 skipped; train.py 1-generation and
+    train_gpu.py (CUDA graphs, 30 x 30, 2 updates) smoke runs clean.

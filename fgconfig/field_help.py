@@ -719,12 +719,29 @@ FIELD_HELP = {
         "editor refuses a group that cannot break even at the "
         "Maintenance Level."
     ),
+    "relocation_speed": (
+        "Relocation speed (section 276): the group's sustained directed "
+        "swimming speed in m/s, from the literature (design.md 2.2, "
+        "research_notes/Observabilitetsparen).\n\n"
+        "A one-cell (1 km) move takes tau = min(1, 1 km / (speed x tick)) "
+        "of the tick. The moving share forages for the rest, 1 - tau, in "
+        "the cell it leaves, with the prey choice of the group's eat "
+        "actions; it pays tau x the Move cost + (1 - tau) x the Eat cost, "
+        "and its share of the tick's intake goes with it. A group of fast "
+        "and slow members is written 'share:speed, ...' (shares summing to "
+        "1): its tau is the member-weighted tau, not the tau of the mean "
+        "speed. Empty = tau 1, a move costs the whole tick's food (the "
+        "rule before section 276). Changing it changes what a move costs: "
+        "retrain."
+    ),
     "movement_cost": (
         "Move cost (multiple of Resting Metabolism; default 3).\n\n"
         "Energy per tonne per tick paid by the biomass that chooses a "
         "move direction: RM x move cost (x impact energy factors x Q10 "
         "term), whatever its Movement Speed. Higher values make "
-        "searching expensive and favour staying put."
+        "searching expensive and favour staying put. With a Relocation "
+        "speed (section 276) it is paid only for the share tau of the tick "
+        "the move takes, the Eat cost for the rest."
     ),
 
     # ------------------------------------------------------------------

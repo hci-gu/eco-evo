@@ -172,6 +172,7 @@ class EcosystemEnvironment:
         self.pi_move = actions.move
         self.pi_rest = actions.rest
         self.pi_eat = actions.eat
+        self.pi_forage = getattr(actions, "forage", None)
         if self.N_dm == 0:
             self.pi = {fid: None for fid in self.fgs}
         else:
@@ -187,6 +188,7 @@ class EcosystemEnvironment:
             move=self.pi_move,
             rest=self.pi_rest,
             eat=self.pi_eat,
+            forage=getattr(self, "pi_forage", None),
         )
 
     # ---------- Tick ----------

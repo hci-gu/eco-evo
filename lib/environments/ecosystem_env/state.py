@@ -56,6 +56,10 @@ class ActionProbabilities:
     move: np.ndarray
     rest: np.ndarray
     eat: np.ndarray
+    # Section 276: the predation's foraging shares, eat + (1 - tau) M q with
+    # q the policy's eat preference before the unit collapse and merge
+    # (``decisions.forage_shares``); None = derived from ``eat``.
+    forage: Optional[np.ndarray] = None
 
 
 @dataclass
@@ -222,6 +226,15 @@ def build_static_caches(env):
         [env.fgs[fid].params.get("feeding_cost", 3.0) for fid in env.dm_ids],
         dtype=env.dtype,
     )
+    # Section 276: the share of the tick a one-cell move takes
+    # (``relocation_tau``, from the library's ``relocation_speed``; 1 = the
+    # old rule, a move costs the whole tick's food).
+    env.dm_tau = np.array(
+        [float(env.fgs[fid].params.get("relocation_tau", 1.0) or 1.0)
+         for fid in env.dm_ids],
+        dtype=env.dtype,
+    )
+    env._has_tau = bool(np.any(env.dm_tau < 1.0))
     env.dm_cost_rest = np.array(
         [env.fgs[fid].params.get("resting_cost", 1.0) for fid in env.dm_ids],
         dtype=env.dtype,

@@ -43,7 +43,7 @@ fabricates mass.
 | `inference.py` | Runs trained policies from `results/<run-name>/policy_<fg>.pth`. |
 | `run_mareld_mvp.py`, `compare_scenarios.py` | Old smoke scripts on the library-only world (random actions, not `mareld2.yaml`); `compare_scenarios.py` compares two seeds. |
 | `mareld2.yaml` | Project manifest (`--project` value). An optional top-level `library:` key (relative to the manifest) replaces `fgconfig/fg_library.yaml` for every run built from it; an explicit library path (probes, `train_gpu.py --library`) still wins (section 232.5). |
-| `fgconfig/fgconfig.py` | Tkinter GUI for FGs, impacts, matrices, spawn strategies. Edits every library and manifest key the engines read (275.8-275.9: encounter lists, member species, the reserve eaten with the prey, the grazing non decision makers' pairs, the nutrient block); Apply refuses what the loader refuses. |
+| `fgconfig/fgconfig.py` | Tkinter GUI for FGs, impacts, matrices, spawn strategies. Edits every library and manifest key the engines read (275.8-275.9: encounter lists, member species, the reserve eaten with the prey, the grazing non decision makers' pairs, the nutrient block; 276: relocation speed); Apply refuses what the loader refuses. |
 | `fgconfig/fg_library.yaml` | Central biological library (species/interaction/impact definitions). |
 | `lib/environments/ecosystem.py` | Re-exports `EcosystemEnvironment` - "The Tick" pipeline, heavily optimised, in `lib/environments/ecosystem_env/environment.py`. |
 | `lib/runners/trainer.py`, `parallel_worker.py` | ARS trainer (CRN, ARS-V2 obs-norm, top-b) + multiprocessing worker. |
@@ -375,6 +375,20 @@ fabricates mass.
   thirds). Planktivores -> zooplankton is Type II
   (`functional_response: 2`) with `visibility_floor` 0.5 (section 162).
 - Movement: slice-assign, per-action metabolic cost; energy follows biomass.
+  Since section 276 a move takes the share tau of the tick
+  (`lib/world/relocation.py`): library `relocation_speed` U m/s (or
+  [share, U] members), tau = sum share x min(1, 1 km / (U x tick)),
+  derived by the loader at `--tick-length`; the moving share forages
+  1 - tau of the tick in the cell it leaves with the policy's eat
+  preference read before the unit collapse (`decisions.forage_shares`,
+  GPU `action_probabilities(..., forage=True)`), pays tau x movement_cost
+  + (1 - tau) x feeding_cost and takes its share of the intake (net of
+  new tissue) and of the new tonnes with it. tau 6 h: planktivores 0.20,
+  benthivores 0.20, whiting 0.23, water column 0.073, mackerel 0.035,
+  porpoises 0.071, seals 0.033; absent = 1 = the old rule (a move ate
+  nothing all tick). Checkpoints before 276 are invalid. Why: fix103's
+  porpoises could not afford to follow the moving planktivores (a
+  follower on their own encounter readings held them only with tau).
   A DM with `movement_speed` 0 has its four move actions masked in both
   engines; zooplankton since section 232.4 (it drifts with the currents
   and chooses only eat or rest/hide - the material of diel migration).

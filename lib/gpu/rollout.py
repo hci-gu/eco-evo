@@ -233,7 +233,8 @@ class RolloutRunner:
         logits = self.bank.forward(grouped, self.weights, self.biases)
         logits = logits.reshape(self.candidates, m.D, self.worlds, m.C, m.A)
         logits = logits.permute(0, 2, 1, 3, 4).reshape(self.E, m.D, m.C, m.A)
-        actions = m.action_probabilities(logits, self.biomass, self.temperature)
+        actions, forage = m.action_probabilities(logits, self.biomass, self.temperature,
+                                                 forage=True)
         statistics, active = m.action_statistics(self.biomass, actions)
         if self.population_stability is not None:
             statistics = torch.where(alive[:, None, None], statistics, 0.0)
@@ -252,6 +253,9 @@ class RolloutRunner:
             current_args["impacts"] = (self.impact_loss, self.impact_cost)
         if m.stages_on:
             current_args["juvenile"] = self.juvenile
+        if forage is not None:
+            # Section 276: the moving share's foraging shares.
+            current_args["forage"] = forage
         record = {} if (self.diagnostics or m.ledger_on) else None
         if record is not None:
             current_args["record"] = record

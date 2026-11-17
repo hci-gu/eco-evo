@@ -902,6 +902,9 @@ class FGConfigApp:
             ("Max Intake Rate (fallback attack rate a, per {tick}; a pair's own a wins)", "max_intake_rate", "entry", 0.0, 1.0),
             ("Interference (Beddington-DeAngelis w, 1/ton, 0=off)", "interference", "entry", 0.0, 10.0),
             ("Movement Speed (cells/{tick})", "movement_speed", "entry", 0.0, 1.0),
+            # Section 276: the time a 1 km move takes; the moving share
+            # forages the rest of the tick.
+            ("  Relocation speed (m/s, or share:speed, ...; empty = a move takes the whole tick)", "relocation_speed", "entry", 0.0, 0.0),
             ("Indivisible Weight (kg)", "min_split_biomass", "entry", 0.0, 1000.0),
             ("Extinction Threshold (× indiv. weight, 0=off)", "extinction_threshold_factor", "entry", 0.0, 5.0),
             ("External Forces (wind/currents; share carried, 0=off)", "current_response", "entry", 0.0, 1.0),
@@ -5191,6 +5194,9 @@ class FGConfigApp:
                 if key == "member_species":
                     var.set(self._members_text(config.get(key)))
                     continue
+                if key == "relocation_speed":
+                    var.set(self._speed_text(config.get(key)))
+                    continue
                 if key == "reserve_reference_fill":
                     # Section 140: shown only while the reserve is eaten
                     # (prey_includes_reserve); the engine's default fill 0.5.
@@ -5575,6 +5581,17 @@ class FGConfigApp:
                 elif not (isinstance(config.get(key), (list, tuple))
                           and self._same_members(config[key], members)):
                     config[key] = self._flow_members(members)
+            elif key == "relocation_speed":
+                # Section 276: a speed, or [share, speed] members.
+                speed, error = self._parse_speed(val)
+                if error:
+                    messagebox.showerror(
+                        "Invalid value", f"Relocation speed: {error}. No changes were saved.")
+                    return
+                if speed is None:
+                    config.pop(key, None)
+                elif not self._same_speed(config.get(key), speed):
+                    config[key] = self._flow_speed(speed)
             elif key == "reserve_reference_fill":
                 # Section 140: empty = the lean body only (no reserve eaten).
                 text = str(val or "").strip()
@@ -6164,7 +6181,8 @@ class FGConfigApp:
                 target.pop(key, None)
         if is_dm and "start_fill" not in config:
             target.pop("start_fill", None)              # section 247: emptied
-        for key in ("member_species", "prey_includes_reserve", "reserve_reference_fill"):
+        for key in ("member_species", "prey_includes_reserve", "reserve_reference_fill",
+                    "relocation_speed"):
             if key not in config:
                 target.pop(key, None)                   # emptied fields
         if refuge_off:
@@ -6270,6 +6288,71 @@ class FGConfigApp:
                 text += f" = {float(m['share'])!r}"
             parts.append(text)
         return "; ".join(parts)
+
+    @staticmethod
+    def _speed_text(value):
+        """The Relocation speed field: '0.65', or 'share:speed, ...' for
+        members (section 276)."""
+        if value in (None, ""):
+            return ""
+        if isinstance(value, (list, tuple)):
+            return ", ".join(f"{float(m[0]):g}:{float(m[1]):g}" for m in value)
+        return f"{float(value):g}"
+
+    @staticmethod
+    def _parse_speed(text):
+        """``(value, error)`` of the Relocation speed field: a number (m/s)
+        or a list of [share, speed]; ``(None, None)`` when empty. Checked by
+        the loader's own rule (``relocation.parse_speed``)."""
+        from lib.world import relocation
+        text = str(text or "").strip()
+        if not text:
+            return None, None
+        try:
+            if ":" in text:
+                value = []
+                for item in text.split(","):
+                    share, sep, speed = item.partition(":")
+                    if not sep:
+                        return None, f"'{item.strip()}' is not share:speed"
+                    value.append([float(share), float(speed)])
+            else:
+                value = float(text)
+        except ValueError:
+            return None, f"'{text}' is not a speed or a list of share:speed"
+        try:
+            relocation.parse_speed(value, "the speed")
+        except ValueError as exc:
+            return None, str(exc)
+        return value, None
+
+    @classmethod
+    def _same_speed(cls, old, new):
+        if isinstance(new, list):
+            return (isinstance(old, (list, tuple)) and len(old) == len(new)
+                    and all(isinstance(o, (list, tuple)) and len(o) == 2
+                            and cls._same_value(o[0], n[0]) and cls._same_value(o[1], n[1])
+                            for o, n in zip(old, new)))
+        return (not isinstance(old, (list, tuple)) and old not in (None, "")
+                and cls._same_value(old, new))
+
+    @staticmethod
+    def _flow_speed(value):
+        """A member list as a flow-style ruamel sequence, as the library
+        writes it; a number as is."""
+        if not isinstance(value, list):
+            return value
+        try:
+            from ruamel.yaml.comments import CommentedSeq
+        except ImportError:
+            return value
+        out = CommentedSeq()
+        for share, speed in value:
+            row = CommentedSeq([share, speed])
+            row.fa.set_flow_style()
+            out.append(row)
+        out.fa.set_flow_style()
+        return out
 
     @staticmethod
     def _parse_members(text):

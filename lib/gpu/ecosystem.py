@@ -268,6 +268,10 @@ class TensorEcosystem:
         self.cost_rest = tensor(env.dm_cost_rest)[None, :, None]
         self.cost_eat = tensor(env.dm_cost_eat)[None, :, None]
         self.cost_move = tensor(env.dm_cost_move)[None, :, None]
+        # Section 276 mirror (``decisions.forage_shares``,
+        # ``movement.apply_energy_costs``): the share of the tick a move takes.
+        self.tau_on = bool(getattr(env, "_has_tau", False))
+        self.tau = tensor(getattr(env, "dm_tau", np.ones(self.D, dtype=np.float32)))[None, :, None]
         self.can_move = tensor(env.dm_v > 0, torch.bool)[None, :, None, None]
         self.min_split = tensor(env.dm_min_split)[None, :, None]
         # Section 159 mirror of ``decisions.merge_subunit_fractions``.
@@ -997,12 +1001,15 @@ class TensorEcosystem:
         eat = (self.eat_mask[None, :, :, None] > 0) & (biomass[:, None] > 0)
         return torch.cat((move, rest, eat), dim=2)
 
-    def action_probabilities(self, logits, biomass, temperature):
+    def action_probabilities(self, logits, biomass, temperature, forage=False):
         # logits [E,D,C,A]; the -1e9 mask and its temperature treatment match
         # the NumPy implementation, including argmax's first-index tie rule.
+        # ``forage=True`` returns ``(probs, forage)``, forage the section 276
+        # foraging shares (None without a relocation speed).
         logits = logits.transpose(2, 3)
         masked = logits + torch.where(self.action_mask(biomass), 0.0, -1e9)
         probs = torch.softmax(masked / temperature, dim=2)
+        preference = self.eat_preference(probs[:, :, 5:]) if (forage and self.tau_on) else None
         b_dm = biomass[:, self.dm_index]
         small = (b_dm > 0) & (b_dm < self.min_split)
         # one_hot performs value checks on some Torch backends/releases. A
@@ -1011,7 +1018,31 @@ class TensorEcosystem:
         probs = torch.where(small[:, :, None], one_hot, probs)
         if self.unit_splits:
             probs = self.merge_subunit_fractions(probs, b_dm)
-        return probs
+        if not forage:
+            return probs
+        if preference is None:
+            return probs, None
+        return probs, self.forage_with(probs, preference)
+
+    @staticmethod
+    def eat_preference(eat):
+        """``decisions.eat_preference``: eat shares [E, D, N, C] normalised
+        per cell, 0 where the cell has none."""
+        total = eat.sum(2, keepdim=True)
+        return torch.where(total > 0, eat / torch.where(total > 0, total, 1.0), 0.0)
+
+    def forage_with(self, actions, preference):
+        """``decisions.forage_with``: eat + (1 - tau) M q."""
+        moving = (1.0 - self.tau) * actions[:, :, :4].sum(2)
+        return actions[:, :, 5:] + moving[:, :, None] * preference
+
+    def forage_shares(self, actions, forage=None):
+        """``decisions.forage_shares``: the predation's foraging shares."""
+        if not self.tau_on:
+            return actions[:, :, 5:]
+        if forage is not None:
+            return forage
+        return self.forage_with(actions, self.eat_preference(actions[:, :, 5:]))
 
     def merge_subunit_fractions(self, probs, b_dm):
         # A cell holding >= one unit never hands off less than one unit:
@@ -1092,7 +1123,8 @@ class TensorEcosystem:
             else np.zeros_like(e.fgs[f].biomass) for f in self.ids]) for e in environments])
         return self.tensor(j).flatten(2)
 
-    def predation(self, biomass, reserve, actions, light_index=None, juvenile=None):
+    def predation(self, biomass, reserve, actions, light_index=None, juvenile=None,
+                  forage=None):
         b_dm = biomass[:, self.dm_index]
         prey = self.accessible(biomass, reserve) if self.refuge_on else biomass
         # h = min(1, max(0, (1 - s) / (1 - u))), as FunctionalGroup.get_hunger
@@ -1153,7 +1185,8 @@ class TensorEcosystem:
             a = a * self.light_mult[light_index.reshape(-1)]
         if self.pair_depth is not None:
             a = a * self.pair_depth
-        eat = actions[:, :, 5:]
+        # Section 276: the moving share forages 1 - tau of the tick too.
+        eat = self.forage_shares(actions, forage)
         if self.holling and self.shared_handling:
             # Section 242 (``interactions.attack_choice`` and
             # ``multi_prey_rate``): foraging time T = sum eat, attack
@@ -1299,9 +1332,13 @@ class TensorEcosystem:
         move, rest = actions[:, :, :4], actions[:, :, 4]
         eat = actions[:, :, 5:].sum(2)
         move_fraction = move.sum(2)
+        cost_move = self.cost_move
+        if self.tau_on:
+            # Section 276: tau of the tick travelling, the rest foraging.
+            cost_move = self.tau * cost_move + (1.0 - self.tau) * self.cost_eat
         rest_r = (r * rest - b * rest * metabolism * self.cost_rest).clamp_min(0)
         eat_r = (r * eat - b * eat * metabolism * self.cost_eat).clamp_min(0) + gains
-        move_r = (r * move_fraction - b * move_fraction * metabolism * self.cost_move).clamp_min(0)
+        move_r = (r * move_fraction - b * move_fraction * metabolism * cost_move).clamp_min(0)
         safe = torch.where(move_fraction > 0, move_fraction, 1.0)
         moving_r = move / safe[:, :, None] * move_r[:, :, None]
         moving_b = move * b[:, :, None]
@@ -1311,23 +1348,46 @@ class TensorEcosystem:
             j = juvenile[:, self.dm_index]
             moving_j = move * j[:, :, None]
             j_out = moving_j * self.velocity
+        stay_b, stay_r = b * rest + b * eat, rest_r + eat_r
+        if juvenile is not None:
+            stay_j = j * (rest + eat)
+        base_b, base_r = stay_b, stay_r
+        if juvenile is not None:
+            base_j = stay_j
+        if self.income_on:
+            before = stay_b
+            stay_b, stay_r = self.income_growth(b, r, gains, metabolism, rest,
+                                                eat, move_fraction, stay_b, stay_r,
+                                                light_index, cost_move=cost_move)
+            if juvenile is not None:
+                share = self.growth_share(b, j, light_index, self.dm_index)
+                stay_j = stay_j + (stay_b - before).clamp_min(0) * share
+        if self.tau_on:
+            # Section 276 (``movement.apply_energy_costs``): the moving share
+            # takes its foraging share of the intake net of new tissue, and
+            # of the tissue's tonnes (and J).
+            travel = (1.0 - self.tau) * move_fraction
+            total = eat + travel
+            share = torch.where(total > 0, travel / torch.where(total > 0, total, 1.0), 0.0)
+            paid = (base_r - stay_r).clamp_min(0)
+            energy = torch.minimum(share * (gains - paid).clamp_min(0), stay_r.clamp_min(0))
+            tonnes = share * (stay_b - base_b)
+            direction = move / safe[:, :, None]
+            stay_r, stay_b = stay_r - energy, stay_b - tonnes
+            moving_r = moving_r + direction * energy[:, :, None]
+            moving_b = moving_b + direction * tonnes[:, :, None]
+            b_out, r_out = moving_b * self.velocity, moving_r * self.velocity
+            if juvenile is not None:
+                grown = share * (stay_j - base_j)
+                stay_j = stay_j - grown
+                moving_j = moving_j + direction * grown[:, :, None]
+                j_out = moving_j * self.velocity
         if self.migration and self.split_thr_any:
             # What is taken out of the off-grid outflow lands in the stay
             # terms below by construction (moving minus outflow).
             if juvenile is not None:
                 _b, j_out = self.cancel_emigration(b_out, j_out)
             b_out, r_out = self.cancel_emigration(b_out, r_out)
-        stay_b, stay_r = b * rest + b * eat, rest_r + eat_r
-        if juvenile is not None:
-            stay_j = j * (rest + eat)
-        if self.income_on:
-            before = stay_b
-            stay_b, stay_r = self.income_growth(b, r, gains, metabolism, rest,
-                                                eat, move_fraction, stay_b, stay_r,
-                                                light_index)
-            if juvenile is not None:
-                share = self.growth_share(b, j, light_index, self.dm_index)
-                stay_j = stay_j + (stay_b - before).clamp_min(0) * share
         b_stay = stay_b + (moving_b - b_out).sum(2)
         b_total, r_total, b_cancel, residue, b_push = self._settle(
             b_out, r_out, b_stay, stay_r + (moving_r - r_out).sum(2))
@@ -1376,7 +1436,7 @@ class TensorEcosystem:
         return b_total, r_total, b_cancel, residue, b_push
 
     def income_growth(self, b, r, gains, metabolism, rest, eat, move_fraction,
-                      stay_b, stay_r, light_index=None):
+                      stay_b, stay_r, light_index=None, cost_move=None):
         """Sections 184, 244 mirror of ``movement.income_growth``: per
         cell G = min(kappa I - C, B g (s - u) p), at most the settling
         reserve (income law), or G = min(B g (s - u) p, kappa_m I p / ec,
@@ -1386,7 +1446,8 @@ class TensorEcosystem:
         (section 241)."""
         cost = (b * rest * metabolism * self.cost_rest
                 + b * eat * metabolism * self.cost_eat
-                + b * move_fraction * metabolism * self.cost_move)
+                + b * move_fraction * metabolism
+                * (self.cost_move if cost_move is None else cost_move))
         growth = self.growth[:, self.dm_index]
         maintenance = self.maintenance[:, self.dm_index]
         ec = self.energy_content[:, self.dm_index][:, :, None]
@@ -1991,7 +2052,7 @@ class TensorEcosystem:
 
     def step(self, biomass, reserve, actions, tick, seed_multiplier,
              current_keys=None, track_source=False, light_index=None,
-             impacts=None, juvenile=None, record=None):
+             impacts=None, juvenile=None, record=None, forage=None):
         """One tick. ``track_source`` appends the local-reward tracking.
 
         ``record``, a dict or None, receives this tick's diagnostics for the
@@ -2026,7 +2087,7 @@ class TensorEcosystem:
             if j is not None:
                 j = out[2]
             impact_cost = impacts[1]
-        out = self.predation(biomass, reserve, actions, light_index, j)
+        out = self.predation(biomass, reserve, actions, light_index, j, forage)
         b, r, gains, hidden, intake = out[:5]
         if record is not None:
             record["intake"] = intake.sum(-1)

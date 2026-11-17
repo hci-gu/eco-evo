@@ -6,7 +6,7 @@ from lib.world.functional_group import FunctionalGroup
 from lib.world.tick_time import LIBRARY_TICK_HOURS, rescale_species
 from lib.world.growth_budget import (SOMATIC_KEY, capacity_loss_rate, derived_growth_rate, growth_budget,
                                      growth_law)
-from lib.world import daylight, nutrients, temperature
+from lib.world import daylight, nutrients, relocation, temperature
 from lib.spawn import StrategySpec, distribute_with_floor, make_weights
 from lib.world import habitat
 from lib.environments.ecosystem_env import encounter, open_pool
@@ -291,6 +291,19 @@ def _spawn_biomass_distribution(grid_size, total_b, min_per_cell,
     return initial_b
 
 
+def _with_relocation_tau(sid, params, tick_hours):
+    """Section 276: ``relocation_tau``, the share of this run's tick a
+    one-cell move takes, from the library's tick-independent
+    ``relocation_speed`` (``lib/world/relocation.py``). A copy of
+    ``params`` when the key is set; unchanged (tau 1) otherwise."""
+    if params.get(relocation.SPEED_KEY) in (None, ""):
+        return params
+    out = dict(params)
+    out[relocation.TAU_KEY] = relocation.tau(
+        params[relocation.SPEED_KEY], tick_hours, f"'{sid}' {relocation.SPEED_KEY}")
+    return out
+
+
 def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60, 60), seed=None, spawn_seed=None,
                           allowed_mask=None, library_config=None,
                           tick_hours=LIBRARY_TICK_HOURS,
@@ -392,6 +405,7 @@ def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60
         # in memory, every time. A 6 h run short-circuits and is
         # bit-identical to not calling this at all. Section 106.
         params, _tick_changes = rescale_species(params, tick_hours)
+        params = _with_relocation_tau(sid, params, tick_hours)
         fg = FunctionalGroup(sid, params)
 
         # Initial total biomass: prefer library range (min/max or legacy scalar),
@@ -862,6 +876,7 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
         # in memory, every time. A 6 h run short-circuits and is
         # bit-identical to not calling this at all. Section 106.
         params, _tick_changes = rescale_species(params, tick_hours)
+        params = _with_relocation_tau(sid, params, tick_hours)
         if daylight_cfg is not None:
             params['daylight'] = dict(daylight_cfg)
         if nutrient_cfg is not None:

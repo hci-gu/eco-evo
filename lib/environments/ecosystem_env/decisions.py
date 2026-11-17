@@ -241,12 +241,52 @@ def build_observation(env):
 
 
 def actions_from_probabilities(env, probs, subthreshold):
+    # Section 276: the eat preference is read off the policy's distribution
+    # before a sub-unit cell collapses to one action or a split is merged,
+    # so a whole-cell move still forages with the prey choice the policy
+    # gave it.
+    preference = (eat_preference(probs[:, EAT_START:EAT_START + env.N_all])
+                  if getattr(env, "_has_tau", False) else None)
     probs = collapse_subthreshold_actions(probs, subthreshold)
     probs = merge_subunit_fractions(env, probs)
     if getattr(env, "collect_action_diagnostics", True):
         update_action_diagnostics(env, probs)
-    return ActionProbabilities(
+    actions = ActionProbabilities(
         move=probs[:, MOVE_SLICE],
         rest=probs[:, REST_INDEX],
         eat=probs[:, EAT_START:EAT_START + env.N_all],
     )
+    if preference is not None:
+        actions.forage = forage_with(env, actions.eat, actions.move, preference)
+    return actions
+
+
+def eat_preference(eat):
+    """(N_dm, N_all, H, W) eat shares normalised to sum 1 per cell (0 where
+    the cell has no eat share): the prey choice q of section 276."""
+    total = eat.sum(axis=1, keepdims=True)
+    return np.where(total > 0, eat / np.where(total > 0, total, np.float32(1.0)),
+                    np.float32(0.0)).astype(eat.dtype, copy=False)
+
+
+def forage_with(env, eat, move, preference):
+    """Section 276: eat + (1 - tau) M q, the shares that forage this tick:
+    the moving share M spends 1 - tau of the tick foraging in the cell it
+    leaves, with the prey choice q."""
+    moving = ((np.float32(1.0) - env.dm_tau)[:, None, None]
+              * move.sum(axis=1)).astype(eat.dtype, copy=False)
+    return (eat + moving[:, None] * preference).astype(eat.dtype, copy=False)
+
+
+def forage_shares(env, actions):
+    """The predation's foraging shares: ``actions.eat`` without a
+    relocation speed (bit-identical), else ``actions.forage``, or for an
+    ActionProbabilities built without it (tests, the viability rig) the
+    eat shares' own prey choice (a cell with no eat share then forages
+    nothing while it moves)."""
+    if not getattr(env, "_has_tau", False):
+        return actions.eat
+    forage = getattr(actions, "forage", None)
+    if forage is not None:
+        return forage
+    return forage_with(env, actions.eat, actions.move, eat_preference(actions.eat))
