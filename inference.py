@@ -1537,8 +1537,19 @@ def main():
 
     if args.warmup_days is None:
         args.warmup_days = run_warmup_days(args.checkpoints)
-    from lib.runners.warmup import settle, warmup_ticks as _warmup_ticks
+    from lib.runners.warmup import settle as _settle, warmup_ticks as _warmup_ticks
     warm_ticks = _warmup_ticks(args.warmup_days, int(args.tick_length))
+
+    def _warm_progress(done, total):
+        print(f"\r    warm-up {done}/{total} ticks ({100 * done // total} %)",
+              end="\n" if done >= total else "", flush=True)
+
+    def settle(e, ticks, seed=None, policies=None, obs=None, quiet=False):
+        """Section 277: the warm-up on the run's --engine (the tensor
+        engine is ~10x faster at 60 x 60), with a progress line."""
+        _settle(e, ticks, seed=seed, policies=policies, obs=obs, engine=args.engine,
+                device=args.cuda_device,
+                progress=None if (quiet or not verbose) else _warm_progress)
     if verbose and warm_ticks:
         print(f"Warm-up:      {args.warmup_days:g} days = {warm_ticks} ticks before the "
               f"recorded rollout (re-anchored: simulation_settings.warmup.reanchor)")
@@ -1708,7 +1719,8 @@ def main():
                 apply_impact_scales(e, base_impact_maps, impact_scales)
                 # The same warm-up as the trained world (same seed, the
                 # trained policies), then its random DMs take over.
-                settle(e, warm_ticks, seed=args.seed, policies=policies, obs=(mean, var))
+                settle(e, warm_ticks, seed=args.seed, policies=policies, obs=(mean, var),
+                       quiet=True)
                 return e
 
             # Section 274: settle the world (overrides and impact scales

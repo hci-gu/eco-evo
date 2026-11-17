@@ -25802,3 +25802,26 @@ remain open exactly as described in 71.9 / 71.11.
     refuses, empties), test_fgconfig_field_help (bound).
     Validation: full pytest 2005 passed, 12 skipped; train.py 1-generation and
     train_gpu.py (CUDA graphs, 30 x 30, 2 updates) smoke runs clean.
+277 inference.py warm-up on the tensor engine, with a progress line (user: inference.py
+    took "10-20 sekunder" before the simulation started; "Bygg punkt 1 och 2").
+    Measured (fix103 policies, 60 x 60, 8 ticks, fix103 training on the same GPU):
+    28.8 s at f9c1194, 27.2 s at 349a38f, 4.2 s with --warmup-days 0. The wait was the
+    section 274 warm-up (the run's 60 days = 240 ticks) on the CPU engine, ~0.1 s per
+    tick since the 275 encounter rule, with --engine gpu too, and nothing on screen.
+    - warmup.settle(..., engine, device, progress): engine "gpu" runs the ticks on the
+      tensor engine (lib/gpu/inference.warm_up: build_runner, blocks of 24 ticks as CUDA
+      graphs, the state copied back with mirror_state - biomass, reserve, juveniles,
+      hide fractions, tick count - the function GpuStepper.mirror now shares); the
+      re-anchoring, the calendar rebase and the cleared books are the CPU path's
+      (_finish_warmup). The world equals the CPU warm-up to float32 rounding per tick,
+      not bit for bit (the CPU engine also shuffles the group order).
+    - inference.py runs it on its --engine (and --cuda-device), and prints "warm-up
+      n/240 ticks (p %)" every tenth (run_warmup's progress callback on the CPU path);
+      the random baselines warm up quietly.
+    - After: 8.3 s for the same command with --engine gpu (CPU engine unchanged, 26 s).
+      --visual with --rnd_baseline all runs clean. The training probes keep the CPU
+      warm-up (they run in their own CPU process).
+    Tests: test_warmup_reanchor (the tensor-engine settle matches the CPU one within
+    float32 rounding on CPU and CUDA, re-anchors, rebases the calendar, clears the
+    books, reports progress).
+    Validation: full pytest 2007 passed, 12 skipped.

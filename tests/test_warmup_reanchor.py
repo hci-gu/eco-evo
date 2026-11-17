@@ -262,3 +262,35 @@ def test_inference_takes_the_runs_training_warmup(tmp_path):
     assert run_warmup_days(str(tmp_path)) == 30.0
     (tmp_path / "gpu_run.json").write_text(json.dumps({"warmup_days": 60.0}))
     assert run_warmup_days(str(tmp_path)) == 60.0
+
+
+# ---- 7. The warm-up on the tensor engine (section 277) ------------------------
+
+@pytest.mark.parametrize("device", ["cpu", pytest.param("cuda", marks=pytest.mark.skipif(
+    not torch.cuda.is_available(), reason="NVIDIA GPU required"))])
+def test_settle_on_the_tensor_engine_matches_the_cpu_warmup(device):
+    """inference.py --engine gpu warms up on the tensor engine: the same
+    world to float32 rounding, the listed totals re-anchored, tick 0 on the
+    same day, the books cleared, progress reported."""
+    from lib.environments.ecosystem_env.interactions import light_index
+    from lib.environments.ecosystem_env.loss_accounting import LOSS_CAUSES
+    cpu, gpu = _env(), _env()
+    policies = _policies(cpu)
+    start = {f: _total(gpu.fgs[f]) for f in gpu.fgs}
+    day = int(gpu.light_start)
+    seen = []
+    settle(cpu, 8, seed=5, policies=policies)
+    settle(gpu, 8, seed=5, policies=policies, engine="gpu", device=device,
+           progress=lambda done, total: seen.append((done, total)))
+    assert seen and seen[-1] == (8, 8)
+    assert gpu.tick_count == 0
+    assert int(light_index(gpu)) == (day + 8) % gpu.light_period == int(light_index(cpu))
+    for _name, attr in LOSS_CAUSES:
+        assert all(v == 0.0 for v in getattr(gpu, attr).values())
+    for fid in LISTED:
+        assert _total(gpu.fgs[fid]) == pytest.approx(start[fid], rel=1e-5)
+    for fid in gpu.fgs:
+        np.testing.assert_allclose(gpu.fgs[fid].biomass, cpu.fgs[fid].biomass,
+                                   rtol=1e-3, atol=1e-4, err_msg=fid)
+        np.testing.assert_allclose(gpu.fgs[fid].energy_reserve, cpu.fgs[fid].energy_reserve,
+                                   rtol=1e-3, atol=1e-2, err_msg=fid)

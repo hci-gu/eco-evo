@@ -141,6 +141,57 @@ def impact_state(model, envs):
     return extra
 
 
+def mirror_state(model, runner, envs, staged=None):
+    """Copy each candidate's world into ``envs`` (one env per candidate):
+    biomass, reserve, juveniles, hide fractions and the tick count - what
+    the CPU engine would have left in them."""
+    m, r = model, runner
+    shape = (r.E, m.G, m.H, m.W)
+    biomass = r.biomass.reshape(shape).cpu().numpy()
+    reserve = r.reserve.reshape(shape).cpu().numpy()
+    hidden = r.hidden.reshape(shape).cpu().numpy()
+    juvenile = r.juvenile.reshape(shape).cpu().numpy() if m.stages_on else None
+    if staged is None:
+        staged = [m.ids[g] for g in range(m.G)
+                  if getattr(envs[0].fgs[m.ids[g]], "juvenile", None) is not None]
+    tick = int(r.tick.item())
+    for k, env in enumerate(envs):
+        for g, fid in enumerate(m.ids):
+            fg = env.fgs[fid]
+            fg.biomass = biomass[k, g].copy()
+            fg.energy_reserve = reserve[k, g].copy()
+            if juvenile is not None and fid in staged:
+                fg.juvenile = juvenile[k, g].copy()
+        env.prev_hidden_frac = hidden[k].copy()
+        env.tick_count = tick
+    return tick
+
+
+def warm_up(env, ticks, policies, obs_mean, obs_var, device="cuda", progress=None,
+            block=24):
+    """Section 277: run the warm-up of ``env``'s world on the tensor engine.
+
+    ``ticks`` ticks with the frozen ``policies`` and observation statistics,
+    in blocks of ``block`` ticks (``progress(done, ticks)`` after each), then
+    the state is copied back into ``env`` with ``tick_count`` = ``ticks``,
+    as ``warmup.run_warmup`` leaves it before the re-anchoring. The world
+    matches the CPU warm-up to float32 rounding per tick, not bit for bit.
+    """
+    ticks = int(ticks)
+    model, runner = build_runner(env, policies, obs_mean, obs_var, None, device=device)
+    try:
+        done = 0
+        while done < ticks:
+            n = min(int(block), ticks - done)
+            runner.run(n)
+            done += n
+            if progress is not None:
+                progress(done, ticks)
+        mirror_state(model, runner, [env])
+    finally:
+        runner.close()
+
+
 def _dead_threshold(env):
     """``inference.run_inference``'s collapse cutoff for the same world."""
     units = [float(getattr(fg, "min_split_biomass", 0.0)) for fg in env.fgs.values()]
@@ -246,27 +297,14 @@ class GpuStepper:
 
     def mirror(self):
         m, r = self.model, self.runner
-        shape = (len(self.envs), m.G, m.H, m.W)
-        biomass = r.biomass.reshape(shape).cpu().numpy()
-        reserve = r.reserve.reshape(shape).cpu().numpy()
-        hidden = r.hidden.reshape(shape).cpu().numpy()
-        juvenile = (r.juvenile.reshape(shape).cpu().numpy()
-                    if m.stages_on else None)
+        tick = mirror_state(m, r, self.envs, self._staged)
         losses = r.loss_book.cpu().numpy()
         imports = r.import_book.cpu().numpy()
         diet = r.diet_book.cpu().numpy()
         actions = r.action_sum.cpu().numpy()
         active = r.active_ticks.cpu().numpy()
-        tick = int(r.tick.item())
         ids = m.ids
         for k, env in enumerate(self.envs):
-            for g, fid in enumerate(ids):
-                fg = env.fgs[fid]
-                fg.biomass = biomass[k, g].copy()
-                fg.energy_reserve = reserve[k, g].copy()
-                if juvenile is not None and fid in self._staged:
-                    fg.juvenile = juvenile[k, g].copy()
-            env.prev_hidden_frac = hidden[k].copy()
             for row, name in enumerate(r.LOSS_ORDER):
                 setattr(env, "loss_" + name,
                         {fid: float(losses[k, row, g]) for g, fid in enumerate(ids)})
@@ -282,7 +320,6 @@ class GpuStepper:
             env._action_eat_frac = actions[k, :, 3].copy()
             env._action_active_ticks = active[k].astype(np.int64)
             env._action_entropy_count = tick
-            env.tick_count = tick
 
     def close(self):
         self.runner.close()

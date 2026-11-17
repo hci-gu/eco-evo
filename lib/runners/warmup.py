@@ -117,7 +117,7 @@ def add_warmup_argument(parser):
               "after the same warm-up (section 274)."))
 
 
-def run_warmup(env, ticks, seed=None):
+def run_warmup(env, ticks, seed=None, progress=None):
     """Advance a CPU env ``ticks`` ticks with its current policies.
 
     The tick reads the env's batched copy of the weights when it has one, so
@@ -135,22 +135,33 @@ def run_warmup(env, ticks, seed=None):
     The observation-normalisation and action-statistic accumulators are
     cleared afterwards, so the scored rollout reports only its own ticks
     (the GPU trainer never merges warm-up observations either).
+
+    ``progress(done, ticks)`` is called about every tenth of the warm-up.
     """
     saved = None
     snapshot = reanchor_snapshot(env) if int(ticks) > 0 else {}
     if seed is not None:
         saved = np.random.get_state()
         np.random.seed((int(seed) ^ 0x5EED200) & 0x7FFFFFFF)
+    ticks = int(ticks)
+    every = max(1, ticks // 10)
     try:
-        for _ in range(int(ticks)):
+        for done in range(1, ticks + 1):
             observation = env.get_observation()
             actions = env.policy_controller.forward(observation)
             env.step(actions)
+            if progress is not None and (done % every == 0 or done == ticks):
+                progress(done, ticks)
     finally:
         if saved is not None:
             np.random.set_state(saved)
-    # Section 274: the re-anchored groups start the scored part at their
-    # start totals, on the settled layout.
+    _finish_warmup(env, snapshot)
+
+
+def _finish_warmup(env, snapshot):
+    """Section 274: the re-anchored groups start the scored part at their
+    start totals, on the settled layout; the warm-up's observation and
+    action accumulators are cleared."""
     reanchor(env, snapshot)
     env._obs_sum = None
     env._obs_sumsq = None
@@ -185,7 +196,8 @@ def rebase_calendar(env):
     env.tick_count = 0
 
 
-def settle(env, ticks, seed=None, policies=None, obs=None):
+def settle(env, ticks, seed=None, policies=None, obs=None, engine="cpu", device="cuda",
+           progress=None):
     """The training warm-up for a probe or inference world (section 274).
 
     Runs ``ticks`` ticks with ``policies`` (default the env's own) and the
@@ -193,9 +205,26 @@ def settle(env, ticks, seed=None, policies=None, obs=None):
     re-anchors the listed groups, makes the settled state the env's tick 0
     and clears the books. The scored start is the start day plus the
     warm-up, as in training. A no-op for ``ticks`` <= 0.
+
+    ``engine="gpu"`` runs the ticks on the tensor engine on ``device``
+    (section 277; ``lib.gpu.inference.warm_up``), ~an order of magnitude
+    faster at 60 x 60, equal to the CPU warm-up to float32 rounding per
+    tick; the re-anchoring and the rest are the same. ``progress(done,
+    ticks)`` reports the ticks run.
     """
     ticks = int(ticks or 0)
     if ticks <= 0:
+        return
+    if engine == "gpu":
+        from lib.gpu.inference import warm_up
+        snapshot = reanchor_snapshot(env)
+        mean, var = obs if obs is not None else (getattr(env, "obs_mean", None),
+                                                 getattr(env, "obs_var", None))
+        warm_up(env, ticks, policies if policies is not None else env.policies,
+                mean, var, device=device, progress=progress)
+        _finish_warmup(env, snapshot)
+        rebase_calendar(env)
+        _reset_books(env)
         return
     saved_policies = saved_obs = None
     if policies is not None:
@@ -207,7 +236,7 @@ def settle(env, ticks, seed=None, policies=None, obs=None):
     if policies is not None and hasattr(env, "rebuild_batched_weights"):
         env.rebuild_batched_weights()
     try:
-        run_warmup(env, ticks, seed=seed)
+        run_warmup(env, ticks, seed=seed, progress=progress)
     finally:
         if saved_policies is not None:
             env.policies = saved_policies

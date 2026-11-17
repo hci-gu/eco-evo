@@ -793,7 +793,10 @@ the list, refused with an Outside Density);
 the viewer probe, the long-run probe and inference.py (`--warmup-days`,
 default the run's) run the same warm-up and score from the settled state,
 start day + warm-up as in training; fix101's porpoises then kept 0.95-0.99
-at day 20 instead of 0.48-0.54),
+at day 20 instead of 0.48-0.54; since section 277 inference.py warms up on
+its `--engine`, the tensor engine with gpu (`warmup.settle(engine=...)`,
+`lib/gpu/inference.warm_up`; 60 days at 60x60 ~4 s instead of ~24 s),
+with a progress line),
 `--depleted-patches SHARE` (train_gpu.py, default 0.5: that share of the
 training worlds starts with depleted benthic patches, 5-30 % of the cells
 at 1-32 % of their biomass - a refuge group loses accessible tonnes - so
