@@ -40,7 +40,7 @@ def _(R, RESULTS, mo):
     runs = R.find_runs(RESULTS)
     runs = runs[runs.scenario.isin(["current_fishing", "no_fishing"])]
     mo.stop(runs.empty, mo.md(f"No runs of `current_fishing` / `no_fishing` under `{RESULTS}`."))
-    save = mo.ui.checkbox(label="Save figures to figures/paper/")
+    save = mo.ui.checkbox(label="Save figures to figures/paper/", value=R.save_by_default())
     mo.vstack([mo.ui.table(runs.drop(columns=["path"]), selection=None), save])
     return runs, save
 
@@ -90,7 +90,8 @@ def _(FIGURES, R, groups, np, plt, save, series):
 def _(R, mo, yr):
     _fm = R.final_mean(yr, years=10)
     _m = _fm.groupby(["scenario", "group"])["biomass"].mean().unstack("scenario")
-    _m["no / today"] = _m["no_fishing"] / _m["current_fishing"]
+    if {"no_fishing", "current_fishing"} <= set(_m.columns):
+        _m["no / today"] = _m["no_fishing"] / _m["current_fishing"]
     _catch = (yr[(yr.scenario == "current_fishing") & yr.group.isin(R.FISH + R.BENTHOS)]
               .groupby(["group", "seed"])["catch"].mean().groupby("group").mean())
     _m["annual catch today (t)"] = _catch

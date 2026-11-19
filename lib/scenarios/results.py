@@ -225,3 +225,9 @@ def diverging_cmap():
     """Orange - neutral grey - blue (two hues, a grey midpoint)."""
     from matplotlib.colors import LinearSegmentedColormap
     return LinearSegmentedColormap.from_list("paper_div", ["#eb6834", "#f0efec", "#2a78d6"])
+
+
+def save_by_default():
+    """The notebooks' "Save figures" box starts ticked with PAPER_SAVE=1
+    (tools/paper/run_all.py runs them headless that way)."""
+    return os.environ.get("PAPER_SAVE", "") == "1"

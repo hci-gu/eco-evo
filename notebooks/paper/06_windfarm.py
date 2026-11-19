@@ -60,7 +60,7 @@ def _(R, RESULTS, ROOT, mo, np, plt):
         _ax.set_xticks([])
         _ax.set_yticks([])
     window = mo.ui.slider(1, 20, value=10, label="Final window (years)")
-    save = mo.ui.checkbox(label="Save figures to figures/paper/")
+    save = mo.ui.checkbox(label="Save figures to figures/paper/", value=R.save_by_default())
     mo.vstack([fig_site, mo.hstack([window, save])])
     return fig_site, footprint, runs, save, window, yr
 

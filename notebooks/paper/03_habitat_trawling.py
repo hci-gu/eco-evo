@@ -42,7 +42,7 @@ def _(R, RESULTS, mo):
     mo.stop(runs.empty, mo.md(f"No `habitat_trawling` runs under `{RESULTS}`."))
     yr = R.yearly(runs)
     window = mo.ui.slider(1, 20, value=10, label="Final window (years)")
-    save = mo.ui.checkbox(label="Save figures to figures/paper/")
+    save = mo.ui.checkbox(label="Save figures to figures/paper/", value=R.save_by_default())
     mo.hstack([window, save])
     return runs, save, window, yr
 

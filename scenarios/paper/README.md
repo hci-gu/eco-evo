@@ -19,6 +19,15 @@ library.
 
 ## Running
 
+Everything in one go on a CUDA machine (checks, a smoke run, every scenario, then
+every figure into `figures/paper/`; re-run it to continue after a stop):
+
+```bash
+uv run tools/paper/run_all.py
+```
+
+Step by step:
+
 ```bash
 # On the GPU machine (all scenarios; finished runs are skipped)
 uv run tools/paper/run_scenarios.py scenarios/paper/*.yaml --device cuda

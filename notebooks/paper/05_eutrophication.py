@@ -41,7 +41,7 @@ def _(R, RESULTS, mo):
     mo.stop(runs.empty, mo.md(f"No `eutrophication` runs under `{RESULTS}`."))
     yr = R.yearly(runs)
     yr["n"] = yr.sweep_value.astype(float)
-    save = mo.ui.checkbox(label="Save figures to figures/paper/")
+    save = mo.ui.checkbox(label="Save figures to figures/paper/", value=R.save_by_default())
     save
     return runs, save, yr
 

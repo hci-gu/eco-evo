@@ -45,7 +45,7 @@ def _(R, RESULTS, mo):
     yr = R.yearly(runs)
     yr["dT"] = yr.sweep_value.astype(float)
     window = mo.ui.slider(1, 20, value=10, label="Final window (years)")
-    save = mo.ui.checkbox(label="Save figures to figures/paper/")
+    save = mo.ui.checkbox(label="Save figures to figures/paper/", value=R.save_by_default())
     mo.hstack([window, save])
     return save, window, yr
 

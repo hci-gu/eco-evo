@@ -61,7 +61,7 @@ def _(R, RESULTS, mo):
         options={"All fish": "fish", **{R.LABELS[g]: g for g in R.FISH},
                  R.LABELS["norway_lobster"]: "norway_lobster"},
         value="All fish", label="Catch of")
-    save = mo.ui.checkbox(label="Save figures to figures/paper/")
+    save = mo.ui.checkbox(label="Save figures to figures/paper/", value=R.save_by_default())
     mo.hstack([catch_group, save])
     return catch_group, runs, save, yr
 
