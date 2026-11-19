@@ -16,7 +16,7 @@ sys.path.insert(0, str(ROOT / "tests"))
 import inference  # noqa: E402
 from lib.scenarios import runner as scenario_runner  # noqa: E402
 from lib.scenarios.spec import (MaterializedManifest, deep_merge, expand_scale,  # noqa: E402
-                                load_scenario, scenario_manifest)
+                                load_scenario, resolve_same_as, scenario_manifest)
 from lib.world import temperature  # noqa: E402
 from test_inference_gpu_engine import _policies  # noqa: E402
 
@@ -32,6 +32,50 @@ def _write(tmp_path, spec, name="s.yaml"):
 
 
 # ------------------------------------------------------------------ spec
+
+def test_same_as_needs_the_same_world(tmp_path):
+    _write(tmp_path, {"seeds": [0], "schedule": [{"from_year": 0, "scale": {"fishing": 1.0}}]},
+           "today.yaml")
+    sweep = {"seeds": [0], "warming_c": 0.0,
+             "schedule": [{"from_year": 0, "scale": {"fishing": 1.0}}],
+             "sweep": {"name": "dT", "values": [0.0, 2.0], "set": ["warming_c"]}}
+    v0, v2 = load_scenario(_write(tmp_path, {**sweep, "same_as": {"dT=0": "today/base"}},
+                                  "warm.yaml"))
+    assert resolve_same_as(v0).scenario == "today" and resolve_same_as(v2) is None
+    # dT = 2 is not today's world.
+    bad = load_scenario(_write(tmp_path, {**sweep, "same_as": {"dT=2": "today/base"}},
+                               "warm_bad.yaml"))[1]
+    with pytest.raises(ValueError, match="warming_c"):
+        resolve_same_as(bad)
+    with pytest.raises(ValueError, match="no variant"):
+        load_scenario(_write(tmp_path, {**sweep, "same_as": {"dT=9": "today/base"}}, "w.yaml"))
+
+
+def test_the_paper_aliases_are_the_same_worlds():
+    from glob import glob
+    runs = 0
+    for path in glob(str(ROOT / "scenarios" / "paper" / "*.yaml")):
+        for v in load_scenario(path):
+            runs += resolve_same_as(v) is None    # raises on a different world
+    assert runs == 11
+
+
+def test_find_runs_follows_a_link(tmp_path):
+    from lib.scenarios import results
+    src = tmp_path / "today" / "base" / "seed_0"
+    link = tmp_path / "warm" / "dT=0" / "seed_0"
+    meta = {"scenario": "today", "variant": "base", "seed": 0, "years": 1.0,
+            "grid": [6, 7], "run_name": "x"}
+    src.mkdir(parents=True)
+    link.mkdir(parents=True)
+    (src / "meta.json").write_text(json.dumps(meta))
+    (link / "meta.json").write_text(json.dumps(
+        {**meta, "scenario": "warm", "variant": "dT=0", "sweep_name": "dT",
+         "sweep_value": 0.0, "data": "../../../today/base/seed_0"}))
+    runs = results.find_runs(str(tmp_path)).set_index("scenario")
+    assert Path(runs.loc["warm", "path"]) == src
+    assert runs.loc["warm", "sweep_value"] == 0.0
+
 
 def test_sweep_makes_one_variant_per_value(tmp_path):
     path = _write(tmp_path, {

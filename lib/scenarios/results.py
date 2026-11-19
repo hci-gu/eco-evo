@@ -105,7 +105,9 @@ def find_runs(root="results/paper"):
             "grid": "x".join(str(v) for v in meta["grid"]),
             "run_name": meta["run_name"],
             "git": meta.get("git"),
-            "path": os.path.dirname(meta_path),
+            # A ``same_as`` variant's data is another run's directory.
+            "path": os.path.normpath(os.path.join(os.path.dirname(meta_path),
+                                                  meta.get("data", "."))),
         })
     return pd.DataFrame(rows, columns=["scenario", "variant", "sweep_name", "sweep_value",
                                        "seed", "years", "grid", "run_name", "git", "path"])

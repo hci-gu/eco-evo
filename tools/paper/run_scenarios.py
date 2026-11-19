@@ -10,11 +10,14 @@
 
 Each (scenario, variant, seed) is written to
 ``<out>/<scenario>/<variant>/seed_<seed>/`` (``lib/scenarios/runner.py``);
-a run whose ``meta.json`` exists is skipped unless ``--force``. See
+a run whose ``meta.json`` exists is skipped unless ``--force``. A variant
+with ``same_as`` is not run: once its source has run, it gets a
+``meta.json`` that points at the source's data. See
 ``scenarios/paper/README.md`` and the notebooks in ``notebooks/paper/``.
 """
 
 import argparse
+import json
 import os
 import sys
 import time
@@ -25,7 +28,7 @@ sys.path.insert(0, ROOT)
 os.chdir(ROOT)
 
 from lib.scenarios.runner import run_variant  # noqa: E402
-from lib.scenarios.spec import load_scenario  # noqa: E402
+from lib.scenarios.spec import load_scenario, resolve_same_as  # noqa: E402
 
 
 def parse_grid(value):
@@ -33,6 +36,19 @@ def parse_grid(value):
     if len(parts) != 2:
         raise argparse.ArgumentTypeError("grid must be N*M")
     return int(parts[0]), int(parts[1])
+
+
+def link_run(variant, source_out, out):
+    """``out/meta.json`` for a ``same_as`` variant: the source run's meta
+    with this variant's identity and ``data`` pointing at the source."""
+    with open(os.path.join(source_out, "meta.json")) as f:
+        meta = json.load(f)
+    meta.update(variant.to_meta())
+    meta["data"] = os.path.relpath(source_out, out)
+    meta["seconds"] = 0.0
+    os.makedirs(out, exist_ok=True)
+    with open(os.path.join(out, "meta.json"), "w") as f:
+        json.dump(meta, f, indent=1)
 
 
 def main():
@@ -67,19 +83,27 @@ def main():
     import torch
     device = args.device or ("cuda" if torch.cuda.is_available() else "cpu")
 
-    jobs = []
+    jobs, links = [], []
     for path in args.scenarios:
         for variant in load_scenario(path):
             if args.only and variant.name not in args.only:
                 continue
+            source = resolve_same_as(variant)
             for seed in (args.seeds if args.seeds is not None else variant.seeds):
                 out = os.path.join(args.out, variant.scenario, variant.name, f"seed_{seed}")
-                jobs.append((variant, seed, out))
-    print(f"{len(jobs)} runs on {device}")
+                if source is None:
+                    jobs.append((variant, seed, out))
+                else:
+                    links.append((variant, out, os.path.join(
+                        args.out, source.scenario, source.name, f"seed_{seed}")))
+    print(f"{len(jobs)} runs on {device}"
+          + (f", {len(links)} variants shared with another scenario's run" if links else ""))
     if args.dry_run:
         for variant, seed, out in jobs:
             done = os.path.exists(os.path.join(out, "meta.json"))
             print(f"  {'done' if done else 'todo'}  {out}")
+        for variant, out, source_out in links:
+            print(f"  same  {out} = {source_out}")
         return 0
 
     failures = 0
@@ -102,6 +126,15 @@ def main():
         except Exception:
             failures += 1
             traceback.print_exc()
+    # After the runs: the sources of the shared variants are done now.
+    for variant, out, source_out in links:
+        if not os.path.exists(os.path.join(source_out, "meta.json")):
+            failures += 1
+            print(f"cannot link {out}: {source_out} has not run "
+                  f"(run {variant.same_as} first)")
+            continue
+        link_run(variant, source_out, out)
+        print(f"linked {out} -> {source_out}")
     if failures:
         print(f"{failures} run(s) failed")
     return 1 if failures else 0

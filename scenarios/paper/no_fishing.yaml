@@ -4,8 +4,8 @@
 description: Present scenario without fishing.
 base: ../../mareld2.yaml
 run_name: 2026-11-17_1
-years: 100
-seeds: [0, 1, 2, 3, 4]
+years: 50
+seeds: [0]
 spatial_every_days: 30
 warmup_scale: {fishing: 1.0}
 schedule:

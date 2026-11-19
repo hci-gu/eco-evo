@@ -6,16 +6,24 @@ The runs step the world on the tensor engine (`lib/gpu`): CUDA on a GPU machine,
 the CPU for small local checks. Nothing is written back to `mareld2.yaml` or the
 library.
 
-| File | Figure | Variants x seeds | Years |
+| File | Figure | Runs | Years |
 |---|---|---|---|
-| `current_fishing.yaml` | today's fishing kept constant | 1 x 5 | 100 |
-| `no_fishing.yaml` | no fishing (after a warm-up with today's) | 1 x 5 | 100 |
-| `fishing_constant.yaml` | harvest curve, effort k x today's | 9 x 3 | 100 |
-| `fishing_rebuild.yaml` | 5 years at r x today's, then k x today's | 21 x 3 | 100 |
-| `habitat_trawling.yaml` | bottom trawling b x today's | 6 x 3 | 50 |
-| `warming.yaml` | + dT on every layer, Q10 relative to today | 5 x 3 | 50 |
-| `eutrophication.yaml` | nitrate reservoir x n | 5 x 3 | 20 |
-| `windfarm_poseidon.yaml` | noise, trawling ban, both (placeholder footprint) | 4 x 5 | 50 |
+| `current_fishing.yaml` | today's fishing kept constant | 1 | 50 |
+| `no_fishing.yaml` | no fishing (after a warm-up with today's) | 1 | 50 |
+| `fishing_constant.yaml` | harvest curve, effort k = 0, 0.5, 1, 2 x today's | 2 (+ k=0, k=1 shared) | 50 |
+| `fishing_rebuild.yaml` | 5 years unfished, then today's effort | 1 | 50 |
+| `habitat_trawling.yaml` | bottom trawling b = 1, 3 x today's | 1 (+ b=1 shared) | 50 |
+| `warming.yaml` | dT = 0, +2 C, Q10 relative to today | 1 (+ dT=0 shared) | 50 |
+| `windfarm_poseidon.yaml` | noise, trawling ban, both (placeholder footprint) | 3 (+ baseline shared) | 50 |
+| `eutrophication.yaml` | nitrate reservoir x 1, 1.5 (not in `run_all.py`) | 1 (+ n=1 shared) | 50 |
+
+10 runs of 50 years, seed 0 (11 with eutrophication). "Shared": the variant's world
+is today's fishing (or no fishing), so it is not run again. `same_as:
+{variant: scenario/variant}` in the scenario file points it at that run, after
+`resolve_same_as` has checked that the two worlds are identical. `run_scenarios.py` then writes
+a `meta.json` whose `data` points at the source run, and `results.find_runs` reads the source run's data.
+For more points or seeds, add values to a `sweep` or `seeds`; finished runs are
+skipped.
 
 ## Running
 
@@ -92,5 +100,5 @@ Each notebook has a "Save figures" checkbox that writes PDF and PNG files to
   they were trained without it. Inside the farm the trawl effort is removed, not
   moved elsewhere.
 * **Long horizon.** The policies were trained on one-year episodes without fishing.
-  100 years is far outside that, so check that `no_fishing` and `current_fishing`
+  50 years is far outside that, so check that `no_fishing` and `current_fishing`
   stay stable before reading the sweeps.

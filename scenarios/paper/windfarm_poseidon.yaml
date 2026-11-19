@@ -9,7 +9,7 @@ description: Wind farm noise and trawling ban, alone and together (2 x 2).
 base: ../../mareld2.yaml
 run_name: 2026-11-17_1
 years: 50
-seeds: [0, 1, 2, 3, 4]
+seeds: [0]
 spatial_every_days: 30
 schedule:
   - {from_year: 0, scale: {fishing: 1.0}}
@@ -32,3 +32,6 @@ variants:
     set: {impacts.windfarm_noise.enabled: false, masks.0.enabled: true}
   - name: noise_ban
     set: {impacts.windfarm_noise.enabled: true, masks.0.enabled: true}
+# The baseline (no noise, no ban) is the current_fishing world: not run again.
+same_as:
+  baseline: current_fishing/base

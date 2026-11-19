@@ -7,8 +7,10 @@
    of the scenario files), the wind farm map (made if missing).
 2. A smoke run (one scenario, a few days, small grid) so a broken setup
    fails in a minute, not after hours.
-3. Every scenario in scenarios/paper/ (tools/paper/run_scenarios.py) into
-   results/paper/. Finished runs are skipped: if it is stopped, run the
+3. The scenarios in ORDER (tools/paper/run_scenarios.py) into
+   results/paper/: 10 runs of 50 years, one seed; the baselines of the
+   sweeps are the current_fishing / no_fishing runs (``same_as`` in the
+   scenario files). Finished runs are skipped: if it is stopped, run the
    same command again and it carries on.
 4. The figures: every notebook in notebooks/paper/ run headless with
    "Save figures" ticked -> figures/paper/*.pdf, *.png.
@@ -29,9 +31,10 @@ sys.path.insert(0, ROOT)
 RESULTS = os.path.join("results", "paper")
 SMOKE = os.path.join("results", "paper_smoke")
 LOG = os.path.join(RESULTS, "run_all.log")
-# Most important first, the long harvest sweeps last.
+# The scenarios run, most important first. eutrophication.yaml is left out
+# (the paper may skip it); add it here to run it too.
 ORDER = ["current_fishing", "no_fishing", "windfarm_poseidon", "warming",
-         "habitat_trawling", "eutrophication", "fishing_constant", "fishing_rebuild"]
+         "habitat_trawling", "fishing_constant", "fishing_rebuild"]
 
 
 def log(message):
@@ -59,9 +62,11 @@ def fail(message):
 
 
 def scenario_files():
-    files = sorted(glob.glob(os.path.join("scenarios", "paper", "*.yaml")))
-    rank = {name: i for i, name in enumerate(ORDER)}
-    return sorted(files, key=lambda p: rank.get(os.path.splitext(os.path.basename(p))[0], 99))
+    files = [os.path.join("scenarios", "paper", name + ".yaml") for name in ORDER]
+    missing = [p for p in files if not os.path.exists(p)]
+    if missing:
+        fail("missing scenario files: " + ", ".join(missing))
+    return files
 
 
 def check_machine(files):

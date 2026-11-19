@@ -6,11 +6,14 @@ description: Temperature + dT on every layer (Q10 relative to today), today's fi
 base: ../../mareld2.yaml
 run_name: 2026-11-17_1
 years: 50
-seeds: [0, 1, 2]
+seeds: [0]
 schedule:
   - {from_year: 0, scale: {fishing: 1.0}}
 warming_c: 0.0
 sweep:
   name: dT
-  values: [0.0, 1.0, 2.0, 3.0, 4.0]
+  values: [0.0, 2.0]
   set: [warming_c]
+# dT = 0 is the current_fishing world: not run again.
+same_as:
+  "dT=0": current_fishing/base

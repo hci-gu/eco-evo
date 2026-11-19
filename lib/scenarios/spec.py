@@ -47,6 +47,10 @@ Keys (every key optional except ``base``)::
       set: [schedule.1.scale.fishing]
     variants:                        # or named variants instead of a sweep
       - {name: noise, set: {impacts.windfarm_noise.enabled: true}}
+    same_as:                         # variants that are another scenario's
+      "k=1": current_fishing/base    # world: not run, the results point
+                                     # at that run (resolve_same_as checks
+                                     # that the worlds are the same)
 
 ``fishing`` is an alias for both trawl impacts wherever an impact id is
 expected. Paths in ``impacts`` and ``masks`` are relative to the scenario
@@ -82,7 +86,7 @@ TOP_LEVEL_KEYS = {
     "name", "description", "base", "run_name", "years", "seeds",
     "record_every_days", "spatial_every_days", "run", "manifest",
     "nutrient_reservoir_scale", "warming_c", "impacts", "masks",
-    "schedule", "warmup_scale", "sweep", "variants",
+    "schedule", "warmup_scale", "sweep", "variants", "same_as",
 }
 
 
@@ -113,6 +117,7 @@ class Variant:
     source: str
     sweep_name: str = None
     sweep_value: object = None
+    same_as: str = None
 
     @property
     def base_dir(self):
@@ -182,7 +187,32 @@ class Variant:
             "sweep_name": self.sweep_name,
             "sweep_value": self.sweep_value,
             "source": os.path.relpath(self.source),
+            "same_as": self.same_as,
             "spec": self.spec,
+        }
+
+    def world(self):
+        """Everything that shapes the simulated world (not what is recorded
+        or how often): two variants with equal worlds give the same run."""
+        impacts = {k: {kk: (self.path(vv) if kk == "map" else vv) for kk, vv in v.items()
+                       if kk != "enabled"}
+                   for k, v in (self.spec.get("impacts") or {}).items()
+                   if (v or {}).get("enabled", True)}
+        masks = [{**{k: v for k, v in m.items() if k != "enabled"}, "map": self.path(m["map"])}
+                 for m in (self.spec.get("masks") or []) if m.get("enabled", True)]
+        return {
+            "base": self.base_manifest,
+            "run_name": self.run_name,
+            "years": self.years,
+            "record_every_days": self.record_every_days,
+            "run": self.run,
+            "manifest": self.spec.get("manifest") or {},
+            "nutrient_reservoir_scale": float(self.spec.get("nutrient_reservoir_scale", 1.0)),
+            "warming_c": float(self.spec.get("warming_c", 0.0) or 0.0),
+            "impacts": impacts,
+            "masks": masks,
+            "schedule": self.schedule(),
+            "warmup_scale": self.warmup_scale(),
         }
 
 
@@ -231,9 +261,9 @@ def load_scenario(path):
     makes one variant per value / combination, named ``k=0.5`` or
     ``r=0,k=0.5``; ``variants`` is an explicit list of
     ``{name, set: {dotted.path: value}}``; neither gives one variant,
-    ``base``.
+    ``base``. ``same_as: {variant: "scenario/variant"}`` marks variants
+    whose world is another scenario's (see ``resolve_same_as``).
     """
-    import itertools
     with open(path) as f:
         spec = yaml.safe_load(f) or {}
     unknown = sorted(set(spec) - TOP_LEVEL_KEYS)
@@ -244,7 +274,20 @@ def load_scenario(path):
     if spec.get("sweep") and spec.get("variants"):
         raise ValueError(f"{path}: use 'sweep' or 'variants', not both")
     name = spec.get("name") or os.path.splitext(os.path.basename(path))[0]
-    common = {k: v for k, v in spec.items() if k not in ("sweep", "variants")}
+    variants = _variants(spec, path, name)
+    same_as = {str(k): str(v) for k, v in (spec.get("same_as") or {}).items()}
+    names = {v.name for v in variants}
+    missing = sorted(set(same_as) - names)
+    if missing:
+        raise ValueError(f"{path}: same_as names no variant {missing} (variants: {sorted(names)})")
+    for v in variants:
+        v.same_as = same_as.get(v.name)
+    return variants
+
+
+def _variants(spec, path, name):
+    import itertools
+    common = {k: v for k, v in spec.items() if k not in ("sweep", "variants", "same_as")}
     if spec.get("variants"):
         variants = []
         for item in spec["variants"]:
@@ -273,6 +316,37 @@ def load_scenario(path):
         variants.append(Variant(name, ",".join(labels), variant_spec, path,
                                 sweep_name, sweep_value))
     return variants
+
+
+def resolve_same_as(variant):
+    """The variant ``variant.same_as`` names (``scenario/variant``, the
+    scenario file next to this one), after checking that both build the
+    same world; None for a variant that runs itself."""
+    if not variant.same_as:
+        return None
+    scenario, _, name = variant.same_as.partition("/")
+    path = os.path.join(variant.base_dir, scenario + ".yaml")
+    if not os.path.exists(path):
+        raise ValueError(f"{variant.scenario}/{variant.name}: same_as {variant.same_as}: "
+                         f"no {path}")
+    matches = [v for v in load_scenario(path) if v.name == (name or "base")]
+    if not matches:
+        raise ValueError(f"{variant.scenario}/{variant.name}: same_as {variant.same_as}: "
+                         f"{scenario} has no variant {name!r}")
+    source = matches[0]
+    if source.same_as:
+        raise ValueError(f"{variant.scenario}/{variant.name}: same_as {variant.same_as} "
+                         f"is itself an alias")
+    mine, theirs = variant.world(), source.world()
+    differ = sorted(k for k in mine if mine[k] != theirs[k])
+    if differ:
+        raise ValueError(f"{variant.scenario}/{variant.name}: same_as {variant.same_as}, "
+                         f"but the worlds differ in {differ}")
+    missing = sorted(set(variant.seeds) - set(source.seeds))
+    if missing:
+        raise ValueError(f"{variant.scenario}/{variant.name}: seeds {missing} are not "
+                         f"among {variant.same_as}'s")
+    return source
 
 
 # ---------------------------------------------------------------- manifest

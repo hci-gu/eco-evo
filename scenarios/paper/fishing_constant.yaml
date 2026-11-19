@@ -1,15 +1,19 @@
-# Harvest curve, constant effort: today's fishing field x k for 100 years
+# Harvest curve, constant effort: today's fishing field x k for 50 years
 # (both trawls together). With fishing_rebuild.yaml this gives the
 # cumulative-yield-vs-effort figure (cf. the Stelvio hunting graphs).
-description: Today's fishing pattern at k x today's effort, constant for 100 years.
+description: Today's fishing pattern at k x today's effort, constant for 50 years.
 base: ../../mareld2.yaml
 run_name: 2026-11-17_1
-years: 100
-seeds: [0, 1, 2]
+years: 50
+seeds: [0]
 warmup_scale: {fishing: 1.0}
 schedule:
   - {from_year: 0, scale: {fishing: 1.0}}
 sweep:
   name: k
-  values: [0.0, 0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0]
+  values: [0.0, 0.5, 1.0, 2.0]
   set: [schedule.0.scale.fishing]
+# k = 0 and k = 1 are the no_fishing and current_fishing worlds: not run again.
+same_as:
+  "k=0": no_fishing/base
+  "k=1": current_fishing/base

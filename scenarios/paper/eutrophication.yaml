@@ -1,14 +1,19 @@
 # Eutrophication: the new-nitrogen source (the 50 m nitrate reservoir of
 # the two-layer column) x n, from the warm-up on. Today's fishing.
+# Not in tools/paper/run_all.py (the paper may skip it); run it with
+# tools/paper/run_scenarios.py scenarios/paper/eutrophication.yaml.
 description: Nitrate reservoir x n (new-N supply), today's fishing.
 base: ../../mareld2.yaml
 run_name: 2026-11-17_1
-years: 20
-seeds: [0, 1, 2]
+years: 50
+seeds: [0]
 schedule:
   - {from_year: 0, scale: {fishing: 1.0}}
 nutrient_reservoir_scale: 1.0
 sweep:
   name: n
-  values: [0.75, 1.0, 1.25, 1.5, 2.0]
+  values: [1.0, 1.5]
   set: [nutrient_reservoir_scale]
+# n = 1 is the current_fishing world: not run again.
+same_as:
+  "n=1": current_fishing/base

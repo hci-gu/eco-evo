@@ -6,12 +6,15 @@ description: Bottom-trawling effort at b x today's, pelagic trawling unchanged.
 base: ../../mareld2.yaml
 run_name: 2026-11-17_1
 years: 50
-seeds: [0, 1, 2]
+seeds: [0]
 spatial_every_days: 365
 warmup_scale: {fishing: 1.0}
 schedule:
   - {from_year: 0, scale: {pelagic_trawling: 1.0, bottom_trawling: 1.0}}
 sweep:
   name: b
-  values: [0.0, 0.5, 1.0, 2.0, 3.0, 5.0]
+  values: [1.0, 3.0]
   set: [schedule.0.scale.bottom_trawling]
+# b = 1 is today's fishing, the current_fishing world: not run again.
+same_as:
+  "b=1": current_fishing/base
