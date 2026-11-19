@@ -84,8 +84,10 @@ PRE250_R_MAX = {"planktivorous_fish": 0.40, "benthivorous_fish": 0.31, "whiting"
 
 
 def _plain(species, fid):
+    # Section 279's spawning block needs reserve_room; the plain copies
+    # here change the appetite, so they leave it out.
     out = {k: v for k, v in species[fid].items()
-           if k not in LAW_KEYS and k != "somatic_production"}
+           if k not in LAW_KEYS and k not in ("somatic_production", "spawning")}
     if fid in PRE250_R_MAX and "r_max" not in out:
         out["r_max"] = PRE250_R_MAX[fid]
     return out

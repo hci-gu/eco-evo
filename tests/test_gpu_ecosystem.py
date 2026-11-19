@@ -1042,6 +1042,51 @@ def test_reserve_set_point_growth_window_matches_reference(device, start_tick):
     assert model.set_point_on
 
 
+# Sized for the fixture's ME 10 MJ/t: a room cut of ~0.08 at most.
+SPAWNING = [{"name": "early", "share": 0.3, "gamete_energy": 4.0, "reserve_share": 0.5,
+             "fast_cut": 0.8, "fast_loss": 0.05, "spawning_days": 60,
+             "spawn_start": {"day_length_h": 6.3, "rising": True},
+             "spawn_end": {"day_length_h": 14.1, "rising": True}}]
+
+
+@pytest.mark.parametrize("with_set_point", [False, True])
+def test_spawning_matches_reference(device, with_set_point):
+    """Section 279: in mid-February DM ``a``'s spawners shed gametes out of
+    the reserve and lower the top of its room, on both engines; with a set
+    point the cut is subtracted from its target."""
+    keys = {"appetite": "reserve_room", "material_growth_share": 0.5,
+            "spawning": copy.deepcopy(SPAWNING)}
+    if with_set_point:
+        keys["reserve_set_point"] = dict(SET_POINT)
+    env = make_env(handling=0.2, min_split=0.0, extinction_factor=0.0,
+                   daylight={"latitude_deg": 58.15, "tick_hours": 6,
+                             "start_tick": 180, "random_start": False},
+                   regen={"a": keys})
+    env.build_static_caches()
+    i = env.dm_ids.index("a")
+    assert env._has_spawning and env.dm_spawning[i] and env._has_set_point
+    shed = float(env.spawn_shed_table[env.light_start, i])
+    assert shed > 0.0
+    top = float(env.set_point_table[env.light_start, i])
+    assert top < (0.999 if not with_set_point else 1.0)
+    reference = copy.deepcopy(env)
+    reserve = float(reference.fgs["a"].energy_reserve.sum())
+    biomass = float(reference.fgs["a"].biomass.sum())
+    reference.step()
+    booked = reference.gamete_energy_shed["a"]
+    assert booked == pytest.approx(min(biomass * shed, reserve), rel=1e-4)
+    model = _assert_parity(env, device, ticks=6, base_tol=5e-6)
+    assert model.spawning_on and model.set_point_on
+
+
+def test_spawning_inert_without_daylight():
+    """Section 279: without the daylight calendar the block has no site."""
+    env = make_env(regen={"a": {"appetite": "reserve_room",
+                                "spawning": copy.deepcopy(SPAWNING)}})
+    env.build_static_caches()
+    assert not env._has_spawning and not env._has_set_point
+
+
 def test_reserve_set_point_needs_a_food_growth_law():
     """The window acts in the material / income law; a reserve-funded DM
     with a set point is refused."""

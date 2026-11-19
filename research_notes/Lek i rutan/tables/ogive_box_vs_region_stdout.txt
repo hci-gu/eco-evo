@@ -1,0 +1,9 @@
+cod          Q1 box mature biomass share: region ogive (n 11485): 0.56; box ogive (n 4706): 0.55
+haddock      Q1 box mature biomass share: region ogive (n 5736): 0.29; box ogive (n 1641): 0.31
+whiting      Q1 box mature biomass share: region ogive (n 4520): 0.39; box ogive (n 1429): 0.43
+saithe       Q1 box mature biomass share: region ogive (n 751): 0.57; box ogive (n 288): 0.55
+Norway pout  Q1 box mature biomass share: region ogive (n 2919): 0.16; box ogive (n 893): 0.17
+herring      Q1 box mature biomass share: region ogive (n 23808): 0.06; box ogive (n 8960): 0.07
+sprat        Q1 box mature biomass share: region ogive (n 7661): 0.34; box ogive (n 3206): 0.34
+plaice       Q1 box mature biomass share: region ogive (n 13041): 0.64; box ogive (n 5503): 0.65
+witch        Q1 box mature biomass share: region ogive (n 1190): 0.43; box ogive (n 587): 0.37

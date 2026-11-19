@@ -1,0 +1,19 @@
+group,species,share,in_box,mature,G_lo,G_mid,G_hi,res_lo,res_mid,res_hi,cut,cut_days,fmr,source
+benthivorous_fish,haddock,0.386,0.7,0.38,100,270,500,0.2,0.5,0.8,0.9,40,20,mature DATRAS Q1 area-wt; G lit_cod_haddock; cut Homans & Vladykov [A] x female spawning 33-37 d; in_box 0.7 [J] builds gonads in box, spawning there unknown
+benthivorous_fish,cod,0.314,1.0,0.52,170,430,1000,0.2,0.5,0.8,0.85,60,20,mature DATRAS; running fish in box Jan-May; G lit_cod_haddock; cut Fordham & Trippel [S/A] 0-0.25 of normal for 50-70 d
+benthivorous_fish,long rough dab,0.126,1.0,0.6,400,600,800,0.3,0.5,0.7,0.5,60,15,mature [J] 0.4-0.8 no DATRAS staging; G proxy [J]; cut [A] 31 % feeding Dec-Jan vs >85 % summer halved [J]
+benthivorous_fish,dab,0.045,1.0,0.6,430,640,850,0.22,0.35,0.47,0.0,0,15,mature DATRAS (44 fish); G lit_flatfish; females keep feeding [F]
+benthivorous_fish,plaice,0.038,1.0,0.66,650,750,850,0.4,0.5,0.6,0.83,80,15,running fish in box Jan-Feb; Rijnsdorp [F via thesis]: 50 % reserve; ripe F 0.06 M 0.29 of immature feeding incidence
+benthivorous_fish,witch,0.017,1.0,0.43,150,250,350,0.1,0.2,0.3,0.0,0,15,spawns May-Aug inside the feeding season [F timing]
+benthivorous_fish,starry ray + hagfish + others,0.075,0.0,0.0,0,0,0,0,0,0,0,0,15,no values found
+whiting,whiting,1.0,0.8,0.43,500,800,1050,0.4,0.6,0.8,0.5,40,20,mature DATRAS Q1 area-wt (0.38-0.65); G lit_whiting_watercolumn; cut = cod proxy halved [J] (no whiting data)
+predatory_fish,saithe,0.797,0.0,0.59,260,400,690,0.3,0.5,0.8,0.0,0,20,builds gonads in/near box but leaves to spawn at the shelf edge Feb-Mar; Q1 presence ~0.06 of Q3
+predatory_fish,spurdog,0.097,0.5,0.5,75,150,250,0.3,0.5,0.7,0.0,0,10,pups Sep-Dec 70 km N [F]; litter energy per t of both sexes [D/J]
+predatory_fish,hake,0.048,1.0,0.7,250,450,700,0.1,0.2,0.4,0.0,0,20,40 spawning fish in box in Aug [D]; G gadoid proxy [J]
+predatory_fish,anglerfish + ling + velvet belly + pollack,0.058,0.0,0.0,0,0,0,0,0,0,0,0,20,not found
+planktivorous_fish,herring,0.554,0.0,0.09,900,1100,1300,0.8,1.0,1.0,0.0,0,0,box herring 91 % immature; WBSS adults spawn outside (Bekkevold 2023 [F])
+planktivorous_fish,Norway pout,0.35,0.5,0.2,500,800,1200,0.2,0.4,0.6,0.0,0,0,builds gonads in box Oct-Feb; few spawners in Skagerrak (Lambert 2009 [Ff]); in_box 0.5 [J]
+planktivorous_fish,sprat,0.021,1.0,0.36,500,800,1200,0.1,0.2,0.3,0.0,0,0,probably spawns in/near box May-Jul [snip]; G proxy [J]
+planktivorous_fish,blue whiting,0.075,0.0,0.0,0,0,0,0,0,0,0,0,0,no Skagerrak spawning evidence
+mackerel,mackerel,0.941,0.0,0.8,1300,2000,2700,0.0,0.1,0.2,0.0,0,0,income breeder feeding hardest while spawning (Jansen 2021 [F]); box share of egg output small
+mackerel,horse mackerel,0.059,0.0,0.0,0,0,0,0,0,0,0,0,0,no box evidence

@@ -14,7 +14,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from lib.world import daylight, set_point  # noqa: E402
+from lib.world import daylight, set_point, spawning  # noqa: E402
 from lib.world.growth_budget import growth_budget  # noqa: E402
 
 LAT = 58.15
@@ -89,6 +89,8 @@ def test_library_block_and_growth_budget():
     cfg = set_point.settings(plank)
     target = set_point.group_target_by_day(cfg, LAT)
     window = set_point.growth_window_by_day(cfg, LAT)
+    # Section 279: the planktivores' spawning cut lowers the target.
+    target = target - spawning.cut_by_day(plank, LAT)
     u = float(plank["maintenance_level"])
     assert site.window_share == pytest.approx(window.mean())
     assert 0.36 < site.window_share < 0.40            # 15 Apr - 30 Aug
@@ -161,7 +163,11 @@ def test_fg_editor_apply_keeps_the_block_and_its_comments(tmp_path):
         root.destroy()
     text = target.read_text()
     block = text[text.index("    reserve_set_point:"):]
-    assert "      observed: true\n    # Section 265" in block
+    assert "      observed: true\n    # Section 279" in block
+    # Section 279: the spawning list after it is kept as well.
+    assert yaml.safe_load(text)["species_definitions"]["planktivorous_fish"][
+        spawning.KEY] == yaml.safe_load(open(ROOT / "fgconfig" / "fg_library.yaml"))[
+        "species_definitions"]["planktivorous_fish"][spawning.KEY]
     written = yaml.safe_load(text)["species_definitions"]["planktivorous_fish"]
     assert written[set_point.KEY] == dict(BLOCK, observed=True)
     # Section 250: a migrating open population keeps no r_max after an Apply.

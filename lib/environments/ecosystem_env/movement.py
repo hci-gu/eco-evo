@@ -260,6 +260,16 @@ def apply_energy_costs(env, actions):
         [env.fgs[fid].energy_reserve for fid in env.dm_ids], axis=0)
     temp_gains = np.stack(
         [env.fgs[fid].temp_energy_gains for fid in env.dm_ids], axis=0)
+    if getattr(env, "_has_spawning", False):
+        # Section 279: the gametes shed this tick leave the reserve before
+        # the action costs (energy only; ``lib/world/spawning.py``).
+        rate = env.spawn_shed_table[interactions.light_index(env)][:, None, None]
+        shed = np.minimum(biomass * rate, np.maximum(reserve, np.float32(0.0)))
+        reserve = reserve - shed
+        book = env.__dict__.setdefault("gamete_energy_shed", {})
+        for i in np.flatnonzero(env.dm_spawning):
+            fid = env.dm_ids[i]
+            book[fid] = float(book.get(fid, 0.0)) + float(shed[i].sum())
 
     # Per-DM extra energy cost from all impacts the FG is affected by
     # (sum of energy_factor lookups over every impact with a valid table).

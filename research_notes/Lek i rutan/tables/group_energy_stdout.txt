@@ -1,0 +1,52 @@
+===== benthivorous_fish (member shares listed 1.001; ME 1800 MJ/t)
+  haddock          share 0.386 in_box 0.70 mature 0.38 -> spawning share of group 0.103; G 100-270-500 MJ/t mature; reserve share 0.2-0.5-0.8; cut 0.9 x 40 d at 20 MJ/t/d
+  cod              share 0.314 in_box 1.00 mature 0.52 -> spawning share of group 0.163; G 170-430-1000 MJ/t mature; reserve share 0.2-0.5-0.8; cut 0.85 x 60 d at 20 MJ/t/d
+  long rough dab   share 0.126 in_box 1.00 mature 0.60 -> spawning share of group 0.076; G 400-600-800 MJ/t mature; reserve share 0.3-0.5-0.7; cut 0.5 x 60 d at 15 MJ/t/d
+  dab              share 0.045 in_box 1.00 mature 0.60 -> spawning share of group 0.027; G 430-640-850 MJ/t mature; reserve share 0.22-0.35-0.47; cut 0.0 x 0 d at 15 MJ/t/d
+  plaice           share 0.038 in_box 1.00 mature 0.66 -> spawning share of group 0.025; G 650-750-850 MJ/t mature; reserve share 0.4-0.5-0.6; cut 0.83 x 80 d at 15 MJ/t/d
+  witch            share 0.017 in_box 1.00 mature 0.43 -> spawning share of group 0.007; G 150-250-350 MJ/t mature; reserve share 0.1-0.2-0.3; cut 0.0 x 0 d at 15 MJ/t/d
+  starry ray + hagfish + others share 0.075 in_box 0.00 mature 0.00 -> spawning share of group 0.000; G 0-0-0 MJ/t mature; reserve share 0-0-0; cut 0 x 0 d at 15 MJ/t/d
+  share of group biomass that is mature and spawns in the box: 0.401
+  reproductive energy, MJ per t of group per yr (lo / mid / hi): 97 / 181 / 322  = 0.054 / 0.101 / 0.179 ME
+  of it from the stored reserve: 26 / 87 / 238 MJ/t = 0.014 / 0.049 / 0.132 ME
+  feeding cut around spawning (fast-equivalent deficit): 299 MJ/t = 0.166 ME
+  total reserve drawdown (reserve-funded gonad + cut): 0.181 / 0.215 / 0.299 ME
+  TEST start_fill: winter max 0.76 -> spring/summer min 0.33: drop 0.43 ME; monthly [0.76, 0.76, 0.62, 0.47, 0.33, 0.33, 0.33, 0.57, 0.81, 0.81, 0.81, 0.79]
+===== whiting (member shares listed 1.000; ME 2000 MJ/t)
+  whiting          share 1.000 in_box 0.80 mature 0.43 -> spawning share of group 0.344; G 500-800-1050 MJ/t mature; reserve share 0.4-0.6-0.8; cut 0.5 x 40 d at 20 MJ/t/d
+  share of group biomass that is mature and spawns in the box: 0.344
+  reproductive energy, MJ per t of group per yr (lo / mid / hi): 172 / 275 / 361  = 0.086 / 0.138 / 0.181 ME
+  of it from the stored reserve: 69 / 165 / 289 MJ/t = 0.034 / 0.083 / 0.144 ME
+  feeding cut around spawning (fast-equivalent deficit): 138 MJ/t = 0.069 ME
+  total reserve drawdown (reserve-funded gonad + cut): 0.103 / 0.151 / 0.213 ME
+  TEST start_fill: winter max 0.69 -> spring/summer min 0.30: drop 0.39 ME; monthly [0.69, 0.69, 0.56, 0.43, 0.3, 0.3, 0.3, 0.52, 0.73, 0.73, 0.73, 0.71]
+===== predatory_fish (member shares listed 1.000; ME 2000 MJ/t)
+  saithe           share 0.797 in_box 0.00 mature 0.59 -> spawning share of group 0.000; G 260-400-690 MJ/t mature; reserve share 0.3-0.5-0.8; cut 0.0 x 0 d at 20 MJ/t/d
+  spurdog          share 0.097 in_box 0.50 mature 0.50 -> spawning share of group 0.024; G 75-150-250 MJ/t mature; reserve share 0.3-0.5-0.7; cut 0.0 x 0 d at 10 MJ/t/d
+  hake             share 0.048 in_box 1.00 mature 0.70 -> spawning share of group 0.034; G 250-450-700 MJ/t mature; reserve share 0.1-0.2-0.4; cut 0.0 x 0 d at 20 MJ/t/d
+  anglerfish + ling + velvet belly + pollack share 0.058 in_box 0.00 mature 0.00 -> spawning share of group 0.000; G 0-0-0 MJ/t mature; reserve share 0-0-0; cut 0 x 0 d at 20 MJ/t/d
+  share of group biomass that is mature and spawns in the box: 0.058
+  reproductive energy, MJ per t of group per yr (lo / mid / hi): 10 / 19 / 30  = 0.005 / 0.009 / 0.015 ME
+  of it from the stored reserve: 1 / 5 / 14 MJ/t = 0.001 / 0.002 / 0.007 ME
+  feeding cut around spawning (fast-equivalent deficit): 0 MJ/t = 0.000 ME
+  total reserve drawdown (reserve-funded gonad + cut): 0.001 / 0.002 / 0.007 ME
+  TEST start_fill: winter max 0.71 -> spring/summer min 0.71: drop 0.00 ME; monthly [0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71]
+===== planktivorous_fish (member shares listed 1.000; ME 4990 MJ/t)
+  herring          share 0.554 in_box 0.00 mature 0.09 -> spawning share of group 0.000; G 900-1100-1300 MJ/t mature; reserve share 0.8-1.0-1.0; cut 0.0 x 0 d at 0 MJ/t/d
+  Norway pout      share 0.350 in_box 0.50 mature 0.20 -> spawning share of group 0.035; G 500-800-1200 MJ/t mature; reserve share 0.2-0.4-0.6; cut 0.0 x 0 d at 0 MJ/t/d
+  sprat            share 0.021 in_box 1.00 mature 0.36 -> spawning share of group 0.008; G 500-800-1200 MJ/t mature; reserve share 0.1-0.2-0.3; cut 0.0 x 0 d at 0 MJ/t/d
+  blue whiting     share 0.075 in_box 0.00 mature 0.00 -> spawning share of group 0.000; G 0-0-0 MJ/t mature; reserve share 0-0-0; cut 0 x 0 d at 0 MJ/t/d
+  share of group biomass that is mature and spawns in the box: 0.043
+  reproductive energy, MJ per t of group per yr (lo / mid / hi): 21 / 34 / 51  = 0.004 / 0.007 / 0.010 ME
+  of it from the stored reserve: 4 / 12 / 28 MJ/t = 0.001 / 0.002 / 0.006 ME
+  feeding cut around spawning (fast-equivalent deficit): 0 MJ/t = 0.000 ME
+  total reserve drawdown (reserve-funded gonad + cut): 0.001 / 0.002 / 0.006 ME
+  TEST start_fill: winter max 0.50 -> spring/summer min 0.20: drop 0.30 ME; monthly [0.5, 0.36, 0.26, 0.2, 0.32, 0.81, 0.94, 0.96, 0.88, 0.88, 0.76, 0.68]
+===== mackerel (member shares listed 1.000; ME 6980 MJ/t)
+  mackerel         share 0.941 in_box 0.00 mature 0.80 -> spawning share of group 0.000; G 1300-2000-2700 MJ/t mature; reserve share 0.0-0.1-0.2; cut 0.0 x 0 d at 0 MJ/t/d
+  horse mackerel   share 0.059 in_box 0.00 mature 0.00 -> spawning share of group 0.000; G 0-0-0 MJ/t mature; reserve share 0-0-0; cut 0 x 0 d at 0 MJ/t/d
+  share of group biomass that is mature and spawns in the box: 0.000
+  reproductive energy, MJ per t of group per yr (lo / mid / hi): 0 / 0 / 0  = 0.000 / 0.000 / 0.000 ME
+  of it from the stored reserve: 0 / 0 / 0 MJ/t = 0.000 / 0.000 / 0.000 ME
+  feeding cut around spawning (fast-equivalent deficit): 0 MJ/t = 0.000 ME
+  total reserve drawdown (reserve-funded gonad + cut): 0.000 / 0.000 / 0.000 ME

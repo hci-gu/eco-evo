@@ -143,17 +143,28 @@ def growth_window_table(cfg, latitude_deg, tick_hours):
     return by_day[np.minimum(days, by_day.size - 1)]
 
 
-def budget_gate(spec, latitude_deg, s_closed, maintenance):
+def budget_gate(spec, latitude_deg, s_closed, maintenance, cut=None):
     """``(gate, window_target, window_share)`` for the growth budget, or None
-    without a block or a latitude. gate = mean_t[w(t) (min(s_T(t), s*) -
-    u)], so g = P / (gate 1460) pays P inside the window; window_target is
-    the mean target there (the reference fill), window_share the share of
-    the year the window covers."""
+    without a block (and no ``cut``) or without a latitude. gate =
+    mean_t[w(t) (min(s_T(t) - cut(t), s*) - u)], so g = P / (gate 1460) pays
+    P inside the window; window_target is the mean target there (the
+    reference fill), window_share the share of the year the window covers.
+    ``cut`` (365,) is the spawners' room cut of section 279
+    (``spawning.cut_by_day``); the window stays the set point's own (all
+    year without a block)."""
     cfg = settings(spec)
-    if cfg is None or latitude_deg is None:
+    if latitude_deg is None or (cfg is None and cut is None):
         return None
-    target = np.minimum(group_target_by_day(cfg, float(latitude_deg)), float(s_closed))
-    window = growth_window_by_day(cfg, float(latitude_deg))
+    latitude = float(latitude_deg)
+    if cfg is None:
+        target = np.ones(365)
+        window = np.ones(365)
+    else:
+        target = group_target_by_day(cfg, latitude)
+        window = growth_window_by_day(cfg, latitude)
+    if cut is not None:
+        target = target - np.asarray(cut, dtype=np.float64)
+    target = np.minimum(target, float(s_closed))
     share = float(window.mean())
     if share <= 0.0:
         raise ValueError(f"{KEY}: the target never stops falling - no growth window")

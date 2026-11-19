@@ -199,12 +199,15 @@ def test_mareld2_open_population():
     from lib.config.config_loader import load_project_config
     fgs = load_project_config(str(ROOT / "mareld2.yaml"), mode="inference", spawn_seed=1,
                               grid_size=(6, 7))[0]
-    from lib.world import set_point
+    from lib.world import set_point, spawning
     for fid, (p, _, _) in expected.items():
         fg = fgs[fid]
-        # Section 271: a reserve set point caps s* at its annual mean target.
+        # Section 271: a reserve set point caps s* at its annual mean target;
+        # section 279: the spawning cut lowers the fill growth runs at.
         u = fg.params["maintenance_level"]
-        window = set_point.budget_gate(fg.params, fg.params["daylight"]["latitude_deg"], 1.0, u)
+        latitude = fg.params["daylight"]["latitude_deg"]
+        window = set_point.budget_gate(fg.params, latitude, 1.0, u,
+                                       cut=spawning.cut_by_day(fg.params, latitude))
         gate = (1.0 - u) if window is None else window[0]
         assert fg.growth_rate == pytest.approx(p / (gate * TICKS_PER_YEAR), rel=1e-9), fid
 

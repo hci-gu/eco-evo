@@ -191,7 +191,7 @@ from typing import Dict, Iterable, Optional
 from lib.world.energy_balance import (appetite_form, growth_cost,
                                      intake_ceiling, net_assimilation,
                                      prey_energy, sda_fraction, tonne_price)
-from lib.world import set_point
+from lib.world import set_point, spawning
 from lib.world.tick_time import LIBRARY_TICK_HOURS
 
 TICKS_PER_YEAR = 365.0 * 24.0 / LIBRARY_TICK_HOURS
@@ -691,17 +691,19 @@ def _ideal_gate(budget, prey_id, spec, species_defs, interactions,
                         f"(best prey {best})")
         return
     try:
-        window = set_point.budget_gate(spec, latitude_deg, s_star, u)
+        # Section 279: the spawners' room cut lowers the fill growth runs at.
+        cut = spawning.cut_by_day(spec, latitude_deg)
+        window = set_point.budget_gate(spec, latitude_deg, s_star, u, cut=cut)
     except ValueError as error:      # the FG editor, mid-keystroke
         budget.error = str(error)
         return
     if window is not None:
         # Section 271 (form 2): growth only in the clock's window, at the
-        # target there; P is paid inside it.
+        # target there (less the spawning cut, 279); P is paid inside it.
         gate, target, share = window
         if gate <= 0.0:
-            budget.error = (f"the reserve set point leaves no growth above "
-                            f"maintenance_level {u:.4g} (section 271)")
+            budget.error = (f"the reserve set point and spawning leave no growth "
+                            f"above maintenance_level {u:.4g} (sections 271, 279)")
             return
         budget.reference_fill = target
         budget.gate = gate

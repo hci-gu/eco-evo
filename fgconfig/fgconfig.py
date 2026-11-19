@@ -1035,6 +1035,20 @@ class FGConfigApp:
         ttk.Separator(self.editor_frame, orient="horizontal").grid(
             row=grow, column=0, columnspan=2, sticky="ew", padx=4, pady=(0, 2))
         grow += 1
+        # Spawning in the box (section 279, lib/world/spawning.py): the
+        # library's ``spawning`` list, one line per entry. Empty = none.
+        self._make_prop_label(
+            self.editor_frame,
+            "Spawning (one line per member:\n name | share | gamete MJ/t/yr | "
+            "reserve share |\n fast cut | fast loss MJ/t/d | days | start | end)",
+            help_key="spawning").grid(row=grow, column=0, sticky="nw", padx=5, pady=2)
+        self.spawning_text = tk.Text(self.editor_frame, width=40, height=5, wrap="none")
+        self.spawning_text.grid(row=grow, column=1, sticky="ew", padx=5, pady=2)
+        attach_help(self.spawning_text, "spawning")
+        grow += 1
+        ttk.Separator(self.editor_frame, orient="horizontal").grid(
+            row=grow, column=0, columnspan=2, sticky="ew", padx=4, pady=(0, 2))
+        grow += 1
         # Derived growth-rate breakdown (lib/world/growth_budget.py), one
         # label per budget term; filled by _update_editor_growth_display.
         self.growth_info_frame = ttk.Frame(self.editor_frame)
@@ -5218,6 +5232,8 @@ class FGConfigApp:
                                       if isinstance(config, dict) else None)
             self._set_set_point_fields(config.get("reserve_set_point")
                                        if isinstance(config, dict) else None)
+            self._set_spawning_field(config.get("spawning")
+                                     if isinstance(config, dict) else None)
         else:
             self.editor_frame.pack_forget()
             if not self.ndm_editor_frame.winfo_ismapped():
@@ -5308,6 +5324,71 @@ class FGConfigApp:
                 "" if value in (None, "") else f"{float(value):g}")
         self.set_point_vars["set_point_observed"].set(
             "" if not block else ("1" if block.get("observed", True) else "0"))
+
+    @staticmethod
+    def _format_spawning(entries):
+        """The Spawning text: one '|'-separated line per library entry."""
+        def point(p):
+            p = p if isinstance(p, dict) else {}
+            return f"{float(p.get('day_length_h', 0.0)):g}{'+' if p.get('rising') else '-'}"
+        lines = []
+        for e in entries if isinstance(entries, list) else []:
+            if not isinstance(e, dict):
+                continue
+            days = e.get("spawning_days")
+            lines.append(" | ".join([
+                str(e.get("name", "")),
+                *(f"{float(e.get(k, 0.0)):g}" for k in (
+                    "share", "gamete_energy", "reserve_share", "fast_cut", "fast_loss")),
+                "-" if days in (None, "") else f"{float(days):g}",
+                point(e.get("spawn_start")), point(e.get("spawn_end"))]))
+        return "\n".join(lines)
+
+    def _set_spawning_field(self, entries):
+        """Fill the Spawning text from a library list (or clear it)."""
+        self.spawning_text.delete("1.0", "end")
+        text = self._format_spawning(entries)
+        if text:
+            self.spawning_text.insert("1.0", text)
+
+    @staticmethod
+    def _collect_spawning_block(text, appetite):
+        """``(entries, error)`` from the Spawning text: ``(None, None)`` =
+        no spawning. Checked with the engine's own reader
+        (spawning.settings)."""
+        from lib.world import spawning as _spawning
+        entries = []
+        for n, raw in enumerate(str(text or "").splitlines(), start=1):
+            if not raw.strip():
+                continue
+            parts = [p.strip() for p in raw.split("|")]
+            if len(parts) != 9:
+                return None, (f"Spawning line {n}: need 9 fields separated by '|' "
+                              f"(got {len(parts)})")
+            try:
+                entry = {"name": parts[0]}
+                for key, value in zip(("share", "gamete_energy", "reserve_share",
+                                       "fast_cut", "fast_loss"), parts[1:6]):
+                    entry[key] = float(value)
+                if parts[6] not in ("", "-"):
+                    entry["spawning_days"] = float(parts[6])
+                for key, value in (("spawn_start", parts[7]), ("spawn_end", parts[8])):
+                    if not value or value[-1] not in "+-":
+                        raise ValueError(f"{key} must end in + or -")
+                    entry[key] = {"day_length_h": float(value[:-1]),
+                                  "rising": value[-1] == "+"}
+            except ValueError as exc:
+                return None, f"Spawning line {n}: {exc}"
+            if float(entry.get("spawning_days", 0.0) or 0.0).is_integer() and "spawning_days" in entry:
+                entry["spawning_days"] = int(entry["spawning_days"])
+            entries.append(entry)
+        if not entries:
+            return None, None
+        try:
+            _spawning.settings({"appetite": appetite, _spawning.KEY: entries})
+        except ValueError as exc:
+            return None, f"Spawning: {exc}"
+        return entries, None
 
     @staticmethod
     def _collect_set_point_block(values, appetite):
@@ -6136,6 +6217,16 @@ class FGConfigApp:
                                      set_point_error + "\n\nNo changes were saved.")
                 return
             config.pop("reserve_set_point", None)
+        spawning_block = None
+        if is_dm:
+            spawning_block, spawning_error = self._collect_spawning_block(
+                self.spawning_text.get("1.0", "end"),
+                str(config.get("appetite") or "").strip().lower())
+            if spawning_error:
+                messagebox.showerror("Invalid Spawning",
+                                     spawning_error + "\n\nNo changes were saved.")
+                return
+            config.pop("spawning", None)
 
         # Sync remaining fields with global library - in place, so the
         # entry keeps its comments and untouched number formatting.
@@ -6201,6 +6292,14 @@ class FGConfigApp:
                 self._update_mapping(target["reserve_set_point"], set_point_block)
             else:
                 target["reserve_set_point"] = set_point_block
+            if spawning_block is None:
+                target.pop("spawning", None)
+            elif (self._collect_spawning_block(
+                    self._format_spawning(target.get("spawning")),
+                    "reserve_room")[0] != spawning_block):
+                # Replaced only when changed, so an Apply that edits nothing
+                # here keeps the library's list and its comments.
+                target["spawning"] = spawning_block
         self.current_fg_configs[fg_id] = target
 
         # ``energy_gain`` är legacy och varken läses av runtime

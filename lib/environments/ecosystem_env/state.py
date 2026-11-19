@@ -4,7 +4,7 @@ from typing import Dict, List, Optional
 import numpy as np
 import torch
 
-from lib.world import nutrients, set_point, temperature
+from lib.world import nutrients, set_point, spawning, temperature
 from lib.world.growth_budget import growth_law, income_growth
 from lib.environments.ecosystem_env import (
     grid_masks, impacts, interactions, natural_mortality, open_pool, refuge,
@@ -282,6 +282,7 @@ def build_static_caches(env):
          for fid in env.dm_ids], dtype=bool)
     env._has_reserve_room = bool(env.dm_reserve_room.any())
     _build_set_point(env)
+    _build_spawning(env)
     # Section 265: DMs that attack every prey they meet (p = 1 on each
     # pair of the menu, ``attack_choice: fixed``); their eat shares set
     # only the foraging time.
@@ -514,6 +515,51 @@ def _build_set_point(env):
     # is not falling (``movement.income_growth``, GPU ``income_growth``).
     env.set_point_growth = window
     env._has_set_point = True
+
+
+def _build_spawning(env):
+    """Section 279: spawning in the box (``lib/world/spawning.py``).
+
+    ``env.spawn_shed_table`` (T, N_dm) is the gamete energy each DM sheds
+    per tonne and tick (0 without a ``spawning`` block) and ``env.dm_spawning``
+    marks those DMs. The spawners' deficit lowers the top of the reserve room:
+    it is subtracted from ``env.set_point_table`` (all ones without a set
+    point), so the room cap and the observed room of both engines read it;
+    the growth window stays the set point's own (ones without one). Inert
+    without the daylight calendar."""
+    env._has_spawning = False
+    env.spawn_shed_table = None
+    env.dm_spawning = np.zeros(env.N_dm, dtype=bool)
+    blocks = [i for i, fid in enumerate(env.dm_ids)
+              if spawning.settings(env.fgs[fid].params) is not None]
+    if not blocks or not getattr(env, "_has_daylight", False):
+        return
+    latitude = float(env.daylight["latitude_deg"])
+    tick_hours = int(env.daylight["tick_hours"])
+    cut = np.zeros((env.light_period, env.N_dm), dtype=np.float64)
+    shed = np.zeros((env.light_period, env.N_dm), dtype=np.float64)
+    for i in blocks:
+        fg = env.fgs[env.dm_ids[i]]
+        spec = dict(fg.params)
+        spec["max_energy_reserve"] = float(fg.max_energy_reserve)
+        cut[:, i], shed[:, i] = spawning.tick_tables(spec, latitude, tick_hours)
+        env.dm_spawning[i] = True
+    top = (np.asarray(env.set_point_table, dtype=np.float64)
+           if getattr(env, "_has_set_point", False)
+           else np.ones_like(cut))
+    top = top - cut
+    for i in blocks:
+        floor = float(env.fgs[env.dm_ids[i]].maintenance_level or 0.0)
+        if float(top[:, i].min()) <= floor:
+            raise ValueError(
+                f"'{env.dm_ids[i]}': spawning lowers the reserve room to "
+                f"{top[:, i].min():.4g}, at or below maintenance_level {floor:.4g}")
+    if not getattr(env, "_has_set_point", False):
+        env.set_point_growth = np.ones((env.light_period, env.N_dm), dtype=env.dtype)
+    env.set_point_table = top.astype(env.dtype)
+    env._has_set_point = True
+    env.spawn_shed_table = shed.astype(env.dtype)
+    env._has_spawning = True
 
 
 def _build_edge_closure(env):

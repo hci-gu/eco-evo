@@ -301,6 +301,9 @@ class GpuStepper:
         losses = r.loss_book.cpu().numpy()
         imports = r.import_book.cpu().numpy()
         diet = r.diet_book.cpu().numpy()
+        gametes = r.gamete_book.cpu().numpy()
+        spawners = [d for d in range(m.D) if bool(m.spawning_on)
+                    and bool(self.envs[0].dm_spawning[d])]
         actions = r.action_sum.cpu().numpy()
         active = r.active_ticks.cpu().numpy()
         ids = m.ids
@@ -309,6 +312,9 @@ class GpuStepper:
                 setattr(env, "loss_" + name,
                         {fid: float(losses[k, row, g]) for g, fid in enumerate(ids)})
             env.gain_exchange = {fid: float(imports[k, g]) for g, fid in enumerate(ids)}
+            if spawners:
+                env.gamete_energy_shed = {env.dm_ids[d]: float(gametes[k, d])
+                                          for d in spawners}
             env.intake_by_pred_prey = {
                 ids[p]: {ids[q]: float(diet[k, p, q]) for q in range(m.G) if diet[k, p, q] != 0.0}
                 for p in range(m.G) if diet[k, p].any()}

@@ -107,6 +107,8 @@ class RolloutRunner:
             # Section 245: an open pool's import (the export is a loss row).
             buffer("import_book", (self.E, model.G), torch.float64)
             buffer("diet_book", (self.E, model.G, model.G), torch.float64)
+            # Section 279: gamete energy shed per world and DM (MJ).
+            buffer("gamete_book", (self.E, model.D), torch.float64)
         self.local_min_energy = (
             model.local_min_energy(self.local_reward.min_energy_factor)
             if self.local_reward is not None else None)
@@ -175,6 +177,7 @@ class RolloutRunner:
             self.loss_book.zero_()
             self.import_book.zero_()
             self.diet_book.zero_()
+            self.gamete_book.zero_()
         if hidden is not None:
             self.hidden.copy_(hidden)
         self.b0.copy_(biomass[:, self.model.dm_index].sum(-1).double())
@@ -346,6 +349,8 @@ class RolloutRunner:
         for k, name in enumerate(self.LOSS_ORDER):
             if name in rows:
                 self.loss_book[:, k].add_(rows[name].double())
+        if "gamete" in record:
+            self.gamete_book.add_(record["gamete"].double())
 
     def _accumulate_local_reward(self, start, tracked, frac_in):
         """Aggregate this tick's per-cell ratios into ``local_sum``.

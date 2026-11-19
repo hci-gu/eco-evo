@@ -686,6 +686,28 @@
       low_day_length_h: 14.11
       top_day_length_h: 17.44
       observed: true
+    # Section 279: spawning in the box (lib/world/spawning.py). The box's
+    # herring are immature or spawn outside (not an entry); half of the
+    # mature Norway pout spawn here [J], sprat in or near the box. Both feed
+    # through it. Subtracted from the set point above. research_notes/"Lek i
+    # rutan" summary.md.
+    spawning:
+      - name: Norway pout
+        share: 0.035
+        gamete_energy: 800
+        reserve_share: 0.4
+        fast_cut: 0.0
+        fast_loss: 0
+        spawn_start: {day_length_h: 9.1, rising: true}
+        spawn_end: {day_length_h: 14.1, rising: true}
+      - name: sprat
+        share: 0.0076
+        gamete_energy: 800
+        reserve_share: 0.2
+        fast_cut: 0.0
+        fast_loss: 0
+        spawn_start: {day_length_h: 15.4, rising: true}
+        spawn_end: {day_length_h: 16.1, rising: false}
     # Section 265: attacks every prey of its menu it meets (p = 1); the eat
     # shares set only the foraging time. Field gadoid diets track what the
     # fish meet; the learned p drifted while the reserve-room cap bound
@@ -810,7 +832,8 @@
     # 0.956 at the manifest's 58.15 N, g = P / (1460 mean(w (s_T - u)));
     # the library-only path, without a site, keeps 0.0004908):
     # 0.00049083039579 -> 0.00136331.
-    growth_rate: 0.00136331
+    # Section 279: P paid at the fill the spawning cut leaves: 0.00136331 -> 0.0013634347.
+    growth_rate: 0.0013634347
     # Section 209: M1 = M0 + predation by groups that are not FGs = 0.26
     # /yr (0.11-0.38): herring M0 0.25, sprat 0.42, Norway pout 0.30,
     # blue whiting 0.20, + squid ~0.01. Was 0.580 (Ecopath 1991), which
@@ -887,6 +910,70 @@
     # long rough dab show only a seasonal switch. Evidence cod only (31 %
     # of the group). research_notes/"Tillvaxt mot ranson" (a-umlaut) Q1, Q3.
     appetite: reserve_room
+    # Section 279: spawning in the box (lib/world/spawning.py). One entry per
+    # member whose mature fish build gonads AND spawn here: share = member
+    # share x in-box x mature (NS-IBTS Q1 ogives on the box length mix);
+    # gametes leave the reserve while shed (energy only: SMS P is net of the
+    # spawning loss), and the spawners' deficit (fast, reserve-paid gametes)
+    # lowers the top of the room until each fish's spawning ends (refill at
+    # once, user 279). Cod spawn in the box (running fish Jan-May), plaice
+    # (Jan-Feb); haddock, long rough dab, dab, witch probable. Fasts: cod
+    # 0-0.25 of normal for 50-70 d [S/A], haddock [A, conflicting], plaice
+    # [F via thesis]; long rough dab weak. Day lengths at 58.15 N.
+    # research_notes/"Lek i rutan" summary.md (tables/species_inputs.csv).
+    spawning:
+      - name: cod
+        share: 0.1633
+        gamete_energy: 430
+        reserve_share: 0.5
+        fast_cut: 0.85
+        fast_loss: 20
+        spawning_days: 60
+        spawn_start: {day_length_h: 6.3, rising: true}
+        spawn_end: {day_length_h: 14.1, rising: true}
+      - name: haddock
+        share: 0.1027
+        gamete_energy: 270
+        reserve_share: 0.5
+        fast_cut: 0.9
+        fast_loss: 20
+        spawning_days: 40
+        spawn_start: {day_length_h: 10.2, rising: true}
+        spawn_end: {day_length_h: 17.4, rising: true}
+      - name: long rough dab
+        share: 0.0756
+        gamete_energy: 600
+        reserve_share: 0.5
+        fast_cut: 0.5
+        fast_loss: 15
+        spawning_days: 60
+        spawn_start: {day_length_h: 10.2, rising: true}
+        spawn_end: {day_length_h: 15.4, rising: true}
+      - name: dab
+        share: 0.027
+        gamete_energy: 640
+        reserve_share: 0.35
+        fast_cut: 0.0
+        fast_loss: 15
+        spawn_start: {day_length_h: 8.0, rising: true}
+        spawn_end: {day_length_h: 15.4, rising: true}
+      - name: plaice
+        share: 0.0251
+        gamete_energy: 750
+        reserve_share: 0.5
+        fast_cut: 0.83
+        fast_loss: 15
+        spawning_days: 80
+        spawn_start: {day_length_h: 6.2, rising: true}
+        spawn_end: {day_length_h: 12.9, rising: true}
+      - name: witch
+        share: 0.0073
+        gamete_energy: 250
+        reserve_share: 0.2
+        fast_cut: 0.0
+        fast_loss: 15
+        spawn_start: {day_length_h: 15.4, rising: true}
+        spawn_end: {day_length_h: 13.6, rising: false}
     # Section 265: attacks every prey of its menu it meets (p = 1); the eat
     # shares set only the foraging time. Field gadoid diets track what the
     # fish meet; the learned p drifted while the reserve-room cap bound
@@ -1056,7 +1143,8 @@
     # Section 247 (u to the field value, g x (1 - u_old)/(1 - u_new)): 0.0015943 -> 0.00086460.
     # Section 250 (somatic production instead of r_max + M1 + M2, no season factor):
     # 0.00086460317579 -> 0.0005497.
-    growth_rate: 0.00054972810745
+    # Section 279: P paid at the fill the spawning cut leaves: 0.00054972810745 -> 0.00056005794020.
+    growth_rate: 0.00056005794020
     # M1 = M0 0.20 (SMS convention) + predation by groups NOT in the model
     # 0.09 (squid, halibut, megrim, grey seal) = 0.29 /yr (0.19-0.46).
     # Predation by predatory_fish, seals and porpoises is M2 on pairs.
@@ -1165,6 +1253,27 @@
     # probe reached fill 0.92-0.98 (rule 240). research_notes/"Hostens
     # tillvaxt och sommarens aptit" (Swedish letters).
     appetite: reserve_room
+    # Section 279: spawning in the box (lib/world/spawning.py). Saithe build
+    # gonads here but spawn at the shelf edge (not an entry); spurdog pup
+    # Sep-Dec (half the mature in the box [J]), hake spawn Jul-Aug (running
+    # fish in Aug). Both feed through it. research_notes/"Lek i rutan".
+    spawning:
+      - name: spurdog
+        share: 0.0243
+        gamete_energy: 150
+        reserve_share: 0.5
+        fast_cut: 0.0
+        fast_loss: 10
+        spawn_start: {day_length_h: 13.6, rising: false}
+        spawn_end: {day_length_h: 6.2, rising: false}
+      - name: hake
+        share: 0.0336
+        gamete_energy: 450
+        reserve_share: 0.2
+        fast_cut: 0.0
+        fast_loss: 20
+        spawn_start: {day_length_h: 17.8, rising: false}
+        spawn_end: {day_length_h: 13.7, rising: false}
     # Section 265: attacks every prey of its menu it meets (p = 1); the eat
     # shares set only the foraging time. Field gadoid diets track what the
     # fish meet; the learned p drifted while the reserve-room cap bound
@@ -1235,7 +1344,8 @@
     # Section 247 (u to the field value, g x (1 - u_old)/(1 - u_new)): 0.0012954 -> 0.00069646.
     # Section 250 (somatic production instead of r_max + M1 + M2, no season factor):
     # 0.00069645523574 -> 0.0003093.
-    growth_rate: 0.00030932390632
+    # Section 279: P paid at the fill the spawning cut leaves: 0.00030932390632 -> 0.00030940926492.
+    growth_rate: 0.00030940926492
     # M1 = M0 + predation by groups NOT in the model: saithe 0.29, spurdog
     # 0.10, hake 0.45, anglerfish 0.25 -> 0.276 /yr (0.19-0.31).
     # Within-group predation is a transfer inside the pool and left out.
@@ -1319,6 +1429,20 @@
     # fill ~0.98 (rule 240). research_notes/"Hostens tillvaxt och
     # sommarens aptit" (Swedish letters).
     appetite: reserve_room
+    # Section 279: spawning in the box (lib/world/spawning.py; see the
+    # benthivores). 0.8 of the mature whiting (0.43, Q1 ogive) spawn here
+    # (running fish Jan-Feb); fast = the cod proxy halved [J], no whiting data.
+    # research_notes/"Lek i rutan" summary.md.
+    spawning:
+      - name: whiting
+        share: 0.344
+        gamete_energy: 800
+        reserve_share: 0.6
+        fast_cut: 0.5
+        fast_loss: 20
+        spawning_days: 40
+        spawn_start: {day_length_h: 8.0, rising: true}
+        spawn_end: {day_length_h: 17.8, rising: false}
     # Section 265: attacks every prey of its menu it meets (p = 1); the eat
     # shares set only the foraging time. Field gadoid diets track what the
     # fish meet; the learned p drifted while the reserve-room cap bound
@@ -1388,7 +1512,8 @@
     # Section 247 (u to the field value, g x (1 - u_old)/(1 - u_new)): 0.0020293 -> 0.0010910.
     # Section 250 (somatic production instead of r_max + M1 + M2, no season factor):
     # 0.0010910017053 -> 0.0004492.
-    growth_rate: 0.00044925614965
+    # Section 279: P paid at the fill the spawning cut leaves: 0.00044925614965 -> 0.00045329864682.
+    growth_rate: 0.00045329864682
     # M1 = SMS residual M 0.20 + grey seal and birds 0.05 = 0.25 /yr
     # (0.20-0.32). Booked on pairs: benthivores 0.18 (223.28), predatory_fish
     # 0.157, porpoises 0.019, seals 0.013; total M 0.62 vs SMS 0.685.

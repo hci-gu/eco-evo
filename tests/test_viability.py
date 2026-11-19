@@ -614,6 +614,8 @@ def test_feeding_cost_is_what_the_tick_charges_the_eaters():
     actions = ActionProbabilities(
         move=np.zeros((env.N_dm, 4, env.H, env.W), dtype=env.dtype),
         rest=np.zeros((env.N_dm, env.H, env.W), dtype=env.dtype), eat=eat)
+    # Section 279's gamete drain is its own term (tests/test_spawning.py).
+    env._has_spawning = False
     settled = movement.apply_energy_costs(env, actions)
     rich = reserve > 10.0 * biomass * viability._feeding_cost(env)
     charged = reserve - settled.stationary_reserve

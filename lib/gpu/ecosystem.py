@@ -101,6 +101,11 @@ class TensorEcosystem:
         self.set_point_obs = (
             [int(d) for d in np.flatnonzero(env.dm_set_point_obs)]
             if self.set_point_on else [])
+        # Section 279: (T, D) gamete energy shed per tonne and tick
+        # (``env.spawn_shed_table``); the spawners' room cut is already in
+        # ``set_point`` (``state._build_spawning``).
+        self.spawning_on = bool(getattr(env, "_has_spawning", False))
+        self.spawn_shed = (tensor(env.spawn_shed_table) if self.spawning_on else None)
         # Per-pair Holling type mask (section 141): [1, D, G, 1].
         self.type3 = tensor(env._type3_pred_mask.reshape(self.D, self.G))[None, :, :, None]
         # Beddington-DeAngelis interference w_X [1/ton], per DM. Mirrors
@@ -1303,6 +1308,17 @@ class TensorEcosystem:
         r = torch.zeros(shape, device=self.device).index_copy(2, self.edge_indices, r_emig[:, :, None] * weights)
         return b, r
 
+    def shed_gametes(self, biomass, reserve, light_index):
+        """Section 279: take this tick's shed gametes out of the DMs'
+        reserves (``movement.apply_energy_costs``' first step on the CPU).
+        Returns the reserve and the energy shed per world and DM [E, D]."""
+        if light_index is None:
+            raise ValueError("light_index is required with spawning")
+        b, r = biomass[:, self.dm_index], reserve[:, self.dm_index]
+        rate = self.spawn_shed[light_index.reshape(-1)][:, :, None]
+        shed = torch.minimum(b * rate, r.clamp_min(0))
+        return reserve.index_copy(1, self.dm_index, r - shed), shed.sum(-1)
+
     def movement(self, biomass, reserve, gains, actions, track=False,
                  light_index=None, impact_cost=None, juvenile=None):
         """Move, split and settle; ``track`` also returns the source flow.
@@ -2093,6 +2109,10 @@ class TensorEcosystem:
             record["intake"] = intake.sum(-1)
         if j is not None:
             j = out[5]
+        if self.spawning_on:
+            r, shed = self.shed_gametes(b, r, light_index)
+            if record is not None:
+                record["gamete"] = shed
         out = self.movement(b, r, gains, actions, track=track_source,
                             light_index=light_index, impact_cost=impact_cost, juvenile=j)
         b, r, flow = out[:3]

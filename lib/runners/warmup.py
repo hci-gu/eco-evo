@@ -179,6 +179,8 @@ def _reset_books(env):
     env.loss_natural_parts = {}
     env._extinction_events = {fid: 0 for fid in env.fgs}
     env.intake_by_pred_prey = {fid: {} for fid in env.fgs}
+    if hasattr(env, "gamete_energy_shed"):
+        env.gamete_energy_shed = {}
     if hasattr(env, "intake_juvenile_by_pred_prey"):
         env.intake_juvenile_by_pred_prey = {}
 

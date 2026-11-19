@@ -980,6 +980,26 @@ FIELD_HELP = {
         "Sep), low 14.11 h (15 Apr), top 17.44 h (1 Jun); "
         "research_notes/\"Ljusstyrd aptit\" design.md."
     ),
+    "spawning": (
+        "Spawning in the box (section 279, lib/world/spawning.py): one line "
+        "per member species whose mature fish build gonads AND spawn in the "
+        "box, fields separated by '|':\n"
+        "  name | share | gamete MJ/t/yr | reserve share | fast cut | fast "
+        "loss MJ/t/d | spawning days | start | end\n"
+        "share = member share x in-box x mature (tonnes per tonne of the "
+        "group); gamete energy per tonne of those fish; reserve share = the "
+        "part of the gametes paid from the reserve; fast cut = the share of "
+        "its normal intake a spawning fish does not eat (0 = feeds through), "
+        "fast loss = its energy loss per tonne and day while fasting; "
+        "spawning days = how long one fish spawns ('-' = the whole window); "
+        "start / end = day length in h with '+' (lengthening days) or '-' "
+        "(shortening), e.g. 6.3+ and 14.1+.\n\n"
+        "Energy only: the gametes leave the reserve while shed, and the "
+        "spawners' deficit lowers the top of the reserve room until each "
+        "fish's spawning ends (needs appetite reserve_room; subtracted from "
+        "a reserve set point). Inert without the daylight calendar. Empty = "
+        "none. research_notes/\"Lek i rutan\" summary.md."
+    ),
     "set_point_depth": (
         "Depth: how far the member species' target falls at the low, 0-1 "
         "(target 1 - depth). Empty or 0 = no set point."

@@ -1,0 +1,26 @@
+day length at 58.15 N, hours; sign = d(day length)/dt
+Jan  1   6.27 h  +
+Jan 15   6.86 h  +
+Feb  1   7.97 h  +
+Feb 15   9.06 h  +
+Mar  1  10.23 h  +
+Mar 15  11.44 h  +
+Apr  1  12.91 h  +
+Apr 15  14.11 h  +
+May  1  15.42 h  +
+May 15  16.46 h  +
+Jun  1  17.44 h  +
+Jun 15  17.86 h  +
+Jul  1  17.77 h  -
+Jul 15  17.22 h  -
+Aug  1  16.14 h  -
+Aug 15  15.06 h  -
+Sep  1  13.64 h  -
+Sep 15  12.43 h  -
+Oct  1  11.05 h  -
+Oct 15   9.85 h  -
+Nov  1   8.46 h  -
+Nov 15   7.44 h  -
+Dec  1   6.54 h  -
+Dec 15   6.13 h  -
+min 6.10 h (day 354), max 17.90 h (day 172)
