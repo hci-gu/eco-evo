@@ -25976,6 +25976,71 @@ remain open exactly as described in 71.9 / 71.11.
     ~20x the field crowding that is an intake elasticity ~-0.05 (model -0.012, 278.3; field -0.2 Baltic
     large cod and flounder, 0 small cod; mechanism unknown, bed pairs saturated in the field too).
 
+278.7 The cost of crowding (2026-11-19; user: option 1 of 278.6, then "kor diagnoserna forst"; research and
+    diagnostic only, nothing changed). research_notes/"Trangselns kostnad" (a-umlaut) summary.md (literature
+    agent; NS-IBTS GOV 1991-2025 box hauls analysed) and model/ (main agent, cf_field_diag.py, frozen fix104
+    u1267, pre-279 library, seeds 0/1).
+    - Field: no crowding cost with a measured magnitude clearly clears the ~-0.05 break-even. Haul-scale
+      stomach elasticity on own density, box-weighted ~-0.04..-0.11 (haddock -0.02..-0.07, Baltic large cod
+      and flounder -0.2, small cod 0), measured only to ~5-25x the mean; condition shows no cost (haddock
+      +0.5-0.8 % per doubling); haddock spread out as they get abundant (basin slope -0.17..-0.20); oxygen,
+      parasites, aggression unsupported; predators' aggregative response on fish prey weak to negative.
+    - The upper tail is the cleanest mismatch: field hauls hold 0 (Q1) / 0.11 (Q3) of the group above 20
+      t/km2 and none above 50 (densest haul 9.5 / 13x the mean, <= 31 t/km2; dense sites recur in place);
+      the model holds 0.80 above 20 and 0.63 above 50 t/km2, densest cell 110-200x the mean (~225 t/km2).
+    - Model intake elasticity on own density at field-like crowding (k ~3, bed-prey control): eaten -0.007,
+      pre-cap +0.02..+0.03; clumped eaten -0.01..-0.03. No crowding cost at any crowding; what is eaten
+      falls only through the reserve cap.
+    - A crowding term on intake at the field size would be absorbed by the cap while the fish sit at fill
+      ~1 (pre-cap 0.91 of the ceiling vs eaten 0.64, 278.4): the fill gap is its precondition.
+
+278.8 What closing the demersal fill gap would do to clumping (user: "sedan 1"; diagnostic only, nothing
+    changed). research_notes/"Trangselns kostnad" model/scripts/cf_fill.py: frozen fix104 u1267, pre-279
+    library, cf_lever snapshots, one-day windows, reserves set to the month's field start_fill per cell
+    (water column 0.71, whiting and benthivores their months; the fill, never the eat share).
+    - Saving of clumping (all-predator M2 spread - clumped) at Lloyd 3: as trained 0.25 /yr; predators at
+      field fill 0.42; benthivores at field fill 0.26; both 0.41 (field placement 0.43 / 0.74 / 0.44 /
+      0.73). Hungry predators put all-predator M2 on spread benthivores at ~1.0 /yr (booked 0.25).
+    - Hungry benthivores (room 1.00): intake elasticity on own density turns positive, +0.01 (clumped) /
+      +0.02 (Lloyd 3) / +0.04 (field): the clumps sit on richer beds and the bed pairs are saturated.
+    - Label check: the realised gain is 1.007x the post-room-cap demand (elasticity -0.015 vs -0.013).
+    Reading: closing the fill gap is a mismatch in its own right but makes clumping pay more and creates
+    no crowding cost. A crowding term at the field's central -0.07 gives ~17 % less intake at k 40 vs 3,
+    against a saving of ~0.4 /yr once the predators are hungry: probably not enough. Every lever on the
+    278 list is now tested short of the field's distribution; the remaining choices are the user's.
+
+278.9 How the water column's excess on spread benthivores splits (user: "2"; diagnostic only, nothing
+    changed). research_notes/"Klumpningens spakar" scripts/cf_pair.py, tables/pair_*: frozen fix104 u1267,
+    pre-279 library, cf_lever snapshots, one-day windows, WC trained placement. Arms: x1 / x0.5 / x0.42 on
+    the WC -> benthivores max_intake_mat (0.42 ~ the pre-279 pair at its booking: budget_gate's equal-cell
+    1.95 on the live library x a 0.1162 / 0.09443; a counterfactual, never a library value), planktivores
+    as trained or even, benthivores clumped / Lloyd 3 / field. Means over 8 snapshots (day 0 dominates):
+    | pair   | planktivores | saving L3 | saving field | WC M2 L3 | WC ration MJ / booked |
+    | x1     | trained      | 0.25      | 0.43         | 0.327    | 1.26                  |
+    | x0.42  | trained      | 0.16      | 0.29         | 0.211    | 1.26                  |
+    | x1     | even         | 0.12      | 0.20         | 0.165    | 1.17                  |
+    | x0.42  | even         | 0.07      | 0.12         | 0.089    | 1.17                  |
+    - The room cap refills the meal: x0.42 on the pair cuts the WC flow on Lloyd-3 benthivores only x0.65
+      (elasticity ~0.5); the refill goes to the other prey (krill is 0.6-0.8 of the WC's tonnes; not read
+      out per prey). The chat estimate after 278.8 ("a third, ~0.1" for the pair alone) is withdrawn: the
+      pair at its booking takes the saving 0.25 -> 0.16. Per snapshot the ratios are stable: pair x0.42
+      0.47-0.69 of the saving, planktivores even 0.42-0.58, both 0.22-0.39 (field placement up to 0.57).
+      On today's library (280 cut this a x0.81) the remaining pair error is ~x0.5: saving 0.18.
+    - Missing planktivores (0.07-0.08 of the WC's tonnes vs ~0.45 when even; the WC sits over shallow beds,
+      the planktivores deep) is the larger factor: alone 0.25 -> 0.12. It is trained state (both
+      placements, and the even arm also removes the planktivores' own clumping), which only retraining
+      moves. It restores the same overlap as 278.6's WC field placement: do not add the two.
+    - Ration: 3.75 t/t/yr is 1.44x booked in tonnes but 1.17-1.26x in MJ (krill-heavy diet); with the
+      planktivores back 1.17x, ~1.1x field Q/B. Not the culprit.
+    - Both together leave 0.07 /yr (9 % of P) AT TRAINED FILL; the rough break-even crowding elasticity
+      there would be ~-0.02, but with field fill (278.8: base 0.25 -> 0.42) the refill and the planktivore
+      redirection change and the combination is unmeasured, so this is no closure; the model also has
+      no crowding-cost mechanism. The non-WC predators realise ~0.03 /yr on clumped and ~0.12 on
+      field-placed benthivores (booked 0.19): clumping, not only the OFF pairs, holds them down.
+    Reading: only the pair derivation (the J encounter at the bed, ~2x the field flow, flagged since 270)
+    is a biology fix; it is worth a third of the saving. Not a clumping lever alone; the rest is trained
+    WC / planktivore overlap. Choice back to the user.
+
 279 SPAWNING IN THE BOX (user, 2026-11-18: "do 2, general for every fish that spawns in the box")
 --------------------------------------------------------------------------------------------
 279.1 Why. 278.4: the demersal fish hold fill 0.97-1.00 all year while the field start_fill cycles

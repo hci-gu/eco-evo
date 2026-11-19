@@ -1,0 +1,91 @@
+Anchor 2021-25 (Q1+Q3; earlier note: haddock median 4.36 (2.64-9.53), cod 2.47, guild B 3.06)
+  group            median 3.42 range 2.25-4.07; discreteness-corrected median 3.42
+  haddock          median 4.61 range 2.71-9.08; discreteness-corrected median 4.61
+  cod              median 2.48 range 1.73-3.65; discreteness-corrected median 2.39
+  plaice           median 3.32 range 1.86-8.73; discreteness-corrected median 3.26
+  dab              median 3.19 range 1.96-14.56; discreteness-corrected median 3.17
+  long_rough_dab   median 2.51 range 1.66-4.61; discreteness-corrected median 2.50
+
+Crowding by period (median over surveys of Lloyd/mean), Q1 / Q3
+  group            Q1  1.52  1.68  2.02  2.70 | Q3  2.60  2.09  2.12  3.51
+  haddock          Q1  2.89  4.71  7.01  3.84 | Q3  2.94  5.60  9.67  5.10
+  cod              Q1  1.72  2.15  3.46  2.39 | Q3  2.20  3.20  3.82  3.17
+  flatfish         Q1  1.39  1.58  1.59  1.48 | Q3  3.43  1.98  1.76  1.96
+  long_rough_dab   Q1  1.64  1.85  1.85  1.91 | Q3  3.07  4.10  3.84  3.58
+  dab              Q1  2.62  3.60  2.68  2.82 | Q3  8.01  3.36  2.57  3.56
+  plaice           Q1  2.04  2.17  2.64  2.08 | Q3  2.99  3.95  3.93  3.78
+  witch            Q1  5.94  4.63  6.54  8.22 | Q3  4.60  5.84  6.40  5.61
+  haddock_small    Q1  2.75  4.05  3.97  5.41 | Q3  2.65  5.22  7.93  5.19
+  cod_small        Q1  2.97  3.08  3.00  2.90 | Q3  2.46  4.46  4.94  4.24
+  haddock_big      Q1  3.57  5.75  8.01  4.03 | Q3  5.45  8.91 11.22  6.17
+  cod_big          Q1  1.83  2.36  3.53  2.41 | Q3  2.90  3.29  4.46  3.22
+  group_big        Q1  1.40  1.70  2.06  2.80 | Q3  2.92  2.04  2.08  3.55
+  (columns: 1991-2000, 2001-10, 2011-20, 2021-25)
+Discreteness-corrected crowding, same layout
+  group            Q1  1.50  1.64  2.00  2.69 | Q3  2.59  2.08  2.11  3.51
+  haddock          Q1  2.88  4.68  6.92  3.84 | Q3  2.94  5.59  9.28  5.10
+  cod              Q1  1.59  1.92  3.28  1.82 | Q3  2.15  3.16  3.66  2.93
+  flatfish         Q1  1.39  1.57  1.58  1.47 | Q3  3.43  1.98  1.76  1.96
+  plaice           Q1  1.96  2.09  2.57  2.01 | Q3  2.91  3.92  3.89  3.77
+  dab              Q1  2.58  3.56  2.64  2.79 | Q3  8.00  3.35  2.57  3.55
+  long_rough_dab   Q1  1.63  1.84  1.84  1.89 | Q3  3.07  4.09  3.83  3.57
+  witch            Q1  5.54  4.13  5.96  7.70 | Q3  4.38  4.91  5.95  5.35
+
+Upper tail of haul densities (t/km2, q = 1, nominal swept area), Q1 and Q3 1991-2025
+  taxon             Q hauls   mean    p99    max   >20   >50  >100  bio>20  bio>50 max/svmean
+  group             1   929   0.84    5.1    9.9     0     0     0   0.000   0.000        9.5
+  group             3   937   1.88   17.9   30.7     8     0     0   0.115   0.000       13.3
+  haddock           1   929   0.33    4.4    9.3     0     0     0   0.000   0.000       18.2
+  haddock           3   937   0.75    9.5   28.6     3     0     0   0.113   0.000       22.7
+  haddock_small     1   929   0.09    1.5    3.1     0     0     0   0.000   0.000       22.2
+  haddock_small     3   937   0.21    2.7    6.0     0     0     0   0.000   0.000       20.4
+  haddock_big       1   929   0.24    4.2    9.3     0     0     0   0.000   0.000       19.7
+  haddock_big       3   937   0.53    9.5   28.6     3     0     0   0.158   0.000       25.0
+  cod               1   929   0.24    2.0    5.4     0     0     0   0.000   0.000       13.2
+  cod               3   937   0.37    3.4   14.7     0     0     0   0.000   0.000       18.2
+  cod_big           1   929   0.22    2.0    5.4     0     0     0   0.000   0.000       13.6
+  cod_big           3   937   0.33    3.4   14.6     0     0     0   0.000   0.000       18.9
+  flatfish          1   929   0.27    1.2    1.8     0     0     0   0.000   0.000        8.7
+  flatfish          3   937   0.76    4.7   29.5     2     0     0   0.075   0.000       15.4
+  plaice            1   929   0.05    0.4    1.7     0     0     0   0.000   0.000       20.0
+  plaice            3   937   0.15    1.8    8.1     0     0     0   0.000   0.000       19.7
+  dab               1   929   0.04    0.3    0.9     0     0     0   0.000   0.000       12.3
+  dab               3   937   0.33    2.5   27.5     1     0     0   0.089   0.000       22.2
+
+Twelve densest hauls (model group), t/km2
+ Year  Quarter  Month StatRec  Depth  group  haddock  haddock_small  cod  flatfish
+ 1997        3      9    44G0     79   30.7      0.6            0.4  0.6      29.5
+ 2024        3      8    44F8     85   30.6     28.6            0.0  0.8       1.3
+ 2024        3      8    44F8     84   26.5     24.9            0.0  0.3       1.4
+ 2023        3      8    44F8    104   26.3     25.5            0.0  0.6       0.2
+ 2025        3      8    44G0     51   23.7      0.0            0.0  0.0      23.7
+ 2002        3      9    44G0     82   22.4      9.4            0.0 12.5       0.6
+ 1992        3      9    44F8     64   21.4     16.0            1.0  1.3       4.2
+ 2022        3      8    44F8     83   20.3     18.6            0.0  1.0       0.7
+ 2001        3      9    44G0     82   19.0     14.3            0.5  0.8       3.9
+ 2024        3      8    45G1    122   18.3     16.8            0.0  0.9       0.6
+ 1999        3      9    44G0     82   17.2      6.1            6.0  0.4      10.6
+ 1991        3      9    44G0     79   16.6      2.5            1.3  0.3      13.8
+
+Basin test: slope of ln(Lloyd/mean) and ln(p90) on ln(survey mean) across surveys,
+observed vs a resampling null (pooled relative distribution, survey haul counts; 1000 draws)
+  group           Q1 n=35 range x  5.4  Lloyd slope +0.07 (null +0.08, 95% -0.07..+0.21, P(null<=obs) 0.43) | p90 elast +1.06 (null +1.01, +0.91..+1.11) | corrected Lloyd slope +0.08 (boot -0.18..+0.35)
+  group           Q3 n=34 range x  8.8  Lloyd slope +0.43 (null +0.10, 95% -0.07..+0.25, P(null<=obs) 1.00) | p90 elast +0.98 (null +1.02, +0.91..+1.13) | corrected Lloyd slope +0.43 (boot +0.31..+0.55)
+  group_big       Q1 n=35 range x  5.4  Lloyd slope +0.09 (null +0.11, 95% -0.06..+0.25, P(null<=obs) 0.38) | p90 elast +1.06 (null +1.01, +0.91..+1.11) | corrected Lloyd slope +nan (boot +nan..+nan)
+  group_big       Q3 n=34 range x  8.8  Lloyd slope +0.43 (null +0.11, 95% -0.07..+0.26, P(null<=obs) 1.00) | p90 elast +1.03 (null +1.03, +0.91..+1.14) | corrected Lloyd slope +nan (boot +nan..+nan)
+  haddock         Q1 n=35 range x 58.9  Lloyd slope -0.20 (null +0.02, 95% -0.08..+0.12, P(null<=obs) 0.00) | p90 elast +1.06 (null +0.99, +0.92..+1.06) | corrected Lloyd slope -0.20 (boot -0.31..-0.06)
+  haddock         Q3 n=34 range x134.9  Lloyd slope -0.18 (null +0.02, 95% -0.08..+0.11, P(null<=obs) 0.00) | p90 elast +0.97 (null +0.99, +0.92..+1.07) | corrected Lloyd slope -0.17 (boot -0.31..-0.06)
+  haddock_big     Q1 n=35 range x 59.9  Lloyd slope -0.13 (null +0.02, 95% -0.08..+0.12, P(null<=obs) 0.00) | p90 elast +1.03 (null +0.99, +0.90..+1.07) | corrected Lloyd slope +nan (boot +nan..+nan)
+  haddock_big     Q3 n=34 range x512.0  Lloyd slope -0.05 (null -0.01, 95% -0.09..+0.08, P(null<=obs) 0.16) | p90 elast +0.93 (null +1.01, +0.91..+1.11) | corrected Lloyd slope +nan (boot +nan..+nan)
+  cod             Q1 n=35 range x 10.7  Lloyd slope +0.06 (null +0.08, 95% -0.08..+0.23, P(null<=obs) 0.40) | p90 elast +0.92 (null +0.99, +0.90..+1.09) | corrected Lloyd slope +0.15 (boot -0.13..+0.44)
+  cod             Q3 n=34 range x 28.3  Lloyd slope +0.11 (null +0.01, 95% -0.10..+0.13, P(null<=obs) 0.94) | p90 elast +0.86 (null +0.99, +0.91..+1.08) | corrected Lloyd slope +0.15 (boot -0.07..+0.48)
+  cod_big         Q1 n=35 range x 12.9  Lloyd slope +0.06 (null +0.07, 95% -0.07..+0.21, P(null<=obs) 0.43) | p90 elast +0.93 (null +0.99, +0.89..+1.08) | corrected Lloyd slope +nan (boot +nan..+nan)
+  cod_big         Q3 n=34 range x 38.1  Lloyd slope +0.08 (null +0.00, 95% -0.12..+0.11, P(null<=obs) 0.91) | p90 elast +0.88 (null +0.98, +0.91..+1.07) | corrected Lloyd slope +nan (boot +nan..+nan)
+  flatfish        Q1 n=35 range x  4.5  Lloyd slope -0.03 (null +0.05, 95% -0.08..+0.18, P(null<=obs) 0.11) | p90 elast +1.03 (null +1.02, +0.91..+1.13) | corrected Lloyd slope -0.02 (boot -0.22..+0.10)
+  flatfish        Q3 n=34 range x  6.5  Lloyd slope +0.62 (null +0.14, 95% -0.06..+0.36, P(null<=obs) 1.00) | p90 elast +0.70 (null +0.95, +0.83..+1.07) | corrected Lloyd slope +0.62 (boot +0.16..+0.94)
+  plaice          Q1 n=35 range x  6.3  Lloyd slope +0.30 (null +0.11, 95% -0.08..+0.33, P(null<=obs) 0.96) | p90 elast +0.93 (null +0.97, +0.84..+1.08) | corrected Lloyd slope +0.34 (boot -0.04..+0.79)
+  plaice          Q3 n=34 range x 28.2  Lloyd slope +0.24 (null +0.04, 95% -0.07..+0.16, P(null<=obs) 1.00) | p90 elast +0.88 (null +1.00, +0.91..+1.08) | corrected Lloyd slope +0.25 (boot +0.11..+0.38)
+  dab             Q1 n=35 range x  5.7  Lloyd slope +0.11 (null -0.01, 95% -0.15..+0.14, P(null<=obs) 0.95) | p90 elast +1.03 (null +1.01, +0.90..+1.13) | corrected Lloyd slope +0.13 (boot -0.06..+0.33)
+  dab             Q3 n=34 range x 18.5  Lloyd slope +0.13 (null +0.05, 95% -0.11..+0.20, P(null<=obs) 0.83) | p90 elast +0.72 (null +0.94, +0.85..+1.03) | corrected Lloyd slope +0.13 (boot -0.30..+0.50)
+  long_rough_dab  Q1 n=35 range x  5.6  Lloyd slope +0.01 (null +0.01, 95% -0.09..+0.12, P(null<=obs) 0.44) | p90 elast +1.00 (null +1.01, +0.91..+1.10) | corrected Lloyd slope +0.01 (boot -0.10..+0.12)
+  long_rough_dab  Q3 n=34 range x  6.8  Lloyd slope -0.28 (null -0.05, 95% -0.19..+0.07, P(null<=obs) 0.00) | p90 elast +0.80 (null +1.00, +0.91..+1.10) | corrected Lloyd slope -0.27 (boot -0.47..-0.07)

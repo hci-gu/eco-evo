@@ -1,0 +1,24 @@
+
+=== seed 1 day 0 (doy 279, month 10); field fill benth 0.81, whiting 0.73, WC 0.71
+  as trained  : clumped all 0.392 (save +0.000) WC 0.334 | WCroom 0.42 Broom 0.75 el -0.017 || 3.0 all 0.953 (save +0.561) WC 0.846 | WCroom 0.52 Broom 0.80 el +0.006 || field all 1.161 (save +0.769) WC 1.024 | WCroom 0.55 Broom 0.78 el +0.005
+  predators   : clumped all 0.724 (save +0.000) WC 0.663 | WCroom 1.00 Broom 0.75 el -0.017 || 3.0 all 1.658 (save +0.934) WC 1.526 | WCroom 1.00 Broom 0.80 el +0.006 || field all 2.031 (save +1.307) WC 1.854 | WCroom 1.00 Broom 0.78 el +0.003
+  benthivores : clumped all 0.407 (save +0.000) WC 0.349 | WCroom 0.44 Broom 1.00 el -0.007 || 3.0 all 0.975 (save +0.568) WC 0.867 | WCroom 0.54 Broom 1.00 el -0.007 || field all 1.200 (save +0.793) WC 1.056 | WCroom 0.56 Broom 1.00 el +0.020
+  both        : clumped all 0.730 (save +0.000) WC 0.669 | WCroom 1.00 Broom 1.00 el -0.003 || 3.0 all 1.626 (save +0.896) WC 1.495 | WCroom 1.00 Broom 1.00 el -0.007 || field all 2.023 (save +1.293) WC 1.838 | WCroom 1.00 Broom 1.00 el +0.016
+
+=== seed 1 day 91 (doy 5, month 1); field fill benth 0.76, whiting 0.69, WC 0.71
+  as trained  : clumped all 0.142 (save +0.000) WC 0.115 | WCroom 0.42 Broom 0.69 el -0.008 || 3.0 all 0.337 (save +0.195) WC 0.298 | WCroom 0.54 Broom 0.76 el +0.004 || field all 0.417 (save +0.275) WC 0.288 | WCroom 0.59 Broom 0.77 el +0.008
+  predators   : clumped all 0.285 (save +0.000) WC 0.257 | WCroom 1.00 Broom 0.69 el -0.008 || 3.0 all 0.589 (save +0.304) WC 0.545 | WCroom 1.00 Broom 0.76 el +0.004 || field all 0.648 (save +0.363) WC 0.479 | WCroom 1.00 Broom 0.77 el +0.008
+  benthivores : clumped all 0.144 (save +0.000) WC 0.117 | WCroom 0.44 Broom 1.00 el +0.027 || 3.0 all 0.349 (save +0.205) WC 0.311 | WCroom 0.57 Broom 1.00 el +0.035 || field all 0.430 (save +0.286) WC 0.298 | WCroom 0.61 Broom 1.00 el +0.026
+  both        : clumped all 0.277 (save +0.000) WC 0.248 | WCroom 1.00 Broom 1.00 el +0.028 || 3.0 all 0.589 (save +0.312) WC 0.545 | WCroom 1.00 Broom 1.00 el +0.035 || field all 0.649 (save +0.372) WC 0.477 | WCroom 1.00 Broom 1.00 el +0.023
+
+=== seed 1 day 182 (doy 96, month 4); field fill benth 0.47, whiting 0.43, WC 0.71
+  as trained  : clumped all 0.070 (save +0.000) WC 0.039 | WCroom 0.54 Broom 0.70 el -0.005 || 3.0 all 0.105 (save +0.034) WC 0.061 | WCroom 0.63 Broom 0.76 el +0.004 || field all 0.201 (save +0.131) WC 0.082 | WCroom 0.73 Broom 0.77 el +0.003
+  predators   : clumped all 0.105 (save +0.000) WC 0.073 | WCroom 1.00 Broom 0.70 el -0.005 || 3.0 all 0.155 (save +0.050) WC 0.105 | WCroom 1.00 Broom 0.76 el +0.003 || field all 0.289 (save +0.184) WC 0.142 | WCroom 1.00 Broom 0.77 el +0.004
+  benthivores : clumped all 0.074 (save +0.000) WC 0.041 | WCroom 0.60 Broom 1.00 el +0.035 || 3.0 all 0.106 (save +0.032) WC 0.065 | WCroom 0.67 Broom 1.00 el +0.032 || field all 0.206 (save +0.132) WC 0.091 | WCroom 0.75 Broom 1.00 el +0.058
+  both        : clumped all 0.116 (save +0.000) WC 0.082 | WCroom 1.00 Broom 1.00 el +0.035 || 3.0 all 0.154 (save +0.037) WC 0.107 | WCroom 1.00 Broom 1.00 el +0.033 || field all 0.293 (save +0.176) WC 0.147 | WCroom 1.00 Broom 1.00 el +0.055
+
+=== seed 1 day 273 (doy 187, month 7); field fill benth 0.33, whiting 0.3, WC 0.71
+  as trained  : clumped all 0.132 (save +0.000) WC 0.105 | WCroom 0.38 Broom 0.69 el -0.040 || 3.0 all 0.268 (save +0.135) WC 0.203 | WCroom 0.42 Broom 0.83 el -0.061 || field all 0.535 (save +0.403) WC 0.408 | WCroom 0.49 Broom 0.92 el -0.003
+  predators   : clumped all 0.254 (save +0.000) WC 0.227 | WCroom 1.00 Broom 0.69 el -0.039 || 3.0 all 0.545 (save +0.291) WC 0.474 | WCroom 1.00 Broom 0.83 el -0.060 || field all 0.976 (save +0.722) WC 0.831 | WCroom 1.00 Broom 0.93 el -0.003
+  benthivores : clumped all 0.171 (save +0.000) WC 0.145 | WCroom 0.47 Broom 1.00 el +0.016 || 3.0 all 0.298 (save +0.127) WC 0.232 | WCroom 0.46 Broom 1.00 el +0.049 || field all 0.576 (save +0.405) WC 0.449 | WCroom 0.52 Broom 1.00 el +0.066
+  both        : clumped all 0.297 (save +0.000) WC 0.270 | WCroom 1.00 Broom 1.00 el +0.017 || 3.0 all 0.546 (save +0.249) WC 0.472 | WCroom 1.00 Broom 1.00 el +0.045 || field all 0.982 (save +0.685) WC 0.835 | WCroom 1.00 Broom 1.00 el +0.067

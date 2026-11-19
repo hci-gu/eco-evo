@@ -1,0 +1,6 @@
+seed 1: benthivore mean density 1.57 t/km2 (cell tonnes at the reference scale)
+  year       : share > 20 t/km2 0.81 (range 0.66-0.93), > 50 0.63, max cell 223 t/km2 = 141x mean, Lloyd 63
+  Q1 Jan-Mar : share > 20 t/km2 0.79 (range 0.71-0.86), > 50 0.58, max cell 183 t/km2 = 121x mean, Lloyd 53
+  Q3 Jul-Sep : share > 20 t/km2 0.82 (range 0.66-0.93), > 50 0.69, max cell 267 t/km2 = 158x mean, Lloyd 72
+  elasticity clumped (biomass-weighted geometric mean k 29.6): eaten -0.014 (with bed-prey control -0.013); pre-cap +0.023 (+0.031)
+  elasticity 3.0     (biomass-weighted geometric mean k 3.1): eaten -0.007 (with bed-prey control -0.008); pre-cap +0.026 (+0.030)

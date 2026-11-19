@@ -60,3 +60,37 @@ What holds field benthivores near Lloyd 3 must then be on the cost side, which t
 - **Intake elasticity.** Intake per tonne on local density is -0.012 in the model (278.3). In the field it is -0.19 to -0.21 for Baltic large cod and flounder, at haul scale with depletion included. It is 0 for small cod, and haddock condition is higher where haddock are dense.
 - **Break-even estimate (rough).** The saving of ~0.2 per year needs a growth loss of ~0.2 per year. At the growth-ration slope of ~0.3 that takes ~15 % of the ration. Clumps sit ~20 times more crowded than the field, so an elasticity of about -0.05 would offset the swamping.
 - **Mechanism.** The field figure is four times that, but the evidence is mixed and the mechanism unknown. The bed pairs are saturated in the field too ("Fodobegransning"), so the cost cannot be plain bed depletion at today's half-saturations.
+
+## How the water column's excess splits (scripts/cf_pair.py, tables/pair_*; section 278.9)
+
+The same frozen world and snapshots, with the WC as trained. Arms:
+- **Pair:** the WC -> benthivores attack rate x 1, x 0.5 or x 0.42. The last is about the pre-279 pair at its booking: the gate's equal-cell ratio 1.95 on today's library, times the pre-280 a 0.1162 / 0.09443. This is a counterfactual only, never a library value.
+- **Planktivores:** as trained, or spread evenly.
+
+Means over 8 snapshots; the day-0 snapshots weigh most.
+
+| Pair | Planktivores | Saving at Lloyd 3 | Saving at field placement | WC M2 at Lloyd 3 | WC ration, MJ / booked |
+|---|---|---|---|---|---|
+| x 1 | trained | 0.25 | 0.43 | 0.327 | 1.26 |
+| x 0.42 | trained | 0.16 | 0.29 | 0.211 | 1.26 |
+| x 1 | even | 0.12 | 0.20 | 0.165 | 1.17 |
+| x 0.42 | even | 0.07 | 0.12 | 0.089 | 1.17 |
+
+- **The room cap refills the meal.** At x 0.42 the WC's flow on Lloyd-3 benthivores falls only x 0.65, an elasticity of about 0.5. The other prey take the rest; krill is 0.6-0.8 of the WC's tonnes, but the script does not read this out per prey. The pair at its booking takes the saving from 0.25 to 0.16, not to the ~0.1 estimated in chat after 278.8.
+- **Per snapshot the ratios are stable.** Each figure is the share of the saving that remains:
+
+  | Arm | Share of the saving left |
+  |---|---|
+  | Pair x 0.42 | 0.47-0.69 |
+  | Planktivores even | 0.42-0.58 |
+  | Both | 0.22-0.39 (up to 0.57 at field placement) |
+
+- **Today's library.** Section 280 already cut this a by x 0.81, so the remaining pair error is about x 0.5, the x 0.5 arm, with a saving of 0.18.
+- **The missing planktivores weigh more.** As trained they are 0.07-0.08 of the WC's tonnes; spread evenly, ~0.45. The WC stands over shallow beds and the planktivores over deep ones. Restoring them alone takes the saving to 0.12. This is trained placement of both groups. The even arm also removes the planktivores' own clumping. It restores the same overlap as the WC field placement above, so the two must not be added.
+- **The ration is not the cause.** 3.75 t/t/yr is 1.44 times the booking in tonnes, but only 1.17-1.26 times in MJ, because krill is lean. With the planktivores back it is 1.17 times, about 1.1 times the field Q/B.
+- **Both together leave 0.07 per year at trained fill**, 9 % of P. The rough break-even crowding elasticity there would be about -0.02. This is no closure:
+  - with field fill (278.8, base 0.25 -> 0.42) the refill and the planktivore redirection change, and that combination is unmeasured;
+  - the model has no crowding-cost mechanism.
+- **The other predators.** Without the WC, the predators realise ~0.03 per year on clumped and ~0.12 on field-placed benthivores, against a booked 0.19. Clumping holds them down too, not only the pairs that are OFF on the prey side.
+
+Of these factors only the pair derivation is a biology fix: the J encounter at the bed, about twice the field flow. It is worth a third of the saving. The rest is the trained overlap between the WC and the planktivores.
