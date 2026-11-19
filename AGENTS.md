@@ -755,6 +755,10 @@ python3 tools/probes/budget_gate.py
 # M2 per pair; probe_diets: realised M2) - a prey's derived g pays its booked M2,
 # and a pair minor for the predator (benthivores -> whiting) passes the diet gate.
 python3 tools/probes/probe_diets.py results/<run-name> [--evaluation N]
+# Section 278: each decision maker's crowding (Lloyd's mean crowding / mean,
+# lib/diagnostics/crowding.py; 1 = even) per long-run probe against NS-IBTS
+# GOV field values (benthivores 3.1, whiting 4.1, water column 5.0). Diagnostic only.
+python3 tools/probes/probe_crowding.py results/<run-name> [--last N]
 # Plankton against SHARK A17 (section 205): column biomass at A17's
 # measured C:chl, surface carbon, nitrate, zooplankton, PP and f-ratio.
 python3 tools/probes/a17_score.py run results/<run-name>      # ~2 min

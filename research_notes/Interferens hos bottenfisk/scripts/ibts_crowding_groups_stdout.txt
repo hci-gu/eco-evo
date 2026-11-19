@@ -1,0 +1,6 @@
+benthivorous_fish (guild B): members 51; Lloyd/mean median 3.06 (range 2.11-3.80, 10 surveys)
+whiting: members 1; Lloyd/mean median 4.06 (range 1.75-5.32, 10 surveys)
+predatory_fish (saithe, spurdog, hake, anglerfish, ling, velvet belly, pollack): members 7; Lloyd/mean median 4.95 (range 2.84-21.32, 10 surveys)
+saithe only: members 1; Lloyd/mean median 13.97 (range 4.78-23.10, 10 surveys)
+planktivorous_fish (guild P; GOV q low for pelagics): members 22; Lloyd/mean median 4.36 (range 1.68-9.42, 10 surveys)
+mackerel (GOV q ~0.1): members 2; Lloyd/mean median 6.33 (range 1.79-25.00, 10 surveys)

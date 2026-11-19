@@ -1,0 +1,142 @@
+exp15|A done
+expHsz|A done
+freerange|A done
+mixK0.1|A done
+mixK0.25|A done
+nightcol|A done
+exp15|dark done
+exp15|Ke2e-4 done
+exp15|kdeep0.05 done
+exp15|kdeep0.09 done
+freerange|dark done
+mixK0.25|dark done
+expHsz|dark done
+
+Reproduction (exp15|A vs band_pairs.json A_band): ratio new/library a
+  predatory_fish->planktivorous_fish       here 2.9040  file 2.9040  cls_rel here 2.206 / 1.210 / 0.411 / 0.164  file 2.206 / 1.210 / 0.411 / 0.164
+  predatory_fish->benthivorous_fish        here 7.6039  file 7.6039  cls_rel here 1.656 / 1.362 / 0.559 / 0.305  file 1.656 / 1.362 / 0.559 / 0.305
+  predatory_fish->whiting                  here 2.7636  file 2.7636  cls_rel here 1.666 / 1.378 / 0.554 / 0.270  file 1.666 / 1.378 / 0.554 / 0.270
+  krill classes here 0.03055 / 0.01407 / 0.002616 / 6.898e-05  (file, library units 0.03059 / 0.01409 / 0.00262 / 6.908e-05)
+
+Class a / equal-cell a (< 100 / 100-150 / 150-250 / >= 250 m); G = a(< 150 m, cell-weighted) / a(150-250 m); G1 = a(100-150) / a(150-250); eq relative to exp15|A
+
+  krill
+    exp15|A               2.616 /  1.205 /  0.224 /  0.006   G    7.96  G1   5.38  eq x1.000
+    expHsz|A              2.827 /  1.046 /  0.232 /  0.011   G    7.65  G1   4.50  eq x1.161
+    freerange|A           2.372 /  1.277 /  0.314 /  0.005   G    5.50  G1   4.06  eq x1.262
+    mixK0.1|A             2.496 /  1.159 /  0.304 /  0.092   G    5.62  G1   3.81  eq x1.148
+    mixK0.25|A            2.366 /  1.109 /  0.391 /  0.185   G    4.15  G1   2.83  eq x1.371
+    nightcol|A            2.578 /  1.211 /  0.238 /  0.015   G    7.44  G1   5.09  eq x1.018
+    exp15|dark            2.580 /  1.101 /  0.331 /  0.032   G    5.16  G1   3.33  eq x0.049
+    exp15|Ke2e-4          2.473 /  1.189 /  0.328 /  0.009   G    5.23  G1   3.62  eq x1.150
+    exp15|kdeep0.05       2.561 /  1.200 /  0.264 /  0.006   G    6.67  G1   4.55  eq x1.025
+    exp15|kdeep0.09       2.816 /  1.198 /  0.102 /  0.006   G   18.20  G1  11.71  eq x0.918
+    freerange|dark        2.308 /  1.165 /  0.449 /  0.026   G    3.64  G1   2.60  eq x0.060
+    mixK0.25|dark         2.328 /  1.028 /  0.475 /  0.220   G    3.29  G1   2.17  eq x0.062
+    expHsz|dark           2.730 /  0.983 /  0.341 /  0.035   G    4.98  G1   2.88  eq x0.054
+
+  predatory_fish->planktivorous_fish
+    exp15|A               2.206 /  1.210 /  0.411 /  0.164   G    3.94  G1   2.95  eq x1.000
+    expHsz|A              2.448 /  1.150 /  0.339 /  0.100   G    4.96  G1   3.39  eq x1.111
+    freerange|A           2.525 /  1.153 /  0.295 /  0.083   G    5.81  G1   3.91  eq x0.883
+    mixK0.1|A             2.279 /  1.185 /  0.390 /  0.156   G    4.19  G1   3.04  eq x0.987
+    mixK0.25|A            2.393 /  1.147 /  0.358 /  0.144   G    4.64  G1   3.21  eq x0.967
+    nightcol|A            2.224 /  1.217 /  0.403 /  0.142   G    4.05  G1   3.02  eq x1.005
+    exp15|dark            1.456 /  0.953 /  0.843 /  0.796   G    1.38  G1   1.13  eq x0.196
+    exp15|Ke2e-4          1.761 /  1.105 /  0.786 /  0.177   G    1.75  G1   1.41  eq x1.337
+    exp15|kdeep0.05       2.067 /  1.187 /  0.523 /  0.158   G    2.96  G1   2.27  eq x1.071
+    exp15|kdeep0.09       2.559 /  1.127 /  0.248 /  0.191   G    6.91  G1   4.54  eq x0.851
+    freerange|dark        1.894 /  1.021 /  0.660 /  0.439   G    2.09  G1   1.55  eq x0.148
+    mixK0.25|dark         1.618 /  0.951 /  0.776 /  0.717   G    1.58  G1   1.23  eq x0.182
+    expHsz|dark           1.728 /  1.003 /  0.745 /  0.525   G    1.75  G1   1.35  eq x0.195
+
+  plk[herring+sprat]
+    exp15|A               3.332 /  0.757 /  0.146 /  0.075   G   12.40  G1   5.17  eq x1.000
+    expHsz|A              3.553 /  0.635 /  0.126 /  0.055   G   14.51  G1   5.03  eq x1.148
+    freerange|A           3.431 /  0.756 /  0.093 /  0.055   G   20.03  G1   8.17  eq x0.971
+    mixK0.1|A             3.334 /  0.764 /  0.140 /  0.072   G   12.99  G1   5.46  eq x1.027
+    mixK0.25|A            3.336 /  0.774 /  0.131 /  0.067   G   13.91  G1   5.90  eq x1.067
+    nightcol|A            3.220 /  0.793 /  0.181 /  0.082   G    9.88  G1   4.38  eq x1.079
+    exp15|dark            2.764 /  0.737 /  0.392 /  0.377   G    4.00  G1   1.88  eq x0.141
+    exp15|Ke2e-4          3.053 /  0.768 /  0.304 /  0.101   G    5.62  G1   2.53  eq x1.144
+    exp15|kdeep0.05       3.266 /  0.762 /  0.183 /  0.074   G    9.76  G1   4.16  eq x1.022
+    exp15|kdeep0.09       3.480 /  0.704 /  0.099 /  0.079   G   18.68  G1   7.13  eq x0.949
+    freerange|dark        2.968 /  0.771 /  0.290 /  0.245   G    5.77  G1   2.66  eq x0.130
+    mixK0.25|dark         2.845 /  0.760 /  0.344 /  0.321   G    4.69  G1   2.21  eq x0.145
+    expHsz|dark           3.019 /  0.672 /  0.339 /  0.265   G    4.83  G1   1.98  eq x0.151
+
+  plk[pout]
+    exp15|A               1.693 /  1.400 /  0.538 /  0.222   G    2.83  G1   2.60  eq x1.000
+    expHsz|A              1.934 /  1.382 /  0.442 /  0.129   G    3.64  G1   3.13  eq x1.095
+    freerange|A           2.044 /  1.365 /  0.400 /  0.102   G    4.11  G1   3.41  eq x0.821
+    mixK0.1|A             1.769 /  1.373 /  0.517 /  0.215   G    2.97  G1   2.65  eq x0.969
+    mixK0.25|A            1.894 /  1.329 /  0.484 /  0.202   G    3.23  G1   2.75  eq x0.921
+    nightcol|A            1.725 /  1.419 /  0.517 /  0.184   G    2.99  G1   2.74  eq x0.964
+    exp15|dark            1.050 /  0.994 /  0.990 /  0.962   G    1.03  G1   1.00  eq x0.230
+    exp15|Ke2e-4          1.282 /  1.210 /  0.978 /  0.217   G    1.27  G1   1.24  eq x1.435
+    exp15|kdeep0.05       1.554 /  1.352 /  0.676 /  0.210   G    2.12  G1   2.00  eq x1.094
+    exp15|kdeep0.09       2.059 /  1.335 /  0.341 /  0.273   G    4.79  G1   3.92  eq x0.809
+    freerange|dark        1.471 /  1.111 /  0.809 /  0.526   G    1.56  G1   1.37  eq x0.158
+    mixK0.25|dark         1.183 /  0.994 /  0.937 /  0.892   G    1.14  G1   1.06  eq x0.208
+    expHsz|dark           1.304 /  1.093 /  0.887 /  0.628   G    1.33  G1   1.23  eq x0.223
+
+  plk[blue whiting]
+    exp15|A               1.777 /  1.469 /  0.476 /  0.101   G    3.35  G1   3.09  eq x1.000
+    expHsz|A              1.921 /  1.440 /  0.420 /  0.078   G    3.90  G1   3.43  eq x1.085
+    freerange|A           2.140 /  1.318 /  0.394 /  0.074   G    4.20  G1   3.34  eq x0.969
+    mixK0.1|A             1.855 /  1.440 /  0.455 /  0.096   G    3.54  G1   3.17  eq x0.971
+    mixK0.25|A            1.980 /  1.393 /  0.421 /  0.087   G    3.88  G1   3.31  eq x0.927
+    nightcol|A            1.764 /  1.466 /  0.484 /  0.106   G    3.28  G1   3.03  eq x1.017
+    exp15|dark            1.325 /  1.170 /  0.829 /  0.569   G    1.49  G1   1.41  eq x0.167
+    exp15|Ke2e-4          1.395 /  1.318 /  0.847 /  0.129   G    1.59  G1   1.56  eq x1.355
+    exp15|kdeep0.05       1.644 /  1.427 /  0.600 /  0.099   G    2.53  G1   2.38  eq x1.085
+    exp15|kdeep0.09       2.181 /  1.423 /  0.249 /  0.124   G    6.96  G1   5.71  eq x0.804
+    freerange|dark        1.647 /  1.128 /  0.726 /  0.425   G    1.85  G1   1.55  eq x0.152
+    mixK0.25|dark         1.507 /  1.154 /  0.759 /  0.498   G    1.71  G1   1.52  eq x0.150
+    expHsz|dark           1.466 /  1.199 /  0.762 /  0.458   G    1.72  G1   1.57  eq x0.171
+
+  predatory_fish->benthivorous_fish
+    exp15|A               1.656 /  1.362 /  0.559 /  0.305   G    2.65  G1   2.43  eq x1.000
+    expHsz|A              2.129 /  1.297 /  0.391 /  0.139   G    4.19  G1   3.32  eq x1.202
+    freerange|A           2.132 /  1.280 /  0.397 /  0.156   G    4.11  G1   3.23  eq x0.574
+    mixK0.1|A             1.706 /  1.335 /  0.551 /  0.307   G    2.70  G1   2.42  eq x0.947
+    mixK0.25|A            1.791 /  1.290 /  0.537 /  0.310   G    2.78  G1   2.40  eq x0.866
+    nightcol|A            1.729 /  1.409 /  0.508 /  0.219   G    3.03  G1   2.78  eq x0.892
+    exp15|dark            1.014 /  0.993 /  1.001 /  0.992   G    1.00  G1   0.99  eq x0.307
+    exp15|Ke2e-4          1.289 /  1.208 /  0.956 /  0.260   G    1.30  G1   1.26  eq x1.437
+    exp15|kdeep0.05       1.526 /  1.327 /  0.684 /  0.285   G    2.06  G1   1.94  eq x1.092
+    exp15|kdeep0.09       1.991 /  1.253 /  0.414 /  0.375   G    3.76  G1   3.03  eq x0.812
+    freerange|dark        1.456 /  1.067 /  0.826 /  0.602   G    1.49  G1   1.29  eq x0.148
+    mixK0.25|dark         1.075 /  0.984 /  0.981 /  0.970   G    1.04  G1   1.00  eq x0.277
+    expHsz|dark           1.498 /  1.098 /  0.800 /  0.536   G    1.58  G1   1.37  eq x0.312
+
+  predatory_fish->whiting
+    exp15|A               1.666 /  1.378 /  0.554 /  0.270   G    2.70  G1   2.49  eq x1.000
+    expHsz|A              1.978 /  1.356 /  0.432 /  0.144   G    3.73  G1   3.14  eq x1.120
+    freerange|A           2.177 /  1.288 /  0.378 /  0.119   G    4.37  G1   3.41  eq x0.709
+    mixK0.1|A             1.752 /  1.342 /  0.534 /  0.265   G    2.83  G1   2.51  eq x0.965
+    mixK0.25|A            1.893 /  1.282 /  0.502 /  0.258   G    3.05  G1   2.55  eq x0.912
+    nightcol|A            1.730 /  1.419 /  0.510 /  0.193   G    3.04  G1   2.78  eq x0.909
+    exp15|dark            1.019 /  0.990 /  1.002 /  0.989   G    1.00  G1   0.99  eq x0.272
+    exp15|Ke2e-4          1.288 /  1.208 /  0.965 /  0.242   G    1.29  G1   1.25  eq x1.439
+    exp15|kdeep0.05       1.534 /  1.336 /  0.684 /  0.253   G    2.07  G1   1.95  eq x1.092
+    exp15|kdeep0.09       2.010 /  1.297 /  0.381 /  0.331   G    4.17  G1   3.40  eq x0.814
+    freerange|dark        1.535 /  1.077 /  0.796 /  0.534   G    1.59  G1   1.35  eq x0.157
+    mixK0.25|dark         1.133 /  0.979 /  0.960 /  0.942   G    1.09  G1   1.02  eq x0.249
+    expHsz|dark           1.345 /  1.099 /  0.867 /  0.602   G    1.38  G1   1.27  eq x0.266
+
+Decomposition of the central (exp15|A) class shape: vision factor = (A / dark) per class, normalised
+  krill                                  geometry  2.580 /  1.101 /  0.331 /  0.032 (G   5.16);  vision  1.263 /  1.363 /  0.844 /  0.230 (G   1.57)
+  predatory_fish->planktivorous_fish     geometry  1.456 /  0.953 /  0.843 /  0.796 (G   1.38);  vision  1.678 /  1.406 /  0.540 /  0.228 (G   2.81)
+  plk[herring+sprat]                     geometry  2.764 /  0.737 /  0.392 /  0.377 (G   4.00);  vision  1.665 /  1.419 /  0.515 /  0.274 (G   2.95)
+  plk[pout]                              geometry  1.050 /  0.994 /  0.990 /  0.962 (G   1.03);  vision  1.631 /  1.425 /  0.550 /  0.234 (G   2.75)
+  plk[blue whiting]                      geometry  1.325 /  1.170 /  0.829 /  0.569 (G   1.49);  vision  1.514 /  1.417 /  0.647 /  0.200 (G   2.25)
+  predatory_fish->benthivorous_fish      geometry  1.014 /  0.993 /  1.001 /  0.992 (G   1.00);  vision  1.636 /  1.374 /  0.560 /  0.308 (G   2.65)
+  predatory_fish->whiting                geometry  1.019 /  0.990 /  1.002 /  0.989 (G   1.00);  vision  1.639 /  1.395 /  0.554 /  0.274 (G   2.70)
+
+Planktivore pair: each prey member's share of the pair's class a (central)
+  herring+sprat  0.465 / 0.193 / 0.110 / 0.140
+  pout           0.449 / 0.677 / 0.766 / 0.793
+  blue whiting   0.087 / 0.131 / 0.125 / 0.066
+
+written class_terms.json

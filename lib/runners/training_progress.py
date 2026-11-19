@@ -25,6 +25,7 @@ import numpy as np
 import torch
 
 from lib.config.config_loader import load_project_config, setup_full_mareld_mvp
+from lib.diagnostics.crowding import crowding
 from lib.environments.ecosystem import EcosystemEnvironment
 from lib.gpu.config import DEFAULT_LIBRARY
 from lib.environments.ecosystem_env.currents import CurrentConfig
@@ -280,7 +281,8 @@ def run_probe(env, ticks, lower, upper, pump_events=None):
     of its start once a day (``trajectory``; None for a group without
     starting biomass), its end ratio per year (``year_end_ratio``) and
     each decision maker's realised diet and ration per probe year
-    (``diets``, section 248; empty for an env without an intake book).
+    (``diets``, section 248; empty for an env without an intake book), and
+    each decision maker's annual mean crowding (``crowding``, section 278).
     """
     dm_ids = sorted(env.dm_ids)
     ids = list(env.global_fg_order)
@@ -316,6 +318,11 @@ def run_probe(env, ticks, lower, upper, pump_events=None):
     # realised M2 (tonnes eaten / its mean biomass) can be read back.
     all_sum = np.zeros(len(ids), dtype=np.float64)
     year_biomass = []
+    # Section 278: each decision maker's crowding (lib/diagnostics/crowding.py),
+    # sampled once a day, as its annual mean per probe year.
+    crowd_sum = {f: 0.0 for f in dm_ids}
+    crowd_n = {f: 0 for f in dm_ids}
+    year_crowding = []
     year_ticks = 0
     ticks_run = 0
     for t in range(1, ticks + 1):
@@ -334,7 +341,16 @@ def run_probe(env, ticks, lower, upper, pump_events=None):
             if t % every == 0:
                 for f, v in now.items():
                     series[f].append(v)
+                for f in dm_ids:
+                    c = crowding(env.fgs[f].biomass)
+                    if c is not None:
+                        crowd_sum[f] += c
+                        crowd_n[f] += 1
             if t % per_year == 0:
+                year_crowding.append({f: crowd_sum[f] / crowd_n[f] for f in dm_ids
+                                      if crowd_n[f] > 0})
+                crowd_sum = {f: 0.0 for f in dm_ids}
+                crowd_n = {f: 0 for f in dm_ids}
                 for f, v in now.items():
                     years[f].append(v)
                 book_end = _intake_snapshot(env, dm_ids)
@@ -360,6 +376,9 @@ def run_probe(env, ticks, lower, upper, pump_events=None):
         "diets": diets,
         # Section 249: {group: mean biomass (t)} per whole probe year.
         "year_biomass": year_biomass,
+        # Section 278: {decision maker: annual mean of the daily crowding}
+        # per whole probe year (a group absent all year is left out).
+        "crowding": year_crowding,
         "trajectory": {"every_ticks": every, "ticks_per_year": per_year, "series": series},
     }
 

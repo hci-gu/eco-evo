@@ -1,0 +1,4 @@
+/home/simon/eco-evo/research_notes/Sejens profil over djupa bottnar/scripts/saithe_stomach_bed.py:75: Pandas4Warning: Starting with pandas version 4.0 all arguments of sum will be keyword-only.
+  R["other fish"] = (R.g_fish.fillna(0.0) - R[["pout", "blue whiting", "herring+sprat", "juv gadoids", "Gadidae unid", "sandeel", "pearlside"]].sum(1)).clip(lower=0)
+/home/simon/eco-evo/research_notes/Sejens profil over djupa bottnar/scripts/saithe_stomach_bed.py:76: Pandas4Warning: Starting with pandas version 4.0 all arguments of sum will be keyword-only.
+  R["other"] = (R.g_total - R[NAMED + ["other fish"]].sum(1)).clip(lower=0)

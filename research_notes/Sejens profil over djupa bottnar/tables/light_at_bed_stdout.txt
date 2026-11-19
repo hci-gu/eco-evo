@@ -1,0 +1,19 @@
+Per class (cell-weighted over the class's 5 m bed bins): daytime median light (lx) and day-mean g at the bed / 15 m / 50 m above it; day-mean R^2 (m2) at the bed for a 50 cm saithe; Ke 0.02 lx unless stated
+
+  K_deep 0.05
+    < 100    bed: E 2.8 lx, g 0.95 (Ke 2e-4: 1.00), R2 0.95  |  15 m up: E 11 lx, g 0.97 (Ke 2e-4: 1.00), R2 0.97  |  50 m up: E 1.4e+03 lx, g 1.00 (Ke 2e-4: 1.00), R2 1.00
+    100-150  bed: E 0.29 lx, g 0.82 (Ke 2e-4: 0.99), R2 0.84  |  15 m up: E 0.61 lx, g 0.88 (Ke 2e-4: 1.00), R2 0.89  |  50 m up: E 5 lx, g 0.96 (Ke 2e-4: 1.00), R2 0.97
+    150-250  bed: E 0.015 lx, g 0.31 (Ke 2e-4: 0.88), R2 0.37  |  15 m up: E 0.031 lx, g 0.42 (Ke 2e-4: 0.92), R2 0.47  |  50 m up: E 0.18 lx, g 0.67 (Ke 2e-4: 0.98), R2 0.70
+    >= 250   bed: E 6.9e-05 lx, g 0.00 (Ke 2e-4: 0.17), R2 0.09  |  15 m up: E 0.00015 lx, g 0.01 (Ke 2e-4: 0.24), R2 0.10  |  50 m up: E 0.00084 lx, g 0.04 (Ke 2e-4: 0.41), R2 0.13
+
+  K_deep 0.06
+    < 100    bed: E 2.6 lx, g 0.94 (Ke 2e-4: 1.00), R2 0.95  |  15 m up: E 10 lx, g 0.97 (Ke 2e-4: 1.00), R2 0.97  |  50 m up: E 1.4e+03 lx, g 1.00 (Ke 2e-4: 1.00), R2 1.00
+    100-150  bed: E 0.18 lx, g 0.75 (Ke 2e-4: 0.99), R2 0.78  |  15 m up: E 0.45 lx, g 0.85 (Ke 2e-4: 0.99), R2 0.86  |  50 m up: E 4.9 lx, g 0.96 (Ke 2e-4: 1.00), R2 0.96
+    150-250  bed: E 0.0056 lx, g 0.17 (Ke 2e-4: 0.76), R2 0.25  |  15 m up: E 0.014 lx, g 0.27 (Ke 2e-4: 0.84), R2 0.34  |  50 m up: E 0.11 lx, g 0.56 (Ke 2e-4: 0.95), R2 0.60
+    >= 250   bed: E 9.6e-06 lx, g 0.00 (Ke 2e-4: 0.05), R2 0.09  |  15 m up: E 2.4e-05 lx, g 0.00 (Ke 2e-4: 0.09), R2 0.09  |  50 m up: E 0.00019 lx, g 0.01 (Ke 2e-4: 0.25), R2 0.10
+
+  K_deep 0.09
+    < 100    bed: E 2.3 lx, g 0.92 (Ke 2e-4: 1.00), R2 0.92  |  15 m up: E 10 lx, g 0.97 (Ke 2e-4: 1.00), R2 0.97  |  50 m up: E 1.4e+03 lx, g 1.00 (Ke 2e-4: 1.00), R2 1.00
+    100-150  bed: E 0.051 lx, g 0.50 (Ke 2e-4: 0.95), R2 0.54  |  15 m up: E 0.2 lx, g 0.70 (Ke 2e-4: 0.98), R2 0.72  |  50 m up: E 4.6 lx, g 0.95 (Ke 2e-4: 1.00), R2 0.95
+    150-250  bed: E 0.00033 lx, g 0.02 (Ke 2e-4: 0.32), R2 0.11  |  15 m up: E 0.0013 lx, g 0.06 (Ke 2e-4: 0.46), R2 0.14  |  50 m up: E 0.03 lx, g 0.31 (Ke 2e-4: 0.78), R2 0.37
+    >= 250   bed: E 2.8e-08 lx, g 0.00 (Ke 2e-4: 0.00), R2 0.09  |  15 m up: E 1.1e-07 lx, g 0.00 (Ke 2e-4: 0.00), R2 0.09  |  50 m up: E 2.5e-06 lx, g 0.00 (Ke 2e-4: 0.01), R2 0.09

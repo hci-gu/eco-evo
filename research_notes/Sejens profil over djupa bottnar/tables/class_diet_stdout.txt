@@ -1,0 +1,170 @@
+cells per class on the 16x16 probe grid: 0.203 / 0.289 / 0.340 / 0.168
+Densities (t/km2): benthivorous_fish 1.53, krill 5, mackerel 0.85, planktivorous_fish 4.72, whiting 0.446, zooplankton 9.72
+
+== library
+  prey                     < 100   100-150   150-250    >= 250   field spread
+  benthivorous_fish        0.204     0.121     0.048     0.038       0.100
+  krill                    0.243     0.453     0.410     0.053       0.390
+  mackerel                 0.000     0.000     0.000     0.000       0.000
+  planktivorous_fish       0.410     0.387     0.528     0.876       0.464
+  whiting                  0.141     0.037     0.007     0.001       0.041
+  zooplankton              0.001     0.002     0.008     0.032       0.005
+  S = sum a h B            50.12     29.32      7.63      2.00       11.94
+  ceiling share S/(1+S)     0.980     0.967     0.884     0.667       0.923
+  intake vs 150-250 m       1.11      1.09      1.00      0.75
+
+== exp15|A
+  prey                     < 100   100-150   150-250    >= 250   field spread
+  benthivorous_fish        0.204     0.121     0.048     0.038       0.100
+  krill                    0.243     0.453     0.410     0.053       0.390
+  mackerel                 0.000     0.000     0.000     0.000       0.000
+  planktivorous_fish       0.411     0.387     0.527     0.876       0.464
+  whiting                  0.141     0.037     0.007     0.001       0.041
+  zooplankton              0.001     0.002     0.008     0.032       0.005
+  S = sum a h B            50.14     29.30      7.63      2.00       11.94
+  ceiling share S/(1+S)     0.980     0.967     0.884     0.667       0.923
+  intake vs 150-250 m       1.11      1.09      1.00      0.75
+
+== expHsz|A
+  prey                     < 100   100-150   150-250    >= 250   field spread
+  benthivorous_fish        0.241     0.133     0.039     0.028       0.113
+  krill                    0.231     0.435     0.478     0.149       0.408
+  mackerel                 0.000     0.000     0.000     0.000       0.000
+  planktivorous_fish       0.384     0.391     0.470     0.780       0.428
+  whiting                  0.143     0.040     0.006     0.001       0.047
+  zooplankton              0.001     0.002     0.007     0.042       0.004
+  S = sum a h B            65.50     30.74      7.78      1.49       12.87
+  ceiling share S/(1+S)     0.985     0.968     0.886     0.598       0.928
+  intake vs 150-250 m       1.11      1.09      1.00      0.68
+
+== freerange|A
+  prey                     < 100   100-150   150-250    >= 250   field spread
+  benthivorous_fish        0.155     0.064     0.018     0.023       0.056
+  krill                    0.283     0.590     0.664     0.105       0.573
+  mackerel                 0.000     0.000     0.000     0.001       0.000
+  planktivorous_fish       0.426     0.320     0.308     0.805       0.334
+  whiting                  0.135     0.024     0.003     0.001       0.033
+  zooplankton              0.001     0.002     0.007     0.066       0.005
+  S = sum a h B            49.55     29.65      7.88      0.96       12.11
+  ceiling share S/(1+S)     0.980     0.967     0.887     0.489       0.924
+  intake vs 150-250 m       1.10      1.09      1.00      0.55
+
+== mixK0.1|A
+  prey                     < 100   100-150   150-250    >= 250   field spread
+  benthivorous_fish        0.194     0.110     0.037     0.020       0.085
+  krill                    0.258     0.488     0.535     0.511       0.473
+  mackerel                 0.000     0.000     0.000     0.000       0.000
+  planktivorous_fish       0.408     0.366     0.416     0.451       0.400
+  whiting                  0.140     0.034     0.005     0.001       0.037
+  zooplankton              0.001     0.002     0.006     0.018       0.004
+  S = sum a h B            51.52     29.81      8.82      3.29       13.06
+  ceiling share S/(1+S)     0.981     0.968     0.898     0.767       0.929
+  intake vs 150-250 m       1.09      1.08      1.00      0.85
+
+== mixK0.25|A
+  prey                     < 100   100-150   150-250    >= 250   field spread
+  benthivorous_fish        0.179     0.094     0.027     0.011       0.068
+  krill                    0.279     0.537     0.662     0.734       0.571
+  mackerel                 0.000     0.000     0.000     0.000       0.000
+  planktivorous_fish       0.403     0.337     0.302     0.244       0.326
+  whiting                  0.137     0.030     0.004     0.000       0.031
+  zooplankton              0.001     0.002     0.005     0.010       0.004
+  S = sum a h B            53.60     30.57     10.59      5.22       14.72
+  ceiling share S/(1+S)     0.982     0.968     0.914     0.839       0.936
+  intake vs 150-250 m       1.07      1.06      1.00      0.92
+
+== nightcol|A
+  prey                     < 100   100-150   150-250    >= 250   field spread
+  benthivorous_fish        0.193     0.111     0.038     0.026       0.090
+  krill                    0.247     0.461     0.437     0.141       0.408
+  mackerel                 0.000     0.000     0.000     0.000       0.000
+  planktivorous_fish       0.422     0.390     0.512     0.799       0.459
+  whiting                  0.136     0.035     0.006     0.001       0.039
+  zooplankton              0.001     0.002     0.008     0.034       0.005
+  S = sum a h B            49.63     29.47      7.73      1.88       12.01
+  ceiling share S/(1+S)     0.980     0.967     0.885     0.652       0.923
+  intake vs 150-250 m       1.11      1.09      1.00      0.74
+
+== exp15|dark
+  prey                     < 100   100-150   150-250    >= 250   field spread
+  benthivorous_fish        0.299     0.231     0.094     0.041       0.141
+  krill                    0.093     0.177     0.108     0.015       0.116
+  mackerel                 0.000     0.000     0.000     0.000       0.000
+  planktivorous_fish       0.415     0.512     0.758     0.906       0.678
+  whiting                  0.183     0.063     0.012     0.001       0.041
+  zooplankton              0.009     0.017     0.028     0.036       0.024
+  S = sum a h B             6.18      3.40      2.19      1.80        2.49
+  ceiling share S/(1+S)     0.861     0.773     0.686     0.643       0.714
+  intake vs 150-250 m       1.25      1.13      1.00      0.94
+
+== exp15|Ke2e-4
+  prey                     < 100   100-150   150-250    >= 250   field spread
+  benthivorous_fish        0.209     0.129     0.054     0.033       0.090
+  krill                    0.244     0.434     0.318     0.065       0.334
+  mackerel                 0.000     0.000     0.000     0.000       0.000
+  planktivorous_fish       0.402     0.396     0.617     0.879       0.542
+  whiting                  0.144     0.040     0.008     0.001       0.032
+  zooplankton              0.001     0.002     0.004     0.023       0.003
+  S = sum a h B            54.01     34.71     16.92      2.85       20.10
+  ceiling share S/(1+S)     0.982     0.972     0.944     0.740       0.953
+  intake vs 150-250 m       1.04      1.03      1.00      0.78
+
+== exp15|kdeep0.05
+  prey                     < 100   100-150   150-250    >= 250   field spread
+  benthivorous_fish        0.204     0.124     0.049     0.038       0.095
+  krill                    0.243     0.445     0.383     0.052       0.376
+  mackerel                 0.000     0.000     0.000     0.000       0.000
+  planktivorous_fish       0.410     0.391     0.555     0.878       0.487
+  whiting                  0.141     0.038     0.007     0.001       0.038
+  zooplankton              0.001     0.002     0.006     0.031       0.004
+  S = sum a h B            50.24     30.43      9.94      2.05       13.89
+  ceiling share S/(1+S)     0.980     0.968     0.909     0.673       0.933
+  intake vs 150-250 m       1.08      1.07      1.00      0.74
+
+== exp15|kdeep0.09
+  prey                     < 100   100-150   150-250    >= 250   field spread
+  benthivorous_fish        0.202     0.107     0.059     0.038       0.115
+  krill                    0.244     0.491     0.356     0.052       0.375
+  mackerel                 0.000     0.000     0.000     0.000       0.000
+  planktivorous_fish       0.412     0.365     0.561     0.876       0.450
+  whiting                  0.141     0.034     0.008     0.001       0.053
+  zooplankton              0.001     0.002     0.016     0.032       0.007
+  S = sum a h B            49.52     24.60      3.73      1.99        8.26
+  ceiling share S/(1+S)     0.980     0.961     0.788     0.666       0.892
+  intake vs 150-250 m       1.24      1.22      1.00      0.84
+
+== freerange|dark
+  prey                     < 100   100-150   150-250    >= 250   field spread
+  benthivorous_fish        0.234     0.147     0.053     0.027       0.097
+  krill                    0.114     0.277     0.254     0.034       0.235
+  mackerel                 0.000     0.000     0.000     0.001       0.000
+  planktivorous_fish       0.461     0.508     0.644     0.857       0.595
+  whiting                  0.180     0.048     0.008     0.001       0.040
+  zooplankton              0.010     0.020     0.040     0.080       0.033
+  S = sum a h B             5.66      2.84      1.51      0.80        1.82
+  ceiling share S/(1+S)     0.850     0.740     0.602     0.443       0.646
+  intake vs 150-250 m       1.41      1.23      1.00      0.74
+
+== mixK0.25|dark
+  prey                     < 100   100-150   150-250    >= 250   field spread
+  benthivorous_fish        0.281     0.214     0.085     0.038       0.131
+  krill                    0.105     0.217     0.203     0.139       0.191
+  mackerel                 0.000     0.000     0.000     0.000       0.000
+  planktivorous_fish       0.422     0.494     0.672     0.785       0.613
+  whiting                  0.183     0.059     0.011     0.001       0.040
+  zooplankton              0.009     0.017     0.029     0.037       0.025
+  S = sum a h B             6.33      3.28      2.08      1.70        2.40
+  ceiling share S/(1+S)     0.864     0.766     0.675     0.629       0.706
+  intake vs 150-250 m       1.28      1.13      1.00      0.93
+
+== expHsz|dark
+  prey                     < 100   100-150   150-250    >= 250   field spread
+  benthivorous_fish        0.348     0.247     0.084     0.034       0.156
+  krill                    0.084     0.165     0.136     0.028       0.131
+  mackerel                 0.000     0.000     0.000     0.001       0.000
+  planktivorous_fish       0.378     0.507     0.737     0.884       0.639
+  whiting                  0.183     0.064     0.011     0.001       0.048
+  zooplankton              0.007     0.016     0.031     0.053       0.025
+  S = sum a h B             7.99      3.63      1.99      1.22        2.42
+  ceiling share S/(1+S)     0.889     0.784     0.666     0.549       0.708
+  intake vs 150-250 m       1.33      1.18      1.00      0.82

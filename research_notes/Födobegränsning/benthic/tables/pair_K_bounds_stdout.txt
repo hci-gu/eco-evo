@@ -1,0 +1,79 @@
+== 1. Model, shared handling (p_k = 1 on every prey; elasticity of pair i to its own B_i = (1 + X - x_i)/(1 + X))
+  infauna      a 0.036   h   112  B_vis  18.800 t/km2  x = a h B_vis =   75.80  single-pair K = 1/(a h) = 0.2480 t/km2 reachable = 1.240 t/km2 of B
+  epifauna     a 0.15    h   258  B_vis   2.344 t/km2  x = a h B_vis =   90.70  single-pair K = 1/(a h) = 0.0258 t/km2 reachable = 0.042 t/km2 of B
+  nephrops     a 0.44    h   286  B_vis   0.092 t/km2  x = a h B_vis =   11.53  single-pair K = 1/(a h) = 0.0079 t/km2 reachable = 0.397 t/km2 of B
+  planktivores a 0.0198  h   238  B_vis   1.416 t/km2  x = a h B_vis =    6.67  single-pair K = 1/(a h) = 0.2122 t/km2 reachable = 0.707 t/km2 of B
+  whiting      a 0.0026  h   177  B_vis   0.045 t/km2  x = a h B_vis =    0.02  single-pair K = 1/(a h) = 2.1730 t/km2 reachable = 21.730 t/km2 of B
+  krill        a 0.013   h   183  B_vis   5.000 t/km2  x = a h B_vis =   11.89  single-pair K = 1/(a h) = 0.4203 t/km2 reachable = 0.420 t/km2 of B
+  menu bed only: X = 178.0; total-menu intake at 0.5x all prey / at today = 0.994; elasticity of total intake = 0.0056
+     infauna      own-B elasticity 0.577; intake at 0.1 x B_i / today 0.162
+     epifauna     own-B elasticity 0.493; intake at 0.1 x B_i / today 0.184
+     nephrops     own-B elasticity 0.936; intake at 0.1 x B_i / today 0.106
+  menu bed + fish + krill: X = 196.6; total-menu intake at 0.5x all prey / at today = 0.995; elasticity of total intake = 0.0051
+     infauna      own-B elasticity 0.616; intake at 0.1 x B_i / today 0.153
+     epifauna     own-B elasticity 0.541; intake at 0.1 x B_i / today 0.170
+     nephrops     own-B elasticity 0.942; intake at 0.1 x B_i / today 0.106
+     planktivores own-B elasticity 0.966; intake at 0.1 x B_i / today 0.103
+     whiting      own-B elasticity 1.000; intake at 0.1 x B_i / today 0.100
+     krill        own-B elasticity 0.940; intake at 0.1 x B_i / today 0.106
+
+== 2. Irish Sea gradient (Johnson et al. 2015 [F]; Hinz station data via the earlier note [D])
+  11 stations, B prey (grab, excl. large) gm 8.2 t/km2, range 2.4-18.5; slope ln B on trawl -0.128 per pass/yr; trawl range 2.7-11.9
+  observed: plaice fullness ~ trawl F(1,13) = 0.004, p 0.949; stomach energy F < 0.001, p 0.981; dab fullness p 0.76 [F]. Prey:fish ratio unchanged (p 0.65) [F].
+  predicted intake (one-prey menu: plaice is an infauna specialist [F]) at the gradient ends and the predicted slope of ln intake on trawl (to compare with ~0)
+  candidate                         a        share   x at gm B   I(2.4)/I(18.5)  slope ln I/pass
+  Exposure note / model            0.03600   0.2       6.65      0.704     -0.0193
+  Exposure 5 %                     0.01600   0.2       2.95      0.532     -0.0355
+  Exposure 95 %                    0.09200   0.2      16.99      0.854     -0.0085
+  Feeding-level note e 0.01        0.00250   0.2       0.46      0.233     -0.0879
+  Feeding-level note e 0.002       0.00050   0.2       0.09      0.153     -0.1167
+  Feeding-level tau=1 inversion    0.00015   0.2       0.03      0.137     -0.1243
+  Exposure note / model            0.03600   1.0      33.24      0.918     -0.0045
+  Exposure 5 %                     0.01600   1.0      14.77      0.836     -0.0097
+  Exposure 95 %                    0.09200   1.0      84.95      0.966     -0.0018
+  Feeding-level note e 0.01        0.00250   1.0       2.31      0.480     -0.0417
+  Feeding-level note e 0.002       0.00050   1.0       0.46      0.233     -0.0879
+  Feeding-level tau=1 inversion    0.00015   1.0       0.14      0.163     -0.1119
+
+  Detectability: SE of the fullness slope = sigma / sqrt(Sxx); sigma = between-station SD of ln mean fullness (J 0.3-0.6;
+  from Johnson: plaice stomach energy 3.22 +- 0.54 J/g s.e., ~200 fish -> CV ~2.4 per fish, ~13 fish/station -> ~0.6).
+  e_max = largest elasticity of intake to prey compatible with a flat result (95 %, t 2.16, 13 df, Johnson n 15; Sxx scaled to 15 stations)
+  sigma 0.3: e_max 0.49 -> X >= 1.02 at B 8.2; K_menu <= 8.05 t/km2 of total B (= 1.61 reachable at share 0.2); a >= 0.00555 at h 112 (model a / a_min = 6.5)
+  sigma 0.3: e_max 0.49 -> X >= 1.02 at B 8.2; K_menu <= 8.05 t/km2 of total B (= 8.05 reachable at share 1.0); a >= 0.00111 at h 112 (model a / a_min = 32.4)
+  sigma 0.45: e_max 0.74 -> X >= 0.35 at B 8.2; K_menu <= 23.58 t/km2 of total B (= 4.72 reachable at share 0.2); a >= 0.00189 at h 112 (model a / a_min = 19.0)
+  sigma 0.45: e_max 0.74 -> X >= 0.35 at B 8.2; K_menu <= 23.58 t/km2 of total B (= 23.58 reachable at share 1.0); a >= 0.00038 at h 112 (model a / a_min = 95.1)
+  sigma 0.6: e_max 0.99 -> X >= 0.01 at B 8.2; K_menu <= 674.71 t/km2 of total B (= 134.94 reachable at share 0.2); a >= 0.00007 at h 112 (model a / a_min = 544.1)
+  sigma 0.6: e_max 0.99 -> X >= 0.01 at B 8.2; K_menu <= 674.71 t/km2 of total B (= 674.71 reachable at share 1.0); a >= 0.00001 at h 112 (model a / a_min = 2720.4)
+
+  Caveat (J): with tau < 1 the daily ration is tau x the foraging-time response; a flat ration still bounds the foraging-time x from below, so the bound on a_model holds for any tau.
+  Caveat (J): fish declined with prey (ratio constant), so a RATIO-dependent food limitation also predicts flat fullness;
+  the test falsifies only prey-dependent food limitation (the model's form with w = 0).
+
+== 3. Kattegat (Dryad [D], tables/kattegat_fishfood_patchiness_stdout.txt)
+  fish food (0.01-0.2 g individuals) 11.6-77.9 t/km2 over 14-15 fine stations (7x); plaice condition ~ ln food r2 0.00, LRD 0.05.
+  Exposure note / model            share 0.2: predicted intake I(11.6)/I(77.9) = 0.918
+  Exposure note / model            share 1.0: predicted intake I(11.6)/I(77.9) = 0.982
+  Feeding-level note e 0.01        share 0.2: predicted intake I(11.6)/I(77.9) = 0.484
+  Feeding-level note e 0.01        share 1.0: predicted intake I(11.6)/I(77.9) = 0.800
+  Feeding-level note e 0.002       share 0.2: predicted intake I(11.6)/I(77.9) = 0.247
+  Feeding-level note e 0.002       share 1.0: predicted intake I(11.6)/I(77.9) = 0.484
+  Feeding-level tau=1 inversion    share 0.2: predicted intake I(11.6)/I(77.9) = 0.181
+  Feeding-level tau=1 inversion    share 1.0: predicted intake I(11.6)/I(77.9) = 0.288
+
+== 4. Supply vs demand on the exposed infauna (model box, J feeding level)
+  benthivore infauna consumption at the field Q/B 4.46: 3.68 t/km2/yr = 0.20 /yr of the exposed stock 18.8 t/km2; refuge exchange 2.5 /yr; infauna production ~r_max 1.0 x 94 = 94 t/km2/yr
+  encounter-limited removal if fish searched all the time: a P 1460 = 80 /yr (gut-capped in practice)
+
+== 5. Epifauna: lab a (Persson et al. 2012 [F], juvenile cod 30-60 g) scaled to adults by ~1/L (J)
+  Crangon (sand)  /2.5: a 0.026-0.052; K = 1/(a h) 0.0745-0.1491 t/km2 accessible; x at today 16-31
+  Crangon (sand)  /3.0: a 0.022-0.043; K = 1/(a h) 0.0894-0.1789 t/km2 accessible; x at today 13-26
+  Palaemon        /2.5: a 0.304-0.600; K = 1/(a h) 0.0065-0.0127 t/km2 accessible; x at today 184-363
+  Palaemon        /3.0: a 0.253-0.500; K = 1/(a h) 0.0078-0.0153 t/km2 accessible; x at today 153-302
+  Hvingel & Kingsley 2006 (cod -> Pandalus, stock scale, Type III): P50 3.6-3.8 x B_MSY at B/B_MSY ~1-1.7 -> x ~0.27-0.47 per pair;
+  in the shared form a minority prey has own-B elasticity ~1 (section 1), so a linear per-prey stock response is the shared denominator, not a low a (J).
+
+== 6. Irish Sea: likelihood of the observed flat slope (b_obs ~ 0, |t| 0.06) under each candidate
+  z = |predicted slope| / SE; LR vs the model a = exp((z_cand^2 - z_model^2)/2) (Gaussian, J)
+  sigma 0.3 (SE 0.029): Exposure note / model z 0.66 LR 1.0; Exposure 5 % z 1.21 LR 1.7; Exposure 95 % z 0.29 LR 0.8; Feeding-level note e 0.01 z 3.00 LR 73.3; Feeding-level note e 0.002 z 3.99 LR 2297.9; Feeding-level tau=1 inversion z 4.25 LR 6688.9
+  sigma 0.45 (SE 0.044): Exposure note / model z 0.44 LR 1.0; Exposure 5 % z 0.81 LR 1.3; Exposure 95 % z 0.19 LR 0.9; Feeding-level note e 0.01 z 2.00 LR 6.7; Feeding-level note e 0.002 z 2.66 LR 31.2; Feeding-level tau=1 inversion z 2.83 LR 50.1
+  sigma 0.6 (SE 0.059): Exposure note / model z 0.33 LR 1.0; Exposure 5 % z 0.61 LR 1.1; Exposure 95 % z 0.15 LR 1.0; Feeding-level note e 0.01 z 1.50 LR 2.9; Feeding-level note e 0.002 z 1.99 LR 6.9; Feeding-level tau=1 inversion z 2.12 LR 9.0

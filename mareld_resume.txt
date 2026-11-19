@@ -25825,3 +25825,110 @@ remain open exactly as described in 71.9 / 71.11.
     float32 rounding on CPU and CUDA, re-anchors, rebases the calendar, clears the
     books, reports progress).
     Validation: full pytest 2007 passed, 12 skipped.
+278 Crowding in the long-run probe, against the field (user: "Kor punkt 1 och 2", 2026-11-18)
+    Why. The decision makers clump far beyond field fish (viewer: the benthivores look like
+    ~10 single pixels moving around). Frozen fix104 policies at update ~1267 (30 x 30, one
+    year; scratchpad clump.py): crowding benthivores 64 (0.70 of the mass in 10 cells),
+    whiting 47-58, seals 65-87, porpoises 32-38, planktivores 10, mackerel 10-13, water
+    column 4.4. A uniform start (1.3) is back at 44 (benthivores) / 53 (whiting) after the
+    60-day warm-up: trained, not inherited from the colony spawn (~22).
+    Counterfactual (scratchpad cf_spread.py, 4 snapshots x 2 seeds, 30 d, the same random
+    numbers): benthivores spread to field crowding (3) or evenly eat the same per tonne
+    (+-5 %, the benthic pairs are saturated) but are eaten 1.5-5x (field crowding) /
+    2.5-11x (even) faster on day 1, 60-85 % by the water column (autumn 0.82-0.95 /yr
+    against 0.25-0.39 clumped), and re-clump to 32-90 within 30 days. Clumping is learned
+    predator swamping: the water column stands at a full reserve (fill 0.98-1.00), its
+    ration is nearly fixed (3.9-4.0 t/t/yr in every arm) and prey trade places in it.
+    The water column -> benthivores pair (scratchpad cf_wc.py, wc_overlap.py): its
+    derivation is ~2x the field flow at the FIELD placement (the J encounter at the bed;
+    270.4), but the trained water column stands over < 100 m beds (0.31-0.65 against GOV
+    saithe 0.043; 150-250 m 0.11-0.26 against 0.78), where every water-column pair's depth
+    table is richest (-> benthivores 1.65 / 1.36 / 0.56 / 0.31 per class, -> krill ~4x
+    under 150 m): the J it meets per tonne x the depth factor is 1.5-3.2 against 0.47 at
+    the field placement. J has the adults' class shares (J rides in B; field J 0.62 on
+    < 100 m). The planktivores' low share of the water column's diet (0.02-0.12 against
+    the gate's 0.46) is their placement: spread evenly, it returns to 0.43-0.54.
+    Contradiction handed to research (research_notes/"Sejens profil over djupa bottnar",
+    running): field saithe stand over 150-250 m beds and eat their krill there, while the
+    bed-anchored profile gives the water column ~0.2 of its mean krill a over those beds.
+278.1 The diagnostic (built). lib/diagnostics/crowding.py: crowding(b) = n sum(b^2) /
+    (sum b)^2 (Lloyd's mean crowding over the mean; 1 = even, k equal cells = n / k) and
+    FIELD_CROWDING, NS-IBTS GOV Q1 + Q3 2021-25 in the Skagerrak + box rectangles, the same
+    statistic per survey, median (range over 10 surveys): benthivores 3.06 (2.11-3.80),
+    whiting 4.06 (1.75-5.32), water column members 4.95 (2.84-21.3; saithe alone 14.0),
+    planktivores 4.36 (1.68-9.42; GOV catches pelagics poorly), mackerel 6.33 (1.79-25; q
+    ~0.1). research_notes/"Interferens hos bottenfisk" scripts/ibts_patchiness.py and the
+    new scripts/ibts_crowding_groups.py (+ stdout). A haul is a 3.4 km tow and the survey
+    region is wider than the box: an order of magnitude, not a target.
+    run_probe samples every decision maker's crowding once a day and stores its annual mean
+    per whole probe year (record key `crowding`, a list of {group: value}); diagnostic only,
+    never a reward. tools/probes/probe_crowding.py results/<run> [--last N] prints the
+    probes against the field. A running probe worker keeps the code it imported (fix104's
+    probes carry no crowding until the worker restarts).
+    Check: run_probe on the frozen fix104 update-1267 policies, one year: benthivores 63.3
+    (20.7x field), whiting 56.4 (13.9x), planktivores 10.4 (2.4x), mackerel 12.4 (2.0x),
+    water column 4.6 (0.9x), porpoises 37.3, seals 85.8, zooplankton 1.3.
+    Tests: tests/test_crowding.py (even = 1, k cells = n / k, scale-free, None without
+    biomass, the field table's ranges, the probe's yearly means, the tool).
+    Validation: full pytest 2012 passed, 12 skipped; train.py 1-generation smoke run clean.
+278.2 Saithe over deep beds (research_notes/"Sejens profil over djupa bottnar"; research only, nothing
+    applied). By day over 150-250 m beds saithe stand near the bed as the library has it (exp, Hs ~15 m;
+    HERAS 6 of 8 near-bed windows with adults, 0 of 63 surface hauls; Stensholt et al. 2001: < 200 m
+    beds "close to seabed", North Sea 69-96 % of the echo within 10 m of the bed); over > 250-300 m
+    beds they spread with bed depth; large adults partly rise at night. The profile does not carry the
+    water column's shallow-bed gradient. Per class (G = a(< 150 m) / a(150-250 m)): bed prey
+    (benthivores J and A, whiting, pout, blue whiting) G 2.65-3.35, all of it the vision term (rule A at
+    the light at the bed: 0.006 lx at a 150-250 m bed by day, from the judged K_deep 0.06 below the
+    65 m sensor floor and the judged Ke 0.02 lx, R_nv 0.3 m); krill G 8.0, geometry 5.2 (the krill day
+    layer 50-90 m above deep beds) x vision 1.6. Supported profile variants keep or steepen every
+    gradient; Ke 2e-4 lx flattens the bed prey to G 1.3 (krill stays 5.2). Stomachs (ICES 1980s, FO at
+    rectangle level) cannot test 100-150 vs 150-250 m, contradict the fall beyond 250 m by one to two
+    orders, and disagree on juvenile gadoids at 150-250 m (field 0.40-0.93 vs model 0.04-0.13). At start
+    densities the water column is near its ceiling: intake per tonne only 1.09-1.11x higher over
+    < 150 m beds; the gradient moves the diet (benthivore share 0.20 / 0.12 / 0.05 / 0.04 by class).
+    Open: box light below 65 m; gadoid detection in near-darkness (Ke, R_nv); krill positions by bed.
+278.3 Does packing cost the benthivores food? (user: run the test; diagnostic, nothing changed.)
+    Frozen fix104 u1267, 30x30, 1 probe year after the warm-up, seeds 0 and 1, daily samples at the
+    predation step; research_notes/"Interferens hos bottenfisk" scripts/bed_depletion_under_clumps.py,
+    tables/bed_depletion_under_clumps_fix104_u1267.txt. k = own density / grid mean.
+    - The beds under the clumps ARE depleted: epifauna / K 0.21-0.26 at k > 32 vs 0.37-0.40 at
+      k < 0.5, infauna A / K_A 0.55-0.58 vs 0.71-0.74, Nephrops ~unchanged; epifauna falls during a
+      stay (0.30 -> 0.19 after 8-16 days). The average benthivore tonne sits on epifauna at 0.41-0.53
+      of the grid mean, infauna 0.68-0.74.
+    - It costs no food: the bed pairs' half-saturations 1/(a h) are 40-400x below the accessible
+      densities even under the clumps (infauna 0.35 vs 13-15 t/km2, epifauna 0.035 vs 0.36-2.5,
+      Nephrops 0.011 vs 4-5); handling takes 0.82-0.93 of the tick. Elasticity of intake per tonne
+      on k: potential (before the reserve cap) +0.02 / +0.03, eaten -0.012 / -0.014; fill 0.995.
+      Field (this note, Q2): -0.19..-0.21 Baltic large cod and flounder (haul scale, depletion
+      included), 0 small cod and cod on capelin; haddock condition higher where haddock are dense.
+    - Clumps move: day-to-day overlap 0.58-0.64, most k > 8 cells held < 4 days.
+    Reading: local depletion exists in the model and is free because the bed pairs are saturated and
+    the fish sit at the reserve cap. research_notes/"Fodobegransning" found the bed pairs saturated
+    in the field too (the library a stands; the feeding level is foraging time), so a depletion
+    cost at cell scale has no clear field basis and the field elasticity evidence is mixed. Packing
+    pays through the benefit side (swamping a satiated water column, 278). A time budget (264.12)
+    does not change this: field fish are saturated while they forage (intake = T x ceiling, flat in
+    prey density, "Fodobegransning"), so it would scale the levels, not the clumped / spread ratio
+    (the same reason 266.7 withdrew it for whiting's avoidance).
+278.4 How large is the "fish are full" gap? (user: the time budget; diagnostic before any design,
+    nothing changed.) Frozen fix104 u1267, 30x30, 1 probe year, seeds 0 and 1 (equal to +-0.01);
+    research_notes/"Fodobegransning" (o-umlaut, a-umlaut) model/scripts/feeding_level_and_fill.py,
+    model/tables/feeding_level_and_fill_fix104_u1267.txt. feed = realised intake / ceiling at the
+    ambient temperature (sum intake x h / B / q10 factor); uncapped = the same before the reserve cap.
+    - feed: benthivores 0.63-0.64 (uncapped 0.91), whiting 0.38 (0.66), water column 0.44 (0.73),
+      planktivores 0.26 (0.49), mackerel 0.31 (0.57). Field 0.22-0.53 (whiting 0.25): only the
+      benthivores sit clearly above it (~1.2-2.9x), whiting ~1.5x its own value; the reserve cap is
+      already the binding limit.
+    - fill: benthivores, whiting and the water column 0.97-1.00 in every month; their field start_fill
+      cycles 0.33 (May-Jul) -> 0.81 (Sep-Nov) (benthivores; whiting 0.30 -> 0.73), water column a flat
+      0.71. Planktivores (set point, 271) and mackerel (migration) cycle near their field tables.
+      So the gap is the demersal fill level and its missing seasonal cycle more than the feeding level.
+    - Swamping payoff (278 counterfactual, cfwc decomposition, seed 0): water column -> benthivores
+      M2 on spread fish = ration 1.29-1.55x booked x benthivore diet share 3.4-6.0x booked x WC/benth
+      biomass ratio 0.25-1.69 (window season) -> 1.1-15.5x the booked 0.058; clumped 0.2-3.1x. The
+      diet-share term (pair ~2x at field placement x the shallow-bed placement) dominates; a time
+      budget could remove at most the ration term (~1.3-1.5x) and leaves the clumped / spread ratio.
+    Constraints on any later mechanism: a cap on T is predator_share again (removed, 221); T is
+    already learned (~0.95), so what a time budget would add is a cost on foraging time; it must be
+    reconciled with section 240 (cod eat at Cmax at livers above the wild maximum). Open, user's call.
+

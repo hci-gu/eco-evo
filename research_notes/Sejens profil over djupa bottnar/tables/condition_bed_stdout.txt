@@ -1,0 +1,15 @@
+records with individual weight: 15; positions {'haul': 15}; years [2024, 2026]; quarters {1: 15}
+         n  stations  K_mean   K_sd  L_mean
+bed                                        
+100-150  9         3   0.735  0.052  44.611
+<100     6         1   0.756  0.086  41.167
+                 n  stations  K_mean   K_sd  L_mean
+quarter bed                                        
+1       100-150  9         3   0.735  0.052  44.611
+        <100     6         1   0.756  0.086  41.167
+
+log W = -5.389 + 3.129 log L; mean residual by bed class (x100 = % weight at length):
+         size  mean   sem
+bed                      
+100-150     9 -1.39  2.23
+<100        6  2.08  4.48

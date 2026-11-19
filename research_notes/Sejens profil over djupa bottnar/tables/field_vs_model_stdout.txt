@@ -1,0 +1,105 @@
+==============================================================================================================
+NE, Q3: stations 57 / 64 / 34 / 28; ratios to 100-150 m for < 100 / 150-250 / > 250 m; prey densities: GOV Q3 in every row (Q1 pout ratio 150-250 / 100-150 is 8.3)
+==============================================================================================================
+  krill        FO 0.65 / 0.72 / 0.79 / 0.79 | occurrence index ratio 0.81 / 1.23 / 1.23 | density ratio 0.41 / 1.22 / 1.42 | field clearance ratio 1.97 / 1.01 / 0.87
+      model exp15|A          a ratio 2.172 / 0.186 / 0.005  predicted intake ratio (no sat) 0.90 / 0.23 / 0.01  (with sat) 0.53 / 0.79 / 0.07
+      model expHsz|A         a ratio 2.702 / 0.222 / 0.010  predicted intake ratio (no sat) 1.12 / 0.27 / 0.01  (with sat) 0.53 / 0.98 / 0.19
+      model freerange|A      a ratio 1.858 / 0.246 / 0.004  predicted intake ratio (no sat) 0.77 / 0.30 / 0.01  (with sat) 0.47 / 1.03 / 0.08
+      model exp15|Ke2e-4     a ratio 2.079 / 0.276 / 0.008  predicted intake ratio (no sat) 0.86 / 0.34 / 0.01  (with sat) 0.56 / 0.67 / 0.10
+      model exp15|kdeep0.05  a ratio 2.134 / 0.220 / 0.005  predicted intake ratio (no sat) 0.88 / 0.27 / 0.01  (with sat) 0.54 / 0.77 / 0.07
+      model exp15|kdeep0.09  a ratio 2.351 / 0.085 / 0.005  predicted intake ratio (no sat) 0.97 / 0.10 / 0.01  (with sat) 0.49 / 0.56 / 0.06
+  pout         FO 0.26 / 0.37 / 0.29 / 0.32 | occurrence index ratio 0.66 / 0.74 / 0.82 | density ratio 0.66 / 0.54 / 0.15 | field clearance ratio 0.99 / 1.35 / 5.61
+      model exp15|A          a ratio 1.209 / 0.384 / 0.159  predicted intake ratio (no sat) 0.80 / 0.21 / 0.02  (with sat) 0.47 / 0.73 / 0.24
+      model expHsz|A         a ratio 1.400 / 0.320 / 0.093  predicted intake ratio (no sat) 0.92 / 0.17 / 0.01  (with sat) 0.44 / 0.63 / 0.17
+      model freerange|A      a ratio 1.498 / 0.293 / 0.075  predicted intake ratio (no sat) 0.99 / 0.16 / 0.01  (with sat) 0.60 / 0.55 / 0.17
+      model exp15|Ke2e-4     a ratio 1.059 / 0.808 / 0.179  predicted intake ratio (no sat) 0.70 / 0.44 / 0.03  (with sat) 0.45 / 0.87 / 0.24
+      model exp15|kdeep0.05  a ratio 1.149 / 0.500 / 0.155  predicted intake ratio (no sat) 0.76 / 0.27 / 0.02  (with sat) 0.47 / 0.78 / 0.23
+      model exp15|kdeep0.09  a ratio 1.543 / 0.255 / 0.205  predicted intake ratio (no sat) 1.02 / 0.14 / 0.03  (with sat) 0.52 / 0.75 / 0.26
+  juv gadoids  FO 0.16 / 0.20 / 0.08 / 0.08 | occurrence index ratio 0.79 / 0.40 / 0.35 | density ratio 8.28 / 0.09 / 0.01 | field clearance ratio 0.10 / 4.26 / 67.94
+      model exp15|A          a ratio 1.216 / 0.411 / 0.224  predicted intake ratio (no sat) 10.06 / 0.04 / 0.00  (with sat) 5.96 / 0.13 / 0.01
+      model expHsz|A         a ratio 1.641 / 0.302 / 0.108  predicted intake ratio (no sat) 13.58 / 0.03 / 0.00  (with sat) 6.48 / 0.10 / 0.01
+      model freerange|A      a ratio 1.666 / 0.310 / 0.122  predicted intake ratio (no sat) 13.79 / 0.03 / 0.00  (with sat) 8.36 / 0.10 / 0.01
+      model exp15|Ke2e-4     a ratio 1.067 / 0.792 / 0.215  predicted intake ratio (no sat) 8.83 / 0.07 / 0.00  (with sat) 5.73 / 0.15 / 0.01
+      model exp15|kdeep0.05  a ratio 1.150 / 0.515 / 0.214  predicted intake ratio (no sat) 9.52 / 0.05 / 0.00  (with sat) 5.84 / 0.14 / 0.01
+      model exp15|kdeep0.09  a ratio 1.589 / 0.330 / 0.299  predicted intake ratio (no sat) 13.15 / 0.03 / 0.00  (with sat) 6.66 / 0.17 / 0.01
+==============================================================================================================
+NE, all quarters: stations 80 / 109 / 69 / 62; ratios to 100-150 m for < 100 / 150-250 / > 250 m; prey densities: GOV Q3 in every row (Q1 pout ratio 150-250 / 100-150 is 8.3)
+==============================================================================================================
+  krill        FO 0.69 / 0.65 / 0.76 / 0.73 | occurrence index ratio 1.09 / 1.36 / 1.22 | density ratio 0.41 / 1.22 / 1.42 | field clearance ratio 2.62 / 1.11 / 0.86
+      model exp15|A          a ratio 2.172 / 0.186 / 0.005  predicted intake ratio (no sat) 0.90 / 0.23 / 0.01  (with sat) 0.53 / 0.79 / 0.07
+      model expHsz|A         a ratio 2.702 / 0.222 / 0.010  predicted intake ratio (no sat) 1.12 / 0.27 / 0.01  (with sat) 0.53 / 0.98 / 0.19
+      model freerange|A      a ratio 1.858 / 0.246 / 0.004  predicted intake ratio (no sat) 0.77 / 0.30 / 0.01  (with sat) 0.47 / 1.03 / 0.08
+      model exp15|Ke2e-4     a ratio 2.079 / 0.276 / 0.008  predicted intake ratio (no sat) 0.86 / 0.34 / 0.01  (with sat) 0.56 / 0.67 / 0.10
+      model exp15|kdeep0.05  a ratio 2.134 / 0.220 / 0.005  predicted intake ratio (no sat) 0.88 / 0.27 / 0.01  (with sat) 0.54 / 0.77 / 0.07
+      model exp15|kdeep0.09  a ratio 2.351 / 0.085 / 0.005  predicted intake ratio (no sat) 0.97 / 0.10 / 0.01  (with sat) 0.49 / 0.56 / 0.06
+  pout         FO 0.28 / 0.42 / 0.41 / 0.44 | occurrence index ratio 0.61 / 0.98 / 1.06 | density ratio 0.66 / 0.54 / 0.15 | field clearance ratio 0.93 / 1.80 / 7.25
+      model exp15|A          a ratio 1.209 / 0.384 / 0.159  predicted intake ratio (no sat) 0.80 / 0.21 / 0.02  (with sat) 0.47 / 0.73 / 0.24
+      model expHsz|A         a ratio 1.400 / 0.320 / 0.093  predicted intake ratio (no sat) 0.92 / 0.17 / 0.01  (with sat) 0.44 / 0.63 / 0.17
+      model freerange|A      a ratio 1.498 / 0.293 / 0.075  predicted intake ratio (no sat) 0.99 / 0.16 / 0.01  (with sat) 0.60 / 0.55 / 0.17
+      model exp15|Ke2e-4     a ratio 1.059 / 0.808 / 0.179  predicted intake ratio (no sat) 0.70 / 0.44 / 0.03  (with sat) 0.45 / 0.87 / 0.24
+      model exp15|kdeep0.05  a ratio 1.149 / 0.500 / 0.155  predicted intake ratio (no sat) 0.76 / 0.27 / 0.02  (with sat) 0.47 / 0.78 / 0.23
+      model exp15|kdeep0.09  a ratio 1.543 / 0.255 / 0.205  predicted intake ratio (no sat) 1.02 / 0.14 / 0.03  (with sat) 0.52 / 0.75 / 0.26
+  juv gadoids  FO 0.16 / 0.19 / 0.18 / 0.14 | occurrence index ratio 0.84 / 0.93 / 0.70 | density ratio 8.28 / 0.09 / 0.01 | field clearance ratio 0.10 / 9.98 / 136.35
+      model exp15|A          a ratio 1.216 / 0.411 / 0.224  predicted intake ratio (no sat) 10.06 / 0.04 / 0.00  (with sat) 5.96 / 0.13 / 0.01
+      model expHsz|A         a ratio 1.641 / 0.302 / 0.108  predicted intake ratio (no sat) 13.58 / 0.03 / 0.00  (with sat) 6.48 / 0.10 / 0.01
+      model freerange|A      a ratio 1.666 / 0.310 / 0.122  predicted intake ratio (no sat) 13.79 / 0.03 / 0.00  (with sat) 8.36 / 0.10 / 0.01
+      model exp15|Ke2e-4     a ratio 1.067 / 0.792 / 0.215  predicted intake ratio (no sat) 8.83 / 0.07 / 0.00  (with sat) 5.73 / 0.15 / 0.01
+      model exp15|kdeep0.05  a ratio 1.150 / 0.515 / 0.214  predicted intake ratio (no sat) 9.52 / 0.05 / 0.00  (with sat) 5.84 / 0.14 / 0.01
+      model exp15|kdeep0.09  a ratio 1.589 / 0.330 / 0.299  predicted intake ratio (no sat) 13.15 / 0.03 / 0.00  (with sat) 6.66 / 0.17 / 0.01
+==============================================================================================================
+N57, Q3: stations 134 / 189 / 118 / 42; ratios to 100-150 m for < 100 / 150-250 / > 250 m; prey densities: GOV Q3 in every row (Q1 pout ratio 150-250 / 100-150 is 8.3)
+==============================================================================================================
+  krill        FO 0.52 / 0.36 / 0.46 / 0.81 | occurrence index ratio 1.63 / 1.40 / 3.67 | density ratio 0.41 / 1.22 / 1.42 | field clearance ratio 3.93 / 1.15 / 2.59
+      model exp15|A          a ratio 2.172 / 0.186 / 0.005  predicted intake ratio (no sat) 0.90 / 0.23 / 0.01  (with sat) 0.53 / 0.79 / 0.07
+      model expHsz|A         a ratio 2.702 / 0.222 / 0.010  predicted intake ratio (no sat) 1.12 / 0.27 / 0.01  (with sat) 0.53 / 0.98 / 0.19
+      model freerange|A      a ratio 1.858 / 0.246 / 0.004  predicted intake ratio (no sat) 0.77 / 0.30 / 0.01  (with sat) 0.47 / 1.03 / 0.08
+      model exp15|Ke2e-4     a ratio 2.079 / 0.276 / 0.008  predicted intake ratio (no sat) 0.86 / 0.34 / 0.01  (with sat) 0.56 / 0.67 / 0.10
+      model exp15|kdeep0.05  a ratio 2.134 / 0.220 / 0.005  predicted intake ratio (no sat) 0.88 / 0.27 / 0.01  (with sat) 0.54 / 0.77 / 0.07
+      model exp15|kdeep0.09  a ratio 2.351 / 0.085 / 0.005  predicted intake ratio (no sat) 0.97 / 0.10 / 0.01  (with sat) 0.49 / 0.56 / 0.06
+  pout         FO 0.33 / 0.51 / 0.54 / 0.33 | occurrence index ratio 0.57 / 1.09 / 0.58 | density ratio 0.66 / 0.54 / 0.15 | field clearance ratio 0.86 / 2.01 / 3.95
+      model exp15|A          a ratio 1.209 / 0.384 / 0.159  predicted intake ratio (no sat) 0.80 / 0.21 / 0.02  (with sat) 0.47 / 0.73 / 0.24
+      model expHsz|A         a ratio 1.400 / 0.320 / 0.093  predicted intake ratio (no sat) 0.92 / 0.17 / 0.01  (with sat) 0.44 / 0.63 / 0.17
+      model freerange|A      a ratio 1.498 / 0.293 / 0.075  predicted intake ratio (no sat) 0.99 / 0.16 / 0.01  (with sat) 0.60 / 0.55 / 0.17
+      model exp15|Ke2e-4     a ratio 1.059 / 0.808 / 0.179  predicted intake ratio (no sat) 0.70 / 0.44 / 0.03  (with sat) 0.45 / 0.87 / 0.24
+      model exp15|kdeep0.05  a ratio 1.149 / 0.500 / 0.155  predicted intake ratio (no sat) 0.76 / 0.27 / 0.02  (with sat) 0.47 / 0.78 / 0.23
+      model exp15|kdeep0.09  a ratio 1.543 / 0.255 / 0.205  predicted intake ratio (no sat) 1.02 / 0.14 / 0.03  (with sat) 0.52 / 0.75 / 0.26
+  juv gadoids  FO 0.14 / 0.23 / 0.16 / 0.07 | occurrence index ratio 0.58 / 0.69 / 0.28 | density ratio 8.28 / 0.09 / 0.01 | field clearance ratio 0.07 / 7.42 / 53.73
+      model exp15|A          a ratio 1.216 / 0.411 / 0.224  predicted intake ratio (no sat) 10.06 / 0.04 / 0.00  (with sat) 5.96 / 0.13 / 0.01
+      model expHsz|A         a ratio 1.641 / 0.302 / 0.108  predicted intake ratio (no sat) 13.58 / 0.03 / 0.00  (with sat) 6.48 / 0.10 / 0.01
+      model freerange|A      a ratio 1.666 / 0.310 / 0.122  predicted intake ratio (no sat) 13.79 / 0.03 / 0.00  (with sat) 8.36 / 0.10 / 0.01
+      model exp15|Ke2e-4     a ratio 1.067 / 0.792 / 0.215  predicted intake ratio (no sat) 8.83 / 0.07 / 0.00  (with sat) 5.73 / 0.15 / 0.01
+      model exp15|kdeep0.05  a ratio 1.150 / 0.515 / 0.214  predicted intake ratio (no sat) 9.52 / 0.05 / 0.00  (with sat) 5.84 / 0.14 / 0.01
+      model exp15|kdeep0.09  a ratio 1.589 / 0.330 / 0.299  predicted intake ratio (no sat) 13.15 / 0.03 / 0.00  (with sat) 6.66 / 0.17 / 0.01
+==============================================================================================================
+N57, all quarters: stations 202 / 298 / 203 / 84; ratios to 100-150 m for < 100 / 150-250 / > 250 m; prey densities: GOV Q3 in every row (Q1 pout ratio 150-250 / 100-150 is 8.3)
+==============================================================================================================
+  krill        FO 0.55 / 0.39 / 0.51 / 0.72 | occurrence index ratio 1.63 / 1.44 / 2.61 | density ratio 0.41 / 1.22 / 1.42 | field clearance ratio 3.94 / 1.19 / 1.84
+      model exp15|A          a ratio 2.172 / 0.186 / 0.005  predicted intake ratio (no sat) 0.90 / 0.23 / 0.01  (with sat) 0.53 / 0.79 / 0.07
+      model expHsz|A         a ratio 2.702 / 0.222 / 0.010  predicted intake ratio (no sat) 1.12 / 0.27 / 0.01  (with sat) 0.53 / 0.98 / 0.19
+      model freerange|A      a ratio 1.858 / 0.246 / 0.004  predicted intake ratio (no sat) 0.77 / 0.30 / 0.01  (with sat) 0.47 / 1.03 / 0.08
+      model exp15|Ke2e-4     a ratio 2.079 / 0.276 / 0.008  predicted intake ratio (no sat) 0.86 / 0.34 / 0.01  (with sat) 0.56 / 0.67 / 0.10
+      model exp15|kdeep0.05  a ratio 2.134 / 0.220 / 0.005  predicted intake ratio (no sat) 0.88 / 0.27 / 0.01  (with sat) 0.54 / 0.77 / 0.07
+      model exp15|kdeep0.09  a ratio 2.351 / 0.085 / 0.005  predicted intake ratio (no sat) 0.97 / 0.10 / 0.01  (with sat) 0.49 / 0.56 / 0.06
+  pout         FO 0.33 / 0.52 / 0.54 / 0.45 | occurrence index ratio 0.56 / 1.08 / 0.82 | density ratio 0.66 / 0.54 / 0.15 | field clearance ratio 0.85 / 2.00 / 5.62
+      model exp15|A          a ratio 1.209 / 0.384 / 0.159  predicted intake ratio (no sat) 0.80 / 0.21 / 0.02  (with sat) 0.47 / 0.73 / 0.24
+      model expHsz|A         a ratio 1.400 / 0.320 / 0.093  predicted intake ratio (no sat) 0.92 / 0.17 / 0.01  (with sat) 0.44 / 0.63 / 0.17
+      model freerange|A      a ratio 1.498 / 0.293 / 0.075  predicted intake ratio (no sat) 0.99 / 0.16 / 0.01  (with sat) 0.60 / 0.55 / 0.17
+      model exp15|Ke2e-4     a ratio 1.059 / 0.808 / 0.179  predicted intake ratio (no sat) 0.70 / 0.44 / 0.03  (with sat) 0.45 / 0.87 / 0.24
+      model exp15|kdeep0.05  a ratio 1.149 / 0.500 / 0.155  predicted intake ratio (no sat) 0.76 / 0.27 / 0.02  (with sat) 0.47 / 0.78 / 0.23
+      model exp15|kdeep0.09  a ratio 1.543 / 0.255 / 0.205  predicted intake ratio (no sat) 1.02 / 0.14 / 0.03  (with sat) 0.52 / 0.75 / 0.26
+  juv gadoids  FO 0.14 / 0.21 / 0.18 / 0.14 | occurrence index ratio 0.63 / 0.85 / 0.61 | density ratio 8.28 / 0.09 / 0.01 | field clearance ratio 0.08 / 9.20 / 119.24
+      model exp15|A          a ratio 1.216 / 0.411 / 0.224  predicted intake ratio (no sat) 10.06 / 0.04 / 0.00  (with sat) 5.96 / 0.13 / 0.01
+      model expHsz|A         a ratio 1.641 / 0.302 / 0.108  predicted intake ratio (no sat) 13.58 / 0.03 / 0.00  (with sat) 6.48 / 0.10 / 0.01
+      model freerange|A      a ratio 1.666 / 0.310 / 0.122  predicted intake ratio (no sat) 13.79 / 0.03 / 0.00  (with sat) 8.36 / 0.10 / 0.01
+      model exp15|Ke2e-4     a ratio 1.067 / 0.792 / 0.215  predicted intake ratio (no sat) 8.83 / 0.07 / 0.00  (with sat) 5.73 / 0.15 / 0.01
+      model exp15|kdeep0.05  a ratio 1.150 / 0.515 / 0.214  predicted intake ratio (no sat) 9.52 / 0.05 / 0.00  (with sat) 5.84 / 0.14 / 0.01
+      model exp15|kdeep0.09  a ratio 1.589 / 0.330 / 0.299  predicted intake ratio (no sat) 13.15 / 0.03 / 0.00  (with sat) 6.66 / 0.17 / 0.01
+
+Saturation S = sum a h B per class (policy-free, start densities; class_diet.json):
+  library          50.1 / 29.3 / 7.6 / 2.0
+  exp15|A          50.1 / 29.3 / 7.6 / 2.0
+  expHsz|A         65.5 / 30.7 / 7.8 / 1.5
+  freerange|A      49.5 / 29.6 / 7.9 / 1.0
+  exp15|Ke2e-4     54.0 / 34.7 / 16.9 / 2.8
+  exp15|kdeep0.05  50.2 / 30.4 / 9.9 / 2.1
+  exp15|kdeep0.09  49.5 / 24.6 / 3.7 / 2.0

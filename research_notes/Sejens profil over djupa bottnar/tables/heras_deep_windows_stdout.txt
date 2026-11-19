@@ -1,0 +1,35 @@
+================================================================================================================
+DAY (sun > 0 deg), beds >= 150 m: hauls / with adult saithe / mean adult kg/h (unmeasured catches dropped) / bed median / window depth median; prey: share of hauls with the prey and mean kg/h
+================================================================================================================
+  a: footrope 0-3 m above bed                n   4  saithe  2  kg/h    21.5  bed   204  window  200- 205 m |  blue whiting 0.75 (129); pout 0.50 (69); herring 0.50 (0); sprat 0.00 (0); euphausiids 0.00 (0)
+  b: footrope 3-30 m above bed               n   4  saithe  4  kg/h   595.2  bed   171  window  152- 162 m |  blue whiting 1.00 (613); pout 1.00 (96); herring 0.50 (17); sprat 0.00 (0); euphausiids 0.50 (115)
+  c: footrope 30-60 m above bed              n   3  saithe  2  kg/h     9.1  bed   180  window  140- 148 m |  blue whiting 0.33 (209); pout 0.33 (0); herring 0.33 (272); sprat 0.00 (0); euphausiids 0.33 (1)
+  d: >60 m up, window in 60-160 m depth      n   1  saithe  0  kg/h     0.0  bed   255  window  140- 155 m |  blue whiting 0.00 (0); pout 0.00 (0); herring 0.00 (0); sprat 0.00 (0); euphausiids 0.00 (0)
+  e: >60 m up, window above 60 m             n  63  saithe  0  kg/h     0.0  bed   290  window    0-  29 m |  blue whiting 0.02 (1); pout 0.00 (0); herring 0.90 (1343); sprat 0.00 (0); euphausiids 0.02 (0)
+    bed 150-250 m: a 2/4, b 4/4, c 1/2, d 0/0, e 0/20
+    bed 250-1000 m: a 0/0, b 0/0, c 1/1, d 0/1, e 0/43
+================================================================================================================
+NIGHT (sun <= 0 deg), beds >= 150 m: hauls / with adult saithe / mean adult kg/h (unmeasured catches dropped) / bed median / window depth median; prey: share of hauls with the prey and mean kg/h
+================================================================================================================
+  e: >60 m up, window above 60 m             n  82  saithe 11  kg/h     1.7  bed   311  window    0-  20 m |  blue whiting 0.48 (33); pout 0.00 (0); herring 0.95 (810); sprat 0.00 (0); euphausiids 0.07 (2)
+    bed 150-250 m: a 0/0, b 0/0, c 0/0, d 0/0, e 3/26
+    bed 250-1000 m: a 0/0, b 0/0, c 0/0, d 0/0, e 8/56
+
+Day hauls over beds >= 150 m whose window lay inside 60-160 m depth and > 60 m above the bed (the krill and
+blue-whiting day layers): every haul
+ cruise  haul gear  bottom   top  foot  elev   y  blue whiting  pout  herring  sprat  euphausiids
+2021207 24024  PEL   254.9 140.0 155.0  51.3 0.0           0.0   0.0      0.0    0.0          0.0
+
+Night hauls over beds >= 150 m with adult saithe: every haul
+        cruise haul gear  bottom  top  foot  hab_foot  elev    y  med_len  blue whiting  pout  herring  sprat  euphausiids
+    26D4201706  476  FOT   182.0  1.0  16.0     166.0  -8.4  7.4    900.0          21.0   0.0     43.6    0.0          0.0
+    26D4201706  851  FOT   181.0  1.0  16.0     165.0  -8.3 10.0   1060.0          14.2   0.0     10.3    0.0          0.0
+    26DA201606 1033  FOT   455.0  0.0  12.0     443.0  -7.1  3.9    730.0           0.0   0.0    114.3    0.0          0.0
+    26DA201606 1196  FOT   197.0  0.0  12.0     185.0  -7.8 12.5    820.0           9.1   0.0   1601.2    0.0          0.0
+    26DA201606  341  FOT   361.0  0.0  13.0     348.0  -8.1  7.0    900.0          61.4   0.0    102.5    0.0          0.0
+    26DA201606  673  FOT   296.0  0.0  14.0     282.0  -8.6  3.9    700.0          42.1   0.0    577.1    0.0          0.0
+    26D4201806 1022  FOT   424.7  0.0  22.0     402.7  -4.5  4.3    790.0           0.0   0.0     12.8    0.0          0.0
+IESSNS_DK_2019    2  PEL   533.0  0.0  27.3     505.7  -7.4 31.4    700.0         146.0   0.0   4438.7    0.0          0.0
+IESSNS_DK_2019    5  PEL   309.0  0.0  39.2     269.8  -5.6 26.5    720.0           6.2   0.0    391.7    0.0          0.0
+IESSNS_DK_2020    3  PEL   520.3  0.0  32.7     487.6  -8.4  9.5    800.0         304.2   0.0   1346.6    0.0          0.0
+IESSNS_DK_2021    2  PEL   507.5  0.0  29.1     478.4  -8.2 23.5    830.0           0.0   0.0   4435.2    0.0          0.0

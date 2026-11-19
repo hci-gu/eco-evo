@@ -1,0 +1,49 @@
+== 1. Rindorf & Gislason 2005, whiting on fish prey (North Sea, Sept) ==
+  swept area per trawl hour km2: {'low': 0.097, 'central': 0.13, 'high': 0.162}
+  clupeids (herring+sprat <= 14 cm): K = 0.043 t/km2 of vulnerable prey (0.0036 - 0.391); plateau 0.1-0.17 of Wmax
+  gadoids (whiting, haddock, pout <= 11 cm): K = 0.129 t/km2 of vulnerable prey (0.0179 - 0.797); plateau 0.06-0.12 of Wmax
+
+== 2. Engine pairs at today's densities (visible share from stage_access, J/B 0.417) ==
+  pair                                    a      h   K_mod  B_vis  x_mod   sat | field K (lo/c/hi) -> a_impl c (lo-hi), model/field a
+  whiting -> planktivores           0.02120  207.0   0.228   0.37   1.64  0.62 | 0.004/0.043/0.391 -> 0.1113 (0.0124-1.327), ratio 0.19 (0.02-1.72); x_field 8.63 (0.96-102.8)  [Rindorf clupeid fit]
+  water column -> planktivores      0.00600  217.8   0.765   1.77   2.32  0.70 |   [no local fit; stock-scale growth link (Cormon 2016)]
+  benthivores -> planktivores       0.01980  238.0   0.212   1.72   8.08  0.89 | 0.110/0.600/1.570 -> 0.0070 (0.0027-0.038), ratio 2.83 (0.52-7.40); x_field 2.86 (1.09-15.6)  [cod-capelin proxy: Fall 2021 Holling fit 0.11 / end of main rise 0.6 (2 km), MULTSPEC 1.57 (~100 km)]
+  mackerel -> planktivores          0.02660   98.0   0.384   0.05   0.12  0.11 |   [no field fit]
+  whiting -> benthivores (bonus)    0.21000  143.6   0.033      -      -     - | 0.018/0.129/0.797 -> 0.0539 (0.0087-0.390), ratio 3.90 (0.54-24.04)  [Rindorf gadoid fit]
+  whiting -> krill                  0.04300  159.5   0.146   5.00  34.29  0.97 |   [no field response]
+  water column -> krill             0.02410  167.8   0.247   5.00  20.22  0.95 |   [no field response]
+  planktivores -> krill             0.01800   57.8   0.961   5.00   5.20  0.84 |   [no field response]
+  benthivores -> krill              0.01300  182.7   0.421   5.00  11.88  0.92 |   [no field response]
+  mackerel -> krill                 0.00250   75.5   5.298   5.00   0.94  0.49 |   [no field response]
+  planktivores -> zooplankton       0.01220   52.0   1.576   9.70   6.15  0.86 |   [no field K; Type II, floor 0.5]
+  mackerel -> zooplankton           0.00084   68.0  17.507   9.70   0.55  0.36 |   [a from Macy 1998 clearance (already)]
+
+  Reading of the Rindorf K under two placements of the plateau share tau:
+   A) tau on the whole response (time/overlap window = eat share): I = tau a N/(1 + a h N) -> a = 1/(K h)
+   B) tau on 1/h only (capture-limited ceiling h/tau): I = a N/(1 + a (h/tau) N) -> a = tau/(K h)
+   whiting -> planktivores: A a = 0.1113 (model/field 0.19); B a = 0.0111-0.0189 (model/field 1.12-1.90)
+   whiting -> benthivores: A a = 0.0539 (model/field 3.90); B a = 0.0032-0.0065 (model/field 32.47-64.93)
+
+== 3. Lauerburg et al. 2018: stock-scale elasticity of whiting intake to forage fish ==
+  uncorrected: elasticity 0.19-0.73 -> x = N/K 0.4-4.3, saturation 0.27-0.81
+  T-corrected: elasticity 0.06-0.34 -> x = N/K 1.9-15.9, saturation 0.66-0.94
+
+== 4. Fall et al. 2021: Barents cod on capelin at 2 km (Fig. 4a, 5 digitised by eye) ==
+  best Holling II on all points: K = 8.91e+03 ind/km2, SSE 0.260 (poor: the field curve is log-like)
+   capelin 8 g: median 1.8e5 ind/km2 = 1.44 t/km2; 5e4 (end of main rise) = 0.40; fitted K = 0.07 t/km2
+   capelin 12 g: median 1.8e5 ind/km2 = 2.16 t/km2; 5e4 (end of main rise) = 0.60; fitted K = 0.11 t/km2
+   capelin 20 g: median 1.8e5 ind/km2 = 3.60 t/km2; 5e4 (end of main rise) = 1.00; fitted K = 0.18 t/km2
+  share of the far-right (300x median) intake reached at the median: exp(-0.45) = 0.64
+
+== 5. WKCAPELIN 2023: Barents cod on maturing capelin, Jan-Mar, Type III ==
+   area 5e+04 km2: levelling density 10.0 t/km2
+   area 1e+05 km2: levelling density 5.0 t/km2
+   area 2e+05 km2: levelling density 2.5 t/km2
+
+== 6. Zooplankton concentrations vs lab feeding modes ==
+   pool 0-25 m = 0.39 g WW/m3; if all were C5-C6 Calanus (2.0 mg WW): 0.19 ind/L
+   pool 0-25 m = 0.39 g WW/m3; if all were C5-C6 Calanus (1.5 mg WW): 0.26 ind/L
+   pool 0-25 m = 0.39 g WW/m3; if all were C5-C6 Calanus (1.2 mg WW): 0.32 ind/L
+   Macy 1998 mackerel: feeding stops below 0.4 /L, starts at 4.4-14.7 /L; Ivlev half-rate 11.5 /L; filter switch 24-64 /L
+   (Ivlev B1 = 0.0624 L per copepod; C50 = 0.4 + ln2/B1 = 11.5 /L)
+   Gibson & Ezzi 1990 herring: biting -> filtering switch at 18 /L (10-34)
