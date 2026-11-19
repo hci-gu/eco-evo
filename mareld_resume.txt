@@ -25932,6 +25932,50 @@ remain open exactly as described in 71.9 / 71.11.
     already learned (~0.95), so what a time budget would add is a cost on foraging time; it must be
     reconciled with section 240 (cod eat at Cmax at livers above the wild maximum). Open, user's call.
 
+278.5 Deep light and gadoid dark vision (2026-11-19; user: "ta fram underlaget for djupljuset"; research only,
+    nothing applied). research_notes/"Ljus under 65 m" (summary.md saved by the main agent) and
+    research_notes/"Torskfiskars syn i morker" (o-umlaut).
+    Light: VOTO gliders in the box (28 missions 2020-2026, CC BY 4.0; MPE-PAR floor ~1e-5 umol, ~1e4 below
+    the SMHI CTD's) measure daytime PAR to 108-148 m: K_PAR 0.092 (p25-p75 0.076-0.109, n 9589 slab fits)
+    over 150-250 m beds >= 100 m above the bed, 0.082 over the Trench, rod band ~0.08-0.09, a near-bed
+    nepheloid layer 0.115 / 0.139 at 25-50 / 0-25 m above the bed (0.13-0.16 over 100-150 m beds). The
+    judged K_deep 0.06 (sections 253, 269, every visual pair) is not supported: bed light by day ~1.8e-4 /
+    1.7e-6 lx at 150 / 200 m beds (was 0.022 / 1.1e-3). The gliders' absolute level is 0.31-0.41 of the
+    library's surface convention at 50-120 m (unexplained).
+    Vision: Aksnes & Utne 1997 fitted Anthony's 1981 cod thresholds (Ke 2.9e-6 W m-2 sr-1); refitted, Ke
+    2.4e-4 (scotopic) to 2e-2 lx (photopic), viewing-geometry factor F 1-30 unresolved: bracket ~2e-4 to
+    0.07 lx, low confidence. R_nv: no gadoid measurement (burbot in the dark 5.6 cm mean), analogue bracket
+    0.05-0.5 m. Svalbard cod and haddock feed (cod on fish) in the January polar night at 90-455 m.
+    Consequence for 278.2's lever: at the measured K 0.09 the water column -> bed prey gradient is 2.3-3.8
+    across the Ke bracket (library 2.65); only K 0.075 with Ke 2e-4 gives 1.7; the advantage moves to < 100 m
+    beds. The light route does not flatten the shallow-bed payoff; the earlier "3-8x" estimate is withdrawn.
+    The stomach mismatch at 150-250 m widens and points at detection without daylight (R_nv, bioluminescence;
+    unconstrained). Data and PDFs in both folders (~210 MB, mixed licences) are not to be committed.
+
+278.6 Predator-side levers on the swamping payoff (2026-11-19; user: "ja, kor forsoket"; diagnostic only,
+    nothing changed). research_notes/"Klumpningens spakar" summary.md, scripts/cf_lever.py, cf_cap.py,
+    tables/. Frozen fix104 u1267 on the pre-279 library, 30x30, seeds 0/1, snapshots day 0/91/182/273,
+    one-day windows. Arms: WC trained / at GOV saithe class shares; WC -> benthivores as library / dark
+    (depth mult 1, no diel swing, a x 0.31); benthivores clumped / Lloyd 3 / uniform / field (adults at GOV
+    class shares, J at the recruit shape).
+    - Mean all-predator M2 on the benthivores (booked 0.25): clumped 0.148, Lloyd 3 0.396, field 0.579
+      (WC trained, library pair). Saving of clumping at Lloyd 3: 0.25 /yr; WC field-placed 0.18; dark
+      pair 0.18; both 0.16 (22 % of P 0.74). Ratio spread / clumped 2.6-2.8 in every arm (a scalar on a
+      cannot move it; the absolute saving is the readout). The dark arm darkened one pair only: flow fell
+      x0.65-0.87 for an encounter x0.2-0.45 - not shown sufficient, not ruled out.
+    - J placed apart from the adults (field arm) leaves the saving 0.17-0.43 /yr: not the cause.
+    - The trained WC already follows the clumps (WC met per benthivore tonne 1.1-3.4 x box mean).
+    - Which cap binds (cf_cap.py): WC and whiting at fill 0.98-1.00 fit 0.38-0.52 of their pre-cap demand
+      in the benthivore cells (reserve room; 0.59-0.72 elsewhere); seals and porpoises on the gate at fill
+      0.65-0.80. Every predator is satiation-limited: its intake is fixed, the encounter sets only the
+      shares; spread benthivores take more of each fixed meal, clumped ones meet only the full predators
+      in a few cells. Satiation swamping, against every predator alike. Hungrier predators (278.4 fill gap)
+      raise the clump cells' intake ~x2.5 and the spread cells' ~x2: ratio ~20 % lower, saving larger.
+    Reading: the predator side is exhausted; the field's Lloyd 3 must be held by a crowding cost the model
+    lacks. Rough break-even: a saving ~0.2 /yr needs ~15 % of the ration at the growth slope ~0.3; at
+    ~20x the field crowding that is an intake elasticity ~-0.05 (model -0.012, 278.3; field -0.2 Baltic
+    large cod and flounder, 0 small cod; mechanism unknown, bed pairs saturated in the field too).
+
 279 SPAWNING IN THE BOX (user, 2026-11-18: "do 2, general for every fish that spawns in the box")
 --------------------------------------------------------------------------------------------
 279.1 Why. 278.4: the demersal fish hold fill 0.97-1.00 all year while the field start_fill cycles
@@ -26008,3 +26052,36 @@ remain open exactly as described in 71.9 / 71.11.
     whole group) is a pooled-room artefact: while the room top falls the whole group stops eating,
     not only the ~0.16 of fasting cod. A slow refill (the other option) would sit near 0.2; open.
 
+280 MEASURED DEEP LIGHT IN EVERY VISUAL PAIR (2026-11-19; user: "Ratta dampningen i alla synpar")
+------------------------------------------------------------------------------------------------
+
+280.1 Why. 278.5: VOTO gliders measure K_PAR ~0.09 below 65 m in the box (research_notes/"Ljus under 65 m");
+    the section 253 light behind every visual pair (269 rule A, 270 schooling F on rule A's radius) used a
+    judged K_deep 0.06. User: one flat K_deep 0.09 below 65 m for every pair and bed class; the near-bed
+    nepheloid layer, the murkier 100-150 m beds and the ~2.5x level gap left out.
+280.2 Re-derivation (research_notes/"Djupljus i synparen"; scripts/run_chain.sh, s1-s8 drivers exec the
+    269-270 note scripts unchanged with K as a parameter). Reproduction gate: at K_deep 0.06 the chain returns
+    all 130 values of the 17 visual pairs exactly (live library and git HEAD; tables/reproduction_0.06.txt).
+    Judgement kept: the schooling script's hard-coded benthivore rows (night/day, pout share, rule-A bed radii
+    0.6 / 0.3 m) follow K (radii scaled by R_eff(K)/R_eff(0.06)); without the radius scaling three a's move
+    1-2 % (tables/s6_0.09_bed_radii_unscaled_stdout.txt).
+280.3 Applied (scripts/apply_280.py from tables/yaml_edits_280.txt, a "Section 280" comment per pair; the
+    library equals the reviewed copy byte for byte). a (night/day): WC -> planktivores 0.0279 -> 0.02348
+    (0.116 -> 0.14), -> benthivores 0.1162 -> 0.09443 (0.165 -> 0.209; stage_access [0.3711, 0.01256]),
+    -> whiting 0.1045 -> 0.08608 (0.139 -> 0.172), -> krill 0.0117 -> 0.0107 (0.0245 -> 0.0257); whiting ->
+    planktivores 0.06357 -> 0.05913 (0.342 -> 0.375), -> benthivores 0.2687 -> 0.2455 (0.565 -> 0.641), ->
+    krill 0.043 -> 0.041; benthivores -> planktivores 0.02905 -> 0.02431 (0.238 -> 0.28), -> whiting 0.04581
+    -> 0.03745 (0.171 -> 0.21), -> krill 0.00679 -> 0.00641 (0.036 -> 0.0366); planktivores -> krill 0.023
+    -> 0.0214; mackerel -> krill 0.0039 -> 0.00382. Class tables lose most over 100-250 m beds. The 2 L cap
+    still binds on whiting, planktivores and mackerel -> krill; they move by the light alone. Unchanged: WC
+    -> mackerel, mackerel -> planktivores, the benthic pairs, light_threshold_deg, every derived growth_rate.
+280.4 Gate (budget_gate on the copy): no pair goes OFF, none comes back. Benthivores -> planktivores 0.81 ->
+    0.69, -> whiting 0.62 -> 0.52; at the field spread WC -> benthivores 1.81 -> 2.13 and WC -> whiting 0.95
+    -> 1.24 (diet shares: the WC's other prey fall more); prey totals planktivores 0.99 -> 0.95, whiting
+    0.72 -> 0.67, krill 1.01 -> 0.96.
+280.5 Sensitivity (not applied): near-bed layer and bed-class K as a per-class composite take the fish ->
+    fish pairs a further x0.80-0.85. Left out: the 270.9 Jan/Dec Secchi fix (still January 5.0 m), the level
+    gap, a bed-depth-resolved near-bed light.
+280.6 Expected effect on clumping (278): none helpful; the shallow-bed gradient of the WC bed prey steepens
+    (class runs: G ~2.65 -> ~3.8). Payoffs change: checkpoints before 280 are invalid, retrain.
+280.7 Tests: test_half_saturation repinned (12 a's, 9 night/day).

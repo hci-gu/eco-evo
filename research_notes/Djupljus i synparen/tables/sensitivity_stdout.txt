@@ -1,0 +1,32 @@
+equal-cell class shares < 100 / 100-150 / 150-250 / >= 250 m: 0.213 / 0.306 / 0.332 / 0.149
+
+pair                                              live a   flat 0.09       class   class+bed   class a's (class+bed)  [chk]
+whiting_preys_on_krill                             0.043     0.04095     0.03728     0.03652   0.14 / 0.0216 / 0.000383 / 0  [0.999]
+planktivorous_fish_preys_on_krill                  0.023     0.02134     0.01926      0.0189   0.0649 / 0.0131 / 0.00253 / 0.00166  [0.997]
+predatory_fish_preys_on_krill                     0.0117     0.01074     0.00967    0.009294   0.029 / 0.00951 / 0.000623 / 6.79e-05  [1.004]
+mackerel_preys_on_krill                           0.0039    0.003822    0.003742    0.003714   0.00524 / 0.00393 / 0.00293 / 0.00284  [1.001]
+predatory_fish_preys_on_planktivorous_fish        0.0279     0.02354     0.02017     0.01946   0.0569 / 0.0164 / 0.00504 / 0.0045  [1.002]
+predatory_fish_preys_on_benthivorous_fish         0.1162     0.09438     0.07693     0.07397   0.171 / 0.0665 / 0.0363 / 0.0353  [0.999]
+predatory_fish_preys_on_whiting                   0.1045     0.08625     0.07121     0.06817   0.162 / 0.0643 / 0.0298 / 0.0285  [1.002]
+predatory_fish_preys_on_mackerel               3.346e-05   3.338e-05   3.338e-05   3.338e-05   5.59e-05 / 3.1e-05 / 2.49e-05 / 2.49e-05  [0.998]
+whiting_preys_on_planktivorous_fish              0.06357      0.0592     0.05568     0.05489   0.121 / 0.045 / 0.0325 / 0.0313  [1.001]
+whiting_preys_on_benthivorous_fish                0.2687      0.2451      0.2276      0.2246   0.321 / 0.217 / 0.187 / 0.186  [0.998]
+benthivorous_fish_preys_on_krill                 0.00679    0.006409    0.005781    0.005634   0.021 / 0.0036 / 0.000194 / 7.51e-06  [1.000]
+benthivorous_fish_preys_on_planktivorous_fish    0.02905     0.02429     0.02054     0.01988   0.0488 / 0.0165 / 0.00933 / 0.00918  [0.999]
+benthivorous_fish_preys_on_whiting               0.04581     0.03751     0.03065     0.02943   0.0652 / 0.0272 / 0.0151 / 0.0149  [1.002]
+
+night/day per K (pair's chain value):
+pair                                             0.082    0.09   0.092    0.11    0.13    0.14    0.16
+whiting_preys_on_krill                            None    None    None    None    None    None    None
+planktivorous_fish_preys_on_krill                 0.57    0.57    0.57    0.57    0.57    0.57    0.57
+predatory_fish_preys_on_krill                   0.0254  0.0257  0.0258  0.0267  0.0278  0.0285  0.0299
+mackerel_preys_on_krill                           0.42    0.42    0.42    0.42    0.42    0.42    0.42
+predatory_fish_preys_on_planktivorous_fish       0.134    0.14   0.141   0.154   0.167   0.173   0.183
+predatory_fish_preys_on_benthivorous_fish        0.198   0.209   0.212   0.236   0.262   0.273   0.296
+predatory_fish_preys_on_whiting                  0.163   0.172   0.174   0.194   0.214   0.223   0.241
+predatory_fish_preys_on_mackerel                 0.916   0.916   0.916   0.916   0.916   0.916   0.916
+whiting_preys_on_planktivorous_fish              0.368   0.375   0.378   0.391   0.405    0.41   0.421
+whiting_preys_on_benthivorous_fish               0.623   0.641   0.645   0.681   0.713   0.727   0.752
+benthivorous_fish_preys_on_krill                0.0364  0.0366  0.0367  0.0375  0.0388  0.0395  0.0412
+benthivorous_fish_preys_on_planktivorous_fish     0.27    0.28   0.281   0.304   0.323   0.335   0.351
+benthivorous_fish_preys_on_whiting               0.199    0.21   0.213   0.236    0.26   0.271   0.293

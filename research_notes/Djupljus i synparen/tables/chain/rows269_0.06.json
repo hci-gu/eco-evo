@@ -1,0 +1,416 @@
+{
+ "rows": {
+  "whiting_preys_on_krill": {
+   "max_intake_rate": 0.043,
+   "depth_access_table": [
+    {
+     "depth_m": 99.9,
+     "factor": 0.148
+    },
+    {
+     "depth_m": 100.0,
+     "factor": 0.0354
+    },
+    {
+     "depth_m": 149.9,
+     "factor": 0.0354
+    },
+    {
+     "depth_m": 150.0,
+     "factor": 0.00199
+    },
+    {
+     "depth_m": 249.9,
+     "factor": 0.00199
+    },
+    {
+     "depth_m": 250.0,
+     "factor": 0.0
+    }
+   ],
+   "dark_ratio": null
+  },
+  "planktivorous_fish_preys_on_krill": {
+   "max_intake_rate": 0.023,
+   "depth_access_table": [
+    {
+     "depth_m": 99.9,
+     "factor": 0.0707
+    },
+    {
+     "depth_m": 100.0,
+     "factor": 0.0211
+    },
+    {
+     "depth_m": 149.9,
+     "factor": 0.0211
+    },
+    {
+     "depth_m": 150.0,
+     "factor": 0.00377
+    },
+    {
+     "depth_m": 249.9,
+     "factor": 0.00377
+    },
+    {
+     "depth_m": 250.0,
+     "factor": 0.00171
+    }
+   ],
+   "dark_ratio": 0.57
+  },
+  "predatory_fish_preys_on_krill": {
+   "max_intake_rate": 0.0117,
+   "depth_access_table": [
+    {
+     "depth_m": 99.9,
+     "factor": 0.0306
+    },
+    {
+     "depth_m": 100.0,
+     "factor": 0.0141
+    },
+    {
+     "depth_m": 149.9,
+     "factor": 0.0141
+    },
+    {
+     "depth_m": 150.0,
+     "factor": 0.00262
+    },
+    {
+     "depth_m": 249.9,
+     "factor": 0.00262
+    },
+    {
+     "depth_m": 250.0,
+     "factor": 6.91e-05
+    }
+   ],
+   "dark_ratio": 0.0245
+  },
+  "mackerel_preys_on_krill": {
+   "max_intake_rate": 0.0039,
+   "depth_access_table": [
+    {
+     "depth_m": 99.9,
+     "factor": 0.00532
+    },
+    {
+     "depth_m": 100.0,
+     "factor": 0.00429
+    },
+    {
+     "depth_m": 149.9,
+     "factor": 0.00429
+    },
+    {
+     "depth_m": 150.0,
+     "factor": 0.0031
+    },
+    {
+     "depth_m": 249.9,
+     "factor": 0.0031
+    },
+    {
+     "depth_m": 250.0,
+     "factor": 0.00284
+    }
+   ],
+   "dark_ratio": 0.42
+  },
+  "predatory_fish_preys_on_planktivorous_fish": {
+   "max_intake_rate": 0.0174,
+   "depth_access_table": [
+    {
+     "depth_m": 99.9,
+     "factor": 0.0384
+    },
+    {
+     "depth_m": 100.0,
+     "factor": 0.0211
+    },
+    {
+     "depth_m": 149.9,
+     "factor": 0.0211
+    },
+    {
+     "depth_m": 150.0,
+     "factor": 0.00716
+    },
+    {
+     "depth_m": 249.9,
+     "factor": 0.00716
+    },
+    {
+     "depth_m": 250.0,
+     "factor": 0.00286
+    }
+   ],
+   "dark_ratio": 0.0594
+  },
+  "predatory_fish_preys_on_benthivorous_fish": {
+   "max_intake_rate": 0.0418,
+   "depth_access_table": [
+    {
+     "depth_m": 99.9,
+     "factor": 0.0693
+    },
+    {
+     "depth_m": 100.0,
+     "factor": 0.057
+    },
+    {
+     "depth_m": 149.9,
+     "factor": 0.057
+    },
+    {
+     "depth_m": 150.0,
+     "factor": 0.0234
+    },
+    {
+     "depth_m": 249.9,
+     "factor": 0.0234
+    },
+    {
+     "depth_m": 250.0,
+     "factor": 0.0128
+    }
+   ],
+   "dark_ratio": 0.165,
+   "stage_access": [
+    0.392,
+    0.0388
+   ]
+  },
+  "predatory_fish_preys_on_whiting": {
+   "max_intake_rate": 0.0359,
+   "depth_access_table": [
+    {
+     "depth_m": 99.9,
+     "factor": 0.0599
+    },
+    {
+     "depth_m": 100.0,
+     "factor": 0.0495
+    },
+    {
+     "depth_m": 149.9,
+     "factor": 0.0495
+    },
+    {
+     "depth_m": 150.0,
+     "factor": 0.0199
+    },
+    {
+     "depth_m": 249.9,
+     "factor": 0.0199
+    },
+    {
+     "depth_m": 250.0,
+     "factor": 0.0097
+    }
+   ],
+   "dark_ratio": 0.137
+  },
+  "predatory_fish_preys_on_mackerel": {
+   "max_intake_rate": 0.000137,
+   "depth_access_table": [
+    {
+     "depth_m": 99.9,
+     "factor": 0.000229
+    },
+    {
+     "depth_m": 100.0,
+     "factor": 0.000127
+    },
+    {
+     "depth_m": 149.9,
+     "factor": 0.000127
+    },
+    {
+     "depth_m": 150.0,
+     "factor": 0.000102
+    },
+    {
+     "depth_m": 249.9,
+     "factor": 0.000102
+    },
+    {
+     "depth_m": 250.0,
+     "factor": 0.000102
+    }
+   ],
+   "dark_ratio": 0.923
+  },
+  "whiting_preys_on_planktivorous_fish": {
+   "max_intake_rate": 0.0329,
+   "depth_access_table": [
+    {
+     "depth_m": 99.9,
+     "factor": 0.0626
+    },
+    {
+     "depth_m": 100.0,
+     "factor": 0.0341
+    },
+    {
+     "depth_m": 149.9,
+     "factor": 0.0341
+    },
+    {
+     "depth_m": 150.0,
+     "factor": 0.0205
+    },
+    {
+     "depth_m": 249.9,
+     "factor": 0.0205
+    },
+    {
+     "depth_m": 250.0,
+     "factor": 0.0159
+    }
+   ],
+   "dark_ratio": 0.212
+  },
+  "whiting_preys_on_benthivorous_fish": {
+   "max_intake_rate": 0.103,
+   "depth_access_table": [
+    {
+     "depth_m": 99.9,
+     "factor": 0.132
+    },
+    {
+     "depth_m": 100.0,
+     "factor": 0.119
+    },
+    {
+     "depth_m": 149.9,
+     "factor": 0.119
+    },
+    {
+     "depth_m": 150.0,
+     "factor": 0.0825
+    },
+    {
+     "depth_m": 249.9,
+     "factor": 0.0825
+    },
+    {
+     "depth_m": 250.0,
+     "factor": 0.0715
+    }
+   ],
+   "dark_ratio": 0.565
+  },
+  "mackerel_preys_on_planktivorous_fish": {
+   "max_intake_rate": 0.0248,
+   "dark_ratio": 0.16
+  },
+  "benthivorous_fish_preys_on_krill": {
+   "max_intake_rate": 0.00679,
+   "depth_access_table": [
+    {
+     "depth_m": 99.9,
+     "factor": 0.0225
+    },
+    {
+     "depth_m": 100.0,
+     "factor": 0.00583
+    },
+    {
+     "depth_m": 149.9,
+     "factor": 0.00583
+    },
+    {
+     "depth_m": 150.0,
+     "factor": 0.000701
+    },
+    {
+     "depth_m": 249.9,
+     "factor": 0.000701
+    },
+    {
+     "depth_m": 250.0,
+     "factor": 1.52e-05
+    }
+   ],
+   "dark_ratio": 0.036
+  },
+  "benthivorous_fish_preys_on_planktivorous_fish": {
+   "max_intake_rate": 0.0214,
+   "depth_access_table": [
+    {
+     "depth_m": 99.9,
+     "factor": 0.0401
+    },
+    {
+     "depth_m": 100.0,
+     "factor": 0.0262
+    },
+    {
+     "depth_m": 149.9,
+     "factor": 0.0262
+    },
+    {
+     "depth_m": 150.0,
+     "factor": 0.0114
+    },
+    {
+     "depth_m": 249.9,
+     "factor": 0.0114
+    },
+    {
+     "depth_m": 250.0,
+     "factor": 0.00685
+    }
+   ],
+   "dark_ratio": 0.141
+  },
+  "benthivorous_fish_preys_on_whiting": {
+   "max_intake_rate": 0.0226,
+   "depth_access_table": [
+    {
+     "depth_m": 99.9,
+     "factor": 0.0366
+    },
+    {
+     "depth_m": 100.0,
+     "factor": 0.0306
+    },
+    {
+     "depth_m": 149.9,
+     "factor": 0.0306
+    },
+    {
+     "depth_m": 150.0,
+     "factor": 0.0129
+    },
+    {
+     "depth_m": 249.9,
+     "factor": 0.0129
+    },
+    {
+     "depth_m": 250.0,
+     "factor": 0.00738
+    }
+   ],
+   "dark_ratio": 0.168
+  },
+  "benthivorous_fish_preys_on_benthic_infauna": {
+   "max_intake_rate": 0.0256
+  },
+  "benthivorous_fish_preys_on_mobile_epifauna": {
+   "max_intake_rate": 0.11
+  },
+  "benthivorous_fish_preys_on_norway_lobster": {
+   "max_intake_rate": 0.308
+  }
+ },
+ "window_key": "A_band|ling anglerfish|k+1.7",
+ "k_central": [
+  1.7,
+  -0.3760394684000656
+ ]
+}

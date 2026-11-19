@@ -1,0 +1,68 @@
+A. OCR casts: (Ed490 - dark)/PAR at 50-80 m = 0.289 (Ed490 unit per umol m-2 s-1, n 11708); Ed490 10-noise level 0.0083 -> PAR 0.029 umol m-2 s-1
+   MPE-PAR K by bed class: all usable bins vs only bins above the OCR-equivalent floor (median, n):
+     bed 100-150: 65-80: 0.128 n1508 -> 0.100 n362; 80-95: 0.128 n1148 -> 0.083 n45
+     bed 150-250: 65-80: 0.094 n3043 -> 0.082 n1078; 80-95: 0.094 n2851 -> 0.075 n333; 95-110: 0.096 n2501 -> 0.072 n23
+     bed   >=250: 65-80: 0.083 n870 -> 0.077 n300; 80-95: 0.082 n847 -> 0.071 n79; 95-110: 0.082 n800 -> 0.065 n12
+
+B. K_PAR at 20-65 m, OCR-504 (2020-22) vs MPE-PAR (2024-26), same month and bed class (median, n >= 20 each):
+   month  1 bed 150-250 20-35 m: OCR 0.124 n56, MPE 0.128 n142, MPE - OCR +0.004
+   month  1 bed 150-250 35-50 m: OCR 0.110 n35, MPE 0.131 n193, MPE - OCR +0.021
+   month  1 bed   >=250 20-35 m: OCR 0.109 n28, MPE 0.111 n60, MPE - OCR +0.002
+   month  1 bed   >=250 35-50 m: OCR 0.086 n25, MPE 0.094 n65, MPE - OCR +0.008
+   month  2 bed 150-250 20-35 m: OCR 0.138 n34, MPE 0.115 n245, MPE - OCR -0.023
+   month  3 bed 100-150 20-35 m: OCR 0.113 n36, MPE 0.110 n233, MPE - OCR -0.003
+   month  3 bed 150-250 20-35 m: OCR 0.086 n382, MPE 0.111 n303, MPE - OCR +0.025
+   month  3 bed 150-250 35-50 m: OCR 0.082 n379, MPE 0.091 n340, MPE - OCR +0.008
+   month  3 bed 150-250 50-65 m: OCR 0.077 n295, MPE 0.085 n338, MPE - OCR +0.008
+   month  3 bed   >=250 20-35 m: OCR 0.095 n191, MPE 0.153 n46, MPE - OCR +0.059
+   month  3 bed   >=250 35-50 m: OCR 0.091 n177, MPE 0.099 n46, MPE - OCR +0.007
+   month  3 bed   >=250 50-65 m: OCR 0.085 n130, MPE 0.089 n46, MPE - OCR +0.004
+   month  4 bed 150-250 20-35 m: OCR 0.092 n395, MPE 0.097 n348, MPE - OCR +0.005
+   month  4 bed 150-250 35-50 m: OCR 0.082 n440, MPE 0.080 n356, MPE - OCR -0.002
+   month  4 bed 150-250 50-65 m: OCR 0.080 n351, MPE 0.074 n356, MPE - OCR -0.007
+   month  4 bed   >=250 20-35 m: OCR 0.096 n117, MPE 0.098 n44, MPE - OCR +0.001
+   month  4 bed   >=250 35-50 m: OCR 0.083 n135, MPE 0.082 n44, MPE - OCR -0.001
+   month  4 bed   >=250 50-65 m: OCR 0.078 n112, MPE 0.071 n44, MPE - OCR -0.006
+   month  5 bed 150-250 20-35 m: OCR 0.099 n282, MPE 0.136 n333, MPE - OCR +0.037
+   month  5 bed 150-250 35-50 m: OCR 0.087 n502, MPE 0.086 n333, MPE - OCR -0.002
+   month  5 bed 150-250 50-65 m: OCR 0.079 n375, MPE 0.080 n333, MPE - OCR +0.001
+   month  5 bed   >=250 20-35 m: OCR 0.093 n102, MPE 0.138 n95, MPE - OCR +0.046
+   month  5 bed   >=250 35-50 m: OCR 0.088 n184, MPE 0.087 n95, MPE - OCR -0.001
+   month  5 bed   >=250 50-65 m: OCR 0.076 n148, MPE 0.077 n95, MPE - OCR +0.001
+   month  6 bed 150-250 20-35 m: OCR 0.115 n307, MPE 0.150 n305, MPE - OCR +0.036
+   month  6 bed 150-250 35-50 m: OCR 0.105 n481, MPE 0.116 n340, MPE - OCR +0.012
+   month  6 bed 150-250 50-65 m: OCR 0.077 n343, MPE 0.099 n340, MPE - OCR +0.022
+   month  6 bed   >=250 20-35 m: OCR 0.125 n116, MPE 0.146 n78, MPE - OCR +0.021
+   month  6 bed   >=250 35-50 m: OCR 0.095 n158, MPE 0.101 n103, MPE - OCR +0.006
+   month  6 bed   >=250 50-65 m: OCR 0.075 n132, MPE 0.080 n103, MPE - OCR +0.004
+   month  8 bed 100-150 20-35 m: OCR 0.110 n31, MPE 0.112 n122, MPE - OCR +0.002
+   month  8 bed 100-150 35-50 m: OCR 0.106 n29, MPE 0.118 n122, MPE - OCR +0.012
+   month  8 bed 150-250 20-35 m: OCR 0.124 n462, MPE 0.113 n202, MPE - OCR -0.011
+   month  8 bed 150-250 35-50 m: OCR 0.109 n438, MPE 0.108 n202, MPE - OCR -0.001
+   month  8 bed 150-250 50-65 m: OCR 0.100 n317, MPE 0.106 n202, MPE - OCR +0.006
+   month  8 bed   >=250 20-35 m: OCR 0.126 n121, MPE 0.106 n79, MPE - OCR -0.021
+   month  8 bed   >=250 35-50 m: OCR 0.101 n114, MPE 0.114 n79, MPE - OCR +0.014
+   month  8 bed   >=250 50-65 m: OCR 0.093 n88, MPE 0.097 n79, MPE - OCR +0.005
+   month  9 bed 100-150 20-35 m: OCR 0.110 n137, MPE 0.102 n78, MPE - OCR -0.008
+   month  9 bed 100-150 35-50 m: OCR 0.102 n139, MPE 0.102 n78, MPE - OCR +0.001
+   month  9 bed 100-150 50-65 m: OCR 0.098 n70, MPE 0.108 n78, MPE - OCR +0.009
+   month  9 bed 150-250 20-35 m: OCR 0.115 n365, MPE 0.107 n414, MPE - OCR -0.008
+   month  9 bed 150-250 35-50 m: OCR 0.100 n291, MPE 0.098 n404, MPE - OCR -0.002
+   month  9 bed 150-250 50-65 m: OCR 0.099 n183, MPE 0.095 n404, MPE - OCR -0.004
+   month  9 bed   >=250 20-35 m: OCR 0.116 n103, MPE 0.096 n72, MPE - OCR -0.020
+   month  9 bed   >=250 35-50 m: OCR 0.096 n80, MPE 0.089 n72, MPE - OCR -0.007
+   month  9 bed   >=250 50-65 m: OCR 0.075 n48, MPE 0.088 n72, MPE - OCR +0.013
+   month 10 bed 150-250 20-35 m: OCR 0.115 n305, MPE 0.135 n277, MPE - OCR +0.020
+   month 10 bed 150-250 35-50 m: OCR 0.100 n112, MPE 0.121 n279, MPE - OCR +0.021
+   month 10 bed   >=250 20-35 m: OCR 0.105 n182, MPE 0.104 n103, MPE - OCR -0.001
+   month 10 bed   >=250 35-50 m: OCR 0.083 n99, MPE 0.097 n111, MPE - OCR +0.014
+   month 11 bed 150-250 20-35 m: OCR 0.148 n74, MPE 0.128 n285, MPE - OCR -0.021
+   month 11 bed   >=250 20-35 m: OCR 0.118 n69, MPE 0.130 n27, MPE - OCR +0.013
+   month 11 bed   >=250 35-50 m: OCR 0.092 n34, MPE 0.130 n27, MPE - OCR +0.038
+   month 12 bed 150-250 20-35 m: OCR 0.131 n53, MPE 0.133 n76, MPE - OCR +0.002
+   month 12 bed   >=250 20-35 m: OCR 0.125 n23, MPE 0.113 n25, MPE - OCR -0.012
+   median MPE - OCR over matched cells: +0.004 (range -0.023 to +0.059, n 56)
+
+C. Within-cast near-bed contrast, MPE casts over 150-250 m beds (lowest usable slab < 50 m above the bed vs the slab 45-60 m higher):
+   lowest slab 25-50 m above bed: n 401, K low 0.122, K higher 0.088, difference median +0.032 [p25 +0.004, p75 +0.074], backscatter ratio low/high 2.19
+   lowest slab 0-25 m above bed: n 39, K low 0.139, K higher 0.075, difference median +0.060 [p25 +0.025, p75 +0.090], backscatter ratio low/high 4.66

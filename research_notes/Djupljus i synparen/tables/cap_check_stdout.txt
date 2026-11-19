@@ -1,0 +1,7 @@
+krill pairs: equal-cell a (library units of the reproduction), rule A / library rule at the same K_deep
+  group                 lib 0.06    A 0.06  A/lib  lib 0.09    A 0.09  A/lib  A 0.09 / A 0.06
+  whiting                0.04303   0.04303  1.000   0.04103   0.04103  1.000            0.953
+  planktivorous_fish     0.02261   0.02261  1.000   0.02099   0.02099  1.000            0.928
+  predatory_fish         0.02596   0.01168  0.450   0.02376   0.01072  0.451            0.918
+  benthivorous_fish      0.01321  0.009597  0.727   0.01257  0.009142  0.727            0.953
+  mackerel              0.003876  0.003876  1.000  0.003797  0.003797  1.000            0.980

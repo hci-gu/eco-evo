@@ -1,0 +1,18 @@
+K bands (>=100, 75-100, 50-75, 25-50, 0-25 m above the bed), 150-250 m beds, MPE-PAR:
+  p25 (bright) 0.076 0.080 0.087 0.098 0.117
+  median       0.092 0.098 0.102 0.115 0.139
+  p75 (dark)   0.109 0.116 0.120 0.146 0.160
+
+Daytime median (sun > 0, all months) at the bed, lx at 54 per umol [umol m-2 s-1] {lx at the spectral lx/umol}:
+  near-bed layer, p25 (bright)               150 m 0.00085 lx [1.6e-05] {0.00071}; 200 m 1.8e-05 lx [3.3e-07] {1.4e-05}; 250 m 3.9e-07 lx [7.2e-09] {2.9e-07}
+  near-bed layer, median                     150 m 0.00018 lx [3.3e-06] {0.00015}; 200 m 1.7e-06 lx [3.1e-08] {1.3e-06}; 250 m 1.7e-08 lx [3.1e-10] {1.2e-08}
+  near-bed layer, p75 (dark)                 150 m 2.6e-05 lx [4.9e-07] {2.2e-05}; 200 m 1e-07 lx [1.8e-09] {7.7e-08}; 250 m 4.2e-10 lx [7.8e-12] {3.1e-10}
+  uniform K_far median, no near-bed layer    150 m 0.0014 lx [2.6e-05] {0.0012}; 200 m 1.4e-05 lx [2.6e-07] {1.1e-05}; 250 m 1.4e-07 lx [2.6e-09] {1e-07}
+  old judged K_deep 0.05                     150 m 0.051 lx [0.00094] {0.042}; 200 m 0.0041 lx [7.7e-05] {0.0032}; 250 m 0.00034 lx [6.3e-06] {0.00025}
+  old judged K_deep 0.06                     150 m 0.022 lx [0.0004] {0.018}; 200 m 0.0011 lx [2e-05] {0.00083}; 250 m 5.4e-05 lx [9.9e-07] {3.9e-05}
+  old judged K_deep 0.09                     150 m 0.0017 lx [3.1e-05] {0.0014}; 200 m 1.9e-05 lx [3.5e-07] {1.5e-05}; 250 m 2.1e-07 lx [3.9e-09] {1.5e-07}
+
+Glider anchor: measured daytime median PAR at 120-125 m over 150-250 m beds 8.4e-05 umol (0.0045 lx at 54)
+  p25 (bright) 150 m 0.00019 lx [3.6e-06]; 200 m 2e-06 lx [3.7e-08]; 250 m 4e-08 lx [7.4e-10]
+  median       150 m 0.00011 lx [2e-06]; 200 m 4.8e-07 lx [9e-09]; 250 m 4.2e-09 lx [7.8e-11]
+  p75 (dark)   150 m 5.8e-05 lx [1.1e-06]; 200 m 8e-08 lx [1.5e-09]; 250 m 2.9e-10 lx [5.4e-12]

@@ -1,0 +1,34 @@
+library /tmp/claude-1001/-home-simon-eco-evo/87acac2d-411e-4442-bd9b-92978f209b16/scratchpad/fg_library_pre279.yaml
+booked WC->benth M2 0.058; cells per class [0.223, 0.298, 0.324, 0.154]; pair depth mult per class [1.65, 1.36, 0.56, 0.3]
+
+=== seed 0 day 0 (doy 264): benth B/B0 1.00 J/B 0.151 Lloyd 88; WC B/B0 1.69 Lloyd 3.5
+  classes WC 0.42/0.41/0.15/0.02 (field 0.043/0.127/0.782/0.048)  benth B 0.39/0.09/0.46/0.05  J 0.42/0.09/0.44/0.05
+  predator response: WC met per benth tonne 1.89 (class-only 1.08), per J tonne 1.97 (class-only 1.12); 1 = no association
+  WC trained pair lib : clumped L88.2 met1.89 WC 0.179 ( 3.1x, pay  1.0) all 0.245 (pay  1.0) | 3.0 L 2.9 met1.31 WC 0.699 (12.0x, pay  3.9) all 0.823 (pay  3.4) | uniform L 1.0 met1.00 WC 0.901 (15.5x, pay  5.0) all 1.080 (pay  4.4) | field L 1.3 met1.33 WC 1.012 (17.5x, pay  5.7) all 1.138 (pay  4.6)
+  WC trained pair dark: clumped L88.2 met1.89 WC 0.127 ( 2.2x, pay  1.0) all 0.194 (pay  1.0) | 3.0 L 2.9 met1.31 WC 0.498 ( 8.6x, pay  3.9) all 0.622 (pay  3.2) | uniform L 1.0 met1.00 WC 0.596 (10.3x, pay  4.7) all 0.775 (pay  4.0) | field L 1.3 met1.33 WC 0.667 (11.5x, pay  5.2) all 0.793 (pay  4.1)
+  WC field   pair lib : clumped L88.2 met0.97 WC 0.195 ( 3.4x, pay  1.0) all 0.261 (pay  1.0) | 3.0 L 2.9 met0.94 WC 0.576 ( 9.9x, pay  2.9) all 0.697 (pay  2.7) | uniform L 1.0 met1.00 WC 0.725 (12.5x, pay  3.7) all 0.904 (pay  3.5) | field L 1.3 met0.68 WC 0.411 ( 7.1x, pay  2.1) all 0.522 (pay  2.0)
+  WC field   pair dark: clumped L88.2 met0.97 WC 0.169 ( 2.9x, pay  1.0) all 0.235 (pay  1.0) | 3.0 L 2.9 met0.94 WC 0.514 ( 8.9x, pay  3.0) all 0.635 (pay  2.7) | uniform L 1.0 met1.00 WC 0.657 (11.3x, pay  3.9) all 0.836 (pay  3.6) | field L 1.3 met0.68 WC 0.323 ( 5.6x, pay  1.9) all 0.434 (pay  1.8)
+
+=== seed 0 day 91 (doy 355): benth B/B0 0.99 J/B 0.111 Lloyd 55; WC B/B0 0.87 Lloyd 2.5
+  classes WC 0.31/0.51/0.18/0.01 (field 0.043/0.127/0.782/0.048)  benth B 0.23/0.44/0.33/0.00  J 0.21/0.41/0.38/0.00
+  predator response: WC met per benth tonne 2.49 (class-only 1.24), per J tonne 2.40 (class-only 1.19); 1 = no association
+  WC trained pair lib : clumped L54.8 met2.49 WC 0.099 ( 1.7x, pay  1.0) all 0.125 (pay  1.0) | 3.0 L 2.9 met1.23 WC 0.287 ( 4.9x, pay  2.9) all 0.375 (pay  3.0) | uniform L 1.0 met1.00 WC 0.356 ( 6.1x, pay  3.6) all 0.506 (pay  4.0) | field L 1.3 met1.30 WC 0.407 ( 7.0x, pay  4.1) all 0.512 (pay  4.1)
+  WC trained pair dark: clumped L54.8 met2.49 WC 0.080 ( 1.4x, pay  1.0) all 0.107 (pay  1.0) | 3.0 L 2.9 met1.23 WC 0.227 ( 3.9x, pay  2.8) all 0.315 (pay  3.0) | uniform L 1.0 met1.00 WC 0.296 ( 5.1x, pay  3.7) all 0.446 (pay  4.2) | field L 1.3 met1.30 WC 0.317 ( 5.5x, pay  3.9) all 0.422 (pay  3.9)
+  WC field   pair lib : clumped L54.8 met1.31 WC 0.065 ( 1.1x, pay  1.0) all 0.091 (pay  1.0) | 3.0 L 2.9 met0.90 WC 0.209 ( 3.6x, pay  3.2) all 0.297 (pay  3.3) | uniform L 1.0 met1.00 WC 0.291 ( 5.0x, pay  4.4) all 0.437 (pay  4.8) | field L 1.3 met0.69 WC 0.172 ( 3.0x, pay  2.6) all 0.275 (pay  3.0)
+  WC field   pair dark: clumped L54.8 met1.31 WC 0.061 ( 1.1x, pay  1.0) all 0.087 (pay  1.0) | 3.0 L 2.9 met0.90 WC 0.217 ( 3.7x, pay  3.5) all 0.305 (pay  3.5) | uniform L 1.0 met1.00 WC 0.345 ( 5.9x, pay  5.6) all 0.491 (pay  5.6) | field L 1.3 met0.69 WC 0.173 ( 3.0x, pay  2.8) all 0.276 (pay  3.2)
+
+=== seed 0 day 182 (doy 81): benth B/B0 1.02 J/B 0.096 Lloyd 43; WC B/B0 0.26 Lloyd 11.1
+  classes WC 0.65/0.23/0.11/0.01 (field 0.043/0.127/0.782/0.048)  benth B 0.31/0.59/0.10/0.00  J 0.31/0.59/0.10/0.00
+  predator response: WC met per benth tonne 1.41 (class-only 1.40), per J tonne 1.36 (class-only 1.40); 1 = no association
+  WC trained pair lib : clumped L42.9 met1.41 WC 0.013 ( 0.2x, pay  1.0) all 0.030 (pay  1.0) | 3.0 L 2.9 met1.09 WC 0.055 ( 0.9x, pay  4.3) all 0.078 (pay  2.6) | uniform L 1.0 met1.00 WC 0.065 ( 1.1x, pay  5.1) all 0.172 (pay  5.8) | field L 1.2 met1.38 WC 0.083 ( 1.4x, pay  6.5) all 0.190 (pay  6.4)
+  WC trained pair dark: clumped L42.9 met1.41 WC 0.009 ( 0.1x, pay  1.0) all 0.026 (pay  1.0) | 3.0 L 2.9 met1.09 WC 0.032 ( 0.5x, pay  3.6) all 0.054 (pay  2.1) | uniform L 1.0 met1.00 WC 0.038 ( 0.7x, pay  4.4) all 0.145 (pay  5.7) | field L 1.2 met1.38 WC 0.050 ( 0.9x, pay  5.8) all 0.157 (pay  6.1)
+  WC field   pair lib : clumped L42.9 met0.60 WC 0.009 ( 0.2x, pay  1.0) all 0.027 (pay  1.0) | 3.0 L 2.9 met0.35 WC 0.023 ( 0.4x, pay  2.5) all 0.047 (pay  1.8) | uniform L 1.0 met1.00 WC 0.072 ( 1.2x, pay  8.0) all 0.185 (pay  6.9) | field L 1.2 met0.70 WC 0.037 ( 0.6x, pay  4.1) all 0.139 (pay  5.2)
+  WC field   pair dark: clumped L42.9 met0.60 WC 0.007 ( 0.1x, pay  1.0) all 0.025 (pay  1.0) | 3.0 L 2.9 met0.35 WC 0.018 ( 0.3x, pay  2.5) all 0.042 (pay  1.7) | uniform L 1.0 met1.00 WC 0.065 ( 1.1x, pay  9.0) all 0.177 (pay  7.1) | field L 1.2 met0.70 WC 0.030 ( 0.5x, pay  4.1) all 0.132 (pay  5.3)
+
+=== seed 0 day 273 (doy 172): benth B/B0 1.07 J/B 0.091 Lloyd 90; WC B/B0 1.14 Lloyd 4.0
+  classes WC 0.36/0.36/0.25/0.02 (field 0.043/0.127/0.782/0.048)  benth B 0.02/0.54/0.44/0.00  J 0.04/0.55/0.41/0.00
+  predator response: WC met per benth tonne 1.14 (class-only 1.04), per J tonne 1.15 (class-only 1.06); 1 = no association
+  WC trained pair lib : clumped L89.5 met1.14 WC 0.043 ( 0.7x, pay  1.0) all 0.046 (pay  1.0) | 3.0 L 2.9 met0.75 WC 0.168 ( 2.9x, pay  3.9) all 0.233 (pay  5.1) | uniform L 1.0 met1.00 WC 0.378 ( 6.5x, pay  8.9) all 0.518 (pay 11.3) | field L 1.2 met1.22 WC 0.394 ( 6.8x, pay  9.3) all 0.480 (pay 10.5)
+  WC trained pair dark: clumped L89.5 met1.14 WC 0.024 ( 0.4x, pay  1.0) all 0.027 (pay  1.0) | 3.0 L 2.9 met0.75 WC 0.058 ( 1.0x, pay  2.4) all 0.123 (pay  4.5) | uniform L 1.0 met1.00 WC 0.121 ( 2.1x, pay  5.0) all 0.261 (pay  9.6) | field L 1.2 met1.22 WC 0.117 ( 2.0x, pay  4.9) all 0.203 (pay  7.5)
+  WC field   pair lib : clumped L89.5 met0.78 WC 0.033 ( 0.6x, pay  1.0) all 0.034 (pay  1.0) | 3.0 L 2.9 met0.63 WC 0.129 ( 2.2x, pay  3.9) all 0.187 (pay  5.5) | uniform L 1.0 met1.00 WC 0.398 ( 6.9x, pay 12.1) all 0.558 (pay 16.3) | field L 1.2 met0.70 WC 0.202 ( 3.5x, pay  6.2) all 0.305 (pay  8.9)
+  WC field   pair dark: clumped L89.5 met0.78 WC 0.024 ( 0.4x, pay  1.0) all 0.025 (pay  1.0) | 3.0 L 2.9 met0.63 WC 0.065 ( 1.1x, pay  2.7) all 0.123 (pay  4.9) | uniform L 1.0 met1.00 WC 0.184 ( 3.2x, pay  7.7) all 0.345 (pay 13.6) | field L 1.2 met0.70 WC 0.077 ( 1.3x, pay  3.2) all 0.179 (pay  7.0)

@@ -1,0 +1,41 @@
+ceiling energy MJ/t/tick {'preda': 20.26, 'seals': 187.15, 'porpo': 204.39, 'whiti': 21.32}
+
+=== seed 1 day 0 (doy 279)
+  clumped preda: benth cells room 0.42 demand/ceil 1.18 | own cells room 0.70 demand/ceil 0.80 | fill 0.99
+          seals: benth cells room 1.00 demand/ceil 0.37 | own cells room 1.00 demand/ceil 0.35 | fill 0.77
+          porpo: benth cells room 1.00 demand/ceil 0.41 | own cells room 1.00 demand/ceil 0.33 | fill 0.74
+          whiti: benth cells room 0.53 demand/ceil 0.75 | own cells room 0.62 demand/ceil 0.69 | fill 1.00
+  3.0     preda: benth cells room 0.52 demand/ceil 0.97 | own cells room 0.61 demand/ceil 0.88 | fill 0.99
+          seals: benth cells room 1.00 demand/ceil 0.39 | own cells room 1.00 demand/ceil 0.38 | fill 0.78
+          porpo: benth cells room 1.00 demand/ceil 0.36 | own cells room 1.00 demand/ceil 0.33 | fill 0.74
+          whiti: benth cells room 0.57 demand/ceil 0.72 | own cells room 0.61 demand/ceil 0.70 | fill 1.00
+
+=== seed 1 day 91 (doy 5)
+  clumped preda: benth cells room 0.40 demand/ceil 0.92 | own cells room 0.70 demand/ceil 0.65 | fill 1.00
+          seals: benth cells room 1.00 demand/ceil 0.42 | own cells room 1.00 demand/ceil 0.32 | fill 0.69
+          porpo: benth cells room 1.00 demand/ceil 0.51 | own cells room 1.00 demand/ceil 0.37 | fill 0.75
+          whiti: benth cells room 0.43 demand/ceil 0.87 | own cells room 0.53 demand/ceil 0.78 | fill 1.00
+  3.0     preda: benth cells room 0.51 demand/ceil 0.78 | own cells room 0.62 demand/ceil 0.70 | fill 1.00
+          seals: benth cells room 1.00 demand/ceil 0.51 | own cells room 1.00 demand/ceil 0.34 | fill 0.69
+          porpo: benth cells room 1.00 demand/ceil 0.38 | own cells room 1.00 demand/ceil 0.37 | fill 0.75
+          whiti: benth cells room 0.49 demand/ceil 0.81 | own cells room 0.53 demand/ceil 0.79 | fill 1.00
+
+=== seed 1 day 182 (doy 96)
+  clumped preda: benth cells room 0.52 demand/ceil 0.81 | own cells room 0.67 demand/ceil 0.70 | fill 0.98
+          seals: benth cells room 1.00 demand/ceil 0.48 | own cells room 1.00 demand/ceil 0.34 | fill 0.71
+          porpo: benth cells room 1.00 demand/ceil 0.43 | own cells room 1.00 demand/ceil 0.43 | fill 0.71
+          whiti: benth cells room 0.45 demand/ceil 0.80 | own cells room 0.67 demand/ceil 0.60 | fill 1.00
+  3.0     preda: benth cells room 0.57 demand/ceil 0.74 | own cells room 0.66 demand/ceil 0.70 | fill 0.98
+          seals: benth cells room 1.00 demand/ceil 0.46 | own cells room 1.00 demand/ceil 0.37 | fill 0.72
+          porpo: benth cells room 1.00 demand/ceil 0.39 | own cells room 1.00 demand/ceil 0.43 | fill 0.71
+          whiti: benth cells room 0.66 demand/ceil 0.61 | own cells room 0.67 demand/ceil 0.60 | fill 1.00
+
+=== seed 1 day 273 (doy 187)
+  clumped preda: benth cells room 0.39 demand/ceil 0.92 | own cells room 0.60 demand/ceil 0.78 | fill 0.99
+          seals: benth cells room 1.00 demand/ceil 0.37 | own cells room 1.00 demand/ceil 0.31 | fill 0.70
+          porpo: benth cells room 1.00 demand/ceil 0.27 | own cells room 1.00 demand/ceil 0.31 | fill 0.79
+          whiti: benth cells room 0.95 demand/ceil 0.74 | own cells room 0.80 demand/ceil 0.56 | fill 0.92
+  3.0     preda: benth cells room 0.43 demand/ceil 0.86 | own cells room 0.59 demand/ceil 0.79 | fill 0.99
+          seals: benth cells room 1.00 demand/ceil 0.41 | own cells room 1.00 demand/ceil 0.34 | fill 0.70
+          porpo: benth cells room 1.00 demand/ceil 0.24 | own cells room 1.00 demand/ceil 0.30 | fill 0.79
+          whiti: benth cells room 0.86 demand/ceil 0.62 | own cells room 0.80 demand/ceil 0.56 | fill 0.92

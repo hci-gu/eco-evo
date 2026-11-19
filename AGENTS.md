@@ -257,25 +257,27 @@ fabricates mass.
   new p (herring and sprat 0.9 of the biomass schooled by day, Norway pout 0.4,
   none at night; mackerel always): research_notes/"Fangstsannolikhet for
   fiskbyten", "Stimskydd i motes-a", "Vitlinglojans stim", "Fangst och stim i
-  fiskparen" (the combined derivation and gate). Values (before 270 in
-  parentheses):
+  fiskparen" (the combined derivation and gate). Since section 280 the rule's
+  light below 65 m is the measured K_deep 0.09 (VOTO gliders; was 0.06 judged;
+  research_notes/"Ljus under 65 m", "Djupljus i synparen"). Values (the 270 value in
+  parentheses where 280 moved it, else the pre-270 value):
   planktivores -> zoo 0.0122 (243.3); benthivores -> infauna 0.0256 (269; was 0.036), -> epifauna
-  0.110 (0.15), -> Nephrops 0.308 (0.44), -> planktivores 0.02905 (0.0214), -> whiting 0.04581 (0.0226);
+  0.110 (0.15), -> Nephrops 0.308 (0.44), -> planktivores 0.02431 (0.02905), -> whiting 0.03745 (0.04581);
   whiting -> epifauna 0.0116 (232: a_enc e x the vertical overlap
-  H_bed/H_whiting; was 0.27), -> planktivores 0.06357 (0.0329), -> zoo 0.000138
-  (copepods only since 245; was 0.0023), -> krill 0.043, ->
-  benthivores 0.2687 (0.103; flagged open, OFF on the prey side, whiting's
-  height above the bed unmeasured); water column -> planktivores 0.0279 (0.0174), -> zoo
-  3.13e-05 (245; was 0.000241), -> krill 0.0117 (0.026), -> benthivores 0.1162 (0.0418;
-  stage_access [0.3745, 0.01112] (0.392, 0.0388): hake out of this pair (its
+  H_bed/H_whiting; was 0.27), -> planktivores 0.05913 (0.06357), -> zoo 0.000138
+  (copepods only since 245; was 0.0023), -> krill 0.041 (0.043), ->
+  benthivores 0.2455 (0.2687; flagged open, OFF on the prey side, whiting's
+  height above the bed unmeasured); water column -> planktivores 0.02348 (0.0279), -> zoo
+  3.13e-05 (245; was 0.000241), -> krill 0.0107 (0.0117), -> benthivores 0.09443 (0.1162;
+  stage_access [0.3711, 0.01256] ([0.3745, 0.01112]): hake out of this pair (its
   score counted whiting), f_A also carries the members' capture p per stage and
   the adults' bottom-2-m share, ling a mixed searcher with its own window;
   booked M2 0.058 (was 0.0833, the 223 broad pool); research_notes/"Vattenpelarens
   vuxna bottenfisk", "Langans indata", "Sej och ungfisk i samma hal"), -> whiting
-  0.1045 (0.0359), -> mackerel 3.346e-05 (0.000137; OFF in every reading); mackerel -> planktivores
+  0.08608 (0.1045), -> mackerel 3.346e-05 (0.000137; OFF in every reading); mackerel -> planktivores
   0.04579 (0.0248; herring and sprat only), -> zoo 0.00084 (245: measured clearance,
-  daytime biting on Calanus; was 0.0023), -> krill 0.0039; planktivores
-  -> krill 0.023, benthivores -> krill 0.00679 (0.013; before 269: section 253: the measured box
+  daytime biting on Calanus; was 0.0023), -> krill 0.00382 (0.0039); planktivores
+  -> krill 0.0214 (0.023), benthivores -> krill 0.00641 (0.00679; before 269: section 253: the measured box
   light, 44 SMHI CTD PAR casts, ~x6 the old central profile at 80-150 m;
   research_notes/"Ljus under 50 m"; section 262: the day layer deeper over
   150-250 m beds and the < 100 m class weighted by krill presence, Sep-Apr 0.43,
@@ -307,10 +309,10 @@ fabricates mass.
   normalised so the library `a` is the annual mean; every DM then also
   observes the light level (last input slot). Since section 269 the visual
   fish pairs take the vision rule's night/day, since 270 x F_night / F_day of
-  the schooling factor (water column -> planktivores 0.116, -> benthivores
-  0.165, -> whiting 0.139, -> mackerel 0.916, -> krill 0.0245; whiting ->
-  planktivores 0.342, -> benthivores 0.565; benthivores -> krill 0.036, ->
-  planktivores 0.238, -> whiting 0.171), stomach values where they exist; the
+  the schooling factor, since 280 at K_deep 0.09 (water column -> planktivores 0.14, -> benthivores
+  0.209, -> whiting 0.172, -> mackerel 0.916, -> krill 0.0257; whiting ->
+  planktivores 0.375, -> benthivores 0.641; benthivores -> krill 0.0366, ->
+  planktivores 0.28, -> whiting 0.21), stomach values where they exist; the
   list below is the pre-269 history. The lever knows day length, not light
   intensity: rule A swings ~10-15 % more over the year (0.80-0.92 of m(t) in
   Nov-Feb, 1.08-1.15 in Jul-Aug), a timing error of at most ~3 % of a pair's

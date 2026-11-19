@@ -92,25 +92,25 @@ def test_fish_pairs_carry_the_encounter_theory_rates():
         ('benthivorous_fish', 'mobile_epifauna'): 0.11,
         ('whiting', 'mobile_epifauna'): 0.0116,
         ('benthivorous_fish', 'norway_lobster'): 0.308,
-        ('benthivorous_fish', 'planktivorous_fish'): 0.02905,
-        ('benthivorous_fish', 'whiting'): 0.04581,  # 251: whiting's own band share
-        ('predatory_fish', 'planktivorous_fish'): 0.0279,
+        ('benthivorous_fish', 'planktivorous_fish'): 0.02431,  # 280: K_deep 0.09
+        ('benthivorous_fish', 'whiting'): 0.03745,  # 251: whiting's own band share
+        ('predatory_fish', 'planktivorous_fish'): 0.02348,
         ('mackerel', 'planktivorous_fish'): 0.04579,
-        ('whiting', 'planktivorous_fish'): 0.06357,
+        ('whiting', 'planktivorous_fish'): 0.05913,
         # Section 245: krill is its own group; the zooplankton pairs keep
         # their copepod part (water column x 0.13, whiting x 0.06) and
         # mackerel's is the measured clearance (biting + filtering).
         ('predatory_fish', 'zooplankton'): 3.13e-05,
         ('mackerel', 'zooplankton'): 0.00084,
         ('whiting', 'zooplankton'): 0.000138,
-        ('planktivorous_fish', 'krill'): 0.023,  # 262: field bed-depth evidence
-        ('benthivorous_fish', 'krill'): 0.00679,
-        ('predatory_fish', 'krill'): 0.0117,
-        ('mackerel', 'krill'): 0.0039,
-        ('whiting', 'krill'): 0.043,
-        ('predatory_fish', 'benthivorous_fish'): 0.1162,
-        ('whiting', 'benthivorous_fish'): 0.2687,
-        ('predatory_fish', 'whiting'): 0.1045,
+        ('planktivorous_fish', 'krill'): 0.0214,  # 262: field bed-depth evidence
+        ('benthivorous_fish', 'krill'): 0.00641,
+        ('predatory_fish', 'krill'): 0.0107,
+        ('mackerel', 'krill'): 0.00382,
+        ('whiting', 'krill'): 0.041,
+        ('predatory_fish', 'benthivorous_fish'): 0.09443,
+        ('whiting', 'benthivorous_fish'): 0.2455,
+        ('predatory_fish', 'whiting'): 0.08608,
         ('predatory_fish', 'mackerel'): 3.346e-05,
     }
     for (pred, prey), a in expected.items():
@@ -130,21 +130,21 @@ def test_fish_pair_light_settings_keep_a_zero_threshold():
         'interaction_definitions']
     expected = {
         'planktivorous_fish_preys_on_zooplankton': (0.03, 0.0),  # 243.3
-        'benthivorous_fish_preys_on_planktivorous_fish': (0.238, 0.0),
-        'benthivorous_fish_preys_on_whiting': (0.171, 0.0),  # 251
-        'predatory_fish_preys_on_planktivorous_fish': (0.116, -5.0),  # 270
+        'benthivorous_fish_preys_on_planktivorous_fish': (0.28, 0.0),  # 280
+        'benthivorous_fish_preys_on_whiting': (0.21, 0.0),  # 251
+        'predatory_fish_preys_on_planktivorous_fish': (0.14, -5.0),  # 270
         'mackerel_preys_on_planktivorous_fish': (0.16, -5.0),  # stomachs (228.4)
-        'whiting_preys_on_planktivorous_fish': (0.342, -5.0),  # 270
+        'whiting_preys_on_planktivorous_fish': (0.375, -5.0),  # 270
         'predatory_fish_preys_on_zooplankton': (0.51, -5.0),
         'mackerel_preys_on_zooplankton': (0.24, -5.0),  # night filtering (245)
         'planktivorous_fish_preys_on_krill': (0.57, 0.0),  # stomachs (245)
-        'benthivorous_fish_preys_on_krill': (0.036, 0.0),  # 253
-        'predatory_fish_preys_on_krill': (0.0245, 0.0),  # 253
+        'benthivorous_fish_preys_on_krill': (0.0366, 0.0),  # 253
+        'predatory_fish_preys_on_krill': (0.0257, 0.0),  # 253
         'mackerel_preys_on_krill': (0.42, -5.0),
         'whiting_preys_on_zooplankton': (0.78, -5.0),
-        'predatory_fish_preys_on_benthivorous_fish': (0.165, -5.0),
-        'whiting_preys_on_benthivorous_fish': (0.565, -5.0),
-        'predatory_fish_preys_on_whiting': (0.139, -5.0),
+        'predatory_fish_preys_on_benthivorous_fish': (0.209, -5.0),
+        'whiting_preys_on_benthivorous_fish': (0.641, -5.0),
+        'predatory_fish_preys_on_whiting': (0.172, -5.0),
         'predatory_fish_preys_on_mackerel': (0.916, -5.0),
     }
     for key, (rho, theta) in expected.items():

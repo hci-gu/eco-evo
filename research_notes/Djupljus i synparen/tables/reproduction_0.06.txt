@@ -1,0 +1,147 @@
+Reproduction gate (section 280): the derivation chain run at K_deep 0.06 against the live library and git HEAD
+chain: band_pairs -> benth_profile + wc_benth_window -> final_gate rows (269) -> pair_terms -> school_factor_pout
+       x p_ppr (combined.py) -> decompose_ling -> gate_ling central (270); scripts/run_chain.sh
+rel = |reproduced / library - 1| (live; HEAD in brackets). Live and HEAD differ only outside these keys.
+
+pair                                             key                       live        HEAD  reproduced       rel    (HEAD)
+whiting_preys_on_krill                           max_intake_rate          0.043       0.043       0.043  0.00e+00  0.00e+00
+whiting_preys_on_krill                           dark_ratio                None        None        None  0.00e+00  0.00e+00
+whiting_preys_on_krill                           table 99.9 m             0.148       0.148       0.148  0.00e+00  0.00e+00
+whiting_preys_on_krill                           table 100 m             0.0354      0.0354      0.0354  0.00e+00  0.00e+00
+whiting_preys_on_krill                           table 149.9 m           0.0354      0.0354      0.0354  0.00e+00  0.00e+00
+whiting_preys_on_krill                           table 150 m            0.00199     0.00199     0.00199  0.00e+00  0.00e+00
+whiting_preys_on_krill                           table 249.9 m          0.00199     0.00199     0.00199  0.00e+00  0.00e+00
+whiting_preys_on_krill                           table 250 m                  0           0           0  0.00e+00  0.00e+00
+planktivorous_fish_preys_on_krill                max_intake_rate          0.023       0.023       0.023  0.00e+00  0.00e+00
+planktivorous_fish_preys_on_krill                dark_ratio                0.57        0.57        0.57  0.00e+00  0.00e+00
+planktivorous_fish_preys_on_krill                table 99.9 m            0.0707      0.0707      0.0707  0.00e+00  0.00e+00
+planktivorous_fish_preys_on_krill                table 100 m             0.0211      0.0211      0.0211  0.00e+00  0.00e+00
+planktivorous_fish_preys_on_krill                table 149.9 m           0.0211      0.0211      0.0211  0.00e+00  0.00e+00
+planktivorous_fish_preys_on_krill                table 150 m            0.00377     0.00377     0.00377  0.00e+00  0.00e+00
+planktivorous_fish_preys_on_krill                table 249.9 m          0.00377     0.00377     0.00377  0.00e+00  0.00e+00
+planktivorous_fish_preys_on_krill                table 250 m            0.00171     0.00171     0.00171  0.00e+00  0.00e+00
+predatory_fish_preys_on_krill                    max_intake_rate         0.0117      0.0117      0.0117  0.00e+00  0.00e+00
+predatory_fish_preys_on_krill                    dark_ratio              0.0245      0.0245      0.0245  0.00e+00  0.00e+00
+predatory_fish_preys_on_krill                    table 99.9 m            0.0306      0.0306      0.0306  0.00e+00  0.00e+00
+predatory_fish_preys_on_krill                    table 100 m             0.0141      0.0141      0.0141  0.00e+00  0.00e+00
+predatory_fish_preys_on_krill                    table 149.9 m           0.0141      0.0141      0.0141  0.00e+00  0.00e+00
+predatory_fish_preys_on_krill                    table 150 m            0.00262     0.00262     0.00262  0.00e+00  0.00e+00
+predatory_fish_preys_on_krill                    table 249.9 m          0.00262     0.00262     0.00262  0.00e+00  0.00e+00
+predatory_fish_preys_on_krill                    table 250 m           6.91e-05    6.91e-05    6.91e-05  0.00e+00  0.00e+00
+mackerel_preys_on_krill                          max_intake_rate         0.0039      0.0039      0.0039  0.00e+00  0.00e+00
+mackerel_preys_on_krill                          dark_ratio                0.42        0.42        0.42  0.00e+00  0.00e+00
+mackerel_preys_on_krill                          table 99.9 m           0.00532     0.00532     0.00532  0.00e+00  0.00e+00
+mackerel_preys_on_krill                          table 100 m            0.00429     0.00429     0.00429  0.00e+00  0.00e+00
+mackerel_preys_on_krill                          table 149.9 m          0.00429     0.00429     0.00429  0.00e+00  0.00e+00
+mackerel_preys_on_krill                          table 150 m             0.0031      0.0031      0.0031  0.00e+00  0.00e+00
+mackerel_preys_on_krill                          table 249.9 m           0.0031      0.0031      0.0031  0.00e+00  0.00e+00
+mackerel_preys_on_krill                          table 250 m            0.00284     0.00284     0.00284  0.00e+00  0.00e+00
+predatory_fish_preys_on_planktivorous_fish       max_intake_rate         0.0279      0.0279      0.0279  0.00e+00  0.00e+00
+predatory_fish_preys_on_planktivorous_fish       dark_ratio               0.116       0.116       0.116  0.00e+00  0.00e+00
+predatory_fish_preys_on_planktivorous_fish       stage_access[0]         0.6483      0.6483      0.6483  0.00e+00  0.00e+00
+predatory_fish_preys_on_planktivorous_fish       stage_access[1]         0.1732      0.1732      0.1732  0.00e+00  0.00e+00
+predatory_fish_preys_on_planktivorous_fish       table 99.9 m            0.0384      0.0384      0.0384  0.00e+00  0.00e+00
+predatory_fish_preys_on_planktivorous_fish       table 100 m             0.0211      0.0211      0.0211  0.00e+00  0.00e+00
+predatory_fish_preys_on_planktivorous_fish       table 149.9 m           0.0211      0.0211      0.0211  0.00e+00  0.00e+00
+predatory_fish_preys_on_planktivorous_fish       table 150 m            0.00716     0.00716     0.00716  0.00e+00  0.00e+00
+predatory_fish_preys_on_planktivorous_fish       table 249.9 m          0.00716     0.00716     0.00716  0.00e+00  0.00e+00
+predatory_fish_preys_on_planktivorous_fish       table 250 m            0.00286     0.00286     0.00286  0.00e+00  0.00e+00
+predatory_fish_preys_on_benthivorous_fish        max_intake_rate         0.1162      0.1162      0.1162  0.00e+00  0.00e+00
+predatory_fish_preys_on_benthivorous_fish        dark_ratio               0.165       0.165       0.165  0.00e+00  0.00e+00
+predatory_fish_preys_on_benthivorous_fish        stage_access[0]         0.3745      0.3745      0.3745  0.00e+00  0.00e+00
+predatory_fish_preys_on_benthivorous_fish        stage_access[1]        0.01112     0.01112     0.01112  0.00e+00  0.00e+00
+predatory_fish_preys_on_benthivorous_fish        table 99.9 m            0.0693      0.0693      0.0693  0.00e+00  0.00e+00
+predatory_fish_preys_on_benthivorous_fish        table 100 m              0.057       0.057       0.057  0.00e+00  0.00e+00
+predatory_fish_preys_on_benthivorous_fish        table 149.9 m            0.057       0.057       0.057  0.00e+00  0.00e+00
+predatory_fish_preys_on_benthivorous_fish        table 150 m             0.0234      0.0234      0.0234  0.00e+00  0.00e+00
+predatory_fish_preys_on_benthivorous_fish        table 249.9 m           0.0234      0.0234      0.0234  0.00e+00  0.00e+00
+predatory_fish_preys_on_benthivorous_fish        table 250 m             0.0128      0.0128      0.0128  0.00e+00  0.00e+00
+predatory_fish_preys_on_whiting                  max_intake_rate         0.1045      0.1045      0.1045  0.00e+00  0.00e+00
+predatory_fish_preys_on_whiting                  dark_ratio               0.139       0.139       0.139  0.00e+00  0.00e+00
+predatory_fish_preys_on_whiting                  stage_access[0]         0.4067      0.4067      0.4067  0.00e+00  0.00e+00
+predatory_fish_preys_on_whiting                  stage_access[1]        0.07186     0.07186     0.07186  0.00e+00  0.00e+00
+predatory_fish_preys_on_whiting                  table 99.9 m            0.0599      0.0599      0.0599  0.00e+00  0.00e+00
+predatory_fish_preys_on_whiting                  table 100 m             0.0495      0.0495      0.0495  0.00e+00  0.00e+00
+predatory_fish_preys_on_whiting                  table 149.9 m           0.0495      0.0495      0.0495  0.00e+00  0.00e+00
+predatory_fish_preys_on_whiting                  table 150 m             0.0199      0.0199      0.0199  0.00e+00  0.00e+00
+predatory_fish_preys_on_whiting                  table 249.9 m           0.0199      0.0199      0.0199  0.00e+00  0.00e+00
+predatory_fish_preys_on_whiting                  table 250 m             0.0097      0.0097      0.0097  0.00e+00  0.00e+00
+predatory_fish_preys_on_mackerel                 max_intake_rate      3.346e-05   3.346e-05   3.346e-05  0.00e+00  0.00e+00
+predatory_fish_preys_on_mackerel                 dark_ratio               0.916       0.916       0.916  0.00e+00  0.00e+00
+predatory_fish_preys_on_mackerel                 stage_access[0]           0.14        0.14        0.14  0.00e+00  0.00e+00
+predatory_fish_preys_on_mackerel                 stage_access[1]           0.14        0.14        0.14  0.00e+00  0.00e+00
+predatory_fish_preys_on_mackerel                 table 99.9 m          0.000229    0.000229    0.000229  0.00e+00  0.00e+00
+predatory_fish_preys_on_mackerel                 table 100 m           0.000127    0.000127    0.000127  0.00e+00  0.00e+00
+predatory_fish_preys_on_mackerel                 table 149.9 m         0.000127    0.000127    0.000127  0.00e+00  0.00e+00
+predatory_fish_preys_on_mackerel                 table 150 m           0.000102    0.000102    0.000102  0.00e+00  0.00e+00
+predatory_fish_preys_on_mackerel                 table 249.9 m         0.000102    0.000102    0.000102  0.00e+00  0.00e+00
+predatory_fish_preys_on_mackerel                 table 250 m           0.000102    0.000102    0.000102  0.00e+00  0.00e+00
+whiting_preys_on_planktivorous_fish              max_intake_rate        0.06357     0.06357     0.06357  0.00e+00  0.00e+00
+whiting_preys_on_planktivorous_fish              dark_ratio               0.342       0.342       0.342  0.00e+00  0.00e+00
+whiting_preys_on_planktivorous_fish              stage_access[0]           0.18        0.18        0.18  0.00e+00  0.00e+00
+whiting_preys_on_planktivorous_fish              stage_access[1]         0.0073      0.0073      0.0073  0.00e+00  0.00e+00
+whiting_preys_on_planktivorous_fish              table 99.9 m            0.0626      0.0626      0.0626  0.00e+00  0.00e+00
+whiting_preys_on_planktivorous_fish              table 100 m             0.0341      0.0341      0.0341  0.00e+00  0.00e+00
+whiting_preys_on_planktivorous_fish              table 149.9 m           0.0341      0.0341      0.0341  0.00e+00  0.00e+00
+whiting_preys_on_planktivorous_fish              table 150 m             0.0205      0.0205      0.0205  0.00e+00  0.00e+00
+whiting_preys_on_planktivorous_fish              table 249.9 m           0.0205      0.0205      0.0205  0.00e+00  0.00e+00
+whiting_preys_on_planktivorous_fish              table 250 m             0.0159      0.0159      0.0159  0.00e+00  0.00e+00
+whiting_preys_on_benthivorous_fish               max_intake_rate         0.2687      0.2687      0.2687  0.00e+00  0.00e+00
+whiting_preys_on_benthivorous_fish               dark_ratio               0.565       0.565       0.565  0.00e+00  0.00e+00
+whiting_preys_on_benthivorous_fish               stage_access[0]          0.038       0.038       0.038  0.00e+00  0.00e+00
+whiting_preys_on_benthivorous_fish               stage_access[1]         0.0064      0.0064      0.0064  0.00e+00  0.00e+00
+whiting_preys_on_benthivorous_fish               table 99.9 m             0.132       0.132       0.132  0.00e+00  0.00e+00
+whiting_preys_on_benthivorous_fish               table 100 m              0.119       0.119       0.119  0.00e+00  0.00e+00
+whiting_preys_on_benthivorous_fish               table 149.9 m            0.119       0.119       0.119  0.00e+00  0.00e+00
+whiting_preys_on_benthivorous_fish               table 150 m             0.0825      0.0825      0.0825  0.00e+00  0.00e+00
+whiting_preys_on_benthivorous_fish               table 249.9 m           0.0825      0.0825      0.0825  0.00e+00  0.00e+00
+whiting_preys_on_benthivorous_fish               table 250 m             0.0715      0.0715      0.0715  0.00e+00  0.00e+00
+mackerel_preys_on_planktivorous_fish             max_intake_rate        0.04579     0.04579     0.04579  0.00e+00  0.00e+00
+mackerel_preys_on_planktivorous_fish             dark_ratio                0.16        0.16        0.16  0.00e+00  0.00e+00
+mackerel_preys_on_planktivorous_fish             stage_access[0]           0.02        0.02        0.02  0.00e+00  0.00e+00
+mackerel_preys_on_planktivorous_fish             stage_access[1]         0.0029      0.0029      0.0029  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_krill                 max_intake_rate        0.00679     0.00679     0.00679  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_krill                 dark_ratio               0.036       0.036       0.036  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_krill                 table 99.9 m            0.0225      0.0225      0.0225  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_krill                 table 100 m            0.00583     0.00583     0.00583  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_krill                 table 149.9 m          0.00583     0.00583     0.00583  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_krill                 table 150 m           0.000701    0.000701    0.000701  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_krill                 table 249.9 m         0.000701    0.000701    0.000701  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_krill                 table 250 m           1.52e-05    1.52e-05    1.52e-05  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_planktivorous_fish    max_intake_rate        0.02905     0.02905     0.02905  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_planktivorous_fish    dark_ratio               0.238       0.238       0.238  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_planktivorous_fish    stage_access[0]           0.62        0.62        0.62  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_planktivorous_fish    stage_access[1]           0.18        0.18        0.18  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_planktivorous_fish    table 99.9 m            0.0401      0.0401      0.0401  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_planktivorous_fish    table 100 m             0.0262      0.0262      0.0262  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_planktivorous_fish    table 149.9 m           0.0262      0.0262      0.0262  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_planktivorous_fish    table 150 m             0.0114      0.0114      0.0114  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_planktivorous_fish    table 249.9 m           0.0114      0.0114      0.0114  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_planktivorous_fish    table 250 m            0.00685     0.00685     0.00685  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_whiting               max_intake_rate        0.04581     0.04581     0.04581  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_whiting               dark_ratio               0.171       0.171       0.171  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_whiting               stage_access[0]           0.68        0.68        0.68  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_whiting               stage_access[1]           0.24        0.24        0.24  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_whiting               table 99.9 m            0.0366      0.0366      0.0366  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_whiting               table 100 m             0.0306      0.0306      0.0306  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_whiting               table 149.9 m           0.0306      0.0306      0.0306  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_whiting               table 150 m             0.0129      0.0129      0.0129  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_whiting               table 249.9 m           0.0129      0.0129      0.0129  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_whiting               table 250 m            0.00738     0.00738     0.00738  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_benthic_infauna       max_intake_rate         0.0256      0.0256      0.0256  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_benthic_infauna       dark_ratio                None        None        None  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_mobile_epifauna       max_intake_rate           0.11        0.11        0.11  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_mobile_epifauna       dark_ratio                None        None        None  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_norway_lobster        max_intake_rate          0.308       0.308       0.308  0.00e+00  0.00e+00
+benthivorous_fish_preys_on_norway_lobster        dark_ratio                None        None        None  0.00e+00  0.00e+00
+
+130 values, 17 pairs; largest relative difference 0.00e+00 -> PASS (tolerance 0.5 %)
+
+Pairs with a light term (or listed in the task) that hold no light below 65 m, not re-derived here:
+  planktivorous_fish_preys_on_zooplankton: prey and predator in the mixed layer (section 162/243.3 encounter); no light below 65 m
+  predatory_fish_preys_on_zooplankton: copepods 0-25 m (section 245, Vattenpelarens par i uppmatt ljus); scaled a, no deep light
+  whiting_preys_on_zooplankton: section 245: a x 0.06 of the old pair on the copepod share; no light below 65 m in its derivation
+  mackerel_preys_on_zooplankton: Macy 1998 clearance, daytime biting 0.62 (section 245); mackerel 0-50 m
+  seals_preys_on_* / porpoises_preys_on_*: no light term in the engine (no dark_ratio; Daggdjurens attackrater: the mammal pairs carry no light)
+  benthivorous_fish_preys_on_{benthic_infauna,mobile_epifauna,norway_lobster}: a x bed-contact tau only (section 269.3); reproduced above, K-independent
+  predatory_fish_preys_on_mackerel, mackerel_preys_on_planktivorous_fish: in the chain; prey in 0-50 m, so the K_deep run returns the same values
