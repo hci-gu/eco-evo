@@ -1,0 +1,34 @@
+# Accumulated effects of an offshore wind farm (Poseidon): (i) noise that
+# raises the porpoises' energy cost (the library's windfarm_noise table;
+# the policies do NOT observe it - they were trained without it) and
+# (ii) a ban on bottom and pelagic trawling inside the farm (the effort
+# is removed, not moved). 2 x 2 variants; today's fishing outside.
+# PLACEHOLDER footprint: maps/poseidon_placeholder.npz
+# (tools/paper/make_windfarm_placeholder.py) until the real outline is in.
+description: Wind farm noise and trawling ban, alone and together (2 x 2).
+base: ../../mareld2.yaml
+run_name: 2026-11-17_1
+years: 50
+seeds: [0, 1, 2, 3, 4]
+spatial_every_days: 30
+schedule:
+  - {from_year: 0, scale: {fishing: 1.0}}
+warmup_scale: {fishing: 1.0}
+impacts:
+  windfarm_noise:
+    map: ../../maps/poseidon_placeholder.npz
+    enabled: true
+masks:
+  - map: ../../maps/poseidon_placeholder.npz
+    key: mask
+    impacts: [fishing]
+    enabled: true
+variants:
+  - name: baseline
+    set: {impacts.windfarm_noise.enabled: false, masks.0.enabled: false}
+  - name: noise
+    set: {impacts.windfarm_noise.enabled: true, masks.0.enabled: false}
+  - name: ban
+    set: {impacts.windfarm_noise.enabled: false, masks.0.enabled: true}
+  - name: noise_ban
+    set: {impacts.windfarm_noise.enabled: true, masks.0.enabled: true}

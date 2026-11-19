@@ -1,0 +1,17 @@
+# Habitat degradation by bottom trawling: the bottom-trawl field x b,
+# pelagic trawling at today's level. Bottom trawling acts on the benthos
+# as mortality (infauna 0.136/yr, exposed epifauna 0.186/yr, Nephrops
+# 0.087/yr at today's mean effort); it does not lower the beds' K.
+description: Bottom-trawling effort at b x today's, pelagic trawling unchanged.
+base: ../../mareld2.yaml
+run_name: 2026-11-17_1
+years: 50
+seeds: [0, 1, 2]
+spatial_every_days: 365
+warmup_scale: {fishing: 1.0}
+schedule:
+  - {from_year: 0, scale: {pelagic_trawling: 1.0, bottom_trawling: 1.0}}
+sweep:
+  name: b
+  values: [0.0, 0.5, 1.0, 2.0, 3.0, 5.0]
+  set: [schedule.0.scale.bottom_trawling]

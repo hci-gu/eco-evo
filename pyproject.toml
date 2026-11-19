@@ -20,6 +20,10 @@ dependencies = [
 
 [dependency-groups]
 dev = ["pytest>=7.0"]
+paper = [
+    "marimo>=0.25.2",
+    "pandas>=3.0.6",
+]
 
 [tool.uv]
 package = false

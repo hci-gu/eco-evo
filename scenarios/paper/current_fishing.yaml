@@ -1,0 +1,10 @@
+# Today's fishing (the manifest's inference.impact_maps: EMODnet bottom
+# otter trawl and pelagic effort) kept constant.
+description: Present scenario with today's fishing kept constant.
+base: ../../mareld2.yaml
+run_name: 2026-11-17_1
+years: 100
+seeds: [0, 1, 2, 3, 4]
+spatial_every_days: 30
+schedule:
+  - {from_year: 0, scale: {fishing: 1.0}}

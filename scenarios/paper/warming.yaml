@@ -1,0 +1,16 @@
+# Warming: every temperature layer + dT relative to today, as Q10 on
+# metabolism, ingestion, growth and grazing (lib/scenarios/runner.py
+# apply_warming). A step change, held for the whole run, with today's
+# fishing. Producers, nutrients and stratification are not warmed.
+description: Temperature + dT on every layer (Q10 relative to today), today's fishing.
+base: ../../mareld2.yaml
+run_name: 2026-11-17_1
+years: 50
+seeds: [0, 1, 2]
+schedule:
+  - {from_year: 0, scale: {fishing: 1.0}}
+warming_c: 0.0
+sweep:
+  name: dT
+  values: [0.0, 1.0, 2.0, 3.0, 4.0]
+  set: [warming_c]

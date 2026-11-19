@@ -1,0 +1,14 @@
+# Eutrophication: the new-nitrogen source (the 50 m nitrate reservoir of
+# the two-layer column) x n, from the warm-up on. Today's fishing.
+description: Nitrate reservoir x n (new-N supply), today's fishing.
+base: ../../mareld2.yaml
+run_name: 2026-11-17_1
+years: 20
+seeds: [0, 1, 2]
+schedule:
+  - {from_year: 0, scale: {fishing: 1.0}}
+nutrient_reservoir_scale: 1.0
+sweep:
+  name: n
+  values: [0.75, 1.0, 1.25, 1.5, 2.0]
+  set: [nutrient_reservoir_scale]

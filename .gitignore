@@ -94,3 +94,7 @@ research_notes/*/*/data/
 /mareld3.yaml
 /fgconfig/fg_library2.yaml
 /exploration.txt
+
+# Paper notebooks and figures (section: paper scenarios)
+__marimo__/
+/figures/

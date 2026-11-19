@@ -1,0 +1,12 @@
+# Present scenario with no fishing: both trawl fields at zero from the
+# recorded start. The warm-up runs with today's fishing, so the run starts
+# from today's fished state.
+description: Present scenario without fishing.
+base: ../../mareld2.yaml
+run_name: 2026-11-17_1
+years: 100
+seeds: [0, 1, 2, 3, 4]
+spatial_every_days: 30
+warmup_scale: {fishing: 1.0}
+schedule:
+  - {from_year: 0, scale: {fishing: 0.0}}
