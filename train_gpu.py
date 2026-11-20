@@ -34,6 +34,27 @@ def world_schedule(value):
     return sorted(schedule)
 
 
+def finite_record(record, names=()):
+    """A JSON-safe copy of a log record: every non-finite float becomes
+    null. Returns (copy, labels of the replaced values). ``names`` maps a
+    top-level list's first index to a group id (decision makers or all
+    groups, whichever matches its length)."""
+    bad = []
+
+    def clean(value, label):
+        if isinstance(value, float) and not math.isfinite(value):
+            bad.append(label)
+            return None
+        if isinstance(value, dict):
+            return {k: clean(v, f"{label}.{k}" if label else str(k)) for k, v in value.items()}
+        if isinstance(value, (list, tuple)):
+            ids = next((n for n in names if len(n) == len(value)), None) if "." not in label and "[" not in label else None
+            return [clean(v, f"{label}[{ids[i] if ids else i}]") for i, v in enumerate(value)]
+        return value
+
+    return clean(record, ""), bad
+
+
 def save_checkpoint(trainer, directory, generation, iteration_in_generation, options):
     payload = dict(trainer=trainer.state_dict(), generation=generation,
                    iteration_in_generation=iteration_in_generation, options=options)
@@ -219,6 +240,13 @@ def main(argv=None, *, on_step=None):
                             # Absent = the project's spawn.
                             record["spawn_overrides"] = spawn
                         last_log_time, last_log_update = now, trainer.iterations_completed
+                        # A non-finite metric (one broken rollout) is logged
+                        # as null with a warning instead of ending the run;
+                        # ars_update leaves such delta pairs out.
+                        record, bad = finite_record(record, (trainer.model.dm_ids, trainer.model.ids))
+                        if bad:
+                            print(f"WARNING: update {record['updates']}: non-finite "
+                                  f"{', '.join(bad)} logged as null", flush=True)
                         log.write(json.dumps(record, allow_nan=False) + "\n")
                         log.flush()
                         rewards = ", ".join(f"{f}={r:+.5f}" for f, r in zip(trainer.model.dm_ids, metrics["reward_mean"]))

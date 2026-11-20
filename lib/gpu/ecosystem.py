@@ -1894,6 +1894,7 @@ class TensorEcosystem:
         if self.stage_exchange_on and juvenile is not None:
             b, r, juvenile = self._stage_exchange(b, r, juvenile, light_index, record)
         if record is not None:
+            self._discount_swept_import(b, record)
             # The extinction sweep is booked as starvation, as
             # ``population_change.apply_extinction_threshold`` does.
             swept = torch.where(b < self.threshold, b, 0.0)
@@ -1968,7 +1969,28 @@ class TensorEcosystem:
             record["exchange_reserve"] = fill_energy[..., 0] - leaving
             record["exchange_energy"] = (record["exchange_biomass"] * ec
                                          + record["exchange_reserve"])
+            # Per-cell arrivals, for the sweep (``_discount_swept_import``).
+            record["import_cells_biomass"] = imported * self.open_dm_entry
+            record["import_cells_reserve"] = fill_energy * self.open_dm_entry
         return b, r
+
+    def _discount_swept_import(self, b, record):
+        """Mirror of ``open_pool.discount_swept_import``: the arrivals the
+        extinction sweep removes in the tick they arrived come out of the
+        tick's net exchange (the reward ledger's X_t), so the ledger index
+        cannot turn negative when a near-empty group's import lands in
+        empty cells below the threshold. The loss books are unchanged."""
+        cells_b = record.pop("import_cells_biomass", None)
+        cells_r = record.pop("import_cells_reserve", None)
+        if cells_b is None or "exchange_biomass" not in record:
+            return
+        dead = (b > 0) & (b < self.threshold)
+        lost_b = torch.where(dead, cells_b, 0.0).sum(-1)
+        lost_r = torch.where(dead, cells_r, 0.0).sum(-1)
+        record["exchange_biomass"] = record["exchange_biomass"] - lost_b
+        record["exchange_reserve"] = record["exchange_reserve"] - lost_r
+        record["exchange_energy"] = (record["exchange_energy"]
+                                     - lost_b * self.energy_content - lost_r)
 
     def _stage_exchange(self, b, r, juvenile, light_index, record):
         """Section 250, mirror of ``stages.exchange``: emigration per stage,
@@ -2000,6 +2022,8 @@ class TensorEcosystem:
             record["exchange_reserve"] = record.get("exchange_reserve", zero) + energy_in - leaving
             record["exchange_energy"] = (record.get("exchange_energy", zero)
                                          + (inn - out) * ec + energy_in - leaving)
+            record["import_cells_biomass"] = record.get("import_cells_biomass", 0.0) + imported
+            record["import_cells_reserve"] = record.get("import_cells_reserve", 0.0) + arriving
         return new_b + imported, kept + arriving, new_j + imported
 
     def advect(self, biomass, reserve, tick, keys=None, track=False, juvenile=None):

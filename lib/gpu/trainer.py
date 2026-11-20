@@ -15,16 +15,32 @@ from lib.world.impact_maps import sample_impact_maps
 
 
 def ars_update(weights, deltas, positive, negative, lr, top_deltas):
-    """One species' reference ARS-V2 update; all arguments stay on device."""
+    """One species' reference ARS-V2 update; all arguments stay on device.
+
+    A delta pair with a non-finite reward on either sign is left out of the
+    ranking, the reward spread and the step, so one broken rollout cannot
+    turn the policy into NaN (fix105 update 562: a NaN log-energy reward
+    from a near-empty whiting world). With every reward finite this is the
+    plain update; with none, the weights are returned unchanged.
+    """
+    valid = torch.isfinite(positive) & torch.isfinite(negative)
+    positive = torch.where(valid, positive, 0.0)
+    negative = torch.where(valid, negative, 0.0)
     if top_deltas == deltas.shape[0]:
         index = torch.arange(top_deltas, device=weights.device)
     else:
-        index = torch.maximum(positive, negative).argsort(dim=0, descending=True, stable=True)[:top_deltas]
+        score = torch.where(valid, torch.maximum(positive, negative), -math.inf)
+        index = score.argsort(dim=0, descending=True, stable=True)[:top_deltas]
+    keep = valid[index]
+    count = keep.sum()
     selected = torch.cat((positive[index], negative[index]))
-    sigma_f = selected.std(correction=0) + 1e-8
-    difference = (positive[index] - negative[index]).to(deltas.dtype)
+    mask = torch.cat((keep, keep)).to(selected.dtype)
+    n = (2 * count).clamp_min(1).to(selected.dtype)
+    mean = (selected * mask).sum() / n
+    sigma_f = (((selected - mean) ** 2 * mask).sum() / n).sqrt() + 1e-8
+    difference = torch.where(keep, positive[index] - negative[index], 0.0).to(deltas.dtype)
     step = (difference[:, None] * deltas[index]).sum(0)
-    updated = weights + ((lr / (top_deltas * sigma_f)) * step).to(weights.dtype)
+    updated = weights + ((lr / (count.clamp_min(1) * sigma_f)) * step).to(weights.dtype)
     return updated, sigma_f
 
 

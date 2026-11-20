@@ -217,7 +217,7 @@ def _parity_tol(tick, base=1e-6):
     return min(PARITY_TOL_CAP, base * PARITY_GROWTH ** tick)
 
 
-def _assert_parity(env, device, ticks=12, base_tol=1e-6):
+def _assert_parity(env, device, ticks=12, base_tol=1e-6, exchange=False):
     model = TensorEcosystem(env, device)
     b, r, hidden = model.import_state([env])
     bank = PolicyBank(model, hidden_dim=9, hidden_layers=2, seed=13)
@@ -249,10 +249,19 @@ def _assert_parity(env, device, ticks=12, base_tol=1e-6):
             np.testing.assert_allclose(
                 numpy(forage[0]).reshape(env.N_dm, env.N_all, env.H, env.W),
                 cpu_actions.forage, atol=2e-6, rtol=2e-5)
+        record = {} if exchange else None
         out = model.step(b, r, probs, model.tensor(tick), torch.zeros_like(b),
-                         light_index=light, impacts=impacts, juvenile=juv, forage=forage)
+                         light_index=light, impacts=impacts, juvenile=juv, forage=forage,
+                         **({"record": record} if exchange else {}))
         b, r, hidden = out[:3]
         env.step(cpu_actions)
+        if exchange:
+            # The reward ledger's net exchange (energy_ledger), per group.
+            for key in ("biomass", "reserve", "energy"):
+                for fid, value in getattr(env, f"tick_exchange_{key}").items():
+                    g = env.global_fg_order.index(fid)
+                    got = float(record[f"exchange_{key}"][0, g])
+                    assert got == pytest.approx(value, rel=max(tol, 1e-4), abs=1e-6 * (1 + abs(value))), (tick, fid, key)
         expected = model.import_state([env])
         np.testing.assert_allclose(numpy(b), numpy(expected[0]), atol=tol, rtol=tol)
         np.testing.assert_allclose(numpy(r), numpy(expected[1]), atol=tol, rtol=tol)

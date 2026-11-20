@@ -425,6 +425,10 @@ def apply_extinction_threshold(env):
     ``extinction_threshold_factor > 0`` are affected. Continuous FGs
     (e.g. plankton, msb=0) are untouched.
     """
+    # This tick's arrivals from the outside, used once (the next tick's
+    # exchange keeps its own).
+    imports = getattr(env, "tick_import_cells", None) or {}
+    env.tick_import_cells = {}
     for fg_id, fg in env.fgs.items():
         min_split = float(getattr(fg, "min_split_biomass", 0.0) or 0.0)
         factor = float(getattr(fg, "extinction_threshold_factor", 0.0) or 0.0)
@@ -438,6 +442,10 @@ def apply_extinction_threshold(env):
         if not np.any(dead_mask):
             continue
         lost = float(biomass[dead_mask].sum())
+        if fg_id in imports:
+            # Arrivals swept in the tick they arrived never stayed: out of
+            # the reward ledger's net exchange (energy_ledger).
+            open_pool.discount_swept_import(env, fg_id, fg, imports[fg_id], dead_mask)
         # Booked as starvation: semantically the closest channel, the cell
         # holds too little biomass to form a viable unit.
         env.loss_starvation[fg_id] = (
@@ -541,7 +549,9 @@ def apply_population_change(env, clip_nonviable=True):
         else:
             _apply_non_decision_maker_population_change(env, fg_id, fg)
     # Section 246: migrating decision makers exchange with the outside on
-    # their group total, before the extinction sweep.
+    # their group total, before the extinction sweep. The per-cell
+    # arrivals are kept for the sweep (open_pool.discount_swept_import).
+    env.tick_import_cells = {}
     open_pool.migrate(env)
     # Section 250: the open-population groups' recruit import and
     # emigration (stages.py), after the migration.

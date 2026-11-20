@@ -361,6 +361,7 @@ def migrate(env):
             fg.biomass = (fg.biomass + np.float32(net) * weights).astype(env.dtype, copy=False)
             fg.energy_reserve = (fg.energy_reserve
                                  + np.float32(net * fill * me) * weights).astype(env.dtype, copy=False)
+            note_import_cells(env, fid, np.float32(net) * weights, np.float32(net * fill * me) * weights)
             export, imported = 0.0, net
             reserve_flow = net * fill * me
         for book, amount in (("loss_exchange", export), ("gain_exchange", imported)):
@@ -373,7 +374,43 @@ def migrate(env):
         env.tick_exchange_energy[fid] = float((imported - export) * ec + reserve_flow)
 
 
+def note_import_cells(env, fid, biomass, reserve):
+    """Keep this tick's per-cell arrivals (tonnes, reserve) of a DM that
+    exchanges with the outside, so the extinction sweep can take the
+    arrivals it removes out of the tick's net exchange
+    (``discount_swept_import``)."""
+    cells = getattr(env, "tick_import_cells", None)
+    if cells is None:
+        cells = env.tick_import_cells = {}
+    old = cells.get(fid)
+    cells[fid] = (biomass, reserve) if old is None else (old[0] + biomass, old[1] + reserve)
+
+
+def discount_swept_import(env, fid, fg, cells, dead):
+    """The arrivals the extinction sweep removes never stayed in the box:
+    take them out of the tick's net exchange (the reward ledger's ``X_t``).
+
+    The ledger's index is Q*_t (Q_{t+1} - X_t) / Q_t. With the swept
+    arrivals in X_t the numerator went negative when a near-empty group's
+    import landed in empty cells below the threshold (fix105 update 562:
+    whiting at 0.016 t, the log-energy reward NaN). The loss books
+    (``gain_exchange``, the sweep's starvation) are unchanged and still
+    balance."""
+    lost_b = float(np.asarray(cells[0], dtype=np.float64)[dead].sum())
+    lost_r = float(np.asarray(cells[1], dtype=np.float64)[dead].sum())
+    if lost_b <= 0.0 and lost_r <= 0.0:
+        return
+    books = getattr(env, "tick_exchange_biomass", None)
+    if books is None or fid not in books:
+        return
+    ec = float(fg.params.get("energy_content", 0.0) or 0.0)
+    env.tick_exchange_biomass[fid] = float(env.tick_exchange_biomass[fid]) - lost_b
+    env.tick_exchange_reserve[fid] = float(env.tick_exchange_reserve.get(fid, 0.0)) - lost_r
+    env.tick_exchange_energy[fid] = (float(env.tick_exchange_energy.get(fid, 0.0))
+                                     - lost_b * ec - lost_r)
+
+
 __all__ = ["DENSITY_KEY", "DEPTH_KEY", "ENTRY_KEY", "FILL_KEY", "RATE_KEY", "SEASON_KEY",
-           "build_tables", "depth_weight_map", "entry_weights", "grow", "is_open",
-           "migrate", "parse", "parse_depth_table", "parse_entry", "season_table",
+           "build_tables", "depth_weight_map", "discount_swept_import", "entry_weights", "grow",
+           "is_open", "migrate", "note_import_cells", "parse", "parse_depth_table", "parse_entry", "season_table",
            "stability_error", "target"]

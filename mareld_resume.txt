@@ -26150,3 +26150,26 @@ remain open exactly as described in 71.9 / 71.11.
 280.6 Expected effect on clumping (278): none helpful; the shallow-bed gradient of the WC bed prey steepens
     (class runs: G ~2.65 -> ~3.8). Payoffs change: checkpoints before 280 are invalid, retrain.
 280.7 Tests: test_half_saturation repinned (12 a's, 9 night/day).
+
+292 NaN reward from swept recruit arrivals; non-finite metrics no longer end a run (fix105 crash at update 562)
+    Symptom: train_gpu.py (fix105, --visual) died after probe 57 writing training.jsonl: json.dumps(allow_nan=False)
+    refused a NaN. The viewer pause (update 434, ~8 min) was unrelated: replaying updates 551-562 from the update-550
+    trainer.pth with the same arguments and spawn overrides reproduced it exactly (deterministic).
+    Cause: one candidate world of 32 (sign +, delta 4) had whiting near extinct (0.016 t). The open-population
+    recruit import arrives uniformly, ~1.2e-4 t per cell per tick, under the extinction threshold 2.5e-4 t
+    (min_split 0.5 kg x 0.5); in empty cells the sweep removed it in the same tick, but the tick's net exchange X_t
+    still counted it. The reward ledger's index Q* (Q_{t+1} - X_t) / Q_t (section 246) then went negative (energy
+    index 86 -> -712 at scored tick 1384) and log energy was NaN. Both engines had it (CPU energy_ledger has the same
+    formula, the sweep runs after stages.exchange / open_pool.migrate).
+    Fix 1 (both engines): the arrivals the sweep removes in the tick they arrive are taken out of X_t
+    (open_pool.note_import_cells / discount_swept_import, called by migrate, stages.exchange and
+    apply_extinction_threshold; GPU record keys import_cells_*, TensorEcosystem._discount_swept_import). The loss
+    books (gain_exchange, the sweep's starvation) are unchanged and still balance. It also corrects the reward of
+    healthy worlds slightly: arrivals swept in empty cells used to count as the group's own loss.
+    Fix 4: ars_update leaves a delta pair with a non-finite reward on either sign out of the ranking, the spread and
+    the step (identical update when every reward is finite; weights unchanged when none is). train_gpu.py logs a
+    non-finite metric as null with a WARNING line (finite_record) instead of crashing.
+    Tests: test_open_population (swept arrivals out of X_t, CPU with import and migration; GPU parity of the
+    record's net exchange via _assert_parity(exchange=True)), test_gpu_trainer (NaN/inf pairs, null logging).
+    Open (biology, not changed): recruits arriving in an empty cell below the threshold are always swept, so the
+    import alone cannot re-seed a collapsed open-population group on a uniform recruit map.

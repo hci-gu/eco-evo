@@ -72,6 +72,7 @@ import math
 
 import numpy as np
 
+from lib.environments.ecosystem_env import open_pool
 from lib.world import daylight, tick_time
 
 KEY = "juvenile_stage"
@@ -364,6 +365,7 @@ def exchange(env):
             env.dtype, copy=False)
         imported = float(per_cell.astype(np.float64).sum())
         arriving = imported * fill * me
+        open_pool.note_import_cells(env, fid, per_cell, per_cell * np.float32(fill * me))
         for book, amount in (("loss_exchange", export), ("gain_exchange", imported)):
             books = getattr(env, book, None)
             if books is not None:

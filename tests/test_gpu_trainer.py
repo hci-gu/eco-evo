@@ -75,6 +75,40 @@ def test_ars_update_matches_numpy(top):
     assert actual_sigma.item() == pytest.approx(sigma)
 
 
+@pytest.mark.parametrize("top", [3, 7])
+def test_ars_update_leaves_out_non_finite_pairs(top):
+    """A delta pair with a NaN or inf reward is out of the ranking, the
+    spread and the step: the update equals the one over the other pairs."""
+    rng = np.random.default_rng(5)
+    weights = rng.normal(size=31).astype(np.float32)
+    deltas = rng.normal(size=(7, 31)).astype(np.float32)
+    pos, neg = rng.normal(size=7), rng.normal(size=7)
+    pos[2], neg[5] = np.nan, np.inf
+    ok = np.array([i for i in range(7) if i not in (2, 5)])
+    n = min(top, ok.size)
+    expected, sigma = ars_update(torch.tensor(weights), torch.tensor(deltas[ok]),
+                                 torch.tensor(pos[ok]), torch.tensor(neg[ok]), 0.03, n)
+    result, actual_sigma = ars_update(torch.tensor(weights), torch.tensor(deltas),
+                                      torch.tensor(pos), torch.tensor(neg), 0.03, top)
+    assert torch.isfinite(result).all()
+    np.testing.assert_allclose(result, expected, atol=2e-7, rtol=2e-6)
+    assert actual_sigma.item() == pytest.approx(sigma.item())
+    none, _ = ars_update(torch.tensor(weights), torch.tensor(deltas),
+                         torch.full((7,), float("nan"), dtype=torch.float64),
+                         torch.tensor(neg), 0.03, top)
+    np.testing.assert_array_equal(none, weights)
+
+
+def test_log_record_keeps_non_finite_metrics_as_null():
+    import train_gpu
+    record = {"updates": 562, "reward_mean": [0.1, float("nan")], "actions": [[0.5, float("inf")]]}
+    clean, bad = train_gpu.finite_record(record, (("whiting", "seals"),))
+    assert clean["reward_mean"] == [0.1, None] and clean["actions"] == [[0.5, None]]
+    assert bad == ["reward_mean[seals]", "actions[0][1]"]
+    import json
+    json.dumps(clean, allow_nan=False)
+
+
 def build_trainer(**kwargs):
     spec = ProjectSpec(EnvironmentBuilder(project_path="mareld2.yaml", grid=(5, 6)))
     return TensorARSTrainer(spec, device="cpu", execution="eager", n_deltas=3,

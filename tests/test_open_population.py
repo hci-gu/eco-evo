@@ -18,6 +18,10 @@ Contracts asserted:
 5. ``somatic_production`` P: g = P / ((s* - u) ticks per year), refused with
    r_max or a feeding season, and the loader refuses a broken budget.
 6. The reward ledger covers the open-population groups; mareld2 pins.
+8. The arrivals the extinction sweep removes in the tick they arrive are
+   not in the tick's net exchange (the reward ledger), on both engines, so
+   the ledger index of a near-empty group stays positive (fix105 update
+   562: a NaN reward).
 7. Section 270: ``recruit_depth_table`` (rows {depth_m, weight}) needs a
    ``recruit_import``; the loader's map (equal-cell mean 1) spreads the
    import over the cells, the booked import total is unchanged, the GPU
@@ -35,7 +39,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from lib.environments.ecosystem_env import open_pool, stages
+from lib.environments.ecosystem_env import open_pool, population_change, stages
 from lib.runners.energy_ledger import migrating
 from lib.world import daylight as daylight_module
 from lib.world.functional_group import FunctionalGroup
@@ -321,3 +325,53 @@ def test_mareld2_benthivores_import_on_shallow_beds():
     assert weight.mean() == pytest.approx(1.0)
     assert weight[depth < 99.9].mean() > 2.5 and weight[depth >= 250.0].mean() < 0.1
     assert "recruit_weight" not in maps.get("planktivorous_fish", {})
+
+
+def _near_empty(min_split=200, extinction_factor=0.3, **kw):
+    """Group a (staged, import 4 t/km2/yr = 0.0027 t per cell per tick, under
+    the 0.06 t threshold) in two cells of twenty; the rest empty."""
+    env = env_with({"a": block(rho=[1.0] * 12, recruit=4.0, emigration=[1.5, 0.3])},
+                   min_split=min_split, extinction_factor=extinction_factor, **kw)
+    a = env.fgs["a"]
+    a.biomass = np.zeros(a.biomass.shape, dtype=np.float32)
+    a.biomass.flat[[3, 11]] = 0.5
+    a.juvenile = (a.biomass * 0.3).astype(np.float32)
+    a.energy_reserve = (a.biomass * 300.0).astype(np.float32)
+    return env
+
+
+@pytest.mark.parametrize("daylight", [True, False])
+def test_swept_arrivals_are_out_of_the_net_exchange(daylight):
+    env = _near_empty(daylight=daylight,
+                      **({} if daylight else {"regen": {"a": dict(OPEN, outside_density=0.05)}}))
+    a = env.fgs["a"]
+    b0 = a.biomass.astype(np.float64).copy()
+    r0 = a.energy_reserve.astype(np.float64).copy()
+    e0 = float(b0.sum()) * float(a.params["energy_content"]) + float(r0.sum())
+    env.loss_exchange, env.gain_exchange = {}, {}
+    env.tick_import_cells = {}
+    open_pool.migrate(env)
+    migrated = env.gain_exchange.get("a", 0.0)          # into the empty west edge
+    assert daylight or migrated > 0.0
+    stages.exchange(env)
+    booked = env.gain_exchange["a"]
+    population_change.apply_extinction_threshold(env)
+    stayed = a.biomass > 0
+    assert int(stayed.sum()) == 2                       # every arrival in an empty cell swept
+    # Only the arrivals in the two occupied cells count as imported.
+    export = env.loss_exchange["a"]
+    kept = (booked - migrated) * 2 / a.biomass.size
+    assert env.tick_exchange_biomass["a"] == pytest.approx(kept - export, rel=1e-4, abs=1e-9)
+    assert env.gain_exchange["a"] == pytest.approx(booked)   # the loss books keep the gross import
+    # The ledger's numerators stay non-negative.
+    now_b = float(a.biomass.astype(np.float64).sum())
+    now_e = now_b * float(a.params["energy_content"]) + float(a.energy_reserve.astype(np.float64).sum())
+    assert now_b - env.tick_exchange_biomass["a"] >= 0.0
+    assert now_e - env.tick_exchange_energy["a"] >= 0.0
+    assert (now_e - env.tick_exchange_energy["a"]) / e0 == pytest.approx(1.0, rel=1e-3)
+
+
+def test_gpu_matches_the_net_exchange_of_a_near_empty_group(device):
+    env = _near_empty(mortality=True, handling=0.3)
+    model = _assert_parity(env, device, ticks=6, base_tol=1e-5, exchange=True)
+    assert model.stage_exchange_on and model.ledger_on
