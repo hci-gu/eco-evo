@@ -30,6 +30,17 @@ Library keys (species):
     ``capacity_depth_table`` rule). The loader renormalises it to an
     equal-cell mean of 1 on the run's depth map (``depth_weight_map``), so
     ``outside_density`` stays the box mean. Without a depth map: 1.
+``outside_depth_season``
+    Optional rows ``{depth_m, season: [12 mid-month factors]}`` (section
+    295): a monthly multiplier on the depth shape by bed depth, linear
+    between rows and held outside them, each row with an annual mean of ~1.
+    Each month's map (depth shape x multiplier) is renormalised to an
+    equal-cell mean of 1, so the box total stays ``outside_density`` x
+    ``outside_season`` and only the layout moves (krill leave the shallow
+    beds in summer); a tick mixes the two neighbouring months with the
+    ``daylight.monthly_value`` weights. Forcing of the prey's own
+    distribution like the season, not a behaviour switch. Needs the
+    daylight calendar and a depth map; inert without either.
 
 The loader refuses g >= exp(k) - 1 (the exchange could not hold the pool:
 with no predation it would grow without bound).
@@ -76,6 +87,7 @@ DENSITY_KEY = "outside_density"
 RATE_KEY = "outside_exchange_rate"
 SEASON_KEY = "outside_season"
 DEPTH_KEY = "outside_depth_table"
+DEPTH_SEASON_KEY = "outside_depth_season"
 FILL_KEY = "outside_fill"
 ENTRY_KEY = "outside_entry"
 EDGES = ("north", "south", "west", "east")
@@ -90,7 +102,7 @@ def is_open(spec):
 def parse(params, group_id=""):
     """Validated settings ``{"density", "rate", "season"}`` or None."""
     if not is_open(params):
-        for key in (RATE_KEY, SEASON_KEY, DEPTH_KEY, FILL_KEY, ENTRY_KEY):
+        for key in (RATE_KEY, SEASON_KEY, DEPTH_KEY, DEPTH_SEASON_KEY, FILL_KEY, ENTRY_KEY):
             if (params or {}).get(key) not in (None, "", []):
                 raise ValueError(f"{group_id}: {key} needs {DENSITY_KEY} (section 245)")
         return None
@@ -118,6 +130,9 @@ def parse(params, group_id=""):
             raise ValueError(f"{group_id}: {SEASON_KEY} must have a mean of ~1 (it scales "
                              f"the annual-mean {DENSITY_KEY}), got {sum(season) / 12.0:.3f}")
     out = {"density": density, "rate": rate, "season": season}
+    if is_dm and params.get(DEPTH_SEASON_KEY) not in (None, "", []):
+        raise ValueError(f"{group_id}: {DEPTH_SEASON_KEY} is for non decision makers (section 295)")
+    parse_depth_season(params, group_id)
     if not is_dm:
         for key in (FILL_KEY, ENTRY_KEY):
             if params.get(key) not in (None, "", []):
@@ -187,6 +202,65 @@ def parse_depth_table(spec):
     return _parse_rows(rows, "weight", DEPTH_KEY)
 
 
+def parse_depth_season(spec, group_id=""):
+    """(depths, factors (rows, 12)) of ``outside_depth_season``, or None.
+
+    Rows ``{depth_m, season}``: distinct finite depths, 12 finite factors
+    >= 0 per row with an annual mean of ~1 (the depth table stays the
+    annual-mean shape), not all zero in any month."""
+    rows = (spec or {}).get(DEPTH_SEASON_KEY)
+    if rows in (None, "", []):
+        return None
+    label = f"{group_id}: {DEPTH_SEASON_KEY}"
+    try:
+        pairs = sorted((float(r["depth_m"]), [float(v) for v in r["season"]]) for r in rows)
+    except (KeyError, TypeError, ValueError):
+        raise ValueError(f"{label}: rows need a numeric depth_m and a season of 12 numbers")
+    depths = np.array([p[0] for p in pairs])
+    if any(len(p[1]) != 12 for p in pairs):
+        raise ValueError(f"{label}: every season needs 12 mid-month factors")
+    values = np.array([p[1] for p in pairs], dtype=np.float64)
+    if (not np.all(np.isfinite(depths)) or not np.all(np.isfinite(values))
+            or (values < 0).any() or (np.diff(depths) <= 0).any()):
+        raise ValueError(f"{label}: depths must be distinct and factors finite and >= 0")
+    if not (values > 0).any(axis=0).all():
+        raise ValueError(f"{label}: every month needs a factor > 0 at some depth")
+    means = values.mean(axis=1)
+    if (np.abs(means - 1.0) > SEASON_MEAN_TOL).any():
+        raise ValueError(f"{label}: each row's season must have a mean of ~1 (the depth table "
+                         f"is the annual shape), got {np.round(means, 3).tolist()}")
+    return depths, values
+
+
+def monthly_weight_maps(weight, table, depth):
+    """(12, H, W): the annual weight map x each month's depth multiplier,
+    renormalised to an equal-cell mean of 1 per month; None without a table
+    or a depth map."""
+    if table is None or depth is None:
+        return None
+    depths, values = table
+    depth = np.asarray(depth, dtype=np.float64)
+    base = np.asarray(weight, dtype=np.float64)
+    out = np.empty((12,) + base.shape, dtype=np.float64)
+    for m in range(12):
+        mult = np.interp(depth, depths, values[:, m], left=values[0, m], right=values[-1, m])
+        w = base * mult
+        mean = float(w.mean())
+        if not mean > 0.0:
+            raise ValueError(f"{DEPTH_SEASON_KEY}: month {m + 1} is zero over every cell")
+        out[m] = w / mean
+    return out
+
+
+def month_weights(light_period, tick_hours):
+    """(light_period, 12) weights of the 12 mid-month values at each tick's
+    midpoint, the ``daylight.monthly_value`` interpolation (rows sum to 1)."""
+    from lib.world import daylight
+    start = np.arange(int(light_period)) * float(tick_hours)
+    day = (start + 0.5 * float(tick_hours)) / 24.0
+    return np.stack([daylight.monthly_value(np.eye(12)[m], day) for m in range(12)], axis=1)
+
+
 def _parse_rows(rows, value_key, label):
     try:
         pairs = sorted((float(r["depth_m"]), float(r[value_key])) for r in rows)
@@ -247,6 +321,10 @@ def build_tables(env):
     env.open_ids = []
     env.open_target = {}
     env.open_season = {}
+    # Section 295: per-month targets (12, H, W) of a pool with
+    # ``outside_depth_season`` and the shared tick -> month weights.
+    env.open_target_months = {}
+    env.open_month_weights = None
     # Section 246: migrating decision makers.
     env.open_dm_ids = []
     env.open_dm_total = {}
@@ -291,15 +369,31 @@ def build_tables(env):
                 int(env.daylight["tick_hours"])).astype(env.dtype)
         else:
             env.open_season[fid] = None
+        months = getattr(fg, "outside_weight_months", None)
+        if months is not None and daylight_on:
+            env.open_target_months[fid] = (settings["density"] * np.asarray(
+                months, dtype=np.float64)).astype(env.dtype)
+            if env.open_month_weights is None:
+                env.open_month_weights = month_weights(
+                    env.light_period, int(env.daylight["tick_hours"])).astype(env.dtype)
 
 
 def target(env, fid):
     """T(c, t) of this tick."""
+    from lib.environments.ecosystem_env import interactions
     season = env.open_season.get(fid)
-    base = env.open_target[fid]
+    months = getattr(env, "open_target_months", {}).get(fid)
+    if months is not None:
+        # Section 295: the layout of this tick, between two months' maps.
+        # Elementwise on purpose: numpy's BLAS product (tensordot / @) gave
+        # intermittently wrong sums in this environment (2-3x, under pytest
+        # with torch loaded; section 295), and the engine uses none.
+        w = env.open_month_weights[interactions.light_index(env)]
+        base = (w[:, None, None] * months).sum(axis=0).astype(env.dtype, copy=False)
+    else:
+        base = env.open_target[fid]
     if season is None:
         return base
-    from lib.environments.ecosystem_env import interactions
     return base * season[interactions.light_index(env)]
 
 
@@ -410,7 +504,8 @@ def discount_swept_import(env, fid, fg, cells, dead):
                                      - lost_b * ec - lost_r)
 
 
-__all__ = ["DENSITY_KEY", "DEPTH_KEY", "ENTRY_KEY", "FILL_KEY", "RATE_KEY", "SEASON_KEY",
+__all__ = ["DENSITY_KEY", "DEPTH_KEY", "DEPTH_SEASON_KEY", "ENTRY_KEY", "FILL_KEY", "RATE_KEY", "SEASON_KEY",
            "build_tables", "depth_weight_map", "discount_swept_import", "entry_weights", "grow",
-           "is_open", "migrate", "note_import_cells", "parse", "parse_depth_table", "parse_entry", "season_table",
+           "is_open", "migrate", "month_weights", "monthly_weight_maps", "note_import_cells", "parse",
+           "parse_depth_season", "parse_depth_table", "parse_entry", "season_table",
            "stability_error", "target"]

@@ -1,0 +1,23 @@
+
+whiting: monthly fill, mean of seeds 0/1 (realised feeding level year mean)
+                                  J     F     M     A     M     J     J     A     S     O     N     D   year  feed
+  copy d                       0.96  0.96  0.93  0.93  0.94  0.95  0.94  0.94  0.93  0.90  0.92  0.95   0.94 0.381
+  d+shallow                    0.95  0.95  0.93  0.93  0.94  0.95  0.91  0.83  0.79  0.85  0.90  0.94   0.90 0.369
+  d+shallow_energy             0.95  0.95  0.93  0.93  0.93  0.94  0.91  0.83  0.79  0.83  0.90  0.94   0.90 0.373
+  d+shallow_energy_flat        0.96  0.96  0.94  0.94  0.93  0.94  0.86  0.75  0.69  0.80  0.89  0.93   0.88 0.362
+  field (start_fill)           0.69  0.69  0.56  0.43  0.30  0.30  0.30  0.52  0.73  0.73  0.73  0.71
+
+planktivorous_fish: monthly fill, mean of seeds 0/1 (realised feeding level year mean)
+                                  J     F     M     A     M     J     J     A     S     O     N     D   year  feed
+  copy d                       0.75  0.67  0.67  0.73  0.90  0.99  0.99  0.99  0.97  0.93  0.88  0.83   0.88 0.258
+  d+shallow                    0.74  0.65  0.66  0.73  0.90  0.99  0.99  0.99  0.97  0.93  0.88  0.82   0.88 0.258
+  d+shallow_energy             0.77  0.70  0.70  0.74  0.90  0.98  0.99  0.99  0.97  0.93  0.89  0.84   0.89 0.257
+  d+shallow_energy_flat        0.71  0.64  0.67  0.74  0.90  0.98  0.99  0.99  0.97  0.93  0.88  0.80   0.87 0.257
+  field (start_fill)           0.50  0.36  0.26  0.20  0.32  0.81  0.94  0.96  0.88  0.88  0.76  0.68
+
+predatory_fish: monthly fill, mean of seeds 0/1 (realised feeding level year mean)
+                                  J     F     M     A     M     J     J     A     S     O     N     D   year  feed
+  copy d                       0.97  0.98  0.98  0.94  0.91  0.91  0.92  0.96  0.98  0.98  0.98  0.97   0.96 0.379
+  d+shallow                    0.97  0.98  0.99  0.94  0.91  0.91  0.92  0.97  0.98  0.98  0.98  0.97   0.96 0.379
+  d+shallow_energy             0.98  0.99  0.99  0.94  0.90  0.90  0.92  0.96  0.98  0.98  0.99  0.98   0.96 0.384
+  d+shallow_energy_flat        0.87  0.89  0.94  0.94  0.91  0.91  0.94  0.96  0.98  0.95  0.94  0.90   0.94 0.384

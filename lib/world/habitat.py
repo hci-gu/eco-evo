@@ -178,7 +178,11 @@ def build(project, project_path, library, grid_size, active_ids,
             equilibrium = _spawn_mode(spec, overrides.get(fid)) == SPAWN_MODE
             out[fid] = {"capacity": None, "outside_weight": weight,
                         "equilibrium": (float(spec[open_pool.DENSITY_KEY]) * weight
-                                        if equilibrium else None)}
+                                        if equilibrium else None),
+                        # Section 295: the monthly layouts (None without a
+                        # season table or a depth map).
+                        "outside_weight_months": open_pool.monthly_weight_maps(
+                            weight, open_pool.parse_depth_season(spec, fid), depth)}
             continue
         recruit_rows = ((spec.get("juvenile_stage") or {}).get(RECRUIT_DEPTH_KEY)
                         if spec.get("is_decision_maker") else None)

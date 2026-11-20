@@ -199,3 +199,37 @@ def test_an_emptied_external_forces_field_keeps_the_kinds_default(app):
     app.apply_fg_changes()
     # The default is not written where the key was absent, and absent is 0.
     assert app.current_fg_configs[ids[0]].get("current_response", 0.0) == 0.0
+
+
+def test_krill_seasons_round_trip_validate_and_empty(app):
+    """Section 295: the krill's depth season and energy season are shown,
+    round-tripped unchanged, refused when invalid, and removed when emptied
+    or when the pool is closed."""
+    entry = app.global_library["species_definitions"]["krill"]
+    before = copy.deepcopy(entry)
+    _select_krill(app)
+    v = app.ndm_prop_vars
+    assert v["outside_depth_season"].get().count("|") == 1
+    assert len(v["energy_season"].get().split(",")) == 12
+    app.apply_fg_changes()
+    assert not [t for t, _ in app.shown if t.startswith("Invalid")], app.shown
+    assert entry["outside_depth_season"] == before["outside_depth_season"]
+    assert entry["energy_season"] == before["energy_season"]
+    _select_krill(app)
+    v["outside_depth_season"].set("99.9: 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2")   # mean 2
+    app.apply_fg_changes()
+    assert app.shown[-1][0].startswith("Invalid")
+    assert entry["outside_depth_season"] == before["outside_depth_season"]
+    _select_krill(app)
+    v["energy_season"].set("1, 1, 1")
+    app.apply_fg_changes()
+    assert app.shown[-1][0] == "Invalid value"
+    _select_krill(app)
+    v["energy_season"].set("")
+    app.apply_fg_changes()
+    assert "energy_season" not in entry
+    _select_krill(app)
+    v["outside_density"].set("")
+    v["r_max"].set("0")
+    app.apply_fg_changes()
+    assert "outside_depth_season" not in entry

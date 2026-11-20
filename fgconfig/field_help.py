@@ -892,6 +892,29 @@ FIELD_HELP = {
         "where the bed is shallower than the 70-150 m day layer; section "
         "245). No rows or no depth map = flat."
     ),
+    "outside_depth_season": (
+        "Outside Depth Season (rows 'depth m: 12 factors Jan..Dec', separated "
+        "by '|'; open pool only; empty = none).\n\n"
+        "A monthly multiplier on the Outside Density by Depth, linear between "
+        "the rows' depths and held outside them; each row's 12 factors must "
+        "have a mean of ~1. Each month's map is renormalised to the box mean, "
+        "so the box total stays Outside Density x Outside Season and only the "
+        "layout moves; a tick mixes the two neighbouring months. Forcing of "
+        "the prey's own distribution, not a behaviour switch. Krill: over beds "
+        "< 100 m 1.42 Sep-Apr and 0.16 May-Aug (present in winter, nearly "
+        "absent in summer; section 295). Needs the daylight calendar and a "
+        "depth map."
+    ),
+    "energy_season": (
+        "Energy Season (12 factors, Jan..Dec; non decision makers; empty = "
+        "constant).\n\n"
+        "Mid-month factors on the group's Energy Content as prey: in month t "
+        "a tonne eaten carries E x f(t), so every predator's gain and its "
+        "handling time per tonne (h = E / ceiling) follow f. Keep the mean ~1: "
+        "Energy Content stays the annual mean the budgets read. Krill: 1.165 "
+        "Oct-Mar (~6 kJ/g WW, lipid-rich adults) and 0.835 Apr-Sep (~4.3, "
+        "after spawning; section 295). Needs the daylight calendar."
+    ),
     "matrix:depth_access_table": (
         "Depth Access: the row's attack rate on the column by the cell's "
         "bed depth, rows 'depth:factor' (empty = a constant a).\n\n"

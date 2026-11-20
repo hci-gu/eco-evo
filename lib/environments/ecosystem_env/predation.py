@@ -1,6 +1,6 @@
 import numpy as np
 
-from lib.environments.ecosystem_env import decisions, interactions, refuge
+from lib.environments.ecosystem_env import decisions, interactions, prey_energy, refuge
 from lib.environments.ecosystem_env.constants import MAX_HARVEST_FRAC
 
 
@@ -71,8 +71,14 @@ def apply_predation(env, actions):
         # Section 265: ``attack_choice: fixed`` attacks every prey it meets.
         attack = interactions.fixed_attack(env, attack)
         eat = forage * attack
+    # Section 295: a prey's seasonal energy content moves its handling time
+    # per tonne (h = E / ceiling) and the gain per tonne alike.
+    energy_factor = prey_energy.factor(env)
     if env._has_holling2 or env._has_holling3:
         handling_time = env.handling_time_mat[:, :, None, None]
+        if energy_factor is not None:
+            handling_time = (handling_time * energy_factor[None, :, None, None]).astype(
+                env.dtype, copy=False)
         # Holling saturation uses the *visible* prey biomass: hidden prey
         # is functionally inaccessible this tick, so it neither
         # contributes to attack-rate saturation nor to total available
@@ -153,7 +159,7 @@ def apply_predation(env, actions):
             env, demand, actual_intake, stage_parts)
 
     gains = (
-        actual_intake * env.energy_gain_mat[:, :, None, None]
+        actual_intake * energy_gain_matrix(env)[:, :, None, None]
     ).sum(axis=1)
     if env._has_reserve_food:
         # The eaten tonnes carry the prey's reserve (section 140):
@@ -293,6 +299,15 @@ def _stage_harvest(env, demand, actual_intake, parts):
     return actual_intake, juvenile
 
 
+def energy_gain_matrix(env):
+    """``energy_gain_mat`` of this tick: the static quality, times each
+    prey's seasonal energy factor (section 295) when one is set."""
+    factor = prey_energy.factor(env)
+    if factor is None:
+        return env.energy_gain_mat
+    return (env.energy_gain_mat * factor[None, :]).astype(env.dtype, copy=False)
+
+
 def _reserve_room_cap(env, demand, predator_biomass, reserve_offset):
     """Cap each ``reserve_room`` predator's demand at its reserve room.
 
@@ -304,7 +319,7 @@ def _reserve_room_cap(env, demand, predator_biomass, reserve_offset):
     reserve the engines clip at B ME. With a reserve set point (section
     271) the room ends at s_T(t) B ME (``lib/world/set_point.py``).
     """
-    potential = (demand * env.energy_gain_mat[:, :, None, None]).sum(axis=1)
+    potential = (demand * energy_gain_matrix(env)[:, :, None, None]).sum(axis=1)
     if reserve_offset is not None:
         potential = potential + (
             demand * env.assimilation_mat[:, :, None, None]

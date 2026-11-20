@@ -7,8 +7,8 @@ import torch
 from lib.world import nutrients, set_point, spawning, temperature
 from lib.world.growth_budget import growth_law, income_growth
 from lib.environments.ecosystem_env import (
-    grid_masks, impacts, interactions, natural_mortality, open_pool, refuge,
-    regeneration, stages)
+    grid_masks, impacts, interactions, natural_mortality, open_pool, prey_energy,
+    refuge, regeneration, stages)
 
 
 @dataclass
@@ -180,6 +180,8 @@ def build_static_caches(env):
     # reads the same calendar: Q10 multipliers on resting_metabolism.
     interactions.build_daylight_tables(env)
     interactions.build_temperature_tables(env)
+    # Section 295: seasonal energy content of a prey (same calendar).
+    prey_energy.build_table(env)
     # Juvenile compartments (stages.py): per-pair stage access, the
     # recruitment and graduation tables on the same calendar.
     stages.build_tables(env)

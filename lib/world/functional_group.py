@@ -139,6 +139,13 @@ class FunctionalGroup:
         if self.open_pool is not None and self.exposed_share is not None:
             raise ValueError(f"{group_id}: an open pool cannot also be a refuge")
         self.outside_weight_map = None
+        # Section 295: the monthly layouts of ``outside_depth_season``
+        # (12, H, W), set by the loader; None = the annual shape all year.
+        self.outside_weight_months = None
+        # Section 295: the prey's energy content by month (12 factors, mean
+        # ~1) on the predators' gain and handling time; None = constant.
+        from lib.environments.ecosystem_env import prey_energy
+        self.energy_season = prey_energy.parse(params, group_id)
         # Section 270: a staged DM's recruit import shape by bed depth
         # (equal-cell mean 1), set by the loader; None = uniform.
         self.recruit_weight_map = None

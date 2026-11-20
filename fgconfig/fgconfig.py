@@ -1090,6 +1090,9 @@ class FGConfigApp:
             ("Outside Density (t/km2, box mean; open pool; 0 = closed)", "outside_density", "entry", 0.0, 100000.0),
             ("Outside Exchange Rate k (1/{tick}; relaxes B to the outside density)", "outside_exchange_rate", "entry", 0.0, 10.0),
             ("Outside Season (12 monthly factors Jan..Dec, mean ~1; empty = flat)", "outside_season", "entry", 0.0, 10.0),
+            # Section 295: the layout by month over bed depth and the energy by month.
+            ("  Outside Depth Season (depth m: 12 factors Jan..Dec | ...; open pool; empty = none)", "outside_depth_season", "entry", 0.0, 0.0),
+            ("Energy Season (12 monthly factors on the energy as prey, mean ~1; empty = constant)", "energy_season", "entry", 0.0, 10.0),
             # Section 268: the open pool's local production P/B (0 = g pays the booked M2).
             ("  Local production P/B (1/yr, field; open pool; 0 = the booked M2)", "somatic_production", "entry", 0.0, 10.0),
             # Light-limited growth on the daylight calendar (section 138).
@@ -5260,6 +5263,10 @@ class FGConfigApp:
                 if key == "member_species":
                     var.set(self._members_text(config.get(key)))
                     continue
+                if key == "outside_depth_season":
+                    # Section 295: rows as "99.9: f1, ..., f12 | 100: ...".
+                    var.set(self._depth_season_text(config.get(key)))
+                    continue
                 val = config.get(key, "")
                 if isinstance(val, (list, tuple)):
                     # Monthly light_saturation (section 138): 12 values.
@@ -5764,6 +5771,32 @@ class FGConfigApp:
                         "Start Fill: 12 numbers in [0, 1] (Jan..Dec) separated by "
                         "commas. No changes were saved.")
                     return
+            elif key == "outside_depth_season":
+                # Section 295: checked with the rest of the pool below.
+                rows, error = self._parse_depth_season_text(val)
+                if error:
+                    messagebox.showerror("Invalid value",
+                                         f"Outside Depth Season: {error}. No changes were saved.")
+                    return
+                if rows is None:
+                    config.pop(key, None)
+                else:
+                    config[key] = rows
+            elif key == "energy_season":
+                # Section 295: 12 factors, mean ~1 (prey_energy.parse); empty = constant.
+                text = str(val or "").strip()
+                if not text:
+                    config.pop(key, None)
+                    continue
+                from lib.environments.ecosystem_env import prey_energy as _prey_energy
+                try:
+                    config[key] = _prey_energy.parse(
+                        {key: [float(v) for v in text.split(",") if v.strip()],
+                         "is_decision_maker": is_dm}, fg_id)
+                except ValueError as exc:
+                    messagebox.showerror("Invalid value",
+                                         f"Energy Season: {exc}. No changes were saved.")
+                    return
             elif key == "outside_entry":
                 rows, error = self._parse_entry_text(val)
                 if error:
@@ -5901,7 +5934,8 @@ class FGConfigApp:
         open_pool_on = False
         outside_keys = (("outside_density", "outside_exchange_rate", "outside_season",
                          "outside_fill", "outside_entry") if is_dm else
-                        ("outside_density", "outside_exchange_rate", "outside_season"))
+                        ("outside_density", "outside_exchange_rate", "outside_season",
+                         "outside_depth_season"))
         try:
             density = float(config.get("outside_density", 0.0) or 0.0)
             rate = float(config.get("outside_exchange_rate", 0.0) or 0.0)
@@ -6267,7 +6301,7 @@ class FGConfigApp:
         for key in (("outside_density", "outside_exchange_rate", "outside_season",
                      "outside_fill", "outside_entry") if is_dm else
                     ("outside_density", "outside_exchange_rate", "outside_season",
-                     "outside_depth_table")):
+                     "outside_depth_table", "outside_depth_season", "energy_season")):
             if key not in config:
                 target.pop(key, None)
         if is_dm and "start_fill" not in config:
@@ -6529,6 +6563,46 @@ class FGConfigApp:
             item.fa.set_flow_style()
             seq.append(item)
         return seq
+
+    @staticmethod
+    def _depth_season_text(rows):
+        """Section 295: ``outside_depth_season`` rows as
+        '99.9: 1.42, ..., 1.42 | 100: 1, ..., 1'."""
+        parts = []
+        for row in rows or []:
+            if not isinstance(row, dict):
+                continue
+            season = ", ".join(f"{float(v):g}" for v in row.get("season") or [])
+            parts.append(f"{float(row.get('depth_m', 0.0)):g}: {season}")
+        return " | ".join(parts)
+
+    @staticmethod
+    def _parse_depth_season_text(text):
+        """``(rows, error)`` of an Outside Depth Season field; ``(None,
+        None)`` when empty. Each row 'depth: 12 factors'; the row checks
+        (12 factors, mean ~1) are the runtime's (open_pool.parse_depth_season)."""
+        from lib.environments.ecosystem_env import open_pool
+        text = str(text or "").strip()
+        if not text:
+            return None, None
+        rows = []
+        for part in text.split("|"):
+            if not part.strip():
+                continue
+            depth, sep, values = part.partition(":")
+            if not sep:
+                return None, f"'{part.strip()}' needs 'depth: 12 factors'"
+            try:
+                rows.append({"depth_m": float(depth),
+                             "season": [float(v) for v in values.split(",") if v.strip()]})
+            except ValueError:
+                return None, f"'{part.strip()}': depth and factors must be numbers"
+        rows.sort(key=lambda r: r["depth_m"])
+        try:
+            open_pool.parse_depth_season({open_pool.DEPTH_SEASON_KEY: rows})
+        except ValueError as exc:
+            return None, str(exc)
+        return rows, None
 
     @staticmethod
     def _entry_text(rows):

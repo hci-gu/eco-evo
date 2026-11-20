@@ -113,10 +113,14 @@ def test_fish_pairs_carry_the_encounter_theory_rates():
         ('predatory_fish', 'whiting'): 0.08608,
         ('predatory_fish', 'mackerel'): 3.346e-05,
     }
+    # Section 296: the measured-a level, one factor per predator on every
+    # pair (the values above are the encounter chain's).
+    measured = {'planktivorous_fish': 0.36, 'whiting': 0.16, 'predatory_fish': 0.16}
     for (pred, prey), a in expected.items():
         i = env.dm_ids.index(pred)
         j = env.global_fg_order.index(prey)
-        assert float(env.max_intake_mat[i, j]) == pytest.approx(a, rel=1e-6)
+        assert float(env.max_intake_mat[i, j]) == pytest.approx(
+            a * measured.get(pred, 1.0), rel=1e-5)
 
 
 def test_fish_pair_light_settings_keep_a_zero_threshold():

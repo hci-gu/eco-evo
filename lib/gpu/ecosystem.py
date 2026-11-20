@@ -77,6 +77,10 @@ class TensorEcosystem:
             self.reserve_reference = tensor(
                 env.prey_reserve_fill * env.prey_reserve_max)[None, :, None]
         self.handling = tensor(env.handling_time_mat)[None, :, :, None]
+        # Section 295: (T, G) seasonal energy factor per prey
+        # (``prey_energy.build_table``), on the gain and the handling time.
+        self.prey_energy = (tensor(env.prey_energy_table)
+                            if getattr(env, "_has_prey_energy", False) else None)
         # Section 240: DMs with the reserve-room appetite (h = 1, intake
         # capped at B ME - R), mirroring ``predation._reserve_room_cap``.
         # Section 265: DMs with ``attack_choice: fixed`` attack every prey
@@ -422,6 +426,19 @@ class TensorEcosystem:
             self.open_keep = tensor([
                 float(np.exp(-env.fgs[fid].open_pool["rate"])) if fid in open_ids else 1.0
                 for fid in self.ids])[None, :, None]
+            # Section 295: per-month targets (12, G, C) and the tick ->
+            # month weights (T, 12) of a pool with ``outside_depth_season``
+            # (``open_pool.target``); pools without it repeat their target.
+            months = getattr(env, "open_target_months", {}) or {}
+            self.open_months = None
+            if months:
+                self.open_months = tensor(np.stack([
+                    np.asarray(months[fid], dtype=np.float32).reshape(12, -1)
+                    if fid in months else np.repeat(
+                        (np.asarray(env.open_target[fid], dtype=np.float32).reshape(1, -1)
+                         if fid in open_ids else np.zeros((1, self.C), dtype=np.float32)), 12, axis=0)
+                    for fid in self.ids], axis=1))
+                self.open_month_weights = tensor(env.open_month_weights)
             seasons = [env.open_season.get(fid) for fid in open_ids]
             self.open_season = None
             if any(t is not None for t in seasons):
@@ -1190,6 +1207,15 @@ class TensorEcosystem:
             a = a * self.light_mult[light_index.reshape(-1)]
         if self.pair_depth is not None:
             a = a * self.pair_depth
+        # Section 295: the prey's seasonal energy content on the handling
+        # time and the gain per tonne (``predation.energy_gain_matrix``).
+        handling, energy_gain = self.handling, self.energy_gain
+        if self.prey_energy is not None:
+            if light_index is None:
+                raise ValueError("light_index is required with a prey's energy_season")
+            factor = self.prey_energy[light_index.reshape(-1)][:, None, :, None]
+            handling = handling * factor
+            energy_gain = energy_gain * factor
         # Section 276: the moving share forages 1 - tau of the tick too.
         eat = self.forage_shares(actions, forage)
         if self.holling and self.shared_handling:
@@ -1203,14 +1229,14 @@ class TensorEcosystem:
                 attack = torch.where(self.fixed_attack_mask, 1.0, attack)
             prey = pair_visible if pair_visible is not None else visible[:, None]
             lam = self.type3 * (a * prey * prey) + (1.0 - self.type3) * (a * prey)
-            busy = (attack * self.handling * lam).sum(2, keepdim=True)
+            busy = (attack * handling * lam).sum(2, keepdim=True)
             rate = lam / (1.0 + busy + inter)
             eat = forage * attack
         elif self.holling:
             prey = pair_visible if pair_visible is not None else visible[:, None]
             squared = prey * prey
-            type2 = a * prey / (1.0 + a * self.handling * prey + inter)
-            type3 = a * squared / (1.0 + a * self.handling * squared + inter)
+            type2 = a * prey / (1.0 + a * handling * prey + inter)
+            type3 = a * squared / (1.0 + a * handling * squared + inter)
             rate = self.type3 * type3 + (1.0 - self.type3) * type2
         elif self.has_interference:
             rate = a / (1.0 + inter)
@@ -1229,7 +1255,7 @@ class TensorEcosystem:
         if self.reserve_room:
             # Cap a reserve-room DM's demand at the room left in its store
             # (``predation._reserve_room_cap``).
-            potential = (demand * self.energy_gain).sum(2)
+            potential = (demand * energy_gain).sum(2)
             if self.reserve_food:
                 density = torch.where(biomass > 1e-9,
                                       reserve / biomass.clamp_min(1e-9), 0.0)
@@ -1266,7 +1292,7 @@ class TensorEcosystem:
                 parts.append(part * s[:, None])
             actual = torch.where(self.stage_mask[:, None], parts[0] + parts[1], actual)
             juvenile_intake = torch.where(self.stage_mask, parts[0].sum(1), 0.0)
-        gains = (actual * self.energy_gain).sum(2)
+        gains = (actual * energy_gain).sum(2)
         if self.reserve_food:
             density = torch.where(biomass > 1e-9,
                                   reserve / biomass.clamp_min(1e-9), 0.0)
@@ -1871,6 +1897,11 @@ class TensorEcosystem:
         if self.open_on:
             # Section 245: growth and the exchange with the outside density.
             target = self.open_target
+            if self.open_months is not None:
+                if light_index is None:
+                    raise ValueError("light_index is required with an open pool's depth season")
+                w = self.open_month_weights[light_index.reshape(-1)]
+                target = torch.einsum("bm,mgc->bgc", w, self.open_months)
             if self.open_season is not None:
                 if light_index is None:
                     raise ValueError("light_index is required with an open pool's season")

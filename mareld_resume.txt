@@ -26791,3 +26791,61 @@ remain open exactly as described in 71.9 / 71.11.
     density anchors (time in the prey's layer, density met, prey present but not eaten), unmeasured. At copy d
     whiting's krill X falls to ~4, so its potential becomes sensitive to krill availability: the field's Q3 krill
     minimum (294.9) is the one physical candidate left that could give whiting a summer deficit in the field phase.
+
+295 SEASONAL KRILL FORCING: LAYOUT BY MONTH AND ENERGY BY MONTH (2026-11-20; user: "Implementera termerna. Jag
+    tranar om sjalv."; research_notes/"Krillens sasong" (a-umlaut), summary.md saved by the main agent)
+295.1 Why. 294.9: field krill intake is high Q1-Q2 and lowest Q3 on every quarterly series, the chain's krill
+    encounter peaks Q3-Q4. The research fork found two terms of the krill's own distribution and quality that the
+    model lacked: (a) over beds < 100 m krill are present Sep-Apr (0.43 of the >= 250 m level; winter-night IKMT,
+    Bohle & Moksness 1991) and nearly absent May-Aug (0.05; 0 of 14 near-bed HERAS day tows Jun-Jul, only 2 in
+    the box, none aimed at krill) - the library held only the annual 0.303; field whiting stand there (0.77 of
+    GOV whiting in the box, 0.88 of their krill encounter); (b) krill energy ~6 kJ/g WW Oct-Mar, ~4.3 Apr-Sep
+    (Buchholz & Prado-Fiedler 1987; Nowicki 2023). The stock season's Q2 trough (judged, against Q2 stomach
+    pulses) is left until monthly data exist.
+295.2 Engine (both, prey forcing like outside_season, not a behaviour switch; inert without the daylight
+    calendar; the depth season also without a depth map):
+    - open_pool: `outside_depth_season` rows {depth_m, season: 12 factors} (NDM open pool only; each row's mean
+      ~1; linear between depths, held outside). habitat.build makes 12 monthly maps (annual shape x the month's
+      multiplier, each renormalised to equal-cell mean 1: the box total stays density x outside_season, only the
+      layout moves); fg.outside_weight_months; env.open_target_months and env.open_month_weights (T, 12) =
+      the daylight.monthly_value weights, so a tick mixes two months; open_pool.target sums elementwise. GPU:
+      `open_months` (12, G, C) and an einsum on the weights.
+    - prey_energy.py (new): any NDM's `energy_season` (12 factors, mean ~1; refused on a DM, whose energy_content
+      is also its tonne price) -> env.prey_energy_table (T, N_all); predation scales the prey's column of the
+      handling time (h = E / ceiling) and of the energy gain (predation.energy_gain_matrix, also in the
+      reserve-room cap). The benthivores' per-prey ceilings strictly give h ~ E^0.75; one rule h x f is used
+      (krill 4 % of their diet, <= 4 % of h). energy_content stays the annual mean every budget and static
+      diagnostic reads. GPU: `prey_energy` on handling and gain.
+    - Side finding: numpy's BLAS product (w @ x, tensordot) gave intermittently wrong sums (2-3x) in this
+      environment under pytest with torch loaded (OpenBLAS via the micromamba env, numpy 1.26.4); not reproducible
+      in a plain loop. The engine uses no numpy BLAS product (checked: none in lib/environments, lib/world); the
+      new code sums elementwise. Worth knowing for any future numpy matmul in the tick.
+295.3 Library (krill): outside_depth_season rows 99.9 m [1.41758 x4 (Jan-Apr), 0.164835 x4 (May-Aug), 1.41758 x4]
+    (= 0.43 / 0.303, 0.05 / 0.303) and 100 m all 1; energy_season [1.16505 x3, 0.834951 x6, 1.16505 x3]
+    (= 6 / 5.15, 4.3 / 5.15). FG editor: two NDM fields ("Outside Depth Season", rows 'depth: 12 factors |
+    ...'; "Energy Season"), validated with the runtime parsers, removed when emptied or the pool is closed; help
+    texts. tests/test_krill_season.py (keys, monthly maps, target, energy = scaled E and h, GPU parity, library),
+    tests/test_fgconfig_open_pool.py (round trip). Checkpoints before 295 are invalid (payoffs change).
+295.4 Frozen check through the real engine (fix105, seeds 0/1, one year; scratchpad terms295/):
+      library                       whiting fill year   whiting fill minimum      field
+      copy d + 295 terms            0.90 / 0.90         0.75 Sep / 0.85 Sep       min 0.30 May-Jul
+      live + 295 terms              0.98 / 0.98         0.95 Aug / 0.97           (Sep-Feb 0.69-0.73)
+    Copy d + terms reproduces the fork's sized arm (0.90, 0.79 Sep). On the live attack rates whiting stays
+    saturated (krill X 14-33), so the terms show only with the measured-a factors of copy d (294.9; not in the
+    live library: whiting and water column x0.16, planktivores x0.36 on every pair). Planktivores and the water
+    column barely move with the terms. The frozen whiting have no May-June deficit (sated placement, 294.6):
+    retraining is the judge.
+
+296 THE MEASURED-A LEVEL IN THE LIBRARY (2026-11-20; user: "Lagg in kopia d:s faktorer och committa")
+    Every max_intake_rate of the planktivores x0.36, of whiting and the water column x0.16 (13 pairs; a comment
+    with the old value on each), i.e. copy d of 294.9 (research_notes/"Motesfaktorn per grupp"/scripts/
+    make_copy_d.py): the level of the field anchors that measure a without the ration (V1 herring clearance at
+    R ~ L; Rindorf & Gislason 2005 whiting clupeid slope, transferred to the water column [J]), one factor per
+    predator [J] so the diet shares and budget_gate are unchanged. Mackerel (no anchor) and the benthivores
+    (separate case, 294.4) unchanged. The library is identical as data to the copy run in 295.4 (copy d + the
+    295 terms): frozen fix105 whiting fill 0.90 (minimum 0.75-0.85 in Sep), planktivores 0.87-0.88, water column
+    0.96; field minimum whiting 0.30 May-Jul. The ration / density anchors sit x5-30 lower; that gap (time in
+    the prey's layer, density met, prey present but not eaten) stays unmeasured and is left to the trained
+    behaviour. The derived g and the growth budget do not read a. Checkpoints before 295/296 are invalid; the
+    user retrains. Note: train_gpu --profile sanity (16 deltas x 3 worlds, 60 x 60) runs out of memory on the
+    12 GB GPU before and after 295 (encounter_view); 4 deltas x 1 world runs.
