@@ -1,0 +1,5 @@
+planktivorous_fish_preys_on_zooplankton: 0.0122 -> 0.004392
+whiting_preys_on_planktivorous_fish: 0.05913 -> 0.00969732
+whiting_preys_on_benthivorous_fish: 0.2455 -> 0.002946
+planktivorous_fish_preys_on_krill: 0.0214 -> 0.00026536
+whiting_preys_on_krill: 0.041 -> 0.0004059

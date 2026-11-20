@@ -1,0 +1,68 @@
+seed 0; /tmp/claude-1001/-home-simon-eco-evo/fbf4a34a-3803-4ba2-a6c2-91405d92c671/scratchpad/bedlight/fix105_frozen; library /tmp/claude-1001/-home-simon-eco-evo/fbf4a34a-3803-4ba2-a6c2-91405d92c671/scratchpad/motesfaktor/lib_d.yaml
+
+planktivorous_fish: year T 0.94, uncapped 0.367, realised 0.259 (cut 0.108, uncapped / realised 1.42), fill 0.879
+  prey                         share   spare  unc w/o
+  zooplankton                  0.665   0.673    0.168
+  krill                        0.335   0.327    0.273
+  month       J     F     M     A     M     J     J     A     S     O     N     D
+  T        0.98  0.98  0.98  0.98  0.94  0.88  0.90  0.90  0.91  0.93  0.96  0.98
+  unc      0.14  0.18  0.35  0.61  0.68  0.56  0.46  0.37  0.34  0.29  0.22  0.16
+  feed     0.13  0.17  0.28  0.44  0.55  0.38  0.32  0.28  0.14  0.14  0.15  0.14
+  fill     0.74  0.66  0.67  0.73  0.91  0.99  0.99  0.99  0.97  0.93  0.88  0.82
+  field    0.50  0.36  0.26  0.20  0.32  0.81  0.94  0.96  0.88  0.88  0.76  0.68
+
+benthivorous_fish: year T 0.95, uncapped 0.933, realised 0.638 (cut 0.295, uncapped / realised 1.46), fill 0.977
+  prey                         share   spare  unc w/o
+  benthic_infauna              0.473   0.475    0.914
+  mobile_epifauna              0.350   0.340    0.927
+  norway_lobster               0.117   0.115    0.929
+  krill                        0.034   0.037    0.932
+  planktivorous_fish           0.024   0.032    0.933
+  whiting                      0.001   0.001    0.933
+  month       J     F     M     A     M     J     J     A     S     O     N     D
+  T        0.93  0.95  0.96  0.96  0.97  0.96  0.94  0.95  0.96  0.97  0.95  0.94
+  unc      0.92  0.94  0.94  0.94  0.92  0.94  0.92  0.93  0.93  0.95  0.94  0.93
+  feed     0.63  0.40  0.68  0.71  0.69  0.64  0.65  0.65  0.63  0.66  0.66  0.66
+  fill     0.99  0.94  0.91  0.94  0.98  0.99  0.99  0.99  0.99  1.00  1.00  1.00
+  field    0.76  0.76  0.62  0.47  0.33  0.33  0.33  0.57  0.81  0.81  0.81  0.79
+
+whiting: year T 0.90, uncapped 0.583, realised 0.384 (cut 0.199, uncapped / realised 1.52), fill 0.948
+  prey                         share   spare  unc w/o
+  krill                        0.870   0.918    0.175
+  mobile_epifauna              0.093   0.057    0.555
+  planktivorous_fish           0.029   0.020    0.574
+  zooplankton                  0.006   0.004    0.581
+  benthivorous_fish            0.002   0.001    0.582
+  month       J     F     M     A     M     J     J     A     S     O     N     D
+  T        0.87  0.91  0.96  0.98  0.97  0.93  0.92  0.91  0.92  0.84  0.84  0.85
+  unc      0.59  0.67  0.72  0.73  0.70  0.64  0.60  0.51  0.42  0.49  0.52  0.54
+  feed     0.36  0.37  0.38  0.42  0.42  0.44  0.41  0.38  0.35  0.41  0.36  0.34
+  fill     0.97  0.97  0.94  0.94  0.95  0.97  0.95  0.93  0.91  0.92  0.97  0.97
+  field    0.69  0.69  0.56  0.43  0.30  0.30  0.30  0.52  0.73  0.73  0.73  0.71
+
+predatory_fish: year T 0.97, uncapped 0.476, realised 0.379 (cut 0.098, uncapped / realised 1.26), fill 0.960
+  prey                         share   spare  unc w/o
+  krill                        0.452   0.282    0.311
+  planktivorous_fish           0.344   0.423    0.354
+  benthivorous_fish            0.117   0.164    0.442
+  whiting                      0.085   0.131    0.450
+  zooplankton                  0.002   0.001    0.476
+  mackerel                     0.000   0.000    0.476
+  month       J     F     M     A     M     J     J     A     S     O     N     D
+  T        0.97  0.97  0.97  0.96  0.96  0.96  0.97  0.97  0.97  0.97  0.97  0.97
+  unc      0.40  0.43  0.47  0.51  0.51  0.51  0.50  0.53  0.51  0.45  0.42  0.39
+  feed     0.36  0.38  0.39  0.44  0.46  0.42  0.42  0.39  0.35  0.34  0.35  0.35
+  fill     0.96  0.97  0.98  0.93  0.90  0.91  0.93  0.97  0.98  0.98  0.98  0.97
+  field    0.71  0.71  0.71  0.71  0.71  0.71  0.71  0.71  0.71  0.71  0.71  0.71
+
+mackerel: year T 0.97, uncapped 0.557, realised 0.282 (cut 0.275, uncapped / realised 1.97), fill 0.930
+  prey                         share   spare  unc w/o
+  krill                        0.673   0.749    0.282
+  zooplankton                  0.194   0.114    0.504
+  planktivorous_fish           0.134   0.136    0.524
+  month       J     F     M     A     M     J     J     A     S     O     N     D
+  T        0.96  0.96  0.97  0.97  0.98  0.98  0.97  0.97  0.97  0.97  0.97  0.96
+  unc      0.50  0.52  0.62  0.67  0.65  0.59  0.59  0.55  0.51  0.50  0.51  0.51
+  feed     0.19  0.20  0.41  0.67  0.64  0.57  0.26  0.15  0.15  0.15  0.17  0.18
+  fill     1.00  1.00  0.97  0.78  0.63  0.77  0.98  1.00  1.00  1.00  1.00  1.00
+  field    0.70  0.58  0.45  0.37  0.13  0.51  0.57  0.91  1.00  1.00  0.94  0.85

@@ -1,0 +1,49 @@
+=== A. Krill pairs: field-implied a against today's a_eff (class 100-150 m unless stated)
+    factor = a_field / a_eff; D_lib = library krill target in the class and month
+
+  whiting_preys_on_krill: library a 0.041, h 159.5
+    NE+NW North Sea Q1 1981, 25-29 cm (ICES DB counts, GER upper)  Jan R 0.34/0.45/0.52 %BW/d; a_eff 0.0308 (x0.75); D_lib 5.0
+      factor at D_lib: 0.0088 (0.0063-0.0105);  at D 3: 0.0147; D 8: 0.0055; D 20: 0.0022   [D on F]
+    Skagerrak Q1 1981, 21 cm (ICES DB counts, GER upper)           Jan R 0.11/0.14/0.16 %BW/d; a_eff 0.0308 (x0.75); D_lib 5.0
+      factor at D_lib: 0.0024 (0.0019-0.0028);  at D 3: 0.0040; D 8: 0.0015; D 20: 0.0006   [D on F]
+    Skagerrak Apr 1991 (0.30 of the model ceiling)                 Apr R 0.59/0.70/0.82 %BW/d; a_eff 0.0279 (x0.68); D_lib 3.0
+      factor at D_lib: 0.0299 (0.0232-0.0375);  at D 3: 0.0300; D 8: 0.0112; D 20: 0.0045   [D on F]
+    Oslofjord Nov (Onsrud 2004, 0.09-0.22 of ceiling)              Nov R 0.24/0.41/0.60 %BW/d; a_eff 0.0322 (x0.79); D_lib 6.5
+      factor at D_lib: 0.0057 (0.0032-0.0091);  at D 3: 0.0123; D 8: 0.0046; D 20: 0.0019   [D on F, fjord]
+    Oslofjord Mar (Onsrud 2004, 0.26-0.60 of ceiling)              Mar R 0.61/0.94/1.41 %BW/d; a_eff 0.0279 (x0.68); D_lib 5.0
+      factor at D_lib: 0.0279 (0.0147-0.0627);  at D 3: 0.0466; D 8: 0.0175; D 20: 0.0070   [D on F, fjord]
+    Oslofjord Jun (Onsrud 2004, 0.08-0.18 of ceiling)              Jun R 0.19/0.29/0.43 %BW/d; a_eff 0.0288 (x0.70); D_lib 3.0
+      factor at D_lib: 0.0095 (0.0061-0.0153);  at D 3: 0.0095; D 8: 0.0036; D 20: 0.0014   [D on F, fjord]
+
+  planktivorous_fish_preys_on_krill: library a 0.0214, h 57.8
+    group Nov-Mar central (herring 0.554, pout 0.35)               Jan R 0.10/0.24/0.46 %BW/d; a_eff 0.0115 (x0.54); D_lib 5.0
+      factor at D_lib: 0.0108 (0.0044-0.0217);  at D 3: 0.0182; D 8: 0.0068; D 20: 0.0027   [D/J]
+    pout NE North Sea 1980 (ICES DB, GER)                          Jan R 0.20/0.20/0.20 %BW/d; a_eff 0.0115 (x0.54); D_lib 5.0
+      factor at D_lib: 0.0090 (0.0090-0.0090);  at D 3: 0.0150; D 8: 0.0056; D 20: 0.0023   [D on F]
+    pout Oslofjord Mar (Onsrud, GER)                               Mar R 0.51/0.75/1.14 %BW/d; a_eff 0.0119 (x0.56); D_lib 5.0
+      factor at D_lib: 0.0371 (0.0238-0.0623);  at D 3: 0.0621; D 8: 0.0233; D 20: 0.0093   [D on F, fjord]
+    herring Oslofjord Nov-Mar (Onsrud)                             Jan R 0.03/0.15/0.53 %BW/d; a_eff 0.0115 (x0.54); D_lib 5.0
+      factor at D_lib: 0.0067 (0.0013-0.0254);  at D 3: 0.0111; D 8: 0.0042; D 20: 0.0017   [D on F, fjord]
+  whiting: geometric mean of central factors, shelf rows 0.0086 (n 3), all rows 0.0099; span of centrals 0.0024-0.0299
+  planktivorous_fish: geometric mean of central factors, shelf rows 0.0099 (n 2), all rows 0.0124; span of centrals 0.0067-0.0371
+
+=== B. Whiting on fish prey: Rindorf & Gislason 2005 (North Sea, Sep 1988-89, 20-35 cm whiting)
+    field initial slope = K x Wmax / half-saturation; half-saturation t/km2 = q rho x w / (A x c)
+  clupeids (Type II, 25-35 cm): half-saturation 0.063 t/km2 (0.0049-0.57); field slope 0.0178 (0.00118-0.527) km2/t/tick
+    library whiting_preys_on_planktivorous_fish a 0.05913 x Sep q 1.02; bed classes <100 x2.01, 100-150 x0.95
+    factor vs equal-cell a: 0.295; vs Rindorf's bed mix (0.8 <100, 0.2 100-150): 0.164; corner span 0.0109-8.72   [D on F, 3 J]
+    (half-saturation reading at today's h 207.2: a = 1/(half x h) = 0.0772, x1.28 of the library - keeps a, puts the field plateau in a ceiling)
+  gadoids (Type II, 25-35 cm): half-saturation 0.186 t/km2 (0.0268-0.97); field slope 0.0040 (0.00044-0.068) km2/t/tick
+    library whiting_preys_on_benthivorous_fish a 0.2455 x Sep q 1.02; bed classes <100 x1.37, 100-150 x1.09
+    factor vs equal-cell a: 0.016; vs Rindorf's bed mix (0.8 <100, 0.2 100-150): 0.012; corner span 0.0013-0.27   [D on F, 3 J]
+    (half-saturation reading at today's h 143.6: a = 1/(half x h) = 0.0374, x0.15 of the library - keeps a, puts the field plateau in a ceiling)
+
+=== C. Planktivores on zooplankton (clearance-based), against the 243.3 chain (library 0.0122)
+  V1 herring YOY: field 46 L/g/h (daylight initial slope; WSC from stomachs vs Z 0-30 m)
+    vs chain, size-free R (the library's convention): factor 0.053 (0.020-0.105)
+    vs chain, R proportional to L: factor 0.59 (0.51-0.66)
+    transfer to the box adults [J]: size-free -> the YOY factor applies as is; R ~ L -> the chain is x0.78 at the box size structure (group 0.0096 vs 0.0122), so the library factor is 0.40-0.51
+  V2 sprat 12 cm: field 0.5 m3/h per fish vs chain 0.86 m3/h (R 5.5 cm, f 0.5, v 0.6 BL/s, p 0.7): factor 0.58
+  V2 sprat 12 cm: field 1.0 m3/h per fish vs chain 0.86 m3/h (R 5.5 cm, f 0.5, v 0.6 BL/s, p 0.7): factor 1.17
+    (f 0.5 was chosen with this datum (planktivores_encounter V2), so V2 is not independent of the chain's scan term)
+  Engine temperature: the library a is at the annual-mean temperature and the engine multiplies it by q(T); planktivore q Jul-Nov 1.07-1.36 (summer ~1.3): at the anchors' summer temperatures the factor on the library a is x0.75-0.85 lower [D on J]

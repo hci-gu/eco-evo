@@ -26668,10 +26668,12 @@ remain open exactly as described in 71.9 / 71.11.
     ration/Cmax flat 0.42-0.49 by quarter; the gadoid appetite depression is spawning-bound). "Krillparen mot
     vintermagar" verdict C is revised for whiting (it rested on herring proxies without krill).
 294.4 Encounter-theory excess (research, "Motesteorins overskott"): no single term of a = scan x area x v_rel x T
-    x N_t x p x F x light x overlap carries it; the sized corrections explain 1-26 %. The excess is common within
-    each predator: an unmeasured search-effort / encounter-realisation factor x0.25-0.35 (planktivores, whiting,
-    water column, mackerel); the field constrains only the whole product (herring clearance, krill in winter, cod
-    on capelin, whiting plateaus). Benthivores are separate (would need x0.03-0.06; the ceiling side or saturated
+    x N_t x p x F x light x overlap carries it; the sized corrections explain 1-26 %. The agent read the excess as
+    common within each predator, an unmeasured search-effort / encounter-realisation factor x0.25-0.35
+    (planktivores, whiting, water column, mackerel); the field constrains only the whole product (herring
+    clearance, krill in winter, cod on capelin, whiting plateaus). CORRECTED in 294.8: the whole-product anchors
+    are prey-specific (krill ~0.01, fish ~0.16, zooplankton 0.36), not one shared factor; the x0.25-0.35 was model
+    algebra on the yardstick X_eff, not a field value. Benthivores are separate (would need x0.03-0.06; the ceiling side or saturated
     beds). A time share 0.5-0.68 is rejected (predator_share; a gut buffer is open). 293's speed reading corrected
     (see 293).
 294.5 Cost of carrying reserve (research, "Reservens kostnad"): none of field size. Gadoid liver ~+0.05 RM at fill 1,
@@ -26700,9 +26702,92 @@ remain open exactly as described in 71.9 / 71.11.
     Reading [J]: a sated policy's placement says nothing about where a hungry one would forage, so a frozen test of a
     lower potential cannot judge the fill cycle; that needs retraining. The krill supply season itself is in the
     field's phase for whiting.
-294.7 Recommended path (user's choice pending): the root of both over-eating and clumping is the surplus
-    potential (288: hungry predators that follow their prey reverse the swamping payoff). Next: a derivation of
-    the encounter-realisation factor per group from field whole-product data (the user decides whether that is
-    allowed; it uses the field ration's information), applied to a library copy and tested frozen for hunger and the
+294.7 Recommended path: the root of both over-eating and clumping is the surplus potential (288: hungry
+    predators that follow their prey reverse the swamping payoff). Next: a derivation of the encounter-realisation
+    factor per group from field whole-product data, applied to a library copy and tested frozen for hunger and the
     following payoff, then retraining; in parallel the water column -> benthivores pair (J at the bed ~2x field
-    flow, 278.9). The engine conventions (reward currency, s* in g) come after the potential.
+    flow, 278.9). The engine conventions (reward currency, s* in g) come after the potential. Done as 294.8 (user:
+    "Ta fram harledningen av faktorn per grupp"). Only clearance-based anchors leave the field ration an
+    independent test; stomach-based ones share its data (the earlier "the ration stops being independent" was
+    true for those only).
+294.8 The factor per group from field whole-product anchors (main-agent fork; research_notes/"Motesfaktorn per
+    grupp" (o-umlaut), summary.md saved by the main agent; derivation only, every field number reused from earlier
+    notes). Factor = field a / today's chain a under the anchor's own conditions; no model output, FIELD_QB or
+    frozen potential set a value.
+      pair                          anchor                                   factor (range)            basis
+      planktivores -> zooplankton   Arrhenius & Hansson 1999 YOY herring V1  0.36 (R ~ L) / 0.04       clearance,
+                                                                            (size-free R, the        independent
+                                                                            library's convention)
+      planktivores -> zooplankton   Kulke 2018 field sprat V2                0.58-1.17                 not independent
+                                                                                                       (scan 0.5 set
+                                                                                                       with it)
+      planktivores -> krill         winter stomachs (group, pout, Oslofjord) 0.012 (0.007-0.037)       stomach, on a x D
+      whiting -> krill              ICES DB 1981 Q1, Skagerrak Apr 1991,     0.0099 (0.0024-0.030)     stomach, on a x D
+                                    Oslofjord Nov/Mar/Jun
+      whiting -> planktivores       Rindorf & Gislason 2005 low-density      0.16 (0.30 equal-cell;    stomach + trawl,
+                                    slope                                    corners 0.011-8.7)        independent [J]
+      whiting -> benthivores        same, gadoid prey                        0.012, weak (mixed prey)
+    Water column and mackerel: no anchor (open; transfers would be [J]); benthivores excluded; no anchor for
+    whiting -> epifauna. The anchors are NOT shared within a predator (>10x between prey types). The krill factor is
+    winter-weighted and on a x D with the site density unmeasured.
+    Contradictions resolved: the Aptit note's f 0.03-0.26 was on the yardstick X_eff 4.47; on the per-cell X (~24,
+    294.6) it is 0.006-0.05, in line with the krill rows. The model-side "needed" factors quoted in this arc for
+    whiting (0.15, 0.114, ~0.03) differ only by the algebra (X_eff vs per-cell X, placement) and set nothing. The
+    220-era "passes" for Rindorf converted the field half-saturation through the engine's h (x1.28 today); the
+    field's own low-density slope gives x0.16-0.30. The planktivore note kept size-free R although V1 favours
+    R ~ L; under size-free R, V1 gives x0.04-0.05.
+    Frozen sizing on library copies (scratchpad motesfaktor/lib_a.yaml: whiting -> krill x0.0099, -> planktivores
+    x0.164, -> benthivores x0.012, planktivores -> krill x0.0124, -> zooplankton x0.36; fix105, seeds 0/1, one
+    year): planktivores uncapped 0.54 -> 0.25-0.27, fill 0.91 -> 0.70-0.72, monthly fill Feb 0.14, Jun-Aug
+    0.98-0.99, Dec 0.55 (field 0.36 / 0.81-0.96 / 0.68, minimum April): food-limited Nov-Mar; whiting uncapped
+    0.75 -> 0.45-0.48, fill 0.87-0.94, its potential moves onto epifauna (0.66, unanchored), fill minimum Oct-Nov
+    (the sated-placement artefact of 294.6). Copy b (zooplankton x0.042): planktivores fill 0.25-0.27, unviable.
+    budget_gate on copy a: planktivores -> krill, whiting -> krill, -> epifauna, -> zooplankton go OFF;
+    planktivores -> krill implied M2 0.10 vs booked 2.07. As an annual factor the winter krill value contradicts
+    the field diets the krill pairs were booked from.
+    Next (user: "Gor steg 1, krillsidan"): research on krill intake by season with krill density measured at the
+    same sites, and where the booked krill diet shares come from (research_notes/"Krillsidan"; running).
+294.9 The krill side (main-agent fork; research_notes/"Krillsidan", summary.md saved by the main agent; user:
+    "Gor steg 1, krillsidan"). Per season and predator, field krill ration against today's chain:
+    - On its booked flow (equal cells, foraging the whole tick, shared handling; booked_level.py, policy-free) the
+      krill factor is 0.022-0.032, beside each predator's other pairs (planktivores krill 0.029 / zooplankton
+      0.024; whiting 0.022 / fish 0.030 / epifauna 0.059; water column 0.029 / fish 0.015-0.034; mackerel 0.032 /
+      fish 0.036 / Macy zooplankton 0.095; benthivores 0.007). The winter stomach anchors (~0.01) agree within
+      conventions (100-150 m class, krill-only handling, winter ration). Krill is not the outlier.
+    - 294.8's split (krill ~0.01, fish ~0.16, zooplankton ~0.36) is a split by anchor METHOD: ration / mean density
+      (every krill row, every booked flow) 0.01-0.05; clearance or density-gradient slope (V1, Kulke, Rindorf,
+      Macy) 0.16-1. The x5-30 between them is what the chain does not represent (time in the prey's layer, density
+      met, prey present but not eaten). Copy a mixed the two and broke the gate.
+    - Seasonal: every quarterly series has field krill intake high in Q1-Q2 and lowest in Q3; the chain's krill
+      encounter peaks Q3-Q4 (summer ingestion Q10, the pool's Q2 0.6 / Q4 1.3 season), so a constant factor
+      misplaces krill x3-5 between quarters. Candidate physical drivers not in the model: krill vertical
+      availability (dense overwintering layer; the pool's depth shape is fixed), krill size, the library's Q2 trough
+      (spring trawls, against Q2 stomach pulses).
+    - The booked pout krill ration (~0.8 %BW/d) is at or above the top of measured pout winter rations: the
+      planktivores' krill share may be x1.5-4 high [J]. No co-located stomach ration and krill density exists for
+      any model species; settling datum: both measured together in Skagerrak / Oslofjord, Q1 and Q3.
+    - Copy c (one booked-flow factor per predator on every pair: 0.026 / 0.028 / 0.031 / 0.049): gate passes, but
+      every frozen group starves (uncapped planktivores 0.09, whiting 0.26-0.33, water column 0.22, mackerel
+      0.065 vs needs 0.26 / 0.39 / 0.40 / 0.28): the equal-cell algebra does not carry into the engine, and a
+      booked-flow factor is a calibration to Q/B in any case.
+    Choice (user: "Gor det"): option A, the level where a is measured without the ration - one factor per predator
+    on every pair from the clearance / slope anchors (sharing within a predator [J]): planktivores 0.36 (V1, R ~ L),
+    whiting 0.16 (Rindorf clupeid slope; arm d2 0.30 at equal cells), water column whiting's slope [J]; mackerel
+    open (left as is), benthivores left. Frozen test on copies d / d2 (Motesfaktorn per grupp/scripts/
+    make_copy_d.py), then retraining; the field ration stays an independent test.
+    Result (fix105 frozen, seeds 0/1, one year; tables/fill_decomp_copy_d*_s*.txt, budget_gate_copy_d*.txt):
+      group          uncapped live -> d (d2)       realised   fill live -> d (d2)   monthly fill d (field)
+      planktivores   0.54 -> 0.35-0.37 (same)      0.26       0.91 -> 0.88           Feb-Mar 0.66-0.67, Jun-Aug
+                                                                                     0.98-0.99 (Mar-Apr 0.20-0.26,
+                                                                                     Aug 0.96); Jan-Feb unc ~ feed
+      whiting        0.75 -> 0.57-0.58 (0.64-0.65)  0.38-0.39 0.98 -> 0.93-0.95 (0.97) flat 0.87-0.97
+      water column   0.76 -> 0.47-0.48 (0.58)       0.38-0.39 0.99 -> 0.96 (0.98)      flat 0.90-0.99
+      mackerel, benthivores unchanged (no factor).
+    The diet gate's OFF list is identical to the live library's (one factor per predator keeps the shares). The
+    measured-a level removes 25-40 % of the predators' potential but the room cap still binds (uncapped /
+    realised 1.2-1.5): whiting and the water column stay at fill ~0.93-0.98, so this level does not make them
+    hungry and does not reach the clumping lever (288). The planktivores become food-limited in Jan-Feb and dip to
+    0.66 (field 0.20-0.26 in Mar-Apr). The rest of the gap is the x5-30 between clearance / slope and ration /
+    density anchors (time in the prey's layer, density met, prey present but not eaten), unmeasured. At copy d
+    whiting's krill X falls to ~4, so its potential becomes sensitive to krill availability: the field's Q3 krill
+    minimum (294.9) is the one physical candidate left that could give whiting a summer deficit in the field phase.

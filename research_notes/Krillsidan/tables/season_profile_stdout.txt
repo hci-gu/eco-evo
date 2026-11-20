@@ -1,0 +1,25 @@
+factor profile = field krill intake index / chain a_eff x D_lib, both over their annual mean; Q1..Q4
+
+planktivorous_fish: chain a_eff x D_lib by quarter (mean 1):  0.68  0.58  1.50  1.25   [light 0.94 1.10 1.06 0.90; q 0.73 0.89 1.30 1.08; krill season 1.00 0.60 1.10 1.30]
+  pout, Albert 1994 (winter = Feb-Apr; summer = Jul-Sep), ration flat
+    field index  1.24  0.93  0.81  1.02; factor profile  1.53  1.34  0.45  0.68; max/min 3.4
+  pout, same, stomach content higher in winter (index 1.5 / 1) [J on F Fig. 10]
+    field index  1.53  0.76  0.66  1.05; factor profile  1.86  1.09  0.36  0.69; max/min 5.1
+
+whiting: chain a_eff x D_lib by quarter (mean 1):  0.97  0.56  1.09  1.38   [light 1.00 1.00 1.00 1.00; q 0.98 0.95 1.00 1.07; krill season 1.00 0.60 1.10 1.30]
+  whiting in-area/Oslofjord: Q1 Skag 1981 0.14 & Oslof Mar 0.94 (gm 0.36), Q2 Skag Apr 1991 0.70 & Oslof Jun 0.29 (gm 0.45), Q3 none (NS 0.01 of ceiling; Skag 2022 ~0) -> 0.05 [J], Q4 Oslof Nov 0.41; %BW/d directly
+    field index  1.13  1.42  0.16  1.29; factor profile  0.98  2.11  0.12  0.79; max/min 17.5
+  whiting, Oslofjord only (Mar 0.94, Jun 0.29, Q3 = Jun, Nov 0.41)
+    field index  1.95  0.60  0.60  0.85; factor profile  1.89  1.01  0.52  0.58; max/min 3.7
+
+predatory_fish: chain a_eff x D_lib by quarter (mean 1):  0.73  0.75  1.46  1.07   [light 0.78 1.34 1.22 0.66; q 0.90 0.88 1.04 1.17; krill season 1.00 0.60 1.10 1.30]
+  saithe CRR 219 1991, ages 3-5 krill %W
+    field index  0.43  3.15  0.38  0.03; factor profile  0.46  3.31  0.21  0.02; max/min 138.2
+  saithe CRR 164 1981, 400-699 mm, Q1+Q4 / Q2+Q3
+    field index  1.09  0.91  0.91  1.09; factor profile  1.37  1.12  0.57  0.94; max/min 2.4
+
+mackerel: chain a_eff x D_lib by quarter (mean 1):  0.65  0.61  1.54  1.20   [light 0.90 1.15 1.09 0.86; q 0.73 0.89 1.30 1.08; krill season 1.00 0.60 1.10 1.30]
+  mackerel CRR 219 1991 (Q1 ages 1-2 only)
+    field index  2.95  0.18  0.85  0.02; factor profile  3.36  0.22  0.41  0.01; max/min 346.5
+  mackerel CRR 164 1981 ages 3-7
+    field index  2.01  0.46  0.48  1.05; factor profile  2.45  0.61  0.25  0.70; max/min 9.8

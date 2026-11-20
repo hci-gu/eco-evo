@@ -1,0 +1,38 @@
+library: live fgconfig/fg_library.yaml; densities t/km2 at the manifest inference start
+
+planktivorous_fish: B 4.722; booked field feeding level S 0.205 (X_field 0.258); chain X at T 1, equal cells 9.91; common factor X_field / X_chain 0.0260
+  prey                        M2      B   B_vis  R %BW/d    h R       enc      f_j
+  zooplankton             1.6120   9.72   9.722    0.909  0.118   0.11861   0.0241
+  krill                   2.0710   5.00   5.000    0.601  0.087   0.06481   0.0292
+
+whiting: B 0.446; booked field feeding level S 0.409 (X_field 0.691); chain X at T 1, equal cells 24.87; common factor X_field / X_chain 0.0278
+  prey                        M2      B   B_vis  R %BW/d    h R       enc      f_j
+  krill                   0.1873   5.00   5.000    0.575  0.229   0.11263   0.0216
+  mobile_epifauna         0.0761   3.78   1.096    0.177  0.053   0.01271   0.0588
+  planktivorous_fish      0.0545   4.72   0.375    0.158  0.082   0.02215   0.0302
+  benthivorous_fish       0.1067   1.53   0.017    0.100  0.036   0.00422   0.1004
+  zooplankton             0.0039   9.72   9.722    0.023  0.008   0.00134   0.0734
+
+predatory_fish: B 0.617; booked field feeding level S 0.346 (X_field 0.530); chain X at T 1, equal cells 17.09; common factor X_field / X_chain 0.0310
+  prey                        M2      B   B_vis  R %BW/d    h R       enc      f_j
+  planktivorous_fish      0.1740   4.72   1.754    0.365  0.199   0.04118   0.0339
+  krill                   0.1190   5.00   5.000    0.264  0.111   0.03460   0.0292
+  benthivorous_fish       0.0580   1.53   0.103    0.039  0.015   0.00975   0.0154
+  whiting                 0.1570   0.45   0.057    0.031  0.013   0.00488   0.0244
+  mackerel                0.0210   0.85   0.119    0.008  0.006   0.00000   7.6163
+  zooplankton             0.0017   9.72   9.722    0.007  0.003   0.00030   0.0923
+
+mackerel: B 0.850; booked field feeding level S 0.093 (X_field 0.102); chain X at T 1, equal cells 2.10; common factor X_field / X_chain 0.0488
+  prey                        M2      B   B_vis  R %BW/d    h R       enc      f_j
+  zooplankton             0.0900   9.72   9.722    0.282  0.048   0.00817   0.0952
+  krill                   0.1250   5.00   5.000    0.201  0.038   0.01761   0.0315
+  planktivorous_fish      0.0186   4.72   0.047    0.028  0.007   0.00217   0.0360
+
+benthivorous_fish: B 1.528; booked field feeding level S 0.504 (X_field 1.015); chain X at T 1, equal cells 141.58; common factor X_field / X_chain 0.0072
+  prey                        M2      B   B_vis  R %BW/d    h R       enc      f_j
+  benthic_infauna         0.0396  93.61  18.722    0.665  0.186   0.47929   0.0070
+  mobile_epifauna         0.5400   3.78   2.342    0.366  0.236   0.25764   0.0072
+  planktivorous_fish      0.1023   4.72   1.717    0.087  0.048   0.04173   0.0105
+  krill                   0.0350   5.00   5.000    0.031  0.014   0.01815   0.0087
+  norway_lobster          0.0225   4.58   0.092    0.018  0.013   0.02823   0.0033
+  whiting                 0.1800   0.45   0.139    0.014  0.006   0.00522   0.0139
