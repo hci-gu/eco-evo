@@ -1,0 +1,29 @@
+seed 0, 3 yr, frozen /tmp/claude-1001/-home-simon-eco-evo/87acac2d-411e-4442-bd9b-92978f209b16/scratchpad/fix104_u1267
+library /tmp/claude-1001/-home-simon-eco-evo/fbf4a34a-3803-4ba2-a6c2-91405d92c671/scratchpad/refuge_test/lib_base.yaml: exposed_share 0.2, refuge k 2.50 /yr; infauna half-sat 1/(a h) 0.349 t/km2 accessible
+--- year 1: Lloyd 66.1; benthivores B/B0 1.03; infauna B/B0 1.042, grid A/K_A 0.821; fill 0.995; infauna share of eaten tonnes 0.730
+    elasticity on k: eaten -0.014 (days p10 -0.044, p90 +0.012); pre-cap +0.022 (p10 -0.006, p90 +0.050)
+    stays at k > 8 (days): mean 2.48, p90 5, max 22; accessible infauna in k > 8 cells p10 (mean over days) 8.94 t/km2
+         k  share B pot t/t/d eat t/t/d   fill  infA/K_A infA t/km2  epi/K inf share
+      <0.5    0.015    0.0214    0.0184  0.894     0.741      17.46  0.401     0.681
+     0.5-2    0.031    0.0215    0.0177  0.959     0.691      16.47  0.357     0.696
+       2-8    0.093    0.0222    0.0176  0.983     0.656      15.91  0.320     0.714
+      8-32    0.215    0.0239    0.0175  0.993     0.643      15.66  0.289     0.722
+       >32    0.646    0.0245    0.0168  0.995     0.581      14.17  0.258     0.720
+--- year 2: Lloyd 48.7; benthivores B/B0 1.20; infauna B/B0 1.064, grid A/K_A 0.819; fill 0.995; infauna share of eaten tonnes 0.818
+    elasticity on k: eaten -0.028 (days p10 -0.059, p90 +0.003); pre-cap +0.007 (p10 -0.029, p90 +0.049)
+    stays at k > 8 (days): mean 1.96, p90 4, max 21; accessible infauna in k > 8 cells p10 (mean over days) 4.52 t/km2
+         k  share B pot t/t/d eat t/t/d   fill  infA/K_A infA t/km2  epi/K inf share
+      <0.5    0.015    0.0238    0.0195  0.902     0.649      15.65  0.242     0.781
+     0.5-2    0.036    0.0238    0.0190  0.956     0.549      13.55  0.168     0.807
+       2-8    0.125    0.0242    0.0188  0.982     0.480      12.10  0.119     0.828
+      8-32    0.272    0.0255    0.0185  0.994     0.488      12.43  0.110     0.831
+       >32    0.552    0.0258    0.0175  0.995     0.509      12.98  0.168     0.788
+--- year 3: Lloyd 48.2; benthivores B/B0 1.40; infauna B/B0 1.050, grid A/K_A 0.788; fill 0.995; infauna share of eaten tonnes 0.855
+    elasticity on k: eaten -0.014 (days p10 -0.053, p90 +0.019); pre-cap +0.023 (p10 -0.019, p90 +0.066)
+    stays at k > 8 (days): mean 1.81, p90 3, max 18; accessible infauna in k > 8 cells p10 (mean over days) 2.47 t/km2
+         k  share B pot t/t/d eat t/t/d   fill  infA/K_A infA t/km2  epi/K inf share
+      <0.5    0.015    0.0246    0.0199  0.914     0.561      13.54  0.138     0.828
+     0.5-2    0.038    0.0240    0.0190  0.959     0.466      11.50  0.098     0.840
+       2-8    0.135    0.0237    0.0185  0.981     0.394       9.89  0.071     0.847
+      8-32    0.281    0.0245    0.0179  0.993     0.402      10.12  0.065     0.849
+       >32    0.530    0.0264    0.0180  0.995     0.438      11.08  0.091     0.837

@@ -1,0 +1,46 @@
+Barents cod Rybachy Bank Jun 1988 (Fortunatova, Bajkov, Santos)
+  W  1000 g T 1.50 C: Hansson F(T) 0.434 Cmax 1.12 %BW/d; Jobling Cmax 1.59 %BW/d
+    total ration 2.20 -> 1.97 (H) 1.39 (J) of Cmax; prey part 1.85 %BW/d -> 1.65 (H) 1.17 (J)
+    total ration 2.10 -> 1.88 (H) 1.32 (J) of Cmax; prey part 1.77 %BW/d -> 1.58 (H) 1.11 (J)
+    total ration 0.64 -> 0.57 (H) 0.40 (J) of Cmax; prey part 0.54 %BW/d -> 0.48 (H) 0.34 (J)
+  W  2100 g T 1.50 C: Hansson F(T) 0.434 Cmax 0.97 %BW/d; Jobling Cmax 1.37 %BW/d
+    total ration 2.20 -> 2.27 (H) 1.61 (J) of Cmax; prey part 1.85 %BW/d -> 1.91 (H) 1.35 (J)
+    total ration 2.10 -> 2.17 (H) 1.53 (J) of Cmax; prey part 1.77 %BW/d -> 1.83 (H) 1.29 (J)
+    total ration 0.64 -> 0.66 (H) 0.47 (J) of Cmax; prey part 0.54 %BW/d -> 0.56 (H) 0.39 (J)
+Barents cod Murman shallow Aug 1989 (3 methods)
+  W  1000 g T 2.45 C: Hansson F(T) 0.479 Cmax 1.23 %BW/d; Jobling Cmax 1.75 %BW/d
+    total ration 0.33 -> 0.27 (H) 0.19 (J) of Cmax; prey part 0.16 %BW/d -> 0.13 (H) 0.09 (J)
+    total ration 0.28 -> 0.23 (H) 0.16 (J) of Cmax; prey part 0.14 %BW/d -> 0.11 (H) 0.08 (J)
+    total ration 0.48 -> 0.39 (H) 0.27 (J) of Cmax; prey part 0.23 %BW/d -> 0.19 (H) 0.13 (J)
+  W  2100 g T 2.45 C: Hansson F(T) 0.479 Cmax 1.07 %BW/d; Jobling Cmax 1.51 %BW/d
+    total ration 0.33 -> 0.31 (H) 0.22 (J) of Cmax; prey part 0.16 %BW/d -> 0.15 (H) 0.11 (J)
+    total ration 0.28 -> 0.26 (H) 0.19 (J) of Cmax; prey part 0.14 %BW/d -> 0.13 (H) 0.09 (J)
+    total ration 0.48 -> 0.45 (H) 0.32 (J) of Cmax; prey part 0.23 %BW/d -> 0.22 (H) 0.15 (J)
+Barents cod Demidov Bank Jul 1988, Themisto 74.1 %W (3 methods)
+  W  1000 g T 1.30 C: Hansson F(T) 0.425 Cmax 1.10 %BW/d; Jobling Cmax 1.55 %BW/d
+    total ration 3.76 -> 3.43 (H) 2.42 (J) of Cmax; prey part 2.79 %BW/d -> 2.54 (H) 1.79 (J)
+    total ration 3.61 -> 3.30 (H) 2.32 (J) of Cmax; prey part 2.68 %BW/d -> 2.44 (H) 1.72 (J)
+    total ration 0.74 -> 0.68 (H) 0.48 (J) of Cmax; prey part 0.55 %BW/d -> 0.50 (H) 0.35 (J)
+  W  2100 g T 1.30 C: Hansson F(T) 0.425 Cmax 0.95 %BW/d; Jobling Cmax 1.34 %BW/d
+    total ration 3.76 -> 3.97 (H) 2.80 (J) of Cmax; prey part 2.79 %BW/d -> 2.94 (H) 2.08 (J)
+    total ration 3.61 -> 3.81 (H) 2.69 (J) of Cmax; prey part 2.68 %BW/d -> 2.82 (H) 1.99 (J)
+    total ration 0.74 -> 0.78 (H) 0.55 (J) of Cmax; prey part 0.55 %BW/d -> 0.58 (H) 0.41 (J)
+Barents cod Goose Bank Jul-Aug 1989, Themisto 64.5 %W (3 methods)
+  W  1000 g T 1.75 C: Hansson F(T) 0.446 Cmax 1.15 %BW/d; Jobling Cmax 1.63 %BW/d
+    total ration 0.91 -> 0.79 (H) 0.56 (J) of Cmax; prey part 0.59 %BW/d -> 0.51 (H) 0.36 (J)
+    total ration 0.85 -> 0.74 (H) 0.52 (J) of Cmax; prey part 0.55 %BW/d -> 0.48 (H) 0.34 (J)
+    total ration 0.99 -> 0.86 (H) 0.61 (J) of Cmax; prey part 0.64 %BW/d -> 0.56 (H) 0.39 (J)
+  W  2100 g T 1.75 C: Hansson F(T) 0.446 Cmax 0.99 %BW/d; Jobling Cmax 1.41 %BW/d
+    total ration 0.91 -> 0.92 (H) 0.65 (J) of Cmax; prey part 0.59 %BW/d -> 0.59 (H) 0.42 (J)
+    total ration 0.85 -> 0.86 (H) 0.60 (J) of Cmax; prey part 0.55 %BW/d -> 0.55 (H) 0.39 (J)
+    total ration 0.99 -> 1.00 (H) 0.70 (J) of Cmax; prey part 0.64 %BW/d -> 0.64 (H) 0.45 (J)
+Pacific hake 500 mm, Washington-Oregon Jul 1967 [cod proxy, J]; krill share 0.72 (Oregon)
+  W   700 g T 8.20 C: Hansson F(T) 0.793 Cmax 2.19 %BW/d; Jobling Cmax 3.21 %BW/d
+    total ration 2.50 -> 1.14 (H) 0.78 (J) of Cmax; prey part 1.80 %BW/d -> 0.82 (H) 0.56 (J)
+  W  1000 g T 8.20 C: Hansson F(T) 0.793 Cmax 2.04 %BW/d; Jobling Cmax 2.99 %BW/d
+    total ration 2.50 -> 1.23 (H) 0.83 (J) of Cmax; prey part 1.80 %BW/d -> 0.88 (H) 0.60 (J)
+Pacific hake 500 mm, Washington-Oregon Jul 1967 [cod proxy, J]; krill share 0.90 (Washington)
+  W   700 g T 8.20 C: Hansson F(T) 0.793 Cmax 2.19 %BW/d; Jobling Cmax 3.21 %BW/d
+    total ration 2.50 -> 1.14 (H) 0.78 (J) of Cmax; prey part 2.25 %BW/d -> 1.03 (H) 0.70 (J)
+  W  1000 g T 8.20 C: Hansson F(T) 0.793 Cmax 2.04 %BW/d; Jobling Cmax 2.99 %BW/d
+    total ration 2.50 -> 1.23 (H) 0.83 (J) of Cmax; prey part 2.25 %BW/d -> 1.10 (H) 0.75 (J)

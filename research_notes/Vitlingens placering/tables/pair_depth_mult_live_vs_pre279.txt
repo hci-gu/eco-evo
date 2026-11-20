@@ -1,0 +1,8 @@
+/home/simon/eco-evo/fgconfig/fg_library.yaml
+  predatory_fish->whiting a 0.08608 mult 1.99/1.28/0.38/0.33  a x mult 0.1713/0.1104/0.0326/0.0281
+  benthivorous_fish->whiting a 0.03745 mult 1.92/1.24/0.43/0.39  a x mult 0.0718/0.0466/0.0162/0.0148
+  whiting->krill mult 3.46/0.75/0.01/0.00
+/tmp/claude-1001/-home-simon-eco-evo/fbf4a34a-3803-4ba2-a6c2-91405d92c671/scratchpad/refuge_test/lib_base.yaml
+  predatory_fish->whiting a 0.1045 mult 1.66/1.37/0.55/0.27  a x mult 0.1735/0.1434/0.0576/0.0281
+  benthivorous_fish->whiting a 0.04581 mult 1.62/1.35/0.57/0.33  a x mult 0.0742/0.0620/0.0261/0.0150
+  whiting->krill mult 3.35/0.80/0.04/0.00

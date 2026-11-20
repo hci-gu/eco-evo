@@ -1,0 +1,60 @@
+grid: 3600 cells, depth median 143 m; K-weighted 100 m composition weight 0.743 (300 m 0.257)
+
+phi by reach depth R (cm) and profile scenario: 100 m | 300 m | grid
+  R 0.0  l: 0.030 0.005 0.024  |  c: 0.049 0.014 0.040  |  h: 0.084 0.032 0.071
+  R 0.5  l: 0.076 0.059 0.072  |  c: 0.097 0.080 0.093  |  h: 0.134 0.109 0.127
+  R 1.0  l: 0.122 0.114 0.120  |  c: 0.145 0.147 0.145  |  h: 0.183 0.187 0.184
+  R 2.0  l: 0.214 0.224 0.217  |  c: 0.241 0.280 0.251  |  h: 0.282 0.342 0.298
+  R 3.0  l: 0.250 0.303 0.264  |  c: 0.277 0.359 0.298  |  h: 0.496 0.419 0.476
+  R 4.0  l: 0.286 0.383 0.311  |  c: 0.493 0.438 0.479  |  h: 0.697 0.497 0.645
+  R 5.0  l: 0.413 0.462 0.426  |  c: 0.690 0.517 0.645  |  h: 0.885 0.574 0.805
+
+per member, grid phi at its reach (low / central / high reach), central profile:
+  haddock         b 0.386 reach (1.0, 2.0, 4.0) cm [J on S/A bounds] -> phi 0.145 / 0.251 / 0.479
+  cod             b 0.314 reach (0.0, 0.5, 1.0) cm [J on A] -> phi 0.040 / 0.093 / 0.145
+  long_rough_dab  b 0.126 reach (0.0, 0.5, 1.0) cm [J] -> phi 0.040 / 0.093 / 0.145
+  dab             b 0.045 reach (0.0, 0.5, 1.0) cm [J on F bound] -> phi 0.040 / 0.093 / 0.145
+  plaice          b 0.038 reach (1.0, 2.0, 4.0) cm [J on F mechanism] -> phi 0.145 / 0.251 / 0.479
+  witch           b 0.017 reach (0.5, 1.0, 2.0) cm [J on F diet] -> phi 0.093 / 0.145 / 0.251
+
+group phi (biomass-weighted), reach scenario x profile scenario:
+  reach low     profile low    : 0.069
+  reach low     profile central: 0.089
+  reach low     profile high   : 0.124
+  reach central profile low    : 0.139
+  reach central profile central: 0.166
+  reach central profile high   : 0.206
+  reach high    profile low    : 0.209
+  reach high    profile central: 0.300
+  reach high    profile high   : 0.397
+
+headline: low = reach low + profile low; high = reach high + profile high
+  biomass-weighted          : 0.069 / 0.166 / 0.397
+  infauna-consumption-weighted: 0.098 / 0.215 / 0.538
+
+one-at-a-time swing of the central group phi (biomass-weighted):
+  reach haddock         low : 0.122 (-0.044)
+  reach haddock         high: 0.261 (+0.095)
+  reach cod             low : 0.148 (-0.018)
+  reach cod             high: 0.184 (+0.018)
+  reach long_rough_dab  low : 0.159 (-0.007)
+  reach long_rough_dab  high: 0.173 (+0.007)
+  reach dab             low : 0.164 (-0.003)
+  reach dab             high: 0.169 (+0.003)
+  reach plaice          low : 0.162 (-0.004)
+  reach plaice          high: 0.175 (+0.009)
+  reach witch           low : 0.165 (-0.001)
+  reach witch           high: 0.168 (+0.002)
+  profile+crop low        : 0.139 (-0.027)
+  profile+crop high       : 0.206 (+0.040)
+
+BRANCH discs    : biomass-weighted 0.069 / 0.166 / 0.397; infauna-weighted 0.098 / 0.215 / 0.538; reach high x profile central 0.300; reach central x profile high 0.206
+   haddock reach 3 cm, others central, central profile: 0.186
+   haddock reach 4 cm, others central, central profile: 0.261
+
+BRANCH arms_only: biomass-weighted 0.069 / 0.166 / 0.291; infauna-weighted 0.098 / 0.215 / 0.368; reach high x profile central 0.244; reach central x profile high 0.206
+   haddock reach 3 cm, others central, central profile: 0.186
+   haddock reach 4 cm, others central, central profile: 0.205
+
+earlier note's uniform reach 1 / 2 / 5 cm on today's profiles: 0.120 / 0.251 / 0.805
+haddock reach giving group phi 0.20 (others central): 3.2 cm

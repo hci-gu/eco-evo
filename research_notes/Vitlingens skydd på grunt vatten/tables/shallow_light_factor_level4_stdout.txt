@@ -1,0 +1,102 @@
+######## bed class 0-100 m ########
+0-100 m cells: bed - 5 m quantiles used for the convention: 48, 63, 69, 72, 76, 80, 84, 87, 90, 93 m
+glider months with >= 10 near-bed casts over 0-100 m beds: [1, 2, 5, 8, 9, 11, 12] (n [124, 41, 65, 62, 41, 46, 284])
+
+Ke 0.002 lx, r2 0.06:
+   month  1 D 0.29  mean_day g: glider cap 0.909 zero 0.639 | convention K_deep 0.09 0.895, 0.16 0.770   H/r2: 5.13 / 3.90 | 5.06 / 4.50
+   month  2 D 0.38  mean_day g: glider cap 0.852 zero 0.298 | convention K_deep 0.09 0.980, 0.16 0.937   H/r2: 6.01 / 2.75 | 6.76 / 6.51
+   month  5 D 0.69  mean_day g: glider cap 0.915 zero 0.573 | convention K_deep 0.09 0.992, 0.16 0.974   H/r2: 10.91 / 7.20 | 11.74 / 11.54
+   month  8 D 0.62  mean_day g: glider cap 0.963 zero 0.893 | convention K_deep 0.09 0.996, 0.16 0.984   H/r2: 10.34 / 9.66 | 10.66 / 10.54
+   month  9 D 0.52  mean_day g: glider cap 0.984 zero 0.984 | convention K_deep 0.09 0.990, 0.16 0.969   H/r2: 9.03 / 9.03 | 9.08 / 8.90
+   month 11 D 0.31  mean_day g: glider cap 0.853 zero 0.119 | convention K_deep 0.09 0.988, 0.16 0.957   H/r2: 5.15 / 1.58 | 5.80 / 5.65
+   month 12 D 0.26  mean_day g: glider cap 0.915 zero 0.417 | convention K_deep 0.09 0.992, 0.16 0.967   H/r2: 4.67 / 2.67 | 4.98 / 4.88
+   matched-month mean H/r2: glider cap 7.32, zero 5.26; convention 0.09 7.73, 0.16 7.50 (all 12 months: 8.72 / 8.51)
+   F = glider / convention: cap 0.947 (vs 0.16: 0.975); zero 0.680 (vs 0.16: 0.701)
+
+Ke 0.02 lx, r2 0.035:
+   matched-month mean H/r2: glider cap 8.73, zero 7.20; convention 0.09 11.97, 0.16 10.86 (all 12 months: 13.77 / 12.60)
+   F = glider / convention: cap 0.729 (vs 0.16: 0.804); zero 0.602 (vs 0.16: 0.663)
+
+Ke 0.02 lx, r2 0.06:
+   month  1 D 0.29  mean_day g: glider cap 0.621 zero 0.526 | convention K_deep 0.09 0.620, 0.16 0.459   H/r2: 3.82 / 3.39 | 3.81 / 3.08
+   month  2 D 0.38  mean_day g: glider cap 0.442 zero 0.236 | convention K_deep 0.09 0.886, 0.16 0.755   H/r2: 3.60 / 2.39 | 6.21 / 5.43
+   month  5 D 0.69  mean_day g: glider cap 0.580 zero 0.429 | convention K_deep 0.09 0.951, 0.16 0.879   H/r2: 7.28 / 5.65 | 11.30 / 10.52
+   month  8 D 0.62  mean_day g: glider cap 0.790 zero 0.758 | convention K_deep 0.09 0.969, 0.16 0.914   H/r2: 8.66 / 8.35 | 10.40 / 9.87
+   month  9 D 0.52  mean_day g: glider cap 0.886 zero 0.886 | convention K_deep 0.09 0.942, 0.16 0.859   H/r2: 8.23 / 8.23 | 8.69 / 8.01
+   month 11 D 0.31  mean_day g: glider cap 0.384 zero 0.070 | convention K_deep 0.09 0.920, 0.16 0.811   H/r2: 2.87 / 1.34 | 5.47 / 4.94
+   month 12 D 0.26  mean_day g: glider cap 0.572 zero 0.333 | convention K_deep 0.09 0.936, 0.16 0.837   H/r2: 3.29 / 2.34 | 4.76 / 4.36
+   matched-month mean H/r2: glider cap 5.39, zero 4.53; convention 0.09 7.24, 0.16 6.60 (all 12 months: 8.26 / 7.59)
+   F = glider / convention: cap 0.745 (vs 0.16: 0.817); zero 0.626 (vs 0.16: 0.685)
+
+Ke 0.02 lx, r2 0.09:
+   matched-month mean H/r2: glider cap 3.83, zero 3.28; convention 0.09 5.02, 0.16 4.62 (all 12 months: 5.68 / 5.25)
+   F = glider / convention: cap 0.763 (vs 0.16: 0.831); zero 0.652 (vs 0.16: 0.710)
+
+Ke 0.1 lx, r2 0.06:
+   month  1 D 0.29  mean_day g: glider cap 0.384 zero 0.359 | convention K_deep 0.09 0.344, 0.16 0.254   H/r2: 2.74 / 2.63 | 2.56 / 2.15
+   month  2 D 0.38  mean_day g: glider cap 0.251 zero 0.197 | convention K_deep 0.09 0.709, 0.16 0.537   H/r2: 2.48 / 2.16 | 5.17 / 4.16
+   month  5 D 0.69  mean_day g: glider cap 0.269 zero 0.226 | convention K_deep 0.09 0.860, 0.16 0.717   H/r2: 3.91 / 3.44 | 10.32 / 8.76
+   month  8 D 0.62  mean_day g: glider cap 0.570 zero 0.561 | convention K_deep 0.09 0.902, 0.16 0.780   H/r2: 6.53 / 6.44 | 9.76 / 8.56
+   month  9 D 0.52  mean_day g: glider cap 0.714 zero 0.714 | convention K_deep 0.09 0.837, 0.16 0.682   H/r2: 6.83 / 6.83 | 7.83 / 6.57
+   month 11 D 0.31  mean_day g: glider cap 0.117 zero 0.027 | convention K_deep 0.09 0.778, 0.16 0.610   H/r2: 1.57 / 1.13 | 4.78 / 3.97
+   month 12 D 0.26  mean_day g: glider cap 0.299 zero 0.227 | convention K_deep 0.09 0.809, 0.16 0.647   H/r2: 2.20 / 1.91 | 4.25 / 3.60
+   matched-month mean H/r2: glider cap 3.75, zero 3.51; convention 0.09 6.38, 0.16 5.40 (all 12 months: 7.38 / 6.25)
+   F = glider / convention: cap 0.588 (vs 0.16: 0.695); zero 0.549 (vs 0.16: 0.650)
+
+######## bed class 100-150 m ########
+100-150 m cells: bed - 5 m quantiles used for the convention: 97, 100, 104, 110, 115, 121, 125, 129, 135, 142 m
+glider months with >= 10 near-bed casts over 100-150 m beds: [1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12] (n [94, 192, 256, 222, 355, 113, 136, 85, 59, 213, 176])
+
+Ke 0.002 lx, r2 0.06:
+   month  1 D 0.29  mean_day g: glider cap 0.861 zero 0.063 | convention K_deep 0.09 0.386, 0.16 0.072   H/r2: 4.91 / 1.29 | 2.75 / 1.33
+   month  2 D 0.38  mean_day g: glider cap 0.826 zero 0.058 | convention K_deep 0.09 0.726, 0.16 0.246   H/r2: 5.85 / 1.34 | 5.26 / 2.45
+   month  3 D 0.48  mean_day g: glider cap 0.893 zero 0.348 | convention K_deep 0.09 0.786, 0.16 0.295   H/r2: 7.78 / 3.64 | 6.97 / 3.24
+   month  4 D 0.59  mean_day g: glider cap 0.889 zero 0.427 | convention K_deep 0.09 0.873, 0.16 0.400   H/r2: 9.27 / 4.97 | 9.12 / 4.72
+   month  5 D 0.69  mean_day g: glider cap 0.837 zero 0.047 | convention K_deep 0.09 0.865, 0.16 0.390   H/r2: 10.07 / 1.51 | 10.37 / 5.22
+   month  6 D 0.74  mean_day g: glider cap 0.826 zero 0.045 | convention K_deep 0.09 0.817, 0.16 0.334   H/r2: 10.62 / 1.52 | 10.52 / 4.89
+   month  8 D 0.62  mean_day g: glider cap 0.873 zero 0.066 | convention K_deep 0.09 0.905, 0.16 0.448   H/r2: 9.47 / 1.64 | 9.78 / 5.35
+   month  9 D 0.52  mean_day g: glider cap 0.912 zero 0.560 | convention K_deep 0.09 0.843, 0.16 0.359   H/r2: 8.44 / 5.57 | 7.88 / 3.93
+   month 10 D 0.40  mean_day g: glider cap 0.840 zero 0.107 | convention K_deep 0.09 0.851, 0.16 0.363   H/r2: 6.28 / 1.67 | 6.35 / 3.28
+   month 11 D 0.31  mean_day g: glider cap 0.839 zero 0.079 | convention K_deep 0.09 0.789, 0.16 0.300   H/r2: 5.08 / 1.38 | 4.84 / 2.46
+   month 12 D 0.26  mean_day g: glider cap 0.864 zero 0.000 | convention K_deep 0.09 0.819, 0.16 0.329   H/r2: 4.47 / 1.00 | 4.29 / 2.32
+   matched-month mean H/r2: glider cap 7.48, zero 2.32; convention 0.09 7.10, 0.16 3.56 (all 12 months: 7.44 / 3.79)
+   F = glider / convention: cap 1.052 (vs 0.16: 2.099); zero 0.327 (vs 0.16: 0.652)
+
+Ke 0.02 lx, r2 0.035:
+   matched-month mean H/r2: glider cap 6.44, zero 2.61; convention 0.09 7.68, 0.16 2.64 (all 12 months: 8.24 / 2.86)
+   F = glider / convention: cap 0.839 (vs 0.16: 2.442); zero 0.340 (vs 0.16: 0.988)
+
+Ke 0.02 lx, r2 0.06:
+   month  1 D 0.29  mean_day g: glider cap 0.387 zero 0.027 | convention K_deep 0.09 0.100, 0.16 0.010   H/r2: 2.76 / 1.12 | 1.45 / 1.04
+   month  2 D 0.38  mean_day g: glider cap 0.325 zero 0.027 | convention K_deep 0.09 0.363, 0.16 0.063   H/r2: 2.91 / 1.16 | 3.13 / 1.37
+   month  3 D 0.48  mean_day g: glider cap 0.492 zero 0.243 | convention K_deep 0.09 0.438, 0.16 0.088   H/r2: 4.74 / 2.85 | 4.33 / 1.67
+   month  4 D 0.59  mean_day g: glider cap 0.489 zero 0.292 | convention K_deep 0.09 0.592, 0.16 0.160   H/r2: 5.55 / 3.72 | 6.51 / 2.49
+   month  5 D 0.69  mean_day g: glider cap 0.349 zero 0.023 | convention K_deep 0.09 0.577, 0.16 0.152   H/r2: 4.78 / 1.25 | 7.25 / 2.65
+   month  6 D 0.74  mean_day g: glider cap 0.327 zero 0.019 | convention K_deep 0.09 0.497, 0.16 0.114   H/r2: 4.81 / 1.22 | 6.79 / 2.33
+   month  8 D 0.62  mean_day g: glider cap 0.407 zero 0.035 | convention K_deep 0.09 0.658, 0.16 0.197   H/r2: 4.95 / 1.34 | 7.38 / 2.92
+   month  9 D 0.52  mean_day g: glider cap 0.610 zero 0.467 | convention K_deep 0.09 0.534, 0.16 0.129   H/r2: 5.98 / 4.81 | 5.36 / 2.06
+   month 10 D 0.40  mean_day g: glider cap 0.359 zero 0.061 | convention K_deep 0.09 0.540, 0.16 0.131   H/r2: 3.26 / 1.38 | 4.39 / 1.82
+   month 11 D 0.31  mean_day g: glider cap 0.350 zero 0.040 | convention K_deep 0.09 0.446, 0.16 0.093   H/r2: 2.70 / 1.19 | 3.17 / 1.45
+   month 12 D 0.26  mean_day g: glider cap 0.394 zero 0.000 | convention K_deep 0.09 0.488, 0.16 0.110   H/r2: 2.58 / 1.00 | 2.96 / 1.44
+   matched-month mean H/r2: glider cap 4.09, zero 1.91; convention 0.09 4.79, 0.16 1.93 (all 12 months: 5.12 / 2.06)
+   F = glider / convention: cap 0.854 (vs 0.16: 2.120); zero 0.399 (vs 0.16: 0.991)
+
+Ke 0.02 lx, r2 0.09:
+   matched-month mean H/r2: glider cap 3.00, zero 1.59; convention 0.09 3.45, 0.16 1.60 (all 12 months: 3.66 / 1.68)
+   F = glider / convention: cap 0.869 (vs 0.16: 1.872); zero 0.461 (vs 0.16: 0.993)
+
+Ke 0.1 lx, r2 0.06:
+   month  1 D 0.29  mean_day g: glider cap 0.113 zero 0.008 | convention K_deep 0.09 0.025, 0.16 0.002   H/r2: 1.51 / 1.03 | 1.11 / 1.01
+   month  2 D 0.38  mean_day g: glider cap 0.088 zero 0.008 | convention K_deep 0.09 0.147, 0.16 0.016   H/r2: 1.52 / 1.05 | 1.86 / 1.09
+   month  3 D 0.48  mean_day g: glider cap 0.202 zero 0.129 | convention K_deep 0.09 0.198, 0.16 0.024   H/r2: 2.54 / 1.98 | 2.50 / 1.18
+   month  4 D 0.59  mean_day g: glider cap 0.197 zero 0.141 | convention K_deep 0.09 0.331, 0.16 0.053   H/r2: 2.83 / 2.31 | 4.07 / 1.50
+   month  5 D 0.69  mean_day g: glider cap 0.099 zero 0.008 | convention K_deep 0.09 0.317, 0.16 0.050   H/r2: 2.07 / 1.08 | 4.43 / 1.54
+   month  6 D 0.74  mean_day g: glider cap 0.090 zero 0.005 | convention K_deep 0.09 0.247, 0.16 0.034   H/r2: 2.05 / 1.06 | 3.88 / 1.39
+   month  8 D 0.62  mean_day g: glider cap 0.121 zero 0.011 | convention K_deep 0.09 0.396, 0.16 0.073   H/r2: 2.18 / 1.11 | 4.84 / 1.71
+   month  9 D 0.52  mean_day g: glider cap 0.356 zero 0.317 | convention K_deep 0.09 0.276, 0.16 0.039   H/r2: 3.91 / 3.58 | 3.25 / 1.32
+   month 10 D 0.40  mean_day g: glider cap 0.107 zero 0.024 | convention K_deep 0.09 0.280, 0.16 0.040   H/r2: 1.67 / 1.15 | 2.76 / 1.25
+   month 11 D 0.31  mean_day g: glider cap 0.099 zero 0.013 | convention K_deep 0.09 0.206, 0.16 0.025   H/r2: 1.48 / 1.06 | 2.00 / 1.12
+   month 12 D 0.26  mean_day g: glider cap 0.116 zero 0.000 | convention K_deep 0.09 0.240, 0.16 0.032   H/r2: 1.47 / 1.00 | 1.96 / 1.13
+   matched-month mean H/r2: glider cap 2.11, zero 1.49; convention 0.09 2.97, 0.16 1.29 (all 12 months: 3.21 / 1.35)
+   F = glider / convention: cap 0.710 (vs 0.16: 1.630); zero 0.502 (vs 0.16: 1.153)
+

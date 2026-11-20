@@ -1,0 +1,57 @@
+mechanism,quantity,low,central,high,unit,source,tag
+model,WC -> whiting per-predator class a ratio < 100 : 150-250 m (live library 280),5.25,5.25,5.25,ratio,"Vitlingens placering tables/pair_depth_mult_live_vs_pre279.txt",D
+model,benthivores -> whiting per-predator class a ratio < 100 : 150-250 m,4.43,4.43,4.43,ratio,"same",D
+model,both fish pairs (a x group density) < 100 : 150-250 m,4.80,4.80,4.80,ratio,"combine_stdout.txt",D
+model,both fish pairs < 100 : 100-150 m,1.55,1.55,1.55,ratio,"combine_stdout.txt",D
+model,class+bed K sensitivity (K below 65 m only) WC -> whiting < 100 : 150-250 m,5.43,5.43,5.43,ratio,"Djupljus i synparen tables/sensitivity.json",D
+model check,simplified rule-A light term K 0.16 vs 0.09 below 65 m on < 100 m beds (chain gives 0.93),0.91,0.91,0.91,ratio,"shallow_light_factor_stdout.txt (7.50/7.73 at Ke 0.002; 6.60/7.24 at Ke 0.02)",D
+2 near-bed light,glider K_PAR 20-80 m slabs over < 100 m beds (Swedish side),0.149,0.155,0.178,1/m,"Ljus under 65 m tables/voto_k_stdout.txt",D
+2 near-bed light,glider K_PAR 20-80 m slabs over 150-250 m beds,0.094,0.10,0.121,1/m,"same",D
+2 near-bed light,daytime PAR at 50 m over < 100 m beds / over 150-250 m beds (same mission; 9 missions),0.007,0.18,0.54,ratio,"glider_shallow_beds_stdout.txt",D
+2 near-bed light,daytime PAR at 65 m over < 100 m beds / over 150-250 m beds (same mission; 9 missions),0.000,0.073,0.43,ratio,"same",D
+2 near-bed light,daytime near-bed (bed - 5 m) PAR over < 100 m beds; monthly medians,4.4e-5,1.3e-4,1.5e-3,umol m-2 s-1,"same",D
+2 near-bed light,share of daytime near-bed casts over < 100 m beds below the sensor threshold (3e-3 lx),0.00,0.40,0.87,share,"same",D
+2 near-bed light,mean daytime g = E/(E+Ke) at the bed over < 100 m beds; glider; Ke 0.02 lx; by month,0.14,0.33,0.74,-,"shallow_light_factor_stdout.txt",D
+2 near-bed light,same under the library light convention (K_deep 0.09),0.62,0.94,0.97,-,"same",D
+2 near-bed light,F = rule-A light term glider / convention; < 100 m beds; Swedish side (Ke 0.1-0.002; r2 0.035-0.09),0.42,0.55,0.82,factor on class a,"shallow_light_factor_stdout.txt",D
+2 near-bed light,F < 100 m; casts west of 11.2 E,0.43,0.58,0.85,factor on class a,"shallow_light_factor_lon11.2_stdout.txt",D
+2 near-bed light,F < 100 m; casts west of 11.15 E over beds >= 70 m,0.39,0.50,0.81,factor on class a,"shallow_light_factor_lon11.15_bed70_stdout.txt",D
+2 near-bed light,F < 100 m; glider level gap 2.5 taken as artefact,0.50,0.68,0.91,factor on class a,"shallow_light_factor_level2.5_stdout.txt",D
+2 near-bed light,F < 100 m Danish side estimate (Swedish column x4-6 for the clearer surface layer),0.59,0.78,0.97,factor on class a,"shallow_light_factor_level4/5/6_stdout.txt",D/J
+2 near-bed light,F 100-150 m beds,0.26,0.48,0.80,factor on class a,"shallow_light_factor_stdout.txt",D
+2 near-bed light,surface Kd490 Feb-Oct mean; < 100 m beds; Danish side,0.148,0.148,0.148,1/m,"kd490_sides_stdout.txt (MODIS Aqua 2015-22)",D
+2 near-bed light,surface Kd490 Feb-Oct mean; < 100 m beds; Swedish side,0.235,0.235,0.235,1/m,"same",D
+2 near-bed light,surface Kd490 Feb-Oct mean; 150-250 m beds,0.148,0.148,0.148,1/m,"same",D
+2 near-bed light,F box-weighted < 100 m (Swedish 0.61 / Danish 0.39 of shallow whiting biomass),0.49,0.64,0.88,factor on class a,"combine.py",D/J
+2 near-bed light,beam attenuation c needed for rule-A R0 to fall below the 2 L cap (prey 15-25 cm; cap 1.0-1.6 m),1.7,2.5,3.7,1/m,"derived from rule A; near-bed c judged ~0.5-1.3",D/J
+1 escape in light,predation in relative darkness / at 160 lx (northern pikeminnow on juvenile chinook; raceway),5,5,5,ratio,"Petersen & Gadomski 1994 J Fish Biol 45:227",A
+1 escape in light,putative escape success of juvenile cod from a fast model attack; clear water,0.73,0.73,0.73,share,"Meager et al. 2006 J Exp Biol 209:4174",A
+1 escape in light,same; highly turbid water,0.21,0.21,0.21,share,"same",A
+1 escape in light,predation frequency vs light 0.005 / 0.5 / 20 lx (bass on trout groups): no difference (p 0.25); success per attack lowest at 20 lx,,,,qualitative,"Frey et al. 2026 Funct Ecol doi:10.1111/1365-2435.70389",F
+1 escape in light,large cod and sculpin most effective on 0-group cod and saithe at dusk/night/dawn,,,,qualitative,"Strand et al. 2020 JEMBE",A
+1 escape in light,factor on < 100 m class a (light-dependent excess over q 0.8 at 0.002-0.08 lx bed light),0.6,0.85,1.0,factor,"judgement",J
+1 escape in light,factor on 100-150 m class a,0.75,0.9,1.0,factor,"judgement",J
+3 diel position,GOV whiting 10-30 cm night/day; < 100 m; Q1+Q3 2000-25 (82 strata),0.93,1.50,2.51,ratio,"gov_day_night_stdout.txt",D
+3 diel position,same; < 100 m; Q2+Q4 1991-97 (117 strata),0.59,0.77,1.01,ratio,"same",D
+3 diel position,same; 100-150 m; Q1+Q3,0.47,0.70,1.05,ratio,"same",D
+3 diel position,same; 100-150 m; Q2+Q4,0.41,0.59,0.85,ratio,"same",D
+3 diel position,same; 150-250 m; Q1+Q3 (13 strata),0.58,0.94,1.26,ratio,"same",D
+3 diel position,same; 150-250 m; Q2+Q4 (27 strata),0.36,0.60,1.03,ratio,"same",D
+3 diel position,factor on < 100 m : 150-250 m ratio,0.8,1.0,1.2,factor,"judgement on the above",J
+4 predator placement,saithe >= 35 cm shape < 100 m (density / box mean),0.01,0.02,0.03,shape,"gov_predators_by_class_stdout.txt",D
+4 predator placement,saithe >= 35 cm shape 150-250 m,2.36,2.63,2.79,shape,"same",D
+4 predator placement,hake >= 30 cm shape < 100 m (Q1+Q3),1.75,2.60,3.24,shape,"same (Q1 0.12; Q3 3.08)",D
+4 predator placement,cod >= 35 cm shape < 100 m,0.58,0.77,0.98,shape,"same",D
+4 predator placement,cod >= 35 cm shape 100-150 m,1.60,1.86,2.11,shape,"same",D
+4 predator placement,cod >= 35 cm shape 150-250 m,0.53,0.69,0.85,shape,"same",D
+4 predator placement,water column member-weighted shape < 100 m,0.14,0.23,0.41,shape,"same",D
+4 predator placement,water column member-weighted shape 150-250 m,2.03,2.30,2.51,shape,"same",D
+4 predator placement,WC placement factor on < 100 : 150-250 m,0.06,0.10,0.20,factor,"combine_stdout.txt",D
+4 predator placement,cod placement factor,0.68,1.12,1.85,factor,"same",D
+4 predator placement,both fish pairs placement factor,0.23,0.36,0.58,factor,"same",D
+combined,both pairs < 100 : 150-250 m with measured light + escape (uniform predators),1.13,2.61,5.07,ratio,"same (factor 0.54; 0.24-1.06)",D/J
+combined,both pairs < 100 : 100-150 m with measured light + escape (uniform predators),1.95,1.95,1.95,ratio,"same (2.61 / 1.34)",D/J
+combined,both pairs < 100 : 150-250 m with field placement + light + escape (placement corners only),0.60,0.93,1.52,ratio,"same",D/J
+combined,same with every factor at its corners,0.26,0.93,2.95,ratio,"same",D/J
+5 other,saithe juvenile-gadoid clearance index < 100 : 150-250 m (FO / GOV density; not diagnostic under ration saturation),0.02,0.05,0.13,ratio,"saithe_clearance_index_stdout.txt",D
+5 other,cod >= 30 cm stomach records with whiting over 150-250 m beds N of 57 N (of 56 stomachs; power statement),0,0,0,records,"ICES stomach DB via Krill over grunda bottnar records_linked.csv.gz",D

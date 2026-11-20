@@ -1,0 +1,16 @@
+seed 1; library /home/simon/eco-evo/fgconfig/fg_library.yaml
+bed-class shares (< 100 / 100-150 / 150-250 / >= 250 m):
+  whiting              0.57/0.32/0.09/0.02
+  predatory_fish       0.25/0.40/0.24/0.10
+  benthivorous_fish    0.25/0.27/0.44/0.04
+  planktivorous_fish   0.03/0.14/0.39/0.44
+realised diets (share of tonnes) and ration t/t/yr:
+  benthivorous_fish    ration 5.79: benthic_infauna 0.670, mobile_epifauna 0.209, norway_lobster 0.068, krill 0.034, planktivorous_fish 0.018
+  whiting              ration 3.72: krill 0.759, mobile_epifauna 0.186, planktivorous_fish 0.041, zooplankton 0.011, benthivorous_fish 0.003
+  predatory_fish       ration 3.39: krill 0.516, planktivorous_fish 0.271, benthivorous_fish 0.119, whiting 0.089, zooplankton 0.004
+prey-side M2 (/yr) by predator:
+  whiting              total 0.757: predatory_fish 0.564, seals 0.169, benthivorous_fish 0.019, porpoises 0.004
+  planktivorous_fish   total 0.487: predatory_fish 0.160, mackerel 0.153, porpoises 0.113, benthivorous_fish 0.044, whiting 0.014, seals 0.004
+  benthivorous_fish    total 0.172: predatory_fish 0.163, seals 0.005, whiting 0.003, porpoises 0.001
+  krill                total 3.113: planktivorous_fish 1.951, mackerel 0.674, predatory_fish 0.227, whiting 0.197, benthivorous_fish 0.064
+year-end biomass / start: whiting 0.83, benthivorous_fish 1.09, predatory_fish 1.73, planktivorous_fish 0.87, mackerel 1.61, seals 0.80, porpoises 1.05, krill 1.06, mobile_epifauna 1.03

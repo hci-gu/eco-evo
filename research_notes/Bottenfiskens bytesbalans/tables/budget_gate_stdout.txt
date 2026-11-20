@@ -1,0 +1,92 @@
+=== per (predator, prey): what ONE prey alone would have to do ===
+A row that does not clear the bar on its own is low-quality food,
+not pure loss - the verdict is the per-predator block below.
+
+      predator               prey   u_x   h(u)    cost   a*gain  sat_min  need_vis   B/cell      max        alone
+benthivorous_fish    benthic_infauna  0.50  1.000     3.9     13.9    0.282     0.097    93.61   129.74           ok
+benthivorous_fish    mobile_epifauna  0.50  1.000     3.9     10.2    0.386     0.016     3.78     4.86           ok
+benthivorous_fish     norway_lobster  0.50  1.000     3.9      8.8    0.445     0.006     4.58     9.20           ok
+benthivorous_fish planktivorous_fish  0.50  1.000     3.9     20.9    0.188     0.131     6.99    90.67           ok
+benthivorous_fish            whiting  0.50  1.000     3.9     19.0    0.207     0.567     3.17    36.23           ok
+      mackerel planktivorous_fish  0.50  1.000    10.3     53.0    0.194     0.051     6.99    90.67           ok
+      mackerel        zooplankton  0.50  1.000    10.3     52.9    0.194     1.541     9.76    23.49           ok
+planktivorous_fish        zooplankton  0.20  1.000    15.2     90.0    0.169     0.299     9.76    23.49           ok
+     porpoises  benthivorous_fish  0.50  1.000    90.0    132.2    0.681     0.622     3.83    60.38           ok
+     porpoises planktivorous_fish  0.50  1.000    90.0    224.2    0.401     1.042     6.99    90.67           ok
+     porpoises     predatory_fish  0.50  1.000    90.0    149.2    0.603     0.266     1.75    17.20           ok
+     porpoises            whiting  0.50  1.000    90.0    141.0    0.638     0.309     3.17    36.23           ok
+predatory_fish  benthivorous_fish  0.50  1.000     7.5     23.8    0.313     0.549     3.83    60.38           ok
+predatory_fish           mackerel  0.50  1.000     7.5     23.8    0.313     1.956     1.93    21.90           ok
+predatory_fish planktivorous_fish  0.50  1.000     7.5     23.8    0.313     0.341     6.99    90.67           ok
+predatory_fish            whiting  0.50  1.000     7.5     23.8    0.313     0.218     3.17    36.23           ok
+predatory_fish        zooplankton  0.50  1.000     7.5     23.8    0.313    12.538     9.76    23.49           ok
+         seals  benthivorous_fish  0.50  1.000    75.0    180.4    0.416     0.336     3.83    60.38           ok
+         seals planktivorous_fish  0.50  1.000    75.0    187.2    0.401     9.980     6.99    90.67           ok
+         seals     predatory_fish  0.50  1.000    75.0    180.7    0.415     0.594     1.75    17.20           ok
+         seals            whiting  0.50  1.000    75.0    180.5    0.415     0.629     3.17    36.23           ok
+       whiting  benthivorous_fish  0.50  1.000     8.5     25.1    0.338     0.017     3.83    60.38           ok
+       whiting    mobile_epifauna  0.50  1.000     8.5     25.1    0.338     0.368     3.78     4.86           ok
+       whiting planktivorous_fish  0.50  1.000     8.5     25.1    0.338     0.107     6.99    90.67           ok
+       whiting        zooplankton  0.50  1.000     8.5     25.1    0.338     1.546     9.76    23.49           ok
+   zooplankton   microzooplankton  0.50  1.000    90.0    900.0    0.100     0.278     0.40     0.97           ok
+   zooplankton      phytoplankton  0.50  1.000    90.0    780.0    0.115     1.087    22.31    53.68           ok
+   zooplankton subsurface_phytoplankton  0.50  1.000    90.0    780.0    0.115     0.652    11.15    26.84           ok
+
+=== per predator: the budget the engine actually closes ===
+      predator    ration  %bm/day    cost    need_q    best_q   worst_q  min share      verdict
+benthivorous_fish   0.00894     3.6%     3.9       440      4988      1560      0.000     any diet
+      mackerel   0.01471     5.9%    10.3       699      5700      3600      0.000     any diet
+planktivorous_fish   0.02500    10.0%    15.2       608      3600      3600      0.000     any diet
+     porpoises   0.03497    14.0%    90.0      2574      6412      3780      0.000     any diet
+predatory_fish   0.00662     2.6%     7.5      1128      6319      3600      0.000     any diet
+         seals   0.04717    18.9%    75.0      1590      6270      3825      0.000     any diet
+       whiting   0.00835     3.3%     8.5      1014      5700      3000      0.000     any diet
+   zooplankton   0.25000   100.0%    90.0       360      3600      3120      0.000     any diet
+
+Units: ration in t prey / t predator / 6 h; cost and quality in
+MJ / t. quality is (assimilation_factor - sda_fraction) * energy_content, i.e. the
+energy the predator keeps per tonne eaten.
+
+Sensitivity for porpoises -> planktivorous_fish (the pair in question):
+   u_x    h(u)  sat_min  need_visible_t/cell
+  0.50   1.000    0.401                1.042
+  0.40   1.000    0.401                1.042
+  0.30   1.000    0.401                1.042
+
+=== diet gate: encounter-implied diet vs booked diet (section 232) ===
+enc = a*B_vis share (concurrent search), booked = M2*B share; ratio
+outside 1/3-3 on a pair with either share >= 0.05 is OFF. sat = a h B_vis / (1 + a h B_vis), the
+share of the ceiling the pair pays on its own. Densities t/km2.
+benthivorous_fish               prey       B   B_vis    enc booked   ratio   sat  verdict
+                  benthic_infauna   93.61  18.722  0.629  0.578    1.09  0.99  ok
+                  mobile_epifauna    3.78   2.342  0.328  0.318    1.03  0.99  ok
+                   norway_lobster    4.58   0.092  0.038  0.016    2.34  0.92  ok
+               planktivorous_fish    3.33   0.862  0.006  0.075    0.08  0.60  OFF
+                          whiting    0.45   0.038  0.000  0.013    0.01  0.02  ok
+      mackerel               prey       B   B_vis    enc booked   ratio   sat  verdict
+               planktivorous_fish    3.33   0.073  0.124  0.065    1.91  0.25  ok
+                      zooplankton    9.72   9.722  0.876  0.935    0.94  0.60  ok
+     porpoises               prey       B   B_vis    enc booked   ratio   sat  verdict
+                benthivorous_fish    1.53   1.049  0.430  0.159    2.70  0.78  ok
+               planktivorous_fish    3.33   3.333  0.256  0.684    0.37  0.68  ok
+                   predatory_fish    0.62   0.033  0.023  0.020    1.15  0.16  ok
+                          whiting    0.45   0.427  0.292  0.137    2.13  0.71  ok
+predatory_fish               prey       B   B_vis    enc booked   ratio   sat  verdict
+                benthivorous_fish    1.53   0.254  0.138  0.082    1.68  0.17  ok
+                         mackerel    0.85   0.246  0.022  0.012    1.86  0.05  ok
+               planktivorous_fish    3.33   0.957  0.531  0.533    1.00  0.56  ok
+                          whiting    0.45   0.060  0.077  0.045    1.71  0.11  ok
+                      zooplankton    9.72   9.722  0.232  0.328    0.71  0.26  ok
+         seals               prey       B   B_vis    enc booked   ratio   sat  verdict
+                benthivorous_fish    1.53   0.881  0.675  0.641    1.05  0.65  ok
+               planktivorous_fish    3.33   3.333  0.170  0.266    0.64  0.43  ok (Type III)
+                   predatory_fish    0.62   0.018  0.007  0.023    0.30  0.02  ok
+                          whiting    0.45   0.386  0.148  0.070    2.12  0.30  ok
+       whiting               prey       B   B_vis    enc booked   ratio   sat  verdict
+                benthivorous_fish    1.53   0.017  0.087  0.126    0.69  0.34  ok
+                  mobile_epifauna    3.78   1.096  0.305  0.223    1.37  0.60  ok
+               planktivorous_fish    3.33   0.141  0.071  0.199    0.36  0.40  ok
+                      zooplankton    9.72   9.722  0.537  0.452    1.19  0.76  ok
+   zooplankton: skipped (plankton pairs scale with the mixed layer)
+
+Diet gate: OFF pairs - benthivorous_fish -> planktivorous_fish enc 0.006 vs booked 0.075

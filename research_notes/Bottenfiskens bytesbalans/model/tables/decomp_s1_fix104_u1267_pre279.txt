@@ -1,0 +1,12 @@
+seed 1, 365 d, frozen /tmp/claude-1001/-home-simon-eco-evo/87acac2d-411e-4442-bd9b-92978f209b16/scratchpad/fix104_u1267
+library /tmp/claude-1001/-home-simon-eco-evo/fbf4a34a-3803-4ba2-a6c2-91405d92c671/scratchpad/refuge_test/lib_base.yaml
+per prey (means over every tick; a(t) = cell mean of a (depth tables have equal-cell mean 1), mult = a/a(t)):
+                prey gate share  enc share  pre-cap post-cap  realised  M/gate  L light  P level  V vis  D beds O overlap
+     benthic_infauna      0.560      0.694    0.728    0.729     0.733   0.755    1.000    1.040  0.920   1.000     0.789
+               krill      0.040      0.047    0.060    0.061     0.059   0.737    1.000    0.933  1.000   0.561     1.505
+     mobile_epifauna      0.301      0.187    0.144    0.144     0.141   0.393    1.000    1.033  1.001   1.000     0.382
+      norway_lobster      0.033      0.052    0.057    0.058     0.058   0.936    1.000    0.989  0.996   1.000     0.950
+  planktivorous_fish      0.058      0.020    0.011    0.008     0.008   0.210    1.000    0.804  1.025   0.656     0.289
+             whiting      0.007      0.000    0.000    0.000     0.000   0.039    1.000    0.972  1.180   0.921     0.030
+total encounter met per benthivore tonne / gate total: 0.614
+note: L x P x V x D x O = M/gate up to the covariance of the factors over days

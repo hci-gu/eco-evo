@@ -1,0 +1,15 @@
+median over pixels of the per-pixel monthly median Kd490 (m-1), n pixels:
+  group                         1      2      3      4      5      6      7      8      9     10     11     12
+  < 100 m, Danish side          -  0.161  0.185  0.193  0.129  0.111  0.096  0.122  0.137  0.193      -      -   (n pix 114)
+  < 100 m, Swedish side         -  0.266  0.325  0.327  0.251  0.165  0.128  0.172  0.189  0.293      -      -   (n pix 104)
+  < 100 m, other                -  0.140  0.158  0.169  0.123  0.108  0.087  0.110  0.115  0.142      -      -   (n pix 13)
+  100-150 m                     -  0.158  0.185  0.226  0.158  0.127  0.096  0.126  0.130  0.193      -      -   (n pix 102)
+  150-250 m                     -  0.148  0.185  0.214  0.143  0.115  0.090  0.122  0.131  0.178      -      -   (n pix 119)
+  >= 250 m                      -  0.150  0.205  0.183  0.138  0.106  0.092  0.109  0.111  0.140      -      -   (n pix 104)
+
+months with every group >= 3 pixels: [2, 3, 4, 5, 6, 7, 8, 9, 10]
+  < 100 m, Danish side     mean over those months 0.148
+  < 100 m, Swedish side    mean over those months 0.235
+  100-150 m                mean over those months 0.156
+  150-250 m                mean over those months 0.148
+  >= 250 m                 mean over those months 0.137

@@ -94,3 +94,33 @@ Means over 8 snapshots; the day-0 snapshots weigh most.
 - **The other predators.** Without the WC, the predators realise ~0.03 per year on clumped and ~0.12 on field-placed benthivores, against a booked 0.19. Clumping holds them down too, not only the pairs that are OFF on the prey side.
 
 Of these factors only the pair derivation is a biology fix: the J encounter at the bed, about twice the field flow. It is worth a third of the saving. The rest is the trained overlap between the WC and the planktivores.
+
+## The infauna refuge as a crowding cost (resume 282)
+
+`scripts/refuge_clump.py`, `tables/refuge_<arm>_s<seed>_fix104_u1267.txt`. Frozen fix104 u1267 on the pre-279 library, 30 x 30, three years, seeds 0 and 1. The arms vary the infauna's `exposed_share` phi and `refuge_exchange_rate` k inside the ranges of "Refugium och utbyte i bentos". The elasticity is that of eaten intake per tonne on own density k. "Eaten" means demand after the reserve-room cap; in emptied cells it is an upper bound.
+
+| Arm | Elasticity yr 1 | yr 2 | yr 3 | Benthivores yr 3 / start | Eaten k > 32 / k < 0.5, yr 3 |
+|---|---|---|---|---|---|
+| phi 0.2, k 2.5 (library) | -0.014 / -0.012 | -0.028 / -0.027 | -0.014 / -0.022 | 1.40 / 1.37 | 0.90 |
+| phi 0.2, k 1.5 | -0.022 / -0.015 | -0.017 / -0.027 | -0.017 / -0.030 | 1.36 / 1.31 | 0.84-0.88 |
+| phi 0.08, k 2.5 | -0.049 / -0.051 | -0.25 / -0.15 | -0.34 / -0.29 | 0.89 / 0.93 | 0.45-0.51 |
+| phi 0.08, k 1.5 | -0.039 / -0.061 | -0.20 / -0.25 | -0.36 / -0.49 | 0.86 / 0.81 | 0.35-0.43 |
+
+- **At phi 0.2, k does nothing.** The accessible infauna under the clumps stays far above the half-saturation of 0.35 t/km2.
+- **At phi 0.08 the clumps return to cells they have emptied.** Accessible infauna there is ~1.3 t/km2, the 10th percentile 0.03, and the epifauna 0.01-0.03 of K. The grid as a whole holds 0.8 of K_A. Lloyd stays at 48-63, because frozen policies cannot respond. The run has not settled by year 3.
+- **What this does not show.** It cannot say whether retrained fish would spread out or roam to unvisited cells. phi may move only on evidence of how deep fish reach in mud, never because it reduces clumping.
+
+## Cost against benefit at phi 0.08, and fresh beds (resume 282.1)
+
+`scripts/cf_refuge_spread.py`, `tables/cf_refuge_<lib>_s<seed>_fix104_u1267.txt`. The setup is the year-3 state of the runs above, four snapshots, each run for 4 days. The benefit is the all-predator M2 avoided by clumping. The cost is the realised intake that clumping gives up, converted at 278.6's rule of 0.3 x the change in ration (rough). Ranges cover seeds 0 and 1.
+
+| Library | Arms compared | Benefit /yr (day 1 / days 1-4) | Cost /yr (day 1 / days 1-4) |
+|---|---|---|---|
+| phi 0.2 | Lloyd 3 vs clumped | 0.19-0.21 / 0.10-0.12 | 0.01 / -0.01..-0.03 |
+| phi 0.08 | Lloyd 3 vs clumped | 0.19-0.22 / 0.11-0.12 | 0.37-0.91 / 0.27-0.62 |
+| phi 0.08 | field vs clumped | 0.33-0.35 / 0.20-0.22 | 0.39-0.90 / 0.42-0.78 |
+| phi 0.08 | fresh beds: Lloyd 3 vs clumped | 0.21-0.23 / 0.13-0.14 | -0.05..-0.09 / -0.04..-0.05 |
+
+- **At phi 0.08 the frozen clumping costs more than it saves.** The whole cost comes from returning to emptied beds: the clumps meet A/K_A 0.03-0.22 while the grid holds 0.8.
+- **On fresh beds the cost vanishes.** The same clumps eat as much as spread fish over the 4 days, longer than a typical stay, and keep the full swamping benefit.
+- **Prediction.** Retrained fish at phi 0.08 would roam in clumps rather than spread out. The refuge penalises revisiting, not packing, so a lower phi does not explain the field's Lloyd 3.

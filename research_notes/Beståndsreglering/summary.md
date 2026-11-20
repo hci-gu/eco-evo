@@ -131,3 +131,7 @@ effect on its own reward shrinks (a learning-signal question to test).
   533 m): the closure will be sensitive to it.
 - Whiting stock identity in 3a (local share 0.2-0.5, J).
 - WBSS herring is below Blim and on the ascending limb: its import would follow its SSB.
+
+## Follow-up
+
+- research_notes/"Oppen population" (O-umlaut), 2026-11-08: the closure at the library of section 249, the engine design of the open form and a prototype with the frozen fix90 policies.

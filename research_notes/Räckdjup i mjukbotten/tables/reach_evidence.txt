@@ -1,0 +1,149 @@
+REACH DEPTH OF THE BENTHIVORE MEMBERS INTO SOFT SEDIMENT - evidence log (sub-question 1)
+Compiled 2026-11-19 by a literature agent. Research only; no model files touched.
+Tags: F = full text read, A = abstract only, S = secondary (cited in another source), J = judgement.
+"reused" = the file already sits in another research_notes folder (path given); "new" = not used by the
+three refuge/exposure notes before.
+
+HEADLINE: no measured bite, dig or pit depth exists for haddock, cod, plaice, dab, long rough dab or
+witch on mud (about 25 targeted searches: feeding pits, excavation, buried-prey experiments, sidescan,
+bioturbation trait lists, flatfish feeding mechanics). Every reach below is a BOUND or an ordinal
+statement, not a measurement. The tightest bound is the Amphiura disc: dab (F) and, per Skold et al. 1994,
+haddock (S) crop the arms and leave the disc, so the routine reach is shallower than the disc depth.
+
+=====================================================================================================
+DAB (Limanda limanda; 0.045 of group biomass)
+=====================================================================================================
+- Kaiser & Ramsay 1997, MEPS 152:307 [F, reused: research_notes/"Exponering av bottenbyten"/data/
+  A_infauna/kaiser_ramsay1997_meps152/]. 40 m, turbid, Amphiura ground. "In undisturbed sediments Amphiura
+  spp. are positioned with their oral discs buried within the sediment while their arms protrude from the
+  sediment surface. Under these circumstances, dab graze the exposed arms, while leaving the oral disc
+  intact". Control-line stomachs held arms; after a beam trawl pass, "much larger numbers of oral discs";
+  "as the tickler chains pass through surface layers of the sediment, they dig out or expose entire
+  brittlestars". => dab reach < Amphiura disc depth (UPPER BOUND, F).
+- Hinz, Kroncke & Ehrich 2005, J Fish Biol 67:125, doi 10.1111/j.0022-1112.2005.00918.x [A, new, via
+  OpenAlex]: "only prey densities in the environment significantly influenced prey choice in dab, while
+  other characteristics such as the position of the prey in the habitat, its palatability or mobility did
+  not have significant effects ... although trends were apparent that suggested that buried living fauna
+  was less likely to be ingested, which was also observed in previous studies." Main prey Pariambus
+  typicus (epibenthic caprellid) and Ophiura albida (epifaunal ophiuroid).
+- Johnson, Gorelli, Jenkins, Hiddink & Hinz 2015, Proc R Soc B 282:20142336 [F, reused file:
+  research_notes/"Fiskgrupper i rutan"/benthivores/data/lit/johnson2015/; new to the refuge notes].
+  Irish Sea mud: "dab are large-eyed visual, opportunistic" feeders; burrowing crustaceans (Goneplax,
+  Callianassa, Jaxea) "Presence of these species in the stomachs of dab was generally as whole chelae
+  only"; "feeding solely on their appendages may well remove the necessity to spend a lot of energy
+  digging individual prey items out from their burrows". => dab crop exposed parts.
+- de Groot 1969, J Cons 32:385 [F, reused: Refugium.../data/vliz_ocrd_268389/]: "Plaice, flounder and dab
+  are day feeders"; group 3 = "day feeders, which although visual feeders, may use chemical clues ... They
+  find their food in or near the bottom"; dab "more or less pure crustacea feeders".
+=> Reach (J on F bounds): 0 / 0.5 / 1 cm (low / central / high) plus exposed parts.
+
+=====================================================================================================
+LONG ROUGH DAB (Hippoglossoides platessoides; 0.126)
+=====================================================================================================
+- de Groot 1969 [F, reused]: "Some species like the Greenland halibut, halibut and long rough dab link up
+  with the Bothidae" (the visual hunters of "fish or ... other quick moving animals, such as shrimps").
+- ICES stomach DB, NNS/CSNS pre-2000 [D, reused: research_notes/"Fiskgrupper i rutan"/benthivores/
+  tables/ices_benth_diet_taxa.csv]: identified echinoderms are epifaunal Ophiothrix / Ophiuridae, a trace
+  of Amphiura (0.14 g); bivalves unidentified. Diet mostly crustaceans and ophiuroids (group diet note:
+  B 85 %, M&D 1991 via Ntiba & Harding 1993 [S]).
+- Gonzalez-Iglesias et al. 2003 NAFO SCR 03/23 [A, new, via OpenAlex]: American plaice (same species,
+  NW Atlantic and Svalbard) "is a daytime feeder"; main prey fish, Ophiuroidea, Crustacea.
+- No digging, siphon or tail cropping reported.
+=> Reach (J): 0 / 0.5 / 1 cm; a visual epibenthic feeder.
+
+=====================================================================================================
+WITCH (Glyptocephalus cynoglossus; 0.017)
+=====================================================================================================
+- Bergstad, Wik & Hildre 2003, J Northw Atl Fish Sci 31:165, Table 6 and text [F, reused file:
+  research_notes/"Fiskgrupper i rutan"/benthivores/data/lit/bergstad2003/; new to the refuge notes].
+  Skagerrak 156-490 m, 134 stomachs: polychaetes 59.3 %W, bivalves 20.4 %W of the identified part.
+  "Twenty-three families of polychaetes were recorded, mainly Polynoidae, Sigalionidae, Capitellidae,
+  Opheliidae, Cirratulidae, and Ampharetidae. The more prominent bivalve families were Scrobiculariidae and
+  Nuculanidae." Living depth (J, tables/stomach_taxa_living_depth.csv): scale worms surface/shallow;
+  cirratulids and ampharetids feed at the surface with palps/tentacles; Abra (Scrobiculariidae) 0-2 cm;
+  Nuculanidae shallow protobranchs; capitellids the only deep-burrowing family (small ones also shallow).
+- de Groot 1969 [F, reused]: witch has the "plaice type" brain (moderate olfactory, very large optic lobes;
+  Evans 1937 [S]); intestine like lemon sole (a polychaete-mollusc feeder).
+=> Reach (J): 0.5 / 1 / 2 cm; small mouth, surface and shallow polychaetes and small bivalves.
+
+=====================================================================================================
+PLAICE (Pleuronectes platessa; 0.038)
+=====================================================================================================
+- Johnson et al. 2015 [F, reused file]: "Plaice predominantly target infaunal prey of limited mobility
+  (such as polychaetes and bivalves) through a well-developed suction capability, horizontal mouth/head
+  down foraging position and large olfactory bulb"; Chesson alpha: preference for Abra alba, Glycera spp.
+  and Nephtys spp.; "increased energetic costs of targeting the deep burrowing ... A. alba ... with more
+  time and energy spent swimming, searching and foraging for buried food items". Abra alba: "a shallow
+  burrower", inhalant siphon "held a few millimetres above the sediment surface" (MarLIN 1722 [S]).
+  Glycera and Nephtys are mobile burrowers of the top ~5-10 cm (J; depth not in the paper).
+- de Vlas 1979 (Wadden Sea) via de Vlas 1981 [S, earlier notes]: ~1/3 of plaice intake = siphon tips,
+  tail ends, heads; Trevallion 1971 via Saward et al. 1975 [S, earlier notes]: juvenile plaice graze
+  Tellina siphon tips.
+- Hill, Burrows & Hughes 2000, J Fish Biol 56:1497 [A, new]: juvenile plaice "foraging for buried
+  bivalves" by pause-travel search; burial depth not in the abstract.
+- ICES stomach DB, Skagerrak 2024 [D, reused]: 185 fed plaice, ophiuroids 47 %, bivalves 26 %,
+  polychaetes 15 %, echinoids 10 % (identified families: tables/stomach_taxa_living_depth.csv; deep-
+  burrowing families < 2 % of the identified polychaete mass).
+=> Reach (J on F mechanism): 1 / 2 / 4 cm (head-down suction into the top layer; whole shallow bivalves and
+   mobile burrowers when near the surface; siphons and tails of deeper animals).
+
+=====================================================================================================
+HADDOCK (Melanogrammus aeglefinus; 0.386)
+=====================================================================================================
+- Skold, Loo & Rosenberg 1994, MEPS 103:81 [F, reused; Exponering.../data/A_infauna/skold1994_meps103]:
+  dab, "haddock Melanogrammus aeglefinus (Mattson 1992) and Norwegian lobster ... These predators do not
+  generally consume the entire brittle star but crop only the arms, which are later regenerated."
+  => haddock routine reach < Amphiura disc depth (S: Skold's reading of Mattson 1992; "generally").
+- Mattson 1992, Sarsia 77:33 [A, reused via the exposure note]: haddock feeding "aimed primarily at the
+  entire fraction of small to medium-sized endobenthos"; "The prey size and the feeding depth in the
+  sediment increased with fish size." Stomach contents "highly particulate". Ordinal only: no depth.
+- Schuckel, Ehrich, Kroncke & Reiss 2010, J Fish Biol 77:98, doi 10.1111/j.1095-8649.2010.02657.x [A, the
+  following sentence new]: "tubicolous polychaetes of the family spionids, especially Spiophanes kroyeri
+  and Spiophanes bombyx as well as the tentaculate Phoronis spp., were not consumed and potentially avoided
+  due to their ability to withdraw below the feeding depths or due to chemical deterrents"; "Other prey
+  characteristics, such as the position in the sediment ... had no significant effect on the selection
+  process". => a finite feeding depth; Spiophanes and Phoronis tubes reach ~10-20 cm (J, not measured
+  there).
+- Jensen c. 1960, "Haddock", US Fish & Wildlife Service Fishery Leaflet 489 [F text, new, data/
+  jensen_noaa_leaflet489/; a popular account, anecdote]: "Adult haddock feed mostly on slow-moving small
+  animals found on or burrowing in the upper layers of the ocean floor"; "Haddock gorge themselves on
+  burrowing worms which they grub out of the bottom with their muscular lips ... 'carp of the sea' because
+  of their habit of rooting on the bottom for food." No number; carries no value.
+- Inferior mouth, the only gadoid of the mix built for infauna (morphology note, research_notes/"Bentos
+  atkomlighet for torskfiskar"/evidence_B_gadoid_foraging.md [F there]).
+=> Reach (J on S/A bounds): 1 / 2 / 4 cm. The high end is set at the Amphiura disc (~4 cm, Rosenberg et al.
+   1997 [F]) because haddock "generally" leave the disc; the earlier note's 5 cm had no source.
+
+=====================================================================================================
+COD (Gadus morhua; 0.314)
+=====================================================================================================
+- Brawn 1969, J Fish Res Board Can 26:583 [A, OpenAlex; reused]: "Food covered by sand was not found."
+  "Food below gravel or stones was located by smell and uncovered by carrying away gravel in the mouth";
+  "food deeply buried was uncovered by several fish digging in the same place". The two statements
+  conflict for fine sediment; the gravel case does not transfer to mud (J).
+- Mattson 1990, Sarsia 75:247 [A, reused]: cod adapted "for catching prey on and below the bottom
+  surface. It captures prey mainly by suction".
+- ICES stomach DB, Skagerrak and box 2000+ [D, reused]: identified infaunal prey almost only Aphrodita
+  aculeata (sea mouse, a surface-dwelling scale worm); infauna is a trace of the box cod diet.
+- Fischer, Lewis, Hawkins & Roberts 2025, Mar Environ Res, doi 10.1016/j.marenvres.2025.107158 [S, press
+  release only, new]: cod scored a "vertical excavator" in a UK fish-bioturbation trait list; no depth.
+=> Reach (J): 0 / 0.5 / 1 cm on mud plus exposed parts.
+
+=====================================================================================================
+OTHERS (starry ray, hagfish, grey gurnard, lemon sole, weever...; 0.074 of the listed biomass)
+=====================================================================================================
+No search. Given the group-mean reach of the six named members (J); rays dig feeding pits (general
+knowledge, not sourced here) and lemon sole is a polychaete feeder, so this is a conservative choice.
+
+=====================================================================================================
+SEARCHED, NOTHING QUANTITATIVE (do not redo)
+=====================================================================================================
+Haddock feeding pits / excavation / video / Georges Bank observations; cod pit digging for bivalves or
+sandeels; flatfish buried-prey depth experiments (plaice, dab, flounder-Macoma); flatfish or gadoid
+feeding pits on sidescan or SPI; Fischer et al. 2025 full text (Elsevier 403); Schuckel 2010 and 2012,
+Hinz 2005, Hill et al. 2000, Pihl 1994, Mattson 1990/1992 full texts (paywalled, no OA copy per
+Unpaywall); Hinz 2005 PhD thesis (Bangor portal returned an HTML block page); de Groot 1971 NJSR 5:121 and
+de Groot 1973 JMBAI (download refused: the server's TLS certificate did not verify); Ludwig et al. 2024
+MEPS 739:173 (opened: trait analysis without a living-depth trait, not used). The North Sea "pits" in a
+2023 Communications Earth & Environment paper (doi 10.1038/s43247-023-01102-y; mean depth 0.11 m) are attributed to
+harbour porpoises, not to fish (search summary only).

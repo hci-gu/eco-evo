@@ -1,0 +1,34 @@
+shallow (< 100 m) : 150-250 m hazard ratio on whiting (per unit whiting biomass)
+
+  WC -> whiting: model, uniform predators 5.25
+    central: x measured bed light 3.36 (factor 0.64); x escape and diel 2.86 (factor 0.54)
+    low    : x measured bed light 2.57 (factor 0.49); x escape and diel 1.24 (factor 0.24)
+    high   : x measured bed light 4.62 (factor 0.88); x escape and diel 5.55 (factor 1.06)
+    field predator placement (central): 0.53 (factor 0.10); with light + escape (central) 0.29
+    field predator placement (shallow-low): 0.29 (factor 0.06); with light + escape (central) 0.16
+    field predator placement (shallow-high): 1.06 (factor 0.20); with light + escape (central) 0.58
+    all corners together (placement + light + escape + diel): 0.07 - 1.12
+
+  benthivores -> whiting: model, uniform predators 4.43
+    central: x measured bed light 2.84 (factor 0.64); x escape and diel 2.41 (factor 0.54)
+    low    : x measured bed light 2.17 (factor 0.49); x escape and diel 1.04 (factor 0.24)
+    high   : x measured bed light 3.90 (factor 0.88); x escape and diel 4.68 (factor 1.06)
+    field predator placement (central): 4.95 (factor 1.12); with light + escape (central) 2.69
+    field predator placement (shallow-low): 3.02 (factor 0.68); with light + escape (central) 1.65
+    field predator placement (shallow-high): 8.20 (factor 1.85); with light + escape (central) 4.46
+    all corners together (placement + light + escape + diel): 0.71 - 8.65
+
+  both fish pairs: model, uniform predators 4.80
+    central: x measured bed light 3.07 (factor 0.64); x escape and diel 2.61 (factor 0.54)
+    low    : x measured bed light 2.35 (factor 0.49); x escape and diel 1.13 (factor 0.24)
+    high   : x measured bed light 4.22 (factor 0.88); x escape and diel 5.07 (factor 1.06)
+    field predator placement (central): 1.72 (factor 0.36); with light + escape (central) 0.93
+    field predator placement (shallow-low): 1.10 (factor 0.23); with light + escape (central) 0.60
+    field predator placement (shallow-high): 2.80 (factor 0.58); with light + escape (central) 1.52
+    all corners together (placement + light + escape + diel): 0.26 - 2.95
+
+  class profile, both pairs, relative to 150-250 m (< 100 / 100-150 / 150-250 / >= 250):
+    model, uniform predators             4.80 / 3.10 / 1.00 / 0.89
+    measured light + escape (central)    2.61 / 1.34 / 1.00 / 0.89
+    field placement                      1.72 / 2.56 / 1.00 / 0.19
+    field placement + light + escape     0.93 / 1.10 / 1.00 / 0.19

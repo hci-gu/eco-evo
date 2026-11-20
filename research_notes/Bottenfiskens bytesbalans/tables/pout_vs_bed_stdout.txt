@@ -1,0 +1,135 @@
+Library values read (benthivorous_fish_preys_on_*):
+  benthic_infauna      a 0.036  h 111.9  f -  stage_access -  M2 0.0396
+  mobile_epifauna      a 0.15  h 257.6  f 0.62  stage_access -  M2 0.54
+  norway_lobster       a 0.44  h 285.6  f 0.02  stage_access -  M2 0.0225
+  planktivorous_fish   a 0.0074  h 238.2  f -  stage_access [0.52, 0.1]  M2 0.145
+  whiting              a 0.0026  h 177.2  f -  stage_access [0.34, 0.036]  M2 0.18
+
+====================================================================================================
+A. Gate lambda = a x B_vis (per tick) and shares
+====================================================================================================
+  benthic_infauna      a 0.0360 B_vis  18.722 lambda 0.67399 share 0.629 booked 0.578
+  mobile_epifauna      a 0.1500 B_vis   2.342 lambda 0.35130 share 0.328 booked 0.318
+  norway_lobster       a 0.4400 B_vis   0.092 lambda 0.04048 share 0.038 booked 0.016
+  planktivorous_fish   a 0.0074 B_vis   0.862 lambda 0.00638 share 0.006 booked 0.075
+  whiting              a 0.0026 B_vis   0.038 lambda 0.00010 share 0.000 booked 0.013
+  lambda_bed 1.0658; shared denominator X_bed = sum h lambda = 177.5
+  planktivore share 0.075 needs lambda_plk 0.0864 = x13.5 the current 0.00638
+  planktivore share 0.102 needs lambda_plk 0.1211 = x19.0 the current 0.00638
+  planktivore share 0.123 needs lambda_plk 0.1495 = x23.4 the current 0.00638
+
+====================================================================================================
+B. Species-resolved planktivore term (per WHOLE benthivore tonne)
+====================================================================================================
+  group shares >= 20 cm: cod 0.310, haddock 0.353; haddock capability c_h 0.65
+  same-layer base at R_sat (F = 1, g = 1): cod 0.357, haddock 0.425 km2/t/tick
+  herring       B 2.624  gF 0.0388  window cod 0.297 haddock 0.075  lambda 0.00409 (cod 0.00335, haddock 0.00074)
+  blue whiting  B 0.353  gF 0.0780  window cod 0.050 haddock 0.000  lambda 0.00015 (cod 0.00015, haddock 0.00000)
+  Norway pout   B 0.253  gF 0.1843  window cod 0.612 haddock 0.352  lambda 0.00476 (cod 0.00316, haddock 0.00160)
+  sprat         B 0.100  gF 0.0241  window cod 0.716 haddock 0.455  lambda 0.00030 (cod 0.00019, haddock 0.00011)
+  species-resolved lambda_plk 0.00930 vs engine 0.00638 (x1.46); pout share of it 0.51
+  field share 0.075, 90 % pout: lambda_pout needed 0.0778 = x16.3 the rebuilt pout term
+  field share 0.102, 90 % pout: lambda_pout needed 0.1090 = x22.9 the rebuilt pout term
+  field share 0.123, 90 % pout: lambda_pout needed 0.1345 = x28.3 the rebuilt pout term
+
+====================================================================================================
+C. Pout term, one factor at a time (ratio to central)
+====================================================================================================
+  R_sat 1.5 L                                          x0.65
+  R_sat 3 L                                            x2.00
+  R_nv 0.3 L                                           x0.85
+  R_nv 1.0 L                                           x1.35
+  Ke 0.005 lx                                          x1.20
+  Ke 0.1 lx                                            x0.75
+  light low K (clear)                                  x1.62
+  light high K (turbid)                                x0.33
+  v 0.2 BL/s                                           x0.66
+  v 0.8 BL/s                                           x1.82
+  p 0.1                                                x0.33
+  p 0.5 (Juanes et al. 2002: ~half of piscivore attacks) x1.67
+  p 0.6                                                x2.00
+  H 5 m                                                x2.00
+  H 20 m                                               x0.50
+  F pout 0.4 / 0.1                                     x0.54
+  F pout 0.9 / 0.7                                     x1.33
+  c_h 0.3                                              x0.82
+  c_h 1.0                                              x1.18
+  window ratio 0.4 (herring-specific p95 band)         x1.23
+  all-high corner (R_sat 3, R_nv 1, Ke .005, low K, v .8, p .6, H 5, F .9/.7, c_h 1, ratio .4) x55
+  MC (n 400, log-uniform, independent) ratio to central: 5/50/95 % 0.08 0.54 3.17
+
+  Vertical geometry variant (structural, J): cod/haddock search within ~2 m of the bed
+  (Stensholt & Stensholt 2004: 19-34 % of tag depths within 2 m of the daily maximum depth),
+  pout layer 5-10 m above the bed (Albert 1994; Aglen 1996: best trawl/acoustic fit at 4 m).
+    R 0.4 m: share of the pout layer within reach 0.00 (band model assumes F_day 0.7 in 10 m)
+    R 0.8 m: share of the pout layer within reach 0.00 (band model assumes F_day 0.7 in 10 m)
+    R 1.4 m: share of the pout layer within reach 0.06 (band model assumes F_day 0.7 in 10 m)
+
+  School variant (structural): a 15 cm pout weighs ~25 g [J, L-W]; a 2 kg cod's ration at the
+  group ration 0.0089 t/t/tick is 18 g per 6 h = 0.7 pout per tick, so a school
+  encounter yields at most ~1 prey; with the school's own radius r_s the encounter rate falls by
+    r_s 3 m, n 100, R 0.5 m: (R + r_s)^2 / (n R^2) = 0.490
+    r_s 3 m, n 100, R 1.0 m: (R + r_s)^2 / (n R^2) = 0.160
+    r_s 5 m, n 1000, R 0.5 m: (R + r_s)^2 / (n R^2) = 0.121
+    r_s 5 m, n 1000, R 1.0 m: (R + r_s)^2 / (n R^2) = 0.036
+  i.e. schooling lowers, never raises, a gut-limited cod's pout encounter (convention: left to the
+  prey's hide action / visibility floor, Attackrater ur motesteori addendum_validation_behaviour.md).
+
+====================================================================================================
+D. Member-resolved diet (each member saturated on its own gut) vs the pooled gate
+====================================================================================================
+  infauna a_eff per member (km2/t/tick): haddock 0.042, cod 0.026, long rough dab 0.029, dab 0.048, plaice 0.037, witch 0.045, starry ray 0.031, grey gurnard 0.061, lemon sole 0.039
+  planktivore lambda per cod tonne 0.0218, per haddock tonne 0.0063
+  planktivore share: member-resolved (consumption-weighted) 0.0100; pooled (gate form) 0.0093; ratio x1.08
+  cod alone: planktivore share 0.025 (field, box-length weighted: 0.19 Skagerrak >= 80 m, 0.54 NNS >= 100 m, SMS box mix 0.176)
+
+====================================================================================================
+E. Bed side: lambda band and lab anchors
+====================================================================================================
+  MC 5 %   a_inf 0.016 a_epi 0.050: lambda_bed 0.457 (x2.33 vs central)
+  central  a_inf 0.036 a_epi 0.150: lambda_bed 1.066 (x1.00 vs central)
+  MC 95 %  a_inf 0.092 a_epi 0.530: lambda_bed 3.004 (x0.35 vs central)
+  Persson 2012 Crangon (buries)   0.071 km2/t/tick at 18 cm; scaled to ~40 cm (x18/40): 0.032
+  Persson 2012 Palaemon           0.825 km2/t/tick at 18 cm; scaled to ~40 cm (x18/40): 0.371
+  Persson 2012 Neomysis           2.239 km2/t/tick at 18 cm; scaled to ~40 cm (x18/40): 1.007
+  library epifauna: a 0.15 per accessible tonne; x f 0.62 = 0.093 per total tonne
+  library infauna: a 0.036 per exposed tonne; x 0.2 = 0.0072 per total tonne
+
+====================================================================================================
+F. Norway pout biomass: conventions and consequences
+====================================================================================================
+  raw GOV q = 1 / acoustic (library)     pout  0.25 t/km2  pool  3.33  pout share 0.075  M2 benthivores 1.60-1.91 (SMS 0.29)  + whiting 0.57  (SMS total 1.89)
+  Walker q, Q1 (0.58)                    pout  0.58 t/km2  pool  3.66  pout share 0.159  M2 benthivores 0.69-0.82 (SMS 0.29)  + whiting 0.25  (SMS total 1.89)
+  Walker q, Q1/Q3 mean                   pout  1.64 t/km2  pool  4.71  pout share 0.347  M2 benthivores 0.24-0.29 (SMS 0.29)  + whiting 0.09  (SMS total 1.89)
+  Walker q, Q3 (0-group pulse)           pout  2.70 t/km2  pool  5.78  pout share 0.467  M2 benthivores 0.15-0.18 (SMS 0.29)  + whiting 0.05  (SMS total 1.89)
+  stock TSB 2024-25 / 1-2e5 km2          pout  0.45 t/km2  pool  3.53  pout share 0.128  M2 benthivores 0.89-1.06 (SMS 0.29)  + whiting 0.32  (SMS total 1.89)
+  stock TSB 2016-24 / 1-2e5 km2          pout  2.00 t/km2  pool  5.08  pout share 0.394  M2 benthivores 0.20-0.24 (SMS 0.29)  + whiting 0.07  (SMS total 1.89)
+  pout B at which the booked benthivore take equals SMS's benthivore M2 0.29: 1.38-1.65 t/km2
+  (caveat: SMS M2 is stock-wide; the box's cod:pout ratio need not equal the stock's)
+
+====================================================================================================
+G. Scenarios: gate shares (a x B_vis), single-pair saturation, Charnov thresholds
+====================================================================================================
+  species-resolution factor (engine pooled a x f_eff vs species sum) x1.46
+  shares: infauna, epifauna, Nephrops, planktivores, whiting | single-pair sat = h lam/(1 + h lam)
+  current library                                        benthi 0.629 mobile 0.328 norway 0.038 plankt 0.006 whitin 0.000 | sat inf 0.99 epi 0.99 neph 0.92 plk 0.60
+  species-resolved, pout 0.25                            benthi 0.627 mobile 0.327 norway 0.038 plankt 0.009 whitin 0.000 | sat inf 0.99 epi 0.99 neph 0.92 plk 0.69
+  species-resolved, pout 0.58                            benthi 0.623 mobile 0.325 norway 0.037 plankt 0.014 whitin 0.000 | sat inf 0.99 epi 0.99 neph 0.92 plk 0.79
+  species-resolved, pout 1.64                            benthi 0.612 mobile 0.319 norway 0.037 plankt 0.032 whitin 0.000 | sat inf 0.99 epi 0.99 neph 0.92 plk 0.89
+  species-resolved, pout 2.70                            benthi 0.601 mobile 0.313 norway 0.036 plankt 0.049 whitin 0.000 | sat inf 0.99 epi 0.99 neph 0.92 plk 0.93
+  species-resolved, pout 1.64, p 0.5 (Juanes)            benthi 0.599 mobile 0.312 norway 0.036 plankt 0.052 whitin 0.000 | sat inf 0.99 epi 0.99 neph 0.92 plk 0.93
+  species-resolved, pout 1.64, bed at MC 5 %             benthi 0.556 mobile 0.290 norway 0.082 plankt 0.072 whitin 0.000 | sat inf 0.97 epi 0.97 neph 0.92 plk 0.89
+  species-resolved, pout 2.70, bed at MC 5 %             benthi 0.534 mobile 0.279 norway 0.079 plankt 0.108 whitin 0.000 | sat inf 0.97 epi 0.97 neph 0.92 plk 0.93
+  field: booked inf 0.578 epi 0.318 neph 0.016 plk 0.075 wht 0.013; in-area plk 0.08-0.17
+
+  stage_access [0.52, 0.1], implied J/B 0.378
+  pout 0.25: pool 3.33, J/B 0.378, f_eff 0.259, B_vis 0.861; engine a equivalent 0.0107 (library 0.0074)
+  pout 0.58: pool 3.66, J/B 0.410, f_eff 0.272, B_vis 0.995; engine a equivalent 0.0155 (library 0.0074)
+  pout 1.64: pool 4.72, J/B 0.482, f_eff 0.302, B_vis 1.426; engine a equivalent 0.0248 (library 0.0074)
+  pout 2.70: pool 5.78, J/B 0.527, f_eff 0.321, B_vis 1.857; engine a equivalent 0.0298 (library 0.0074)
+
+  energy kept per gut time (assim - sda) E / h, MJ/t/tick: benthic_infauna 13.9, mobile_epifauna 10.2, norway_lobster 8.8, planktivorous_fish 20.9
+  top-ranked prey per gut time: planktivorous_fish -> always attacked by a rate maximiser (zero-one rule)
+  mobile_epifauna: included only while the infauna x = h lam < 2.7 (now 75; ignores the planktivore term)
+  norway_lobster: included only while the infauna x = h lam < 1.7 (now 75; ignores the planktivore term)
+  (planktivore E as eaten = lean 4000 + 0.5 x reserve 6250 = 7125: library, prey_includes_reserve)

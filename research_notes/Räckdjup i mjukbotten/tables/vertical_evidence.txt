@@ -1,0 +1,314 @@
+VERTICAL DISTRIBUTION OF INFAUNA BY SEDIMENT DEPTH, AND CROPPABLE EXPOSED MASS
+Evidence log, literature round 2 (new sources only; round-1 sources listed in the
+brief are not repeated: Dauwe et al. 1998, Loo et al. 1996, Rosenberg et al. 1997,
+2002, Skold et al. 1994, Skold & Gunnarsson 1996, Zwarts et al. 1994, Gremare
+et al. 2004, Zanzerl & Dufour 2017, etc.)
+
+Tags: F = full text read; A = abstract only; S = secondary (named);
+J = own judgement or arithmetic. Figure digitizing is stated where used.
+Rows for the CSV are in tables/vertical_rows.csv.
+
+Bottom line of this round
+- No NEW sliced-core biomass profile was found for Skagerrak-like mud at
+  70-300 m. Dauwe et al. 1998 station SK (280 m) stays the only direct anchor.
+- New: one shelf-edge / slope sliced-core biomass profile (Flach & Heip 1996,
+  Goban Spur, 185-208 m on fine sand, plus deeper stations); in situ burrow
+  and disc-chamber depths and arm extension of Amphiura filiformis by
+  time-lapse SPI (Solan & Kennedy 2002); the first measured arm vs disc mass
+  split for an amphiurid (Dobson et al. 1991, Microphiopholis gracillima -
+  NOT A. filiformis).
+- The arm vs disc split of Amphiura filiformis itself is still not found.
+
+==========================================================================
+1. Flach, E. & Heip, C. 1996. Vertical distribution of macrozoobenthos within
+   the sediment on the continental slope of the Goban Spur area (NE Atlantic).
+   Mar Ecol Prog Ser 141: 55-66. doi:10.3354/meps141055
+   File: data/flach1996_meps141/m141p055.pdf (+ .txt). Tag F (text) and
+   digitized figure (Fig. 5e/f).
+--------------------------------------------------------------------------
+Site: Goban Spur, Celtic margin, 12 stations 185-4460 m. Relevant here only
+Stn 12 (185 m, 1 boxcore, 30 cm diameter) and Stn A (208 m, 3 boxcores),
+10.5 C; Stn I (670 m) for context. Sediment: "Median grain size decreased
+with increasing water depth from ~90 um at 208 m to ~8 um below 2000 m" -
+i.e. Stn A (208 m) is very fine SAND on the shelf edge, not mud; Stn 12
+(185 m) is assumed similar (J: no grain size given for it).
+Slicing: "Boxcore samples were sliced in sediment layers of 0-1, 1-5, 5-10
+and 10-15 cm and sieved on a 0.5 mm" sieve. Biomass as mg organic C m-2.
+
+Quotes (abstract):
+- "Most of the macrofauna was concentrated In the upper 1 cm of the sediment.
+  The highest proportion (70 to 80%) was in the upper 1 cm found at
+  intermediate depths (670 to 1425 m)" [DENSITY, not biomass].
+- "At most stations the biomass was concentrated below the upper 1 cm, which
+  was also reflected in the vertical distribution pattern of the mean
+  individual weight, showing small individuals in the upper 1 cm and larger
+  individuals in the deeper sediment layers."
+Quotes (results):
+- "Most of the macrofauna (40 to 80%) was found in the upper 1 cm of the
+  sediment" [density].
+- "Relatively high biomass values were found in the deepest sediment layer
+  (10 to 15 cm) at shallow Stn A, whereas at the deeper stations the biomass
+  in this deep sediment layer was relatively low."
+- "At the shallowest stations deep burrowing Callianassa sp. were found,
+  accounting for the high percentage below 5 cm sediment depth" [Crustacea
+  density].
+- Polychaetes: "at all stations small individuals were found in the upper
+  1 cm and large individuals in the deeper sediment layers ... mainly
+  filter-feeders and surface deposit-feeders ... in the upper 1 cm, whereas
+  it was mainly subsurface deposit-feeders in the deeper layers."
+- Echinoderms (mainly juvenile ophiuroids): "At Stns I and B ~90 % of the
+  Echinodermata ... were found in the upper 1 cm" [density].
+- Mollusca: "~75% of the Mollusca living in the upper 1 cm" [density].
+
+Digitized: Fig. 5e/f, "Relative (%) importance in biomass (without large
+individuals) of the different sediment layers". Page 6 rendered at 300 dpi,
+pixel columns scanned (scripts/vert_column_scan.py; 0 % axis at y~372,
+100 % at y~12 of the crop, 360 px). Stack order: legend boxes of 0-1 cm and
+10-15 cm both print white; order fixed from the text: "high biomass in the
+deepest layer (10-15 cm) at shallow Stn A" = the bottom white segment
+(~48 % at 208 m), and "relatively low biomass values in the upper 1 cm at
+most of the stations (all except Stn B)" = Stn B (1034 m) has a top white
+segment of ~75 %. Adjacency agrees: the black (5-10 cm) band sits directly
+on the bottom white and the grey hatch (1-5 cm) directly under the top white
+in every bar. (One sentence, "decrease in relative biomass values in the
+upper 1 cm of the sediment with increasing water depth", is only a trend
+statement and does not contradict this.) So bottom to top: 10-15, 5-10
+(black), 1-5 (grey hatch), 0-1 cm. Error +-3 % per segment (reading), more
+for the thin 1-5 cm band.
+Reproduce: pdftoppm -f 6 -l 6 -r 300 -png m141p055.pdf -> 2438 x 3284 px;
+crop box (0.06 w, 0.535 h, 0.60 w, 0.70 h) = 1316 x 542 px; then
+python3 -I scripts/vert_column_scan.py CROP.png 187 235 672 722 770
+(x = 187: Fig 5e 208 m; 235: 5e 670 m; 672: 5f 185 m; 722: 5f 208 m;
+770: 5f 670 m). Segment boundaries in y (crop px), e.g. 208 m (5e): top
+white 13-126, hatch 127-165, black 166-197, bottom white 198-371.
+  Stn 12, 185 m: 0-1 31 %, 1-5 35 %, 5-10 33 %, 10-15 ~1 %
+  Stn A, 208 m (Fig. 5e and 5f agree): 0-1 31-32 %, 1-5 11 %, 5-10 9 %,
+       10-15 48 %
+  Stn I, 670 m: 0-1 34 %, 1-5 3 %, 5-10 51 %, 10-15 12 %
+Caveats: biomass in organic C, "excluding the few extremely large
+individuals" (sipunculans, a pennatulid, a holothurian); 0.5 mm sieve;
+Stn 12 is one core; the two shelf-edge stations disagree completely below
+10 cm (~1 % vs ~48 %, the latter large deep burrowers), so they widen the
+range rather than narrow it. Cores reach only 15 cm.
+
+==========================================================================
+2. Solan, M. & Kennedy, R. 2002. Observation and quantification of in situ
+   animal-sediment relations using time-lapse sediment profile imagery
+   (t-SPI). Mar Ecol Prog Ser 228: 179-191. doi:10.3354/meps228179
+   File: data/solan2002_meps228/m228p179.pdf (+ .txt). Tag F.
+--------------------------------------------------------------------------
+Site: Margaretta station, inner Galway Bay, Ireland, "approximately 22 m of
+water", tidal ("mean bottom currents are usually < 25 cm s-1"), 5.8-16.8 C,
+brown-green muddy fine sand ("fine sand (2 to 3 phi ...)"). Amphiura
+filiformis > 700 ind m-2. Two 24 h time-lapse SPI sequences, 30 min frames.
+NOT a Skagerrak analogue for depth or flow; the tidal feeding rhythm does
+not transfer to 70-300 m.
+Quotes:
+- Excavation depth: "the maximum depth (Table 3) attained over the 24 h
+  period ranging from 6.25 cm (Excavation B) to 11.73 cm (Excavation A).
+  Apparent mean maximum excavation depth (+- 95% CI, n = 8) was
+  8.95 +- 1.6 cm". Excavation = arm burrow + disc chamber, apparent against
+  the faceplate.
+- Disc chamber: "The disc chamber was located at 9.15 cm depth and was
+  monitored for 7.5 h" (one individual). "Maximum apparent disc chamber
+  volume was 0.27 cm3 after 7 h."
+- Arm extension: "feeding 'arms' were positioned vertically and extended
+  > 20 mm into the overlying water column".
+- Rest: "During slack tidal periods, individuals remained below the sediment
+  surface and either rested (i.e. arms largely retracted in the disc
+  chamber) or maintained the integrity of the burrow structure (i.e. arms
+  just short of the sediment-water interface)."
+- Timing: "suspension feeding activity by A. filiformis commenced at
+  approximately 1 to 2 h following high or low tide, peaked during the
+  mid-tide, and ended at approximately 1 to 2 h before the next tide".
+- Number of arms: "it is known that A. filiformis ordinarily extends at
+  least 2 'arms' from the disc chamber" - cited prior knowledge, not
+  measured here. Counts in Fig. 6 are per image (15 cm wide profile), not
+  per individual ("approximately 25 to 35" at peak).
+- Cropping: cites Duineveld & Van Noort 1986 and Baden et al. 1990.
+J: time with arms out in a semidiurnal tide: each ~6.2 h half-cycle loses
+1-2 h at each end -> 2.2-4.2 h of 6.2 h = 0.35-0.68 of the time (tidal
+site; with weak deep currents the Skagerrak value is unknown).
+J: disc depth here (9 cm, n=1; burrows 6-12 cm) is deeper than the ~4 cm
+disc depth of Rosenberg et al. 1997 (round 1). Record both; do not average.
+
+==========================================================================
+3. Dobson, W.E., Stancyk, S.E., Clements, L.A. & Showman, R.M. 1991.
+   Nutrient translocation during early disc regeneration in the brittlestar
+   Microphiopholis gracillima (Stimpson). Biol Bull 180: 167-184.
+   File: data/biostor10379_microphiopholis/biostor-10379.pdf (BioStor scan,
+   archive.org) + b.txt. Tag F (Table I read from the page image; OCR of the
+   table was garbled).
+--------------------------------------------------------------------------
+Species: Microphiopholis gracillima - an AMPHIURID brittlestar (family
+Amphiuridae; J: infaunal with buried disc and long arms like Amphiura; the
+habitat and feeding mode were not in the parts read). It is an analogue for
+Amphiura filiformis, not the species itself.
+Method (biochemical composition, Table I): animals "dissected into the
+following body fractions: proximal, medial, and distal thirds of the arms,
+the oral" frame and the disc; dried 80 C; ashed 400 C 6 h. (The later
+time-series experiment used arm halves; Table I uses thirds.) Units of
+Table I are not visible in the header read (J: mg per individual).
+Quotes (text): "About 60% of the total dry body weight is organic tissue (as
+ash-free dry weight), and most of it is located in the arms. The central
+disc has the highest organic content (74%) relative to inorganic material,
+but this represents only 7% of the total dry body weight and 10% of the
+total organic tissue weight. The proximal, medial, and distal arm parts and
+the oral frame region contain 50 to 60% organic material, which accounts for
+90% of the total organic material. The arms have a higher percentage of
+organic material at their bases than at their tips."
+Table I (mean +- SD, mg; % of whole):
+  DW:   whole 91.32; disc 8.85 (9.7 %); proximal arms 29.27 (32 %); medial
+        27.50 (30.0 %); distal 22.32 (24.5 %); oral frame 2.26 (2.4 %)
+  AFDW: whole 52.47; disc 6.52 (12 %); proximal 15.96 (30.4 %); medial
+        16.32 (31.1 %); distal 12.35 (23.5 %); oral frame 1.35 (2.5 %)
+  Organic share of each part's DW: disc 74 %, proximal 54.5, medial 59.3,
+        distal 55.3, oral frame 59.7 %.
+  Protein (% of total protein): disc 24.35, proximal 31.24, medial 22.05,
+        distal 17.91, oral frame 3.21.
+Internal mismatch: text says disc = 7 % of DW and 10 % of organic; Table I
+gives 9.7 % and 12 % (6.52/52.47). Use 0.10-0.12 for the disc's AFDW share.
+J: arms (three thirds) = 85 % of AFDW (oral frame 2.5 % is inside the disc
+body); distal third of all five arms = 23.5 % of AFDW, i.e. ~4.7 % per arm.
+J transfer to Amphiura filiformis (flagged): A. filiformis also carries long
+arms (~10x disc diameter, MarLIN, round 1), so arms ~0.85-0.90 of body
+organic mass is plausible, but it is a cross-species transfer, not a
+measurement.
+J exposed arm mass of A. filiformis while feeding (arithmetic, crude):
+  inputs: 2 arms out (Loo et al. 1996; Solan & Kennedy "at least 2"),
+  10-20 mm out (Loo et al. 1996; Solan >20 mm), arm length L = 60-100 mm
+  for adults (~10x a 6-10 mm disc, MarLIN), distal third of one arm =
+  0.235/5 = 0.047 of body AFDW (Dobson analogue), medial third of one arm
+  = 0.311/5 = 0.062.
+  exposed share of arm length f = 10/100 ... 20/60 = 0.10-0.33 (within the
+  distal third); with uniform mass per length inside that third, exposed
+  mass per arm = 0.047 x f / (1/3) = 0.141 f = 0.014-0.047; two arms:
+  0.03-0.09 of body organic mass (central ~0.05 at f 0.18).
+  small animals (L 40 mm, 20 mm out, f 0.5) reach into the medial third:
+  0.047 + 0.062 x (0.5 - 0.333)/0.333 = 0.078 per arm, 0.16 for two arms.
+  Uniform mass per length overstates the tapering tip (Dobson: arm bases
+  richer in organic matter than tips), so these are upper-leaning values.
+
+==========================================================================
+4. Duineveld, G.C.A. & Van Noort, G.J. 1986. Neth J Sea Res 20: 85-94
+   (already on the round-1 list as abstract). Tag S here: numbers seen only
+   in a search-engine summary of the abstract and the marineinfo.org record
+   (https://marineinfo.org/doc/publication/15896, "Non-open access"); no
+   verbatim sentence obtained in this round.
+--------------------------------------------------------------------------
+Reported (S): dab consumption of A. filiformis arms ~0.84 g wet weight m-2
+yr-1, ~420 arms, ~6 % of the arm population, Oyster Ground (central North
+Sea, ~45 m).
+J: 0.84 g / 420 arms = ~2.0 mg wet weight per cropped arm piece.
+
+==========================================================================
+5. Rosenberg, R., Nilsson, H.C., Hellman, B. & Agrenius, S. 2000. Depth
+   correlated benthic faunal quantity and infaunal burrow structures on the
+   slopes of a marine depression. Estuar Coast Shelf Sci 50: 843-853.
+   doi:10.1006/ecss.2000.0614. Tag S (search-engine snippet of the abstract;
+   abstract page 403, Unpaywall: closed). NOT OBTAINED.
+--------------------------------------------------------------------------
+Correction to the brief: the site is the Alkor Deep, northern Kattegat
+(well oxygenated), not the Gullmarsfjord. Sampling: 0.1 m2 grabs and SPI
+along four slope transects - i.e. probably no sliced cores. Snippet: "the
+mean apparent RPD was found as deep as between 8.0 and 11.3 cm depth", RPD
+correlated with water depth; abundance and biomass correlated with depth.
+
+==========================================================================
+6. Rosenberg, R., Hellman, B. & Lundberg, A. 1996. Benthic macrofaunal
+   community structure in the Norwegian Trench, deep Skagerrak. J Sea Res
+   35: 181-188. doi:10.1016/S1385-1101(96)90745-5. NOT OBTAINED
+   (Unpaywall closed, ScienceDirect 403, abstract elided at Semantic
+   Scholar). Snippet only (S): 15 stations 144-682 m; Spiochaetopterus
+   bergensis dominant in the deep trench, Thyasira eumyaria and Kelliella
+   miliaris abundant. No vertical-distribution statement seen.
+
+==========================================================================
+7. Clare, D.S. et al. 2022. Biological traits of marine benthic
+   invertebrates in Northwest Europe. Sci Data 9: 339.
+   doi:10.1038/s41597-022-01442-y (PMC9200785; XML in data/clare2022_scidata/).
+   Tag S: the paper (F) only names "sediment position" as a trait; the
+   modality names come from the Cefas R script on GitHub and the 0-3 scale
+   from a search summary of the Cefas DOI record.
+--------------------------------------------------------------------------
+Trait "sediment position", fuzzy-coded 0-3 per taxon, modalities (from the
+Cefas analysis script CefasRepRes/OneBenthicTraitsMapping): Surface,
+Infauna 0-5 cm, Infauna 6-10 cm, Infauna >10 cm. Per-taxon scores are in
+Cefas Data Hub doi:10.14466/CefasDataHub.123 (JavaScript portal, download
+not reachable from here). NOT OBTAINED. These are literature/expert codes,
+not measurements; useful as a cross-check of living depths per taxon.
+
+==========================================================================
+Tried, nothing usable
+- Wood, Spicer & Widdicombe 2008 Proc R Soc B (PMC2587798): A. filiformis
+  arm regeneration under low pH; no disc/arm mass split (WebFetch of PMC).
+- German MPA macrofauna inventory 2020-2022 (Biology 13: 389, PMC11201066):
+  sliced cores 0-2 ... >15 cm in the method, but no vertical results
+  reported in the text.
+- Jorgensen, Bang & Blackburn 1990 MEPS 59: 39 (Kattegat/Skagerrak
+  sediments): biogeochemistry only.
+- Hines & Comtois 1985 (Smithsonian repository link returned an HTML viewer,
+  no PDF); estuarine, low priority.
+
+==========================================================================
+8. Munday, B.W. 1993. Field survey of the occurrence and significance of
+   regeneration in Amphiura chiajei (Echinodermata: Ophiuroidea) from
+   Killary Harbour, west coast of Ireland. Mar Biol 115: 661-668.
+   doi:10.1007/BF00349374. Tag S (search-engine snippet only; Unpaywall
+   closed, Springer login redirect). NOT OBTAINED.
+--------------------------------------------------------------------------
+Snippet: biomass assays showed regenerated tissue "up to 57.9% of the total
+body weight"; animals dissected into disc, undamaged arm and regenerated
+arm fractions (weight basis - wet, dry or AFDW - unverified).
+Lead: the Amphiura arm vs disc mass split most likely sits in this paper
+(A. chiajei) and in Bowmer & Keegan 1983, Mar Biol, "Field survey of the
+occurrence and significance of regeneration in Amphiura filiformis ...
+Galway Bay" (doi:10.1007/BF00394276; same study design, A. filiformis).
+Both need library access.
+
+==========================================================================
+SYNTHESIS (J) - community biomass by layer, Skagerrak-like mud 70-300 m
+--------------------------------------------------------------------------
+Inclusion rule: stations at 150-300 m water depth with sliced-core biomass:
+Dauwe et al. 1998 SK (280 m, mud; central value, round 1) and Flach & Heip
+1996 Stn 12 (185 m) and Stn A (208 m) (fine sand). Shallow North Sea
+stations (German Bight, Frisian Front) are left out by depth, not by
+sediment. Bounds are named station values; the width comes from the
+non-mud shelf-edge stations and from cores of different length (15 cm
+Flach vs 20 cm Dauwe).
+  0-2 cm:   low 0.27 (SK) ... high 0.42 (Stn A 0-5 cm, the ceiling of its
+            0-2 cm share; its 0-1 cm alone is 0.31-0.32, Stn 12 0.31)
+  0-5 cm:   0.43 (Stn A) / 0.51 (SK) / 0.66 (Stn 12)
+  5-10 cm:  0.09 (Stn A) / 0.30 (SK) / 0.33 (Stn 12)
+  >10 cm:   0.01 (Stn 12, 10-15) / 0.19 (SK, 10-20) / 0.48 (Stn A, 10-15)
+
+==========================================================================
+NOT OBTAINED / NOT TRIED
+--------------------------------------------------------------------------
+Tried, closed (Unpaywall closed; publisher 403 or login):
+- Rosenberg, Hellman & Lundberg 1996 J Sea Res 35:181,
+  doi:10.1016/S1385-1101(96)90745-5
+- Rosenberg, Nilsson, Hellman & Agrenius 2000 ECSS 50:843,
+  doi:10.1006/ecss.2000.0614 (Alkor Deep, Kattegat)
+- Nilsson & Skold 1996 JEMBE, doi:10.1016/0022-0981(95)00188-3
+- Munday 1993 Mar Biol 115:661, doi:10.1007/BF00349374
+- Cefas trait scores, doi:10.14466/CefasDataHub.123 (JS portal)
+- Duineveld & Van Noort 1986 NJSR 20:85 (marineinfo: non-open access)
+Identified, not tried (likely closed):
+- Bowmer & Keegan 1983 Mar Biol, doi:10.1007/BF00394276 (A. filiformis
+  regeneration; probable arm/disc split)
+- O'Connor, Bowmer, McGrath & Raine 1986 Ophelia 26:351,
+  doi:10.1080/00785326.1986.10421999 (A. filiformis energy flow)
+- De Vlas 1985 NJSR 19:147, doi:10.1016/0077-7579(85)90019-5 (Macoma
+  siphon regeneration production)
+- Tomiyama 2016 Mar Biol, doi:10.1007/s00227-016-2854-6 (quantitative
+  siphon regeneration, short vs long siphons)
+- Witte 2000 Deep-Sea Res II, doi:10.1016/S0967-0645(00)00055-2 (Arabian
+  Sea; poor analogue)
+Never searched in this round: Ockelmann & Muus 1978; Hollertz; Rosenberg &
+Lundberg 2004; Rockall Trough / Porcupine / Faroe-Shetland Channel vertical
+distributions; Fladen Ground sliced cores (none surfaced in searches).
+
+No new living depths were found for any taxon except Amphiura filiformis
+(Solan & Kennedy 2002). Nothing new on bivalve siphons or polychaete palps,
+tentacles or tails in this round.

@@ -1,0 +1,27 @@
+1987 euph %W 38.9 fullness 0.801 -> euph content 0.311 %BW
+1988 euph %W 33.8 fullness 0.764 -> euph content 0.258 %BW
+1989 euph %W 31.3 fullness 0.743 -> euph content 0.233 %BW
+1990 euph %W 22.9 fullness 0.903 -> euph content 0.207 %BW
+1991 euph %W 31.7 fullness 0.901 -> euph content 0.285 %BW
+1992 euph %W 38.5 fullness 1.127 -> euph content 0.434 %BW
+1993 euph %W 33.4 fullness 0.681 -> euph content 0.227 %BW
+1994 euph %W 48.0 fullness 0.727 -> euph content 0.349 %BW
+1995 euph %W 50.9 fullness 0.835 -> euph content 0.425 %BW
+1996 euph %W 52.1 fullness 0.658 -> euph content 0.343 %BW
+1997 euph %W 54.9 fullness 0.636 -> euph content 0.349 %BW
+1998 euph %W 55.3 fullness 0.723 -> euph content 0.400 %BW
+1999 euph %W 29.4 fullness 0.496 -> euph content 0.146 %BW
+2000 euph %W 50.8 fullness 0.672 -> euph content 0.341 %BW
+2001 euph %W 48.5 fullness 0.368 -> euph content 0.179 %BW
+2002 euph %W 55.7 fullness 0.898 -> euph content 0.500 %BW
+2003 euph %W 65.0 fullness 0.418 -> euph content 0.271 %BW
+2004 euph %W 31.9 fullness 0.447 -> euph content 0.143 %BW
+2005 euph %W 33.8 fullness 1.139 -> euph content 0.385 %BW
+2006 euph %W 39.9 fullness 1.191 -> euph content 0.475 %BW
+2007 euph %W 35.4 fullness 0.705 -> euph content 0.249 %BW
+2008 euph %W 34.1 fullness 1.047 -> euph content 0.357 %BW
+2009 euph %W 23.8 fullness 0.940 -> euph content 0.224 %BW
+2010 euph %W 31.9 fullness 1.115 -> euph content 0.356 %BW
+2011 euph %W 30.6 fullness 0.690 -> euph content 0.211 %BW
+n 25 min 0.143 max 0.500 mean 0.306 %BW
+max total fullness 1.191 %BW

@@ -1,0 +1,49 @@
+1. Otolith FMR (Alewijnse 2022 dataset, n=5 each) -> model temperature
+  whiting   Q10 2.3: VO2 at 17.2 C = 124.8 (96.4-249.7); at 7.4 C = 55.2 (42.6-110.4) mg/kg/h = 4.50 (3.48-9.01) MJ/t/tick; /model non-SDA 5.8: 0.78 (0.60-1.55); FMR/model RM 1.16
+  whiting   Q10 2.7: VO2 at 17.2 C = 124.8 (96.4-249.7); at 7.4 C = 47.2 (36.4-94.3) mg/kg/h = 3.85 (2.97-7.70) MJ/t/tick; /model non-SDA 5.8: 0.66 (0.51-1.33); FMR/model RM 0.99
+  saithe/WC Q10 2.3: VO2 at 11.1 C = 100.9 (65.1-127.7); at 8.4 C = 80.6 (52.0-102.0) mg/kg/h = 6.58 (4.24-8.32) MJ/t/tick; /model non-SDA 7.04: 0.93 (0.60-1.18); FMR/model RM 2.00
+  saithe/WC Q10 2.7: VO2 at 11.1 C = 100.9 (65.1-127.7); at 8.4 C = 77.2 (49.8-97.6) mg/kg/h = 6.30 (4.06-7.97) MJ/t/tick; /model non-SDA 7.04: 0.89 (0.58-1.13); FMR/model RM 1.91
+2. SDA on top of the model cost at the SMS saithe ration
+  Q1: ration 0.44 %BW/d -> intake 6.05 MJ/t/tick, SDA 0.12 = 0.73, model total 7.77
+  Q2: ration 1.27 %BW/d -> intake 17.46 MJ/t/tick, SDA 0.12 = 2.10, model total 9.14
+  Q3: ration 0.67 %BW/d -> intake 9.21 MJ/t/tick, SDA 0.12 = 1.11, model total 8.15
+  Q4: ration 0.79 %BW/d -> intake 10.86 MJ/t/tick, SDA 0.12 = 1.30, model total 8.34
+  annual mean ration 0.792 %BW/d -> intake 10.90 MJ/t/tick = 15909 MJ/t/yr; model cost+SDA 8.35
+3. Andersen & Riis-Vestergaard 2004 activity multiplier on the model's SMR (saithe 3.29 at 8.4 C)
+  x1.44: 4.74 MJ/t/tick, /7.04 = 0.67
+  x2.0: 6.58 MJ/t/tick, /7.04 = 0.93
+  x2.5: 8.22 MJ/t/tick, /7.04 = 1.17
+  x3.27: 10.76 MJ/t/tick, /7.04 = 1.53
+4. Cruising at Uopt (COT, Steinhausen et al. 2005 [S]) for assumed lab sizes
+  saithe L 0.3 m: U 0.42 m/s, 0.577 W/kg = 153 mg O2/kg/h = 12.5 MJ/t/tick if cruising all day
+  saithe L 0.5 m: U 0.70 m/s, 0.961 W/kg = 254 mg O2/kg/h = 20.8 MJ/t/tick if cruising all day
+  whiting L 0.25 m: U 0.25 m/s, 0.368 W/kg = 97 mg O2/kg/h = 7.9 MJ/t/tick if cruising all day
+5. Saithe spawning round trip box -> northern North Sea shelf edge
+  to Tampen 61.0N 2.0E: 585 km one way, 1170 km round trip
+  to Viking/NT edge 60.0N 3.0E: 486 km one way, 971 km round trip
+  to NT edge 59.0N 4.0E: 397 km one way, 795 km round trip
+  COT 0.06 d 800 km U 0.5: gross 471 MJ/t over 18.5 d, minus model routine 522 -> extra -51 MJ/t migrant
+  COT 0.06 d 800 km U 0.84: gross 471 MJ/t over 11.0 d, minus model routine 311 -> extra 160 MJ/t migrant
+  COT 0.06 d 1100 km U 0.5: gross 647 MJ/t over 25.5 d, minus model routine 718 -> extra -71 MJ/t migrant
+  COT 0.06 d 1100 km U 0.84: gross 647 MJ/t over 15.2 d, minus model routine 427 -> extra 220 MJ/t migrant
+  COT 0.1 d 800 km U 0.5: gross 785 MJ/t over 18.5 d, minus model routine 522 -> extra 263 MJ/t migrant
+  COT 0.1 d 800 km U 0.84: gross 785 MJ/t over 11.0 d, minus model routine 311 -> extra 474 MJ/t migrant
+  COT 0.1 d 1100 km U 0.5: gross 1079 MJ/t over 25.5 d, minus model routine 718 -> extra 361 MJ/t migrant
+  COT 0.1 d 1100 km U 0.84: gross 1079 MJ/t over 15.2 d, minus model routine 427 -> extra 652 MJ/t migrant
+  COT 0.14 d 800 km U 0.5: gross 1099 MJ/t over 18.5 d, minus model routine 522 -> extra 576 MJ/t migrant
+  COT 0.14 d 800 km U 0.84: gross 1099 MJ/t over 11.0 d, minus model routine 311 -> extra 788 MJ/t migrant
+  COT 0.14 d 1100 km U 0.5: gross 1511 MJ/t over 25.5 d, minus model routine 718 -> extra 793 MJ/t migrant
+  COT 0.14 d 1100 km U 0.84: gross 1511 MJ/t over 15.2 d, minus model routine 427 -> extra 1083 MJ/t migrant
+6. Seasonal temperature at_50m 6.9-11.7 C, Q10 2.3, relative to 8.4 C
+  6.9 C: x0.88
+  11.7 C: x1.32
+7. Inline arithmetic used in the notes
+  saithe FMR/SMR: 6.58 / 3.5 = 1.88
+  SMS Q1 shortfall: (0.79-0.44)/100*1000 kg/t * 90 d * 5.5 MJ/kg = 1733 MJ/t = 0.109 of annual ration
+  migration 0 MJ/t migrant x mature 0.25-0.6 x 0.797 = 0-0 MJ/t group/yr (0.0 % of ration at the top)
+  migration 652 MJ/t migrant x mature 0.25-0.6 x 0.797 = 130-312 MJ/t group/yr (2.0 % of ration at the top)
+  migration 1083 MJ/t migrant x mature 0.25-0.6 x 0.797 = 216-518 MJ/t group/yr (3.3 % of ration at the top)
+  cruising multiples vs model 7.04: 12.5 -> 1.78, 20.8 -> 2.95; whiting 7.9 vs 5.8 -> 1.36
+8. Ration-route closure, water column: R = A * ration energy - P * body energy (gonads ignored)
+  A 0.7: R = 0.7*15909 - 0.42*5080 = 9003 MJ/t/yr = 6.17 MJ/t/tick (otolith 6.58, model+SDA 8.35)
+  A 0.8: R = 0.8*15909 - 0.42*5080 = 10594 MJ/t/yr = 7.26 MJ/t/tick (otolith 6.58, model+SDA 8.35)

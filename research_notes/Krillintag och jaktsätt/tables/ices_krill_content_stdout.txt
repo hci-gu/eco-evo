@@ -1,0 +1,21 @@
+species names seen (top): [('cod', 122413), ('whiting', 4095), ('plaice', 2404), ('saithe', 1278), ('mackerel', 1211), ('haddock', 496), ('horse mackerel', 472), ('hake', 336), ('tub gurnard', 242), ('spurdog', 182), ('norway pout', 134), ('long rough dab', 111)]
+
+Single stomachs with krill mass > 0 (wet g). Columns: n; krill content %BW median / p90 / p99 / max; in krill-dominated stomachs (krill >= 0.8 of the mass): n, total content %BW median / p90 / max
+whiting        20-25 cm  n    4  krill %BW  3.99 / 14.38 / 14.38 / 14.38   dominated n    3  total %BW  3.99 / 14.38 / 14.38
+whiting        25-30 cm  n    1  krill %BW  0.01 /  0.01 /  0.01 /  0.01   dominated n    0  total %BW   nan /   nan /   nan
+whiting        30-35 cm  n    2  krill %BW  0.29 /  1.00 /  1.00 /  1.00   dominated n    1  total %BW  0.29 /  0.29 /  0.29
+saithe         30-40 cm  n    1  krill %BW  0.53 /  0.53 /  0.53 /  0.53   dominated n    1  total %BW  0.59 /  0.59 /  0.59
+saithe         40-50 cm  n    1  krill %BW  0.16 /  0.16 /  0.16 /  0.16   dominated n    0  total %BW   nan /   nan /   nan
+haddock        25-35 cm  n    1  krill %BW  1.25 /  1.25 /  1.25 /  1.25   dominated n    1  total %BW  1.25 /  1.25 /  1.25
+cod            15-25 cm  n    7  krill %BW  0.09 /  0.28 /  1.97 /  1.97   dominated n    4  total %BW  0.28 /  2.30 /  2.30
+cod            35-50 cm  n    3  krill %BW  0.01 /  0.03 /  0.03 /  0.03   dominated n    1  total %BW  0.01 /  0.01 /  0.01
+cod            50-70 cm  n    1  krill %BW  0.01 /  0.01 /  0.01 /  0.01   dominated n    0  total %BW   nan /   nan /   nan
+
+Same, krill-bearing stomachs by quarter (all lengths): n, krill %BW median / p90 / max
+whiting      Q2  n    6   1.57 /  3.99 / 14.38
+whiting      Q3  n    1   0.01 /  0.01 /  0.01
+saithe       Q1  n    2   0.16 /  0.53 /  0.53
+haddock      Q1  n    1   1.25 /  1.25 /  1.25
+cod          Q1  n    8   0.03 /  0.09 /  0.28
+cod          Q3  n    2   0.03 /  0.28 /  0.28
+cod          Q4  n    1   1.97 /  1.97 /  1.97

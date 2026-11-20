@@ -1,0 +1,6 @@
+seed 1: resource met by the mean tonne / grid mean (epifauna as /K)
+  whiting              epifauna 1.05  krill 1.05
+  benthivorous_fish    epifauna 0.41  krill 0.75
+  planktivorous_fish   epifauna 1.16  krill 1.07
+  predatory_fish       epifauna 0.95  krill 0.79
+  cells with benthivores > 8x mean: whiting density there / mean 0.03; epifauna/K there / mean 0.40

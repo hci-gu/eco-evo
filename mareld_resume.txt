@@ -26151,6 +26151,418 @@ remain open exactly as described in 71.9 / 71.11.
     (class runs: G ~2.65 -> ~3.8). Payoffs change: checkpoints before 280 are invalid, retrain.
 280.7 Tests: test_half_saturation repinned (12 a's, 9 night/day).
 
+281 STRATEGY DECKS, EDITION 3: Strategi_nov.pdf / Strategy_Nov.pdf (2026-11-19; user: new strategy
+    documents by the earlier method, Swedish and English, with the known shortcomings and open challenges
+    documented and reasoned about, new model concepts explained for a reader who has not followed the work)
+281.1 Generators: tools/make_strategi_deck3.py (Swedish, master) and tools/make_strategy_deck3_en.py
+    (English; imports the Swedish module, LABELS_EN must carry exactly the keys of LABELS, NUM switched to
+    "." / ","). Page geometry, text and table helpers copied from make_strategi_deck2.py, which stays
+    unchanged and no longer builds against today's library (gadoids / pelagic_fish are gone). Default
+    outputs Strategi_nov.pdf / Strategy_Nov.pdf; --png DIR for proofing.
+        python3 tools/make_strategi_deck3.py
+        python3 tools/make_strategy_deck3_en.py
+281.2 Layout check built in (layout_problems in the Swedish module): every text inside the page, none
+    in the footer band, no two page texts overlapping, no page text over an inset plot. The build prints
+    each problem and exits 1 on any; --no-check skips it. Not checked: tick labels inside an inset that
+    reach the page text below it (proof the PNGs).
+281.3 Read at build time (cannot drift): the DM value tables (fish five columns; zooplankton and the
+    mammals), the open-population table (P, recruit import, emigration, outside density, exchange,
+    season, graduation), the growth budget (growth_budget with the site latitude, so the set point's
+    window shows), the 35 active pair rows in three tables, the Observability matrix and observation widths,
+    the spawning table (share, gamete MJ/t/yr, largest room cut via spawning.cut_by_day), start
+    biomasses and ranges, regional F from the two trawl maps, tau per DM (relocation.tau at 6 h), and the
+    recorded long-run probes of PROBE_RUN = pzbpgp248nsrpfix104 (last 20 probes, updates 1620-1810:
+    year-end ratios, and realised M2 per pair = tonnes eaten / prey mean biomass in probe year 3).
+    Figures: food web of the 16 groups with open groups outlined, depth map and benthivore recruit
+    weighting, reserve room vs hunger gate and the year's room top (set point, spawning cut), the
+    open-population flows, outside seasons and start fills, shared handling (whiting on krill and
+    planktivores), encounter P(met) curves from encounter_own, tau bars, monthly light multipliers,
+    zooplankton concentration grazing and the benthivores' per-prey energy ceilings, fishing maps,
+    water column, observation layout, policy net (2 x 24 tanh), energy flow, spawn patterns, the fix104
+    year-3 trajectory over training.
+281.4 Content (108 slides each; a glossary after the summary; Swedish species names via
+    LABELS['species']): Part 3 fish energetics (reserve room, material-capped growth, costs and
+    SDA, starvation line, light clock, spawning) and Part 4 the open population (why the box is open,
+    flows, exchange formulas, krill, growth budget, the bed refuge) are new and written as intuition
+    before formula; Part 5 who eats whom (encounter-theory a, rule A and band overlap, capture per
+    encounter and schooling, bed pairs, shared handling, protection, light); Part 6 behaviour (encounter
+    rule, tau, masks, closed fish edge); Part 9 diagnostics and the fix76-fix105 history; Part 10 known
+    shortcomings and open challenges, each as what / why / what it can move / blocks scenarios? / way
+    forward: 1 clumping (with the 278 lever table), 2 WC -> benthivores ~2x, 3 no hungry season (fill and
+    feeding level), 4 porpoises and seals, 5 the level set outside the box (B ~ I/(L - P)), 6 booked vs
+    realised predation and the OFF pairs, 7 krill boundary and excess, 8 plankton vs A17, 9 vision in
+    the dark, 10 the light clock and spawning as provisional clock rules, 11 judged values, 12 training
+    and evaluation (one-year episodes, one seed, unfished training vs fished inference), 13 engine
+    structure; then strengths and a priority table. Part 11 scenarios: baseline vs inference maps, what a
+    scenario can and cannot show. The clumping choice is presented as open (the user's).
+281.5 Caveats stated in the decks: every trained number is from fix104 (30 x 30, unfished, one seed,
+    trained before 279/280); fix105, the first run on the full library, started 2026-11-19 and has no
+    results. Plankton year-end ratios are left out of the fix104 table (season-blind start totals).
+    Nothing in the engine, the library or the tests was touched.
+281.6 Checks: both builds 108 slides, 0 layout problems; formula slides proofed at full size (the
+    checker cannot see a mathtext glyph failure). Part 10's OFF list is read off budget_gate.py at this
+    library (seven pairs: porpoises -> benthivores, porpoises -> whiting, whiting -> benthivores; whiting
+    -> epifauna at the field spread; WC -> mackerel, porpoises -> WC, seals -> WC on the prey side; WC ->
+    benthivores 2.13 field spread / 1.95 equal cells). The realised-M2 table (median of 20 probes) agrees
+    with probe_diets.py on the latest fix104 probe in magnitude. pytest 2036 passed / 12 skipped. No
+    train.py smoke run: only tools/ and this file changed.
+282 Infauna refuge values and benthivore clumping (2026-11-19; follows 278.9; user: "Kor testet";
+    diagnostic only, nothing changed). Question: can other values of the infauna's exposed_share phi
+    (0.2, note range 0.08-0.45) and refuge_exchange_rate k (2.5 /yr, range 1.5-3.0) make packing cost
+    the benthivores food? research_notes/"Klumpningens spakar" scripts/refuge_clump.py (278.3's
+    bed_depletion_under_clumps.py with the library as an argument and per-year readouts),
+    tables/refuge_<arm>_s<seed>_fix104_u1267.txt. Frozen fix104 u1267, pre-279 library (= 1f28d12),
+    30 x 30, the run's warm-up, 3 years, seeds 0/1. Arms: base (0.2, 2.5), phi 0.2 / k 1.5, phi 0.08 /
+    k 2.5, phi 0.08 / k 1.5 (k_in 0.12, below the note's 0.3-0.6: an extreme, not a candidate).
+    "Eaten" is demand after the reserve-room cap, before the harvest cap (the 278.8 label check, 1.007,
+    was at phi 0.2); in the emptied cells at phi 0.08 the harvest cap likely binds, so the eaten
+    figures there are an upper bound and the true cost larger.
+    - Base year 1 reproduces 278.3 exactly (eaten elasticity -0.014 / -0.012). Years 2-3: -0.014..-0.028;
+      benthivores 1.37-1.40 x start by year 3, epifauna in their cells 0.05-0.17 of K, infauna 0.84-0.86
+      of the eaten tonnes (booked 0.56); accessible infauna in k > 8 cells p10 1.6-2.5 t/km2 by year 3.
+    - phi 0.08 (k 2.5): eaten elasticity on own density -0.05 (yr 1), -0.15 / -0.25 (yr 2), -0.29 / -0.34
+      (yr 3); pre-cap the same. Accessible infauna under k > 32 ~2.0 (yr 2) and 1.3 t/km2 (yr 3; half-saturation 0.35),
+      p10 in k > 8 cells 0.03-0.06, epifauna there 0.01-0.03 of K: the alternatives are gone too. Grid
+      A/K_A stays 0.80-0.84: the food is in cells the clumps do not visit. Eaten per tonne at k > 32 is
+      0.45-0.51 of k < 0.5 in year 3 (base 0.90); fill 0.95-0.97; benthivores 0.89-0.93 x start (base 1.37-1.40);
+      infauna B 1.12. Lloyd stays 48-63 (frozen policies cannot respond); stays at k > 8 shorten
+      (mean 1.5-1.8 d vs 1.8-2.5).
+    - phi 0.2, k 1.5: as base, -0.015..-0.030 every year, benthivores 1.31-1.36: k does not matter at
+      phi 0.2.
+    - phi 0.08, k 1.5: -0.04 / -0.06 (yr 1), -0.20 / -0.25, -0.36 / -0.49 (yr 3); benthivores 0.81-0.86,
+      eaten at k > 32 0.35-0.43 of k < 0.5. Against phi 0.08 / k 2.5 a tendency on two seeds (seed 0
+      year 2 weaker, year 3 equal); the level and the k > 32 ratio point the same way.
+    - The chat prediction before the run ("k does nothing, phi at most marginal, the cap absorbs it")
+      was wrong for phi 0.08: the cap headroom is consumed because the clumps return to cells they
+      emptied and the epifauna is exhausted there as well.
+    Not settled at year 3: the elasticity still grows and the benthivores still decline in the phi 0.08
+    arms. Reading: a phi at the low end of the evidence range gives, in years 2-3 of a drifting frozen
+    world, a crowding cost at or above the field's
+    (box-weighted -0.04..-0.11, Baltic large cod and flounder -0.2) and well past the ~-0.05 break-even
+    of 278.6, in a frozen world; it also lowers the benthivore level (0.9 vs 1.4 x start at 3 years)
+    and the infauna's share of their diet. Whether retrained fish spread out or roam faster to unvisited
+    cells (the grid holds 0.8 of K_A) needs retraining. The frozen policies see the infauna on a 0.4x
+    scale they were not trained on (confound). phi may only move on evidence (fish reach depth in mud,
+    never measured; Amphiura exposed tips 1-5 % of body mass vs 6 % inside phi, "Exponering av
+    bottenbyten"), never because it reduces clumping.
+282.1 Cost against benefit of clumping at phi 0.08 (user: "Gor 1 och 2", item 1; diagnostic only, nothing
+    changed). research_notes/"Klumpningens spakar" scripts/cf_refuge_spread.py, tables/cf_refuge_<lib>_s<seed>_
+    fix104_u1267.txt. Frozen fix104 u1267, pre-279 library, 2 years run in refuge_clump.py's random context,
+    then 4 snapshots in year 3 (days 0/91/182/273), each copied into arms run 4 days: clumped (as left),
+    Lloyd 3 (278.6 Gaussian), field (278.6), and clumped / Lloyd 3 on FRESH beds (every bed cell set to
+    the grid-mean fill of its K: a clump that has just arrived on unvisited beds). Benefit = all-predator
+    M2 avoided by clumping (278.6); cost = realised tonnes eaten per benthivore tonne (book, after both
+    caps) given up by clumping, converted at 278.6's growth-ration rule 0.3 x d eat (rough).
+    | library       | arm pair                | benefit /yr day 1 / days 1-4 | cost /yr day 1 / days 1-4 |
+    | phi 0.2       | Lloyd 3 vs clumped      | 0.19-0.21 / 0.10-0.12        | 0.01 / -0.01..-0.03       |
+    | phi 0.2       | field vs clumped        | 0.31 / 0.19                  | -0.02..-0.06 / -0.06      |
+    | phi 0.08      | Lloyd 3 vs clumped      | 0.19-0.22 / 0.11-0.12        | 0.37-0.91 / 0.27-0.62     |
+    | phi 0.08      | field vs clumped        | 0.33-0.35 / 0.20-0.22        | 0.39-0.90 / 0.42-0.78     |
+    | phi 0.08      | fresh: Lloyd 3 vs clump | 0.21-0.23 / 0.13-0.14        | -0.05..-0.09 / -0.04..-0.05 |
+    | phi 0.2       | fresh: Lloyd 3 vs clump | 0.19-0.21 / 0.10-0.11        | 0.01-0.02 / -0.01         |
+    (ranges over seeds 0/1; negative cost = the clump eats more.) Frozen clumps at phi 0.08 meet
+    A/K_A 0.03-0.22 while the grid holds 0.80-0.87; the clumped eaten ration falls to 1.7-5.2 t/t/yr.
+    Reading: at phi 0.08 clumping as the frozen policies do it costs more than it saves (2.7-5.2x in seed
+    0, 1.1-2.5x in seed 1), but the whole cost is RETURNING to emptied beds. The same clumps on fresh beds eat
+    as much as spread fish over the first 4 days (a stay at k > 8 lasts 1.5-2.5 d) and keep the full
+    swamping benefit. Prediction for a retrained world at phi 0.08: roaming clumps (move on before a cell
+    is emptied), not spread fish; the infauna refuge penalises revisiting, not packing. Withdraws 282's
+    hint that phi could hold the field's Lloyd 3. Caveats: frozen policies; fresh beds raise the bed food
+    of both fresh arms alike; the 0.3 rule is rough (MJ shows the same signs).
+282.2 Fish reach depth in mud and the infauna's phi (user: "Gor 1 och 2", item 2; research only, nothing
+    applied). research_notes/"Rackdjup i mjukbotten" (a-umlaut; summary.md written by the research agent,
+    saved by the main agent; scripts/phi_reach.py, tables/, data/ ~12 MB mixed licences, not to be
+    committed). No measured bite, dig or pit depth exists for any benthivore member (~25 searches); every
+    reach is still J: haddock 1/2/4 cm, cod 0/0.5/1, long rough dab 0/0.5/1, dab 0/0.5/1, plaice 1/2/4,
+    witch 0.5/1/2. New bounds: dab (F) and haddock (S, Skold 1994 citing Mattson 1992) crop Amphiura arms
+    and leave the disc; disc at ~4 cm in the Kattegat-Skagerrak (Rosenberg 1997, F), 9 cm Galway Bay
+    (Solan & Kennedy 2002, F); 100 m composition from the SK3 standing stock (D), Amphiura 65 %.
+    Geometric group phi (biomass above each member's reach + exposed parts, biomass-weighted, K-weighted
+    over the grid): 0.07 / 0.17 / 0.29 (arms-only branch; 0.40 if haddock take discs); infauna-consumption-
+    weighted 0.10 / 0.22 / 0.37-0.54. Haddock's reach is the swing input (1 -> 4 cm: 0.12 -> 0.26); group
+    0.20 = haddock reach ~3.2 cm. Recommendation: keep phi 0.20; range 0.07-0.29. Decisive datum: whether
+    haddock in the Skagerrak eat Amphiura discs or only arms (Mattson 1992 in full, ICES / SLU stomach
+    data). With 282.1 (phi penalises revisiting, not packing) phi is no clumping lever either way.
+282.3 Does a smaller / slower infauna refuge put more fish in the benthivores' diet? (user question; diagnostic
+    only, nothing changed). research_notes/"Klumpningens spakar" scripts/refuge_diet.py, tables/refuge_diet_*:
+    frozen fix104 u1267, pre-279 library, 3 years, seeds 0/1, realised tonnes per prey per year.
+    | arm            | ration t/t/yr | infauna   | krill     | epifauna  | planktivores (M2; booked 0.102) | whiting (M2; booked 0.18) |
+    | phi 0.2 k 2.5  | 6.05-6.27     | 0.71-0.79 | 0.04-0.11 | 0.04-0.18 | 0.007-0.013 (0.019-0.039)       | 0.000-0.001 (0.008-0.015) |
+    | phi 0.2 k 1.5  | 5.69-6.09     | 0.70-0.76 | 0.05-0.16 | 0.03-0.18 | 0.008-0.013 (0.019-0.038)       | 0.000-0.001 (0.010-0.016) |
+    | phi 0.08 k 2.5 | 4.00-5.11     | 0.53-0.60 | 0.18-0.35 | 0.01-0.16 | 0.012-0.019 (0.017-0.035)       | 0.001 (0.007-0.014)       |
+    | phi 0.08 k 1.5 | 3.48-4.85     | 0.48-0.53 | 0.20-0.42 | 0.01-0.18 | 0.012-0.021 (0.017-0.038)       | 0.001 (0.006-0.015)       |
+    The fish share rises at most from ~0.01 to ~0.02 of the tonnes while the ration falls, so the realised
+    M2 on planktivores (0.02-0.04, 0.2-0.4 of booked) and on whiting (~0.01, 0.05 of booked) does not move.
+    The infauna's place goes to krill (M2 0.40-0.49 vs booked 0.035 in years 2-3) and Nephrops. With
+    attack_choice fixed, diet = encounter shares: a lower infauna encounter scales every other prey up in
+    proportion to its own encounter, and the fish encounters are small (placement and the OFF pairs,
+    249/278.9), so the refuge is no route to fish in the diet. At phi 0.08 the infauna M2 lands at its
+    booking (0.02-0.04) and the ration near field Q/B (4.0-4.6 at k 2.5): output, not evidence for phi.
+283 Why the benthivores eat so little fish (user question, 2026-11-19; diagnostic only, nothing changed).
+    research_notes/"Bottenfiskens bytesbalans" model/ (scripts fish_diet_decomp.py, fish_overlap.py,
+    fish_overlap_wc.py, whiting_beds.py; tables/*_fix104_u1267_pre279.txt; budget_gate on the live library).
+    Booked shares of the benthivores' tonnes: planktivores 0.073, whiting 0.012 (field stomachs 0.08-0.17
+    planktivores, "Bottenfiskens sillbyte"). Realised: fix104 0.003-0.013 / 0.000-0.001; fix105 probe 30
+    (live library) 0.033 -> 0.012 over the 3 probe years / 0.002 (M2 on planktivores 0.07 -> 0.02, booked 0.10).
+    - Library level (budget_gate, equal cells, no policy; live library): encounter share 0.050 / 0.006 =
+      0.69 / 0.52 of booked (prey side 0.69 / 0.52); with the pre-279 a 0.058 / 0.007. The pairs explain a factor ~1.5-2, not the 6-10 (planktivores) or
+      ~10-30 (whiting) seen.
+    - In-world encounter decomposition (frozen fix104 u1267, pre-279 library, 1 yr, every tick, seeds 0/1;
+      the engine's own a(t) x depth mult and per-pair visible prey, benthivores read at the predation step):
+      encounter met per benthivore tonne / gate = level P x visible V x prey-on-favoured-beds D x benthivore
+      association O: planktivores 0.21-0.32 = P 0.80-0.82 x V 1.03-1.04 x D 0.65 x O 0.29-0.49 (light L = 1
+      over the day); shares: gate 0.058 (pre-279 a), encounter 0.020-0.027, pre-cap demand 0.011-0.017,
+      post-cap 0.008-0.013 = realised (the last x0.4-0.5 is inside the benthivores' own demand: the per-pair
+      bound on visible prey in dense clump cells and the reserve-room cap; epifauna loses the same way).
+      Whiting 0.04-0.08 = O 0.03-0.08 (everything else ~1). Total encounter 0.61-0.67 of gate.
+    - Placement (fish_overlap.py, bed classes < 100 / 100-150 / 150-250 / >= 250 m): benthivores
+      0.31-0.43 / 0.40-0.42 / 0.16-0.29 / 0.00 (GOV adults 0.31 / 0.44 / 0.19 / 0.06: right); planktivores
+      0.06-0.08 / 0.14-0.16 / 0.42 / 0.36 (deep: class-only overlap 0.54-0.70; D 0.65 is the vision rule's
+      dark deep beds); whiting 0.04 / 0.39-0.43 / 0.41-0.45 / 0.11-0.12 against GOV 0.77 / 0.20 / 0.03 /
+      0.00 (a placement mismatch of its own; class-only overlap still 0.96-1.15, field 1.38).
+    - Cell overlap with each predator (fish_overlap_wc.py): whiting 0.03-0.08 with benthivores vs 1.07-1.11
+      water column, 0.65-0.91 seals (Lloyd 64-90, also clumped), 0.55-0.80 mackerel and porpoises;
+      planktivores 0.18-0.32 benthivores, 0.58-0.59 water column, 0.52-0.57 whiting, ~1-2.7 mammals and
+      mackerel. Whiting density in benthivore cells > 8x mean: 0.03-0.05 of the mean; epifauna there
+      0.40-0.54 of the mean while whiting meet epifauna at 1.00-1.05 (whiting_beds.py): the segregation is
+      specific to the benthivores and not food-following; most likely avoidance of the extreme local hazard
+      of a dense clump (benthivores -> whiting a x ~100 t/km2; an inference from where whiting are absent),
+      food competition not excluded. Seals (Lloyd 64-90) are not avoided: clumping alone does not make a
+      predator avoided.
+    - Spread counterfactual (cf_fish_spread.py = cf_refuge_spread.py with fish shares; phi 0.2, year-3
+      snapshots, day 1, prey not yet rearranged = upper bound): planktivore share clumped 0.007-0.008 ->
+      Lloyd 3 0.014-0.020 -> field placement 0.019-0.020 (x2.5-2.7; booked 0.073); whiting 0.0001-0.0005 ->
+      0.001 -> 0.005-0.006 (x10+; booked 0.012).
+    Reading: the deficit is in-world placement, mostly trained segregation of the prey from the clumped
+    benthivores (whiting x0.03-0.09, planktivores x0.3-0.5) plus planktivores on dark deep beds (x0.65)
+    and the demand bound in dense clump cells (x0.4-0.5); the pairs themselves are ~0.5-0.7 (0.7-0.8 pre-279). Planktivore prey side is
+    not under-eaten in total (fix105 0.49-0.52 vs booked 0.42; mackerel 8x its booking), so the error is the
+    split between predators. Candidate actions (none taken): (1) the clumping and placement (field placement
+    at most x2.5 planktivores, x10 whiting, upper bounds; no clumping fix exists, 278); (2) gadoid detection
+    without daylight on deep beds (278.5 open; D 0.65 caps it at ~x1.5); (3) the pairs (~x1.4-1.9 to
+    booking; 'Bottenfiskens sillbyte' / 'Bottenfiskens bytesbalans' already audited them); (4) mackerel ->
+    planktivores at 8x booking (the split). Whiting at 100-250 m (GOV < 100 m) is a separate mismatch that
+    does not drive this deficit (class-only overlap ~1). fix105 (update 290) starts at 0.44 of booked in
+    probe year 1 and falls to 0.17: not equivalent to fix104. Never raise a or force the diet (fit).
+284 Why whiting stand at 100-250 m and away from the benthivores (user: "Undersok vitlingen"; diagnostic only,
+    nothing changed). research_notes/"Vitlingens placering" scripts/cf_whiting.py, tables/. Frozen fix104
+    u1267, pre-279 library, 4 snapshots in year 1 (days 0/91/182/273), each copied into arms run one day
+    (4 ticks): whiting as trained / at GOV class shares (0.77/0.20/0.03/0.00; within-class pattern kept, or
+    even) / uniform / into the benthivore clumps / trained minus the benthivore > 8x cells; wcF+ = the water
+    column also at GOV saithe class shares; H: = whiting reserves at the month's field start_fill; HA: =
+    whiting, benthivores and the water column (0.71) all at field fill (278.8's 'both'). Readouts: whiting
+    eaten t/t/yr and net MJ/t/yr (book), M2 on whiting by predator. Scope: fix104, whose own probes have
+    whiting eaten at 0.25-0.27 /yr (booked 0.49); fix105 probe 30 has 0.69-0.83, not comparable.
+    Pair depth multipliers by bed class (< 100 / 100-150 / 150-250 / >= 250 m), pre-279: WC -> whiting
+    1.66/1.37/0.55/0.27, benthivores -> whiting 1.62/1.35/0.57/0.33 (vision at the bed light), whiting ->
+    krill 3.35/0.80/0.04/0.00. Live library (280, K_deep 0.09): a x mult WC -> whiting 0.171/0.110/0.033/0.028
+    (shallow / 150-250 m 5.3x, pre-279 3.0x): today's refuge is steeper.
+    | arm (means of 4 snapshots, seeds 0 / 1)  | eat t/t/yr  | M2 on whiting /yr (main predators)          |
+    | trained                                  | 3.75 / 3.86 | 0.23 / 0.26 (WC 0.18-0.21)                  |
+    | GOV classes, trained pattern kept        | 4.53 / 4.11 | 0.23 / 0.34                                 |
+    | GOV classes, even                        | 4.76 / 4.13 | 1.60 / 1.74 (WC 1.21-1.30, benth 0.25-0.47) |
+    | uniform                                  | 4.66 / 4.26 | 1.46 / 1.57                                 |
+    | into the benthivore clumps               | 4.32 / 3.99 | 1.89 / 2.36 (benth 1.71-2.11)               |
+    | WC at GOV, whiting trained               | 3.69 / 3.85 | 0.44 / 0.54                                 |
+    | WC at GOV, whiting GOV even              | 4.81 / 4.08 | 0.70 / 0.84 (WC 0.37-0.39, benth 0.25-0.41) |
+    | whiting hungry: WC GOV, whiting trained  | 6.14 / 6.45 | 0.46 / 0.60                                 |
+    | whiting hungry: WC GOV, whiting GOV even | 8.49 / 8.38 | 0.71 / 0.88                                 |
+    | all hungry: WC GOV, whiting trained      | 6.15 / 6.48 | 0.67 / 0.80                                 |
+    | all hungry: WC GOV, whiting GOV even     | 8.49 / 8.37 | 1.01 / 1.34 (benth 0.33-0.66, WC 0.62-0.63) |
+    (booked total M2 on whiting 0.49.)
+    - Away from the benthivores: flight from a real hazard, not food competition. In the clump cells whiting
+      would lose 1.7-2.1 /yr to benthivores (trained 0.01) and eat no less (3.99-4.32 vs 3.75-3.86).
+    - Deep beds are a light refuge: both fish predators' encounter on whiting is ~3x (pre-279; ~5x on today's
+      library) higher over < 100 m than over 150-250 m beds, and the trained WC stands shallow (0.28-0.61 on
+      < 100 m vs GOV saithe 0.04, 278). At GOV placement under the trained WC whiting die at 1.6-1.7 /yr.
+    - WC at GOV, full whiting: the shallow food gain appears in ONE of four snapshots (day 273: 7.90 vs 3.64,
+      5.62 vs 3.91); days 0/91/182 give -0.35..+0.12 t/t/yr for +0.03..+0.83 M2. Full whiting do better deep.
+    - All three hungry (field fill): GOV placement gains +2.3 / +1.9 t/t/yr (+35-42 % MJ, +29-38 % of the
+      ration) for +0.35 / +0.54 M2 (1.0-1.3 /yr total, 2-2.7x booked). Not netted: no growth-ration slope for
+      whiting (278.6's 0.3 is the benthivores'). Whether that trade pays is not shown.
+    - "GOV classes, trained pattern kept" (whiting packed into the few shallow cells they use now) gives more
+      food at equal M2 in the mean, but again only on day 273 (seed 1 there M2 1.03); otherwise equal.
+    Reading: whiting's deep placement is the trained answer to the light refuge of the predator pairs plus the
+    water column standing shallow; full whiting have little food reason to go shallow except in autumn. The
+    fill gap (278.4/278.8) makes shallow food worth more but also makes the predators hungrier, and the net is
+    open. Neither root has a lever today (278.5 withdrew the light route for the WC; the fill gap is open).
+    Frozen one-day windows; the WC field arm keeps its trained within-class pattern.
+285 Whiting's protection over shallow beds (user: "Undersok vitlingens skydd pa grunt vatten"; research only,
+    nothing applied). research_notes/"Vitlingens skydd pa grunt vatten" (a-ring; summary.md written by the
+    research agent, saved by the main agent; evidence.md, tables/factors.csv, scripts/, data/ MODIS Kd490 ~3 MB).
+    Question: a field protection over < 100 m beds that cuts the model's per-predator hazard gradient on whiting
+    (live library: WC 5.25x, benthivores 4.43x, both 4.80x, < 100 vs 150-250 m beds) by >= 2.
+    - Whiting-side protection: no. Light-dependent escape x0.85 (0.6-1.0) [J on A/F; bed light already
+      crepuscular, where piscivore success peaks]; diel position x1.0 (GOV day/night by class, no shallow
+      day refuge); shelter, schooling and between-cell avoidance were already ruled out (Vitlingens golv,
+      Stimskydd i motes-a, Vitlingens uteblivna predation).
+    - Near-bed darkness over shallow beds (not in the model: one light profile for every bed class above
+      65 m): VOTO gliders over < 100 m beds on the Swedish side measure K_PAR 0.15-0.18 at 20-80 m (vs
+      0.09-0.12 over 150-250 m) and daytime near-bed light 0.002-0.08 lx (convention 0.5-3 lx); rule-A light
+      term x0.55 (0.42-0.82) Swedish side, x0.64 (0.49-0.88) box-weighted with a Danish side estimated from
+      MODIS Kd490 [D/J]; 100-150 m beds x0.48 (0.26-0.80). Gliders miss Mar, Apr, Jun, Jul, Oct.
+    - Field predator placement (GOV): water column member-weighted 0.23 / 0.43 / 2.30 of its box mean over
+      < 100 / 100-150 / 150-250 m (saithe 0.02 / 0.26 / 2.63), cod 0.77 / 1.86 / 0.69: x0.36 (0.23-0.58) on the
+      ratio, placement not protection (the trained WC stands shallow, 278/284).
+    - Combined: per-predator gradient 4.80 -> 2.61 (x0.54, 0.24-1.06; only x0.64 measured); with field
+      predator placement too the field hazard profile is ~flat (0.93 / 1.10 / 1.00 for < 100 / 100-150 /
+      150-250 m; corners 0.26-2.95): whiting's shallow placement fits ordinary predation in the field.
+    Reading: the model lacks no whiting-side protection; it overstates the light on shallow beds (a measured
+    candidate, x0.64, that would move every shallow-bed visual pair and the equal-cell a's, not examined) and
+    the trained WC stands where the field's does not. Settling datum: daytime PAR in the bottom 10 m over
+    60-100 m beds on the Danish side and in June-July on the Swedish side.
+286 Bed-light per bed class in every visual pair: measured effect (user: "Mat"; nothing applied to the live
+    library). research_notes/"Vitlingens skydd pa grunt vatten" model/ (scripts run_bedlight.sh, compose.py,
+    frozen_compare.py, cf_whiting.py; tables/ incl. the library copy fg_library_bedlight_copy.yaml).
+    Method: the section 280 chain ("Djupljus i synparen" run_chain.sh) on a scratch mirror of the repo whose copy of
+    one_rule_pairs.py takes the two mid-water layers from an env var; base = live profile (reproduces the 280
+    final_0.09.json exactly), A = < 100 m beds K 0.17 (20-50 m) / 0.15 (50-65) / 0.16 (below), B = 100-150 m beds
+    0.139 / 0.121 / 0.14 (VOTO gliders: month-matched PAR at 50/65/80 m vs the 150-250 m column, extra ~0.06 /m
+    and ~0.03 /m from 20 m; 285); class a's composed as sensitivity.py does (a_c = row_c x a_final / a_269 of
+    that class's run; 150-250 and >= 250 m keep the base). dark_ratio and stage_access kept from the base run
+    (the A/B runs give higher night/day, e.g. WC -> whiting 0.172 -> 0.34 / 0.27: not composed).
+    - Pair a / live: WC -> whiting 0.62, -> benthivores 0.61, -> planktivores 0.68; benthivores -> whiting 0.63,
+      -> planktivores 0.68, -> krill 0.82; whiting -> krill 0.82, -> planktivores 0.85, -> benthivores 0.85;
+      WC -> krill 0.84, planktivores -> krill 0.87; mackerel pairs 0.96-0.99. Shallow : 150-250 m class a, WC ->
+      whiting 5.25 -> 3.48, benthivores -> whiting 4.45 -> 2.77; the 100-150 m class falls most (x0.41-0.48).
+    - budget_gate (gate_280.py runner, validated): WC -> benthivores 1.95 -> 1.72 (field spread 2.13 -> 1.73),
+      WC -> whiting 1.24 -> 1.02 (field), whiting -> epifauna and the krill pairs ~unchanged; prey side
+      benthivores -> planktivores 0.69 -> 0.48, -> whiting 0.52 -> 0.33 (OFF), -> krill 0.82 -> 0.62,
+      planktivores -> krill 0.89 -> 0.78; whiting -> benthivores at the field spread 0.35 -> 0.31 (OFF). No derived
+      growth_rate moves.
+    - Frozen fix105 (policies copied 2026-11-20 01:19; trained on the live library), 1 year, seeds 0/1, live ->
+      copy: whiting M2 0.76-0.78 -> 0.69-0.73 (WC 0.56-0.60 -> 0.50-0.55; booked total 0.49, WC 0.157), the
+      satiated WC refills its meal (cf. 278.9); benthivores' planktivore share 0.013-0.018 -> 0.011-0.014; all
+      year-end biomasses within 0.05. cf_whiting (fix105): GOV-even placement M2 1.20-1.22 -> 0.99-1.12.
+    - Scope correction to 283/284: fix105's whiting already stand mostly shallow (0.57-0.65 / 0.25-0.32 / 0.09 /
+      0.01-0.02 vs GOV 0.77 / 0.20 / 0.03 / 0.00); fix104's deep whiting is that run's. In fix105 the whiting
+      problem is the WC eating them at ~3.6-3.8x its booked M2 (WC 0.24-0.25 on < 100 m beds vs GOV saithe 0.04).
+    Reading: bed light per class is a measured correction that moves the two WC pairs flagged high toward their
+    bookings and the benthivores' fish pairs (already low) further below; its frozen effect on flows is small
+    (~-10 % whiting M2) because the predators are satiated. Uncertain: the Danish side (39 % of shallow whiting)
+    is unmeasured (profile A = Swedish gliders, the darker side), gliders miss Mar/Apr/Jun/Jul/Oct, composite
+    approximation, night/day not composed. Applying it would invalidate checkpoints (payoffs move).
+287 Can a slow infauna refill force the clumps to spread? (user: "Mat fall 2 med k 0.2 och 0.5"; mechanism test
+    below the evidence range (k 1.5-3 /yr), nothing changed). Same scripts and frozen fix104 u1267 / pre-279
+    library as 282-282.3 (refuge_clump.py 3 yr, cf_refuge_spread.py year-3 fresh-bed arms, refuge_diet.py), phi
+    0.2, k 0.2 and 0.5 /yr; research_notes/"Klumpningens spakar" tables/*p20_k02*, *p20_k05*. Case 2 of the chat
+    reasoning: the beds limit the group as a whole, so no fresh cells exist and the fish must spread
+    (input matching); rough threshold k < ~0.2-0.5 /yr at phi 0.2.
+    | k /yr | eaten elasticity yr 1 / 2 / 3      | grid A/K_A yr 3 | fill yr 3 | ration yr 3 | krill share (M2 /booked 0.035) |
+    | 2.5   | -0.01 / -0.03 / -0.01..-0.02         | 0.79            | 0.995     | 6.1-6.2     | 0.10-0.11 (0.28-0.32)          |
+    | 0.5   | -0.005 / -0.005..-0.01 / -0.07..-0.43 | 0.68-0.74       | 0.92-0.99 | 3.3-4.6     | 0.30-0.46 (0.52-0.56)          |
+    | 0.2   | 0.00 / +0.01..-0.09 / -0.37..-0.64   | 0.66-0.73       | 0.78-0.93 | 2.5-3.2     | 0.49-0.61 (0.45-0.57)          |
+    Year-3 cost vs benefit of clumping (one-day / four-day windows): on the beds as left, Lloyd 3 vs clumped gains
+    +0.5..+3.6 t/t/yr (cost 0.14-1.09 /yr at the 0.3 rule) against a benefit of 0.10-0.22 /yr; on FRESH beds
+    (every bed cell at the grid mean) the clumps eat as much or more than spread fish (cost -0.24..+0.01 /yr)
+    and keep the full benefit (0.11-0.22 /yr).
+    Reading: case 2 is not reached. The grid keeps 0.66-0.74 of its accessible infauna; the cost is again only
+    the frozen clumps returning to cells they emptied, and roaming clumps escape it at any k tested. The
+    infauna's place goes to krill (an open pool refilled from outside the box, benthivore M2 on krill 13-16x
+    booked), so group-wide food limitation would need every bed prey and krill limiting at once; k alone cannot
+    force spreading. 3 years < the refill time 1/k (2-5 yr) at these k; frozen policies (trained fish would roam
+    and deplete more of the grid, but krill stays).
+288 Hungry predators that follow their prey: does clumping still pay? (user: "Mat det med hungriga och foljande
+    predatorer"; diagnostic only, nothing changed). research_notes/"Klumpningens spakar" scripts/cf_follow.py,
+    tables/cf_follow_f104_s<seed>.txt (frozen fix104 u1267, pre-279 library) and cf_follow_f105_s<seed>.txt
+    (frozen fix105 policies of 2026-11-20 01:19, live library). Snapshots and one-day windows as 278.8; fill
+    trained or hungry (WC 0.71, whiting its month's field start_fill); every predator of the benthivores (WC,
+    whiting, seals, porpoises) redistributed as (1 - w) trained + w x the benthivores' shape in that arm, w 0 /
+    0.05 / 0.1 / 0.2 / 0.5 / 1, totals and per-cell fill kept; benthivores clumped / Lloyd 3 / field. Readout:
+    the saving of clumping = all-predator M2 on Lloyd-3 (or field-placed) minus clumped benthivores; the
+    association = WC met per clumped benthivore tonne / WC mean.
+    | run    | w    | association | saving L3, trained fill | saving L3, hungry |
+    | fix104 | 0    | 1.5-1.9     | +0.25..+0.27            | +0.42..+0.46      |
+    | fix104 | 0.1  | 8.1-8.5     | +0.17                   | +0.26..+0.27      |
+    | fix104 | 0.2  | 14-16       | +0.11                   | +0.17..+0.22      |
+    | fix104 | 0.5  | 33-36       | -0.10..+0.02            | -0.11..-0.02      |
+    | fix104 | 1    | 64-71       | -0.20..-0.27            | -0.30..-0.43      |
+    | fix105 | 0    | 2.4-3.2     | +0.06..+0.07            | +0.05..+0.06      |
+    | fix105 | 0.05 | 3.7-4.3     | +0.02..+0.03            | -0.02..-0.04      |
+    | fix105 | 0.1  | 4.9-5.3     | -0.01                   | -0.10..-0.11      |
+    | fix105 | 0.2  | 7.4-7.5     | -0.06..-0.09            | -0.19..-0.22      |
+    | fix105 | 1    | 24-28       | -0.36..-0.48            | -0.73..-0.86      |
+    (field placement gives the same signs, larger.)
+    - With predators that stay put, hungry predators raise the saving (278.8). Once they follow, clumped prey lose:
+      predators in proportion to prey feed at their ceiling in the dense cells, so per-prey risk is highest there.
+    - fix105 (live library; benthivore Lloyd 19-47 vs fix104 44-88) has a small saving already (0.06-0.07 /yr);
+      a small rise in following (association 2.4-3.2 -> ~4-5) removes it, at hungry fill already at w 0.05.
+      fix104 needs w ~0.5 (association ~35).
+    Caveats: frozen one-day windows, following imposed (predators of the benthivores moved with their other food
+    left behind; WC's benthivore share of the diet is 0.11-0.12 in fix105), mammals' fill unchanged. Whether a
+    retrained, hungry WC/whiting would follow the clumps depends on its own payoff; the field's aggregative response
+    of predators on fish prey is weak (278.7). The demersal fill gap (278.4) has no mechanism fix yet (fix105 whiting
+    fill still 0.97-0.995 after 279's spawning drain).
+289 Why the water column and whiting are full (user: "Undersok varfor rovfisken och vitlingen gar fullmatta";
+    model part, nothing changed; a literature agent writes research_notes/"Mattnad hos rovfisk" (a-umlaut),
+    whose model/ holds this part: scripts fill_decomp.py, band_plateaus.py; tables/).
+    - Decomposition (frozen fix105 policies of 2026-11-20 01:19, live library, 1 year, seeds 0/1; feeding level =
+      share of the ceiling at the ambient temperature): water column T 0.97, saturation while foraging 0.78,
+      uncapped 0.75, EATEN 0.41-0.42, krill 0.46 of the uncapped handling time, fill 0.99; whiting T 0.90-0.91,
+      saturation 0.83-0.86, uncapped 0.75-0.78, eaten 0.39, krill 0.80-0.84, fill 0.98; benthivores T 0.95,
+      saturation 0.97-0.98, uncapped 0.93, eaten 0.63-0.64, fill 0.98. The eaten level of the WC and whiting
+      sits inside the field's 0.22-0.53 (it equals what a full fish spends plus grows); what keeps them full is
+      the spare capacity (uncapped ~0.75, ~1.8x the eaten), which refills any deficit within weeks (field
+      3-6 months, "Lek i rutan" 5), and few seasonal deficits.
+    - Band plateaus (user: derive the per-prey plateaus from the band profiles, not fixed intervals): saturation per
+      1-m depth bin, sum_z f(z) X(z)/(1 + X(z)), instead of one shared denominator; X from budget_gate's equal-cell
+      a h B_vis, distributed over depth by the chain's prey profiles (vision R(z) inside the overlap ignored [J]).
+      Whiting (uniform bottom 10 m): krill alone 0.30 (= the time share where krill reaches its band: shallow beds
+      only), epifauna 0.09-0.10 (bottom 1 m), juvenile benthivores 0.15-0.19, planktivores 0.82-0.98 (present
+      through the whole band), all prey 0.88 (concurrent 0.91). Water column (saithe 0.8, hake 0.2): krill
+      0.35-0.37, benthivores 0.13-0.14, whiting 0.30-0.48, planktivores 0.81-0.96, all 0.87 (concurrent 0.93).
+      Bed-bound prey get Rindorf-like plateaus (0.06-0.22) implicitly; pelagic fish prey do not; the total stays
+      ~0.87 against a need of ~0.4, so per-depth saturation on today's profiles does not remove the spare
+      capacity. Whiting's search profile (one uniform 10 m band, [J]) holds every prey together; a plateau on
+      fish prey would need search split into modes with their own time shares, which the profiles do not carry.
+290 Why field saithe, whiting and hake are not full: literature (research agent; summary.md saved by the main
+    agent; research_notes/"Mattnad hos rovfisk" (a-umlaut): evidence.md, three lit_*.md, tables/mechanisms.csv,
+    scripts/, data/ ~21 MB not to be committed). Nothing applied.
+    - The model already eats the field ration (whiting 0.38 of the ceiling vs SMS 0.33-0.41; the realised level
+      equals cost + field P at fill 1: whiting 0.388, WC 0.435); the potential (0.66-0.73) is ~1.7x the need.
+      Under the growth law fill 0.1 -> 1 spans only feeding 0.275 -> 0.388 (whiting), 0.350 -> 0.435 (WC): fill
+      is a knife edge in the potential. Field refill (3-6 months) bounds the field potential at ~0.44-0.62.
+    - Field fish are food-acquisition limited: Dempster et al. 2011 [F], wild saithe eat 0.43-0.65 of what
+      farm-associated saithe eat, HSI x1.4-1.8 with easy food (appetite capped by the reserve contradicted).
+    - Mechanisms: foraging time / risk weak, not sizable for adults; per-prey-group plateaus (Rindorf & Gislason
+      2005 [F]: clupeids 0.12-0.20, gadoids 0.07-0.14 of the model ceiling, density-independent; three groups
+      0.29-0.61; krill alone <= ~0.26 [J]) the only field-sized form, one study; digestion already in the model;
+      patchiness weak; seasonal sinks small (saithe spawning 0-3 % of ration, outside the box) but the SMS
+      seasonal ration taken as supply-limited reproduces whiting's reserve cycle (swing 0.31-0.60 ME); costs
+      not low (FMR / model cost saithe 0.93, whiting 0.78, n 5 each).
+    - Field fill series (library conversion): saithe Q1 0.63, Apr-Jun 0.67, Sep 1.02 (NIFES Norwegian Sea),
+      box sizes 0.47-0.71, minimum Mar-Apr / maximum Aug-Sep [J], no monthly wild HSI; whiting (Black Sea HSI)
+      May-Aug 0.27-0.32, Sep-Oct 0.40-0.49, Nov-Apr 0.59-0.71; hake HSI Mar 3.2 / Jul 5.8.
+    - With 289's band plateaus (bed prey get field-sized plateaus implicitly, krill ~0.3, pelagic fish prey none,
+      total 0.87): the field plateaus on fish prey are not produced by today's search profiles.
+    Settling datum: whiting or saithe intake on krill alone at high krill density as a share of Wmax.
+291 Krill-only intake, foraging modes, and the intake limit while foraging (user: "Gor 1 och 2"; two research agents,
+    summaries saved by the main agent; research_notes/"Krillintag och jaktsatt" (a-umlaut; data/ ~18 MB) and
+    "Intag under fodosok" (o-umlaut twice; data/ ~4.5 MB); not to be committed). Nothing applied.
+    - Krill alone at high density: no gadoid functional response on krill exists. Krill-dominated stomachs (ICES DB
+      1980-82, 1991 [D]) put whiting >= 20 cm at 0.32 (low band) / 0.75 (central) of the model ceiling, saithe
+      0.20 / 0.47; over all stomachs the means are 0.09-0.17 (whiting) and 0.07-0.11 (saithe): krill is met in some
+      hauls and periods (km, 1-2 d; Rindorf 2003 "a patchily distributed prey") and eaten heavily there. Leans
+      against a fixed krill plateau at 0.1-0.25 (not excluded at the low band, saithe especially). Barents cod on
+      84 % krill 0.34-0.56 of a cod Cmax; Pacific hake 0.56-1.1.
+    - Foraging modes: real (prey-specific clock windows: whiting bed prey at night over shallow beds, perhaps no bed
+      foraging at 137 m; krill at dawn / afternoon or in the layer; fish prey at twilight; saithe active by day,
+      resting aggregated at night, 0.15 rapid vertical runs) but no measured time budget for any species. Lean [J]:
+      per-mode limits by window x encounter plus one shared soft fullness brake on search (Rindorf 2002 [A]).
+    - Intake limit while foraging: pursuit/handling time per item is no limit (< 0.3 % at 30 s; SSS asymptote
+      1/max(b, c), Jeschke 2002); field capture success unmeasured for any gadoid; encounter theory over-predicts in
+      every case found (cod-capelin Fall & Fiksen 2020; library krill a 50-260x the January field-implied a,
+      "Krillparen mot vintermagar"; bass 0.5 Cmax); new sized item: whiting in-situ search speed ~0.6 BL/s vs the
+      chain's 0.8 (x0.75, night x0.525; Onsrud et al. 2005 [S]); fish-prey twilight windows partly in the light rule.
+      Forward combination of the sized factors: potential whiting 0.38 / 0.67 / 0.80, WC 0.27 / 0.67 / 0.78 (need
+      0.388 / 0.435): the central removes ~0.1 of the ~0.3 excess. Krill carries 0.82 of whiting's spare capacity
+      (krill alone 0.74), so any fix must include krill; a generic x0.15-0.23 on whiting's a (x0.20-0.30 WC) or
+      x0.52-0.66 on the foraging share would be needed.
+    Reading: the field's low mean krill intake is patchiness in space and time (krill met on some days and places),
+    which the model's smooth krill field (open pool, depth table, presence season) lacks; inside a patch gadoids eat
+    krill at high rates, so a per-prey cap is not the form. Fish prey are limited by twilight windows. Open and the
+    deciding data: krill patch statistics in the box (acoustics) or a krill density paired with a gadoid ration.
+
 292 NaN reward from swept recruit arrivals; non-finite metrics no longer end a run (fix105 crash at update 562)
     Symptom: train_gpu.py (fix105, --visual) died after probe 57 writing training.jsonl: json.dumps(allow_nan=False)
     refused a NaN. The viewer pause (update 434, ~8 min) was unrelated: replaying updates 551-562 from the update-550

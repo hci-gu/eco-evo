@@ -1,0 +1,29 @@
+beds 98, day share 0.50, H_whiting 10.0, phi_follow 0.0
+
+=== whiting (members whiting 1.0); X = a h B_vis krill 19.0, planktivorous_fish 4.6, mobile_epifauna 1.5, benthivorous_fish 0.6
+  concurrent, all prey: S = 0.963
+  prey (alone)            x concurrent  per depth time share where prey occurs
+  krill                   1      0.376      0.304                        0.311
+  planktivorous_fish      1      0.816      0.816                        1.000
+  mobile_epifauna         1      0.600      0.094                        0.100
+  benthivorous_fish       1      0.380      0.151                        0.200
+  ALL                     1      0.907      0.882                        1.000
+  krill                  10      0.389      0.310                        0.311
+  planktivorous_fish     10      0.978      0.978                        1.000
+  mobile_epifauna        10      0.937      0.099                        0.100
+  benthivorous_fish      10      0.860      0.194                        0.200
+  ALL                    10      0.989      0.986                        1.000
+
+=== predatory_fish (members saithe 0.8, hake 0.2); X = a h B_vis krill 5.7, planktivorous_fish 9.0, benthivorous_fish 1.5, whiting 0.8
+  concurrent, all prey: S = 0.944
+  prey (alone)            x concurrent  per depth time share where prey occurs
+  krill                   1      0.606      0.348                        0.376
+  planktivorous_fish      1      0.893      0.814                        0.985
+  benthivorous_fish       1      0.599      0.127                        0.140
+  whiting                 1      0.439      0.303                        0.510
+  ALL                     1      0.933      0.865                        0.994
+  krill                  10      0.817      0.373                        0.376
+  planktivorous_fish     10      0.988      0.960                        0.985
+  benthivorous_fish      10      0.937      0.138                        0.140
+  whiting                10      0.886      0.477                        0.510
+  ALL                    10      0.993      0.974                        0.994

@@ -1,0 +1,90 @@
+seed 1; cells per class 0.22/0.30/0.32/0.15
+  depth mult  benthivorous_fish -> whiting   : 1.92/1.24/0.43/0.39
+  depth mult          porpoises -> whiting   : 1.00/1.00/1.00/1.00
+  depth mult     predatory_fish -> whiting   : 1.99/1.28/0.38/0.33
+  depth mult              seals -> whiting   : 1.00/1.00/1.00/1.00
+  depth mult whiting ->  benthivorous_fish: 1.38/1.09/0.77/0.76
+  depth mult whiting ->              krill: 3.46/0.75/0.01/0.00
+  depth mult whiting ->    mobile_epifauna: 1.00/1.00/1.00/1.00
+  depth mult whiting -> planktivorous_fish: 2.03/0.96/0.55/0.52
+  depth mult whiting ->        zooplankton: 1.00/1.00/1.00/1.00
+
+=== day 0: whiting classes 0.68/0.15/0.11/0.07 (GOV 0.77/0.20/0.03/0.00), benthivores 0.61/0.23/0.13/0.03, WC 0.24/0.43/0.27/0.05, krill 0.06/0.28/0.42/0.24
+  trained      eat  3.66 t/t/yr MJ  12031 fill 0.995 | M2 1.124 (preda 0.930, seals 0.143, porpo 0.036, benth 0.015) | diet krill 0.73, mobil 0.20, plank 0.06, benth 0.01, zoopl 0.01
+  field_kept   eat  3.68 t/t/yr MJ  12306 fill 0.996 | M2 1.096 (preda 0.902, seals 0.145, porpo 0.037, benth 0.012) | diet krill 0.86, mobil 0.10, plank 0.03, zoopl 0.01
+  field_even   eat  3.72 t/t/yr MJ  12664 fill 0.996 | M2 1.836 (preda 1.209, benth 0.431, seals 0.128, porpo 0.069) | diet krill 0.83, mobil 0.07, plank 0.07, benth 0.03
+  uniform      eat  3.70 t/t/yr MJ  12134 fill 0.996 | M2 1.611 (preda 1.296, benth 0.192, seals 0.066, porpo 0.057) | diet krill 0.51, mobil 0.32, plank 0.15, benth 0.02, zoopl 0.01
+  in_clumps    eat  3.66 t/t/yr MJ  12074 fill 0.996 | M2 2.685 (benth 2.155, preda 0.473, seals 0.035, porpo 0.021) | diet krill 0.61, benth 0.23, mobil 0.09, plank 0.06
+  trained_noBE eat  3.74 t/t/yr MJ  12294 fill 0.996 | M2 1.101 (preda 0.910, seals 0.143, porpo 0.036, benth 0.012) | diet krill 0.74, mobil 0.19, plank 0.05, zoopl 0.01, benth 0.01
+  wcF+trained  eat  3.65 t/t/yr MJ  12014 fill 0.995 | M2 0.636 (preda 0.440, seals 0.144, porpo 0.037, benth 0.016) | diet krill 0.73, mobil 0.19, plank 0.06, benth 0.01, zoopl 0.01
+  wcF+field_even eat  3.71 t/t/yr MJ  12614 fill 0.996 | M2 1.013 (benth 0.445, preda 0.387, seals 0.110, porpo 0.070) | diet krill 0.83, plank 0.07, mobil 0.07, benth 0.03
+  wcF+uniform  eat  3.69 t/t/yr MJ  12117 fill 0.996 | M2 1.258 (preda 0.963, benth 0.187, porpo 0.056, seals 0.053) | diet krill 0.51, mobil 0.31, plank 0.15, benth 0.02, zoopl 0.01
+  H:trained    eat  7.16 t/t/yr MJ  23692 fill 0.748 | M2 1.179 (preda 0.986, seals 0.145, porpo 0.036, benth 0.013) | diet krill 0.74, mobil 0.18, plank 0.07, benth 0.01, zoopl 0.01
+  H:wcF+trained eat  7.23 t/t/yr MJ  23970 fill 0.749 | M2 0.645 (preda 0.449, seals 0.145, porpo 0.037, benth 0.014) | diet krill 0.75, mobil 0.17, plank 0.07, benth 0.01, zoopl 0.01
+  H:wcF+field_even eat  8.14 t/t/yr MJ  27810 fill 0.754 | M2 1.023 (benth 0.442, preda 0.400, seals 0.111, porpo 0.070) | diet krill 0.82, plank 0.08, mobil 0.07, benth 0.03
+  HA:wcF+trained eat  7.23 t/t/yr MJ  23985 fill 0.749 | M2 0.962 (preda 0.757, seals 0.145, porpo 0.037, benth 0.023) | diet krill 0.75, mobil 0.17, plank 0.07, benth 0.01, zoopl 0.01
+  HA:wcF+field_even eat  8.14 t/t/yr MJ  27820 fill 0.754 | M2 1.574 (preda 0.706, benth 0.687, seals 0.110, porpo 0.070) | diet krill 0.82, plank 0.08, mobil 0.07, benth 0.03
+
+=== day 91: whiting classes 0.71/0.17/0.11/0.01 (GOV 0.77/0.20/0.03/0.00), benthivores 0.28/0.13/0.58/0.01, WC 0.23/0.51/0.19/0.08, krill 0.09/0.32/0.40/0.19
+  trained      eat  3.88 t/t/yr MJ  12739 fill 0.995 | M2 0.782 (preda 0.540, seals 0.232, benth 0.010, porpo 0.000) | diet krill 0.84, mobil 0.15, plank 0.01
+  field_kept   eat  3.91 t/t/yr MJ  13028 fill 0.996 | M2 0.795 (preda 0.548, seals 0.236, benth 0.011) | diet krill 0.91, mobil 0.08
+  field_even   eat  3.98 t/t/yr MJ  13346 fill 0.996 | M2 1.077 (preda 0.687, benth 0.219, seals 0.171, porpo 0.000) | diet krill 0.93, mobil 0.06, benth 0.01
+  uniform      eat  3.92 t/t/yr MJ  12644 fill 0.996 | M2 0.805 (preda 0.623, seals 0.092, benth 0.084, porpo 0.006) | diet krill 0.57, mobil 0.31, plank 0.10, benth 0.03
+  in_clumps    eat  3.90 t/t/yr MJ  12263 fill 0.996 | M2 1.223 (benth 1.031, preda 0.175, seals 0.011, porpo 0.006) | diet krill 0.44, benth 0.33, mobil 0.20, plank 0.03
+  trained_noBE eat  3.97 t/t/yr MJ  13012 fill 0.996 | M2 0.779 (preda 0.540, seals 0.235, benth 0.004, porpo 0.000) | diet krill 0.83, mobil 0.15, plank 0.01
+  wcF+trained  eat  3.88 t/t/yr MJ  12754 fill 0.995 | M2 0.492 (preda 0.251, seals 0.231, benth 0.010) | diet krill 0.84, mobil 0.15, plank 0.01
+  wcF+field_even eat  3.97 t/t/yr MJ  13310 fill 0.996 | M2 0.599 (benth 0.245, preda 0.188, seals 0.166, porpo 0.000) | diet krill 0.93, mobil 0.06, benth 0.01
+  wcF+uniform  eat  3.92 t/t/yr MJ  12645 fill 0.996 | M2 0.543 (preda 0.363, benth 0.087, seals 0.085, porpo 0.007) | diet krill 0.57, mobil 0.31, plank 0.10, benth 0.03
+  H:trained    eat  7.65 t/t/yr MJ  25214 fill 0.710 | M2 0.819 (preda 0.574, seals 0.236, benth 0.009, porpo 0.000) | diet krill 0.85, mobil 0.14, plank 0.01
+  H:wcF+trained eat  7.81 t/t/yr MJ  25765 fill 0.711 | M2 0.502 (preda 0.259, seals 0.233, benth 0.009, porpo 0.000) | diet krill 0.85, mobil 0.13, plank 0.01
+  H:wcF+field_even eat  8.57 t/t/yr MJ  28780 fill 0.714 | M2 0.604 (benth 0.235, preda 0.194, seals 0.175, porpo 0.000) | diet krill 0.93, mobil 0.05, benth 0.01
+  HA:wcF+trained eat  7.81 t/t/yr MJ  25764 fill 0.710 | M2 0.635 (preda 0.388, seals 0.233, benth 0.014, porpo 0.000) | diet krill 0.85, mobil 0.13, plank 0.01
+  HA:wcF+field_even eat  8.58 t/t/yr MJ  28798 fill 0.714 | M2 0.852 (benth 0.379, preda 0.298, seals 0.175, porpo 0.000) | diet krill 0.93, mobil 0.05, benth 0.01
+
+=== day 182: whiting classes 0.39/0.52/0.09/0.00 (GOV 0.77/0.20/0.03/0.00), benthivores 0.24/0.22/0.51/0.03, WC 0.47/0.27/0.11/0.15, krill 0.09/0.30/0.40/0.20
+  trained      eat  3.76 t/t/yr MJ  12251 fill 0.968 | M2 0.426 (preda 0.228, seals 0.176, benth 0.022) | diet krill 0.82, mobil 0.16, zoopl 0.02
+  field_kept   eat  3.70 t/t/yr MJ  12266 fill 0.968 | M2 0.416 (preda 0.202, seals 0.168, benth 0.045) | diet krill 0.89, mobil 0.09, zoopl 0.01
+  field_even   eat  3.68 t/t/yr MJ  12267 fill 0.968 | M2 0.901 (benth 0.406, preda 0.383, seals 0.111) | diet krill 0.90, mobil 0.07, zoopl 0.01, benth 0.01
+  uniform      eat  3.72 t/t/yr MJ  11945 fill 0.968 | M2 0.516 (preda 0.231, benth 0.209, seals 0.073, porpo 0.003) | diet krill 0.53, mobil 0.30, plank 0.09, zoopl 0.05, benth 0.03
+  in_clumps    eat  3.61 t/t/yr MJ  11374 fill 0.968 | M2 2.405 (benth 2.342, preda 0.062) | diet benth 0.40, krill 0.38, mobil 0.15, zoopl 0.04, plank 0.03
+  trained_noBE eat  3.76 t/t/yr MJ  12255 fill 0.968 | M2 0.413 (preda 0.234, seals 0.177, benth 0.002) | diet krill 0.82, mobil 0.16, zoopl 0.02
+  wcF+trained  eat  3.76 t/t/yr MJ  12253 fill 0.968 | M2 0.371 (seals 0.176, preda 0.170, benth 0.024) | diet krill 0.82, mobil 0.15, zoopl 0.02
+  wcF+field_even eat  3.67 t/t/yr MJ  12257 fill 0.968 | M2 0.572 (benth 0.382, seals 0.108, preda 0.082) | diet krill 0.90, mobil 0.07, zoopl 0.01, benth 0.01
+  wcF+uniform  eat  3.72 t/t/yr MJ  11945 fill 0.968 | M2 0.502 (benth 0.218, preda 0.209, seals 0.072, porpo 0.003) | diet krill 0.53, mobil 0.30, plank 0.09, zoopl 0.05, benth 0.03
+  H:trained    eat  8.02 t/t/yr MJ  26280 fill 0.452 | M2 0.451 (preda 0.251, seals 0.179, benth 0.022) | diet krill 0.84, mobil 0.14, zoopl 0.02
+  H:wcF+trained eat  8.06 t/t/yr MJ  26406 fill 0.452 | M2 0.380 (seals 0.178, preda 0.177, benth 0.025) | diet krill 0.84, mobil 0.14, zoopl 0.02
+  H:wcF+field_even eat  8.12 t/t/yr MJ  27140 fill 0.454 | M2 0.639 (benth 0.452, seals 0.105, preda 0.082) | diet krill 0.91, mobil 0.06, zoopl 0.01, benth 0.01
+  HA:wcF+trained eat  8.05 t/t/yr MJ  26402 fill 0.452 | M2 0.479 (preda 0.269, seals 0.178, benth 0.032) | diet krill 0.84, mobil 0.14, zoopl 0.02
+  HA:wcF+field_even eat  8.12 t/t/yr MJ  27133 fill 0.453 | M2 0.947 (benth 0.719, preda 0.122, seals 0.106) | diet krill 0.91, mobil 0.06, zoopl 0.01, benth 0.01
+
+=== day 273: whiting classes 0.23/0.62/0.14/0.01 (GOV 0.77/0.20/0.03/0.00), benthivores 0.11/0.45/0.34/0.10, WC 0.06/0.38/0.43/0.13, krill 0.10/0.29/0.42/0.20
+  trained      eat  4.06 t/t/yr MJ  13214 fill 0.976 | M2 0.560 (preda 0.403, seals 0.121, benth 0.036) | diet krill 0.68, mobil 0.24, plank 0.07, zoopl 0.01
+  field_kept   eat  7.56 t/t/yr MJ  25146 fill 0.991 | M2 0.327 (preda 0.156, seals 0.130, benth 0.040) | diet krill 0.84, mobil 0.12, plank 0.03, zoopl 0.01
+  field_even   eat  7.70 t/t/yr MJ  25920 fill 0.992 | M2 0.980 (preda 0.480, benth 0.414, seals 0.085, porpo 0.001) | diet krill 0.86, mobil 0.08, plank 0.04, benth 0.02, zoopl 0.01
+  uniform      eat  7.05 t/t/yr MJ  23476 fill 0.991 | M2 1.297 (preda 0.895, benth 0.337, seals 0.061, porpo 0.004) | diet krill 0.51, mobil 0.27, plank 0.17, benth 0.03, zoopl 0.01
+  in_clumps    eat  6.51 t/t/yr MJ  21671 fill 0.990 | M2 3.460 (benth 2.627, preda 0.819, seals 0.013, porpo 0.002) | diet krill 0.38, benth 0.32, plank 0.16, mobil 0.14, zoopl 0.01
+  trained_noBE eat  7.26 t/t/yr MJ  23850 fill 0.990 | M2 0.464 (preda 0.314, seals 0.129, benth 0.021, porpo 0.000) | diet krill 0.71, mobil 0.21, plank 0.07, zoopl 0.01
+  wcF+trained  eat  4.04 t/t/yr MJ  13186 fill 0.976 | M2 0.549 (preda 0.400, seals 0.122, benth 0.027, porpo 0.000) | diet krill 0.68, mobil 0.24, plank 0.07, zoopl 0.01
+  wcF+field_even eat  7.77 t/t/yr MJ  26137 fill 0.993 | M2 0.786 (benth 0.371, preda 0.333, seals 0.081, porpo 0.000) | diet krill 0.86, mobil 0.08, plank 0.04, benth 0.01, zoopl 0.01
+  wcF+uniform  eat  7.10 t/t/yr MJ  23664 fill 0.992 | M2 1.229 (preda 0.895, benth 0.275, seals 0.055, porpo 0.003) | diet krill 0.52, mobil 0.27, plank 0.17, benth 0.03, zoopl 0.01
+  H:trained    eat  7.86 t/t/yr MJ  25816 fill 0.324 | M2 0.598 (preda 0.438, seals 0.125, benth 0.034) | diet krill 0.71, mobil 0.21, plank 0.07, zoopl 0.01
+  H:wcF+trained eat  7.88 t/t/yr MJ  25933 fill 0.324 | M2 0.578 (preda 0.425, seals 0.125, benth 0.028, porpo 0.000) | diet krill 0.71, mobil 0.21, plank 0.07, zoopl 0.01
+  H:wcF+field_even eat  8.22 t/t/yr MJ  27681 fill 0.326 | M2 0.790 (benth 0.385, preda 0.330, seals 0.076) | diet krill 0.86, mobil 0.08, plank 0.04, benth 0.01, zoopl 0.01
+  HA:wcF+trained eat  7.87 t/t/yr MJ  25899 fill 0.324 | M2 0.873 (preda 0.708, seals 0.125, benth 0.040, porpo 0.000) | diet krill 0.72, mobil 0.20, plank 0.07, zoopl 0.01
+  HA:wcF+field_even eat  8.21 t/t/yr MJ  27661 fill 0.326 | M2 1.152 (benth 0.539, preda 0.537, seals 0.076) | diet krill 0.86, mobil 0.08, plank 0.04, benth 0.01, zoopl 0.01
+
+=== means over the 4 snapshots
+  trained      eat  3.84 MJ  12559 M2 0.723 (preda 0.525, seals 0.168, benth 0.021, porpo 0.009)
+  field_kept   eat  4.71 MJ  15687 M2 0.658 (preda 0.452, seals 0.170, benth 0.027, porpo 0.009)
+  field_even   eat  4.77 MJ  16049 M2 1.199 (preda 0.690, benth 0.368, seals 0.123, porpo 0.018)
+  uniform      eat  4.60 MJ  15050 M2 1.057 (preda 0.761, benth 0.206, seals 0.073, porpo 0.018)
+  in_clumps    eat  4.42 MJ  14346 M2 2.443 (benth 2.039, preda 0.382, seals 0.015, porpo 0.007)
+  trained_noBE eat  4.68 MJ  15353 M2 0.689 (preda 0.500, seals 0.171, benth 0.010, porpo 0.009)
+  wcF+trained  eat  3.83 MJ  12552 M2 0.512 (preda 0.315, seals 0.168, benth 0.019, porpo 0.009)
+  wcF+field_even eat  4.78 MJ  16079 M2 0.742 (benth 0.361, preda 0.248, seals 0.117, porpo 0.018)
+  wcF+uniform  eat  4.61 MJ  15093 M2 0.883 (preda 0.608, benth 0.192, seals 0.066, porpo 0.017)
+  H:trained    eat  7.67 MJ  25251 M2 0.762 (preda 0.562, seals 0.171, benth 0.019, porpo 0.009)
+  H:wcF+trained eat  7.74 MJ  25519 M2 0.526 (preda 0.328, seals 0.171, benth 0.019, porpo 0.009)
+  H:wcF+field_even eat  8.26 MJ  27853 M2 0.764 (benth 0.378, preda 0.252, seals 0.117, porpo 0.018)
+  HA:wcF+trained eat  7.74 MJ  25512 M2 0.737 (preda 0.530, seals 0.170, benth 0.027, porpo 0.009)
+  HA:wcF+field_even eat  8.26 MJ  27853 M2 1.131 (benth 0.581, preda 0.416, seals 0.117, porpo 0.018)

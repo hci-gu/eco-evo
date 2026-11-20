@@ -1,0 +1,16 @@
+Rindorf & Gislason 2005 Table 1 (whiting sites, early Sept): windows from the printed clock times
+loc  day h day/24 night h night/24 twilight h
+  1  13.37  0.557    9.40    0.392       1.23
+  2  13.72  0.572    9.02    0.376       1.27
+  3  13.83  0.576    8.85    0.369       1.32
+  4  13.53  0.564    9.20    0.383       1.27
+  5  13.45  0.560    9.25    0.385       1.30
+Fish window bounds with 4-h sampling: twilight only vs two 4-h bins = 8 h -> 0.051 - 0.333 of 24 h
+
+case                                                                    day h civil h day/24 night/24 twilight h (both)
+Mergardt & Temming 1997, 30 May-1 Jun, 57.53 N                          17.49   19.60  0.729    0.183              2.11
+Modica 2011, 27 Jun, Catalan Sea ~41 N                                  15.12   16.24  0.630    0.324              1.12
+Box (manifest latitude_deg 58.15 N), 21 Mar                             12.20   13.51  0.508    0.437              1.31
+Box 58.15 N, 21 Jun                                                     18.23   20.81  0.760    0.133              2.58
+Box 58.15 N, 5 Sep                                                      13.76   15.15  0.573    0.369              1.39
+Box 58.15 N, 21 Dec                                                      6.42    8.16  0.267    0.660              1.74

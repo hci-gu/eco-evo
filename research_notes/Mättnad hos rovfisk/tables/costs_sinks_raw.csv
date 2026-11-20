@@ -1,0 +1,39 @@
+mechanism,species,quantity,low,central,high,unit,temperature_C,source,tag,note
+SMR,whiting,standard metabolic rate,,59.2,,mg O2/kg/h,unknown,Steinhausen et al. 2005 Mar Biol doi:10.1007/s00227-005-0055-9,S,via earlier repo note; temperature and size not recovered; saithe 'similar'
+SMR,saithe,standard metabolic rate (repo value),,3.5,,MJ/t/tick,8.4,Fiskgrupper i rutan/params_predatory_fish.md,S,earlier repo synthesis
+activity,saithe,activity multiplier at optimum cruising speed,2.0,,2.5,x SMR,,Andersen & Riis-Vestergaard 2004 CJFAS doi:10.1139/f04-153,A,cited; model 2.14 was built from it (circular)
+activity,saithe,activity multiplier with kappa_wild,1.44,,3.27,x SMR,,Andersen & Riis-Vestergaard 2004 CJFAS doi:10.1139/f04-153,A,cited
+conversion,saithe,net conversion efficiency kappa_wild,0.43,,0.50,fraction of ingested,,Andersen & Riis-Vestergaard 2004 CJFAS doi:10.1139/f04-153,A,
+conversion,saithe,net conversion efficiency kappa = a C^b (a),,0.272,,-,,Andersen & Riis-Vestergaard 2003 J Fish Biol doi:10.1046/j.1095-8649.2003.00030.x,A,exponent 0.18; units of C not in abstract
+conversion,whiting,net conversion efficiency kappa = a C^b (a),,0.426,,-,,Andersen & Riis-Vestergaard 2003 J Fish Biol doi:10.1046/j.1095-8649.2003.00030.x,A,exponent 0.11; no temperature or size effect
+swimming,saithe,optimum swimming speed Uopt,,1.4,,BL/s,unknown,snippet attributed to Steinhausen et al. 2005,S,attribution unconfirmed
+swimming,saithe,cost of transport at Uopt (gross),,0.14,,J/N/m,unknown,snippet attributed to Steinhausen et al. 2005,S,attribution unconfirmed
+swimming,whiting,optimum swimming speed Uopt,,1.0,,BL/s,unknown,snippet attributed to Steinhausen et al. 2005,S,attribution unconfirmed
+swimming,whiting,cost of transport at Uopt (gross),,0.15,,J/N/m,unknown,snippet attributed to Steinhausen et al. 2005,S,attribution unconfirmed
+swimming,saithe,continuous cruising at Uopt (30-50 cm),12.5,,20.8,MJ/t/tick,unknown,costs.py block 4,D,upper bound only; lab length assumed
+swimming,whiting,continuous cruising at Uopt (25 cm),,7.9,,MJ/t/tick,unknown,costs.py block 4,D,upper bound only; lab length assumed
+FMR,saithe,otolith C_resp (n=5 Channel 1.9-3.9 kg),0.106,0.143,0.164,-,11.1,Alewijnse 2022 dataset doi:10.6084/m9.figshare.22110335,S,cited (E2 of Faltmetabolism note); min-max of 5 fish
+FMR,saithe,otolith FMR (Chung 2019 cod calibration),65.1,100.9,127.7,mg O2/kg/h,11.1,costs.py block 1,D,
+FMR,saithe,otolith FMR at model temperature Q10 2.3,4.24,6.58,8.32,MJ/t/tick,8.4,costs.py block 1,D,includes SDA and growth synthesis; Q10 2.7 gives 6.30 (4.06-7.97)
+FMR,saithe,FMR / model non-SDA charge 7.04,0.60,0.93,1.18,ratio,8.4,costs.py block 1,D,
+FMR,saithe,FMR / (model + SDA at SMS mean ration 8.35),0.51,0.79,1.00,ratio,8.4,costs.py blocks 1-2,D,prey E 5.5 MJ/kg judged
+FMR,saithe,FMR / SMR (repo SMR 3.5),,1.9,,ratio,8.4,costs.py,D,Chung 2019 cod 1.9-3.5
+FMR,whiting,otolith C_resp (n=5 Channel 65-199 g),0.139,0.162,0.216,-,17.2,Alewijnse 2022 dataset doi:10.6084/m9.figshare.22110335,S,cited; top fish near calibration asymptote 0.243
+FMR,whiting,otolith FMR (Chung 2019 cod calibration),96.4,124.8,249.7,mg O2/kg/h,17.2,costs.py block 1,D,
+FMR,whiting,otolith FMR at model temperature Q10 2.3,3.48,4.50,9.01,MJ/t/tick,7.4,costs.py block 1,D,10 C extrapolation; Q10 2.7 gives 3.85 (2.97-7.70); FMR/RM 1.0-1.16 = floor signal; verdict undetermined
+FMR,whiting,FMR / model non-SDA charge 5.8,0.60,0.78,1.55,ratio,7.4,costs.py block 1,D,not credible as estimate (FMR ~ SMR)
+activity,saithe,diel and seasonal activity (DST hourly depth change),,,,qualitative,,Armannsson & Jonsson 2012 ICES JMS doi:10.1093/icesjms/fss121,F,lower at night and in winter; lowest in July; 51 fish 42-83 cm; median depth 140 m Mar-Apr <50 m summer
+activity,saithe,residence depth summer / winter (acoustic tags at farms),25,,90,m,,Skilbrei & Ottera 2016 ICES JMS doi:10.1093/icesjms/fsv261,A,25-50 m summer 60-90 m winter; reduced activity at night
+activity,hake,diel vertical migration across thermocline,7,,,C temperature change,,de Pontual et al. 2012 J Fish Biol doi:10.1111/j.1095-8649.2012.03345.x,A,'rapid temperature changes >7 C'; homing to feeding grounds
+migration,saithe,adult (>60 cm Norway) distance from tagging site farthest Feb-Mar shortest late summer,,,,qualitative,,Homrum et al. 2013 ICES JMS doi:10.1093/icesjms/fst048,F,return to same feeding grounds; 6.6 % of Norway adults recaptured outside Continental waters; <50 cm move shortest
+migration,saithe,round trip box -> spawning shelf edge,795,971,1170,km,,costs.py block 5,D,endpoints judged (59N4E / 60N3E / 61N2E)
+migration,saithe,extra locomotion cost per migrating fish (COT 0.06-0.10),0,,652,MJ/t migrant,,costs.py block 5,D,adult COT judged; upper bound 1083 at COT 0.14 and 0.84 m/s; paid outside box
+migration,saithe,extra locomotion per tonne of water-column group,0,,310,MJ/t group/yr,,costs.py block 5 x mature share 0.25-0.6 x 0.797,D,upper bound 520; 0-2 % (max ~3 %) of annual ration 15900
+ration,saithe,SMS annual mean ration energy,,15909,,MJ/t/yr,,SMS rations x prey E 5.5 MJ/kg,D,prey E judged
+winter,saithe,Q1 intake shortfall vs annual mean (SMS),,1733,,MJ/t/yr,,costs.py (0.79-0.44)% x 90 d x 5.5 MJ/kg,D,~11 % of annual ration; missing intake not extra cost; population mean incl. immatures
+temperature,saithe,cost multiplier at_50m 6.9 / 11.7 C vs 8.4 C (Q10 2.3),0.88,,1.32,x,6.9-11.7,costs.py block 6,D,already charged by engine metabolism_q10
+diet,saithe,Norwegian Deep strongest links: small saithe -> euphausiids; saithe -> Norway pout,,,,qualitative,,Bergstad 1991 Sarsia doi:10.1080/00364827.1991.10413456,A,winter/summer/autumn 1984-87; seasonal percentages not obtained
+reproduction,hake,egg production financed by intake during spawning season,,,,qualitative,,Dominguez-Petit & Saborido-Rey 2010 Fish Res doi:10.1016/j.fishres.2009.09.002,S,batch fecundity ~ liver energy density; income breeder
+reproduction,hake,spawning seasons NW Spain winter-spring / summer / autumn,,,,qualitative,,Garcia-Fernandez et al. 2020 MEPS doi:10.3354/meps13420,A,more and better oocytes in winter-spring
+FMR,saithe,ration-route respiration R = A x SMS ration energy - P x 5080 (A 0.7-0.8; P 0.42),6.17,,7.26,MJ/t/tick,,costs.py block 8,D,gonads ignored; SMS rations may read low -> lower bound; between otolith 6.58 and model+SDA 8.35
+FMR,saithe,upper field-derived constraint kappa_wild 3.27 x model SMR 3.29,,10.76,,MJ/t/tick,8.4,Andersen & Riis-Vestergaard 2004 x model SMR (costs.py block 3),D,ratio 1.53 to model 7.04

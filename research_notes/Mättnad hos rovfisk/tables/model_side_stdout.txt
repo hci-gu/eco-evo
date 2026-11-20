@@ -1,0 +1,37 @@
+
+1. Units: ceiling, cost, need at fill 1 (annual-mean temperature)
+-----------------------------------------------------------------
+whiting       ceiling 31.34 MJ/t/tick = 125.4 kJ/kg/d; cost 5.80 (23.2 kJ/kg/d) = 0.272 of ceiling (ingested); cost + P at fill 1 = 8.27 -> feeding level 0.388 (fix104 realised 0.383, uncapped 0.664)
+water_column  ceiling 29.79 MJ/t/tick = 119.2 kJ/kg/d; cost 7.04 (28.2 kJ/kg/d) = 0.348 of ceiling (ingested); cost + P at fill 1 = 8.82 -> feeding level 0.435 (fix104 realised 0.438, uncapped 0.731)
+
+2. Feeding level a fish needs to hold fill s (equilibrium, no season)
+---------------------------------------------------------------------
+fill s:          0.10   0.30   0.50   0.71   0.73   0.90   1.00
+whiting        0.275  0.294  0.317  0.344  0.347  0.372  0.388
+water_column   0.350  0.364  0.382  0.402  0.404  0.423  0.435
+Reading: the whole fill range 0.1-1.0 lies inside a feeding-level band of ~0.1 of the ceiling,
+so a fill below 1 needs a potential feeding level within that band; the model's uncapped
+potential (fix104) is ~0.25-0.3 above its top.
+
+3. Refill speed: model surplus vs the field refill time
+-------------------------------------------------------
+whiting       whiting proxy 0.30 -> 0.73: model surplus 5.99 MJ/t/tick refills in 36 d; field: 60 d -> surplus 3.58 MJ/t/tick, potential 0.551; 90 d -> surplus 2.39 MJ/t/tick, potential 0.495; 150 d -> surplus 1.43 MJ/t/tick, potential 0.450; 180 d -> surplus 1.19 MJ/t/tick, potential 0.439
+whiting       saithe NIFES-like ~0.25 ME: model surplus 5.99 MJ/t/tick refills in 21 d; field: 60 d -> surplus 2.08 MJ/t/tick, potential 0.481; 90 d -> surplus 1.39 MJ/t/tick, potential 0.448; 150 d -> surplus 0.83 MJ/t/tick, potential 0.422; 180 d -> surplus 0.69 MJ/t/tick, potential 0.416
+water_column  whiting proxy 0.30 -> 0.73: model surplus 5.94 MJ/t/tick refills in 36 d; field: 60 d -> surplus 3.58 MJ/t/tick, potential 0.615; 90 d -> surplus 2.39 MJ/t/tick, potential 0.556; 150 d -> surplus 1.43 MJ/t/tick, potential 0.509; 180 d -> surplus 1.19 MJ/t/tick, potential 0.497
+water_column  saithe NIFES-like ~0.25 ME: model surplus 5.94 MJ/t/tick refills in 21 d; field: 60 d -> surplus 2.08 MJ/t/tick, potential 0.541; 90 d -> surplus 1.39 MJ/t/tick, potential 0.507; 150 d -> surplus 0.83 MJ/t/tick, potential 0.479; 180 d -> surplus 0.69 MJ/t/tick, potential 0.472
+
+4. Seasonal ration (SMS, stomach-based) -> implied reserve swing, closure imposed
+---------------------------------------------------------------------------------
+whiting 120 g  E 4.0 kJ/g: annual imbalance +1.03 MJ/t/tick (+18% of cost); quarter net-mean (ME) -0.26 -0.15 +0.39 +0.03; fill from the minimum at 1 Jan/1 Apr/1 Jul/1 Oct/31 Dec: 0.41 0.15 0.00 0.39 0.41
+whiting 120 g  E 4.5 kJ/g: annual imbalance +2.00 MJ/t/tick (+35% of cost); quarter net-mean (ME) -0.30 -0.18 +0.43 +0.04; fill from the minimum at 1 Jan/1 Apr/1 Jul/1 Oct/31 Dec: 0.48 0.18 0.00 0.43 0.48
+whiting 120 g  E 5.5 kJ/g: annual imbalance +3.95 MJ/t/tick (+68% of cost); quarter net-mean (ME) -0.37 -0.23 +0.53 +0.07; fill from the minimum at 1 Jan/1 Apr/1 Jul/1 Oct/31 Dec: 0.60 0.23 0.00 0.53 0.60
+whiting 250 g  E 4.0 kJ/g: annual imbalance -0.59 MJ/t/tick (-10% of cost); quarter net-mean (ME) -0.20 -0.11 +0.31 +0.01; fill from the minimum at 1 Jan/1 Apr/1 Jul/1 Oct/31 Dec: 0.31 0.11 0.00 0.31 0.31
+whiting 250 g  E 4.5 kJ/g: annual imbalance +0.18 MJ/t/tick (+3% of cost); quarter net-mean (ME) -0.23 -0.13 +0.34 +0.02; fill from the minimum at 1 Jan/1 Apr/1 Jul/1 Oct/31 Dec: 0.36 0.13 0.00 0.34 0.36
+whiting 250 g  E 5.5 kJ/g: annual imbalance +1.73 MJ/t/tick (+30% of cost); quarter net-mean (ME) -0.29 -0.17 +0.42 +0.04; fill from the minimum at 1 Jan/1 Apr/1 Jul/1 Oct/31 Dec: 0.46 0.17 0.00 0.42 0.46
+saithe 1.5 kg  E 4.0 kJ/g: annual imbalance -2.40 MJ/t/tick (-34% of cost); quarter net-mean (ME) -0.31 +0.75 -0.20 -0.25; fill from the minimum at 1 Jan/1 Apr/1 Jul/1 Oct/31 Dec: 0.31 0.00 0.75 0.56 0.31
+saithe 1.5 kg  E 4.5 kJ/g: annual imbalance -1.72 MJ/t/tick (-24% of cost); quarter net-mean (ME) -0.36 +0.83 -0.22 -0.25; fill from the minimum at 1 Jan/1 Apr/1 Jul/1 Oct/31 Dec: 0.36 0.00 0.83 0.61 0.36
+saithe 1.5 kg  E 5.5 kJ/g: annual imbalance -0.38 MJ/t/tick (-5% of cost); quarter net-mean (ME) -0.47 +0.98 -0.25 -0.25; fill from the minimum at 1 Jan/1 Apr/1 Jul/1 Oct/31 Dec: 0.47 0.00 0.98 0.72 0.47
+Caveats: SMS consumption = stomach content x a temperature-dependent evacuation model with
+North Sea temperatures, so part of the Q3 rise is temperature in that model, not food; growth
+is spread evenly (field whiting grow mainly Q2-Q3, which deepens the summer trough); saithe
+SMS is the North Sea stock (mostly adults that spawn in Q1), the box fish are mostly immature.

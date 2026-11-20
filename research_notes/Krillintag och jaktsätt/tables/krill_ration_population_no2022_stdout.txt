@@ -1,0 +1,23 @@
+species, area, quarter: records, stomachs, share of stomachs in krill-bearing records, mean krill ration / GER Cmax (S_max 2.5 %, M 1; x0.47 for the low band S_max 5 %, M 1.5), records skipped (krill uncounted)
+saithe   NE North Sea  Q1: rec  163 stom    438 krill-bearing 0.45  mean ratio 0.081  skipped 16
+saithe   NE North Sea  Q2: rec   18 stom    154 krill-bearing 0.87  mean ratio 0.084  skipped 0
+saithe   NE North Sea  Q3: rec   99 stom    751 krill-bearing 0.43  mean ratio 0.130  skipped 119
+saithe   NE North Sea  Q4: rec   18 stom    146 krill-bearing 0.82  mean ratio 0.547  skipped 0
+saithe   NW North Sea  Q1: rec  176 stom    571 krill-bearing 0.16  mean ratio 0.056  skipped 7
+saithe   NW North Sea  Q2: rec    1 stom      1 krill-bearing 0.00  mean ratio 0.000  skipped 0
+saithe   NW North Sea  Q3: rec  313 stom   1839 krill-bearing 0.10  mean ratio 0.036  skipped 48
+saithe   NW North Sea  Q4: rec   24 stom    148 krill-bearing 0.41  mean ratio 0.237  skipped 3
+saithe   Skagerrak     Q3: rec    1 stom      1 krill-bearing 0.00  mean ratio 0.000  skipped 0
+whiting  Kattegat      Q2: rec   34 stom    100 krill-bearing 0.13  mean ratio 0.049  skipped 0
+whiting  Kattegat      Q4: rec   12 stom     12 krill-bearing 0.00  mean ratio 0.000  skipped 0
+whiting  NE North Sea  Q1: rec   74 stom    431 krill-bearing 0.48  mean ratio 0.306  skipped 0
+whiting  NE North Sea  Q2: rec   26 stom    216 krill-bearing 0.00  mean ratio 0.000  skipped 0
+whiting  NE North Sea  Q4: rec   19 stom    113 krill-bearing 0.04  mean ratio 0.007  skipped 0
+whiting  NW North Sea  Q1: rec   42 stom    344 krill-bearing 0.35  mean ratio 0.279  skipped 0
+whiting  NW North Sea  Q2: rec   35 stom    272 krill-bearing 0.00  mean ratio 0.000  skipped 0
+whiting  NW North Sea  Q3: rec   25 stom    163 krill-bearing 0.05  mean ratio 0.012  skipped 0
+whiting  NW North Sea  Q4: rec    3 stom     27 krill-bearing 0.74  mean ratio 0.084  skipped 0
+whiting  Skagerrak     Q1: rec    4 stom     32 krill-bearing 0.44  mean ratio 0.059  skipped 0
+whiting  Skagerrak     Q2: rec   36 stom     90 krill-bearing 0.47  mean ratio 0.365  skipped 0
+saithe: all areas and quarters, stomach-weighted mean krill ration / GER Cmax 0.089 over 4049 stomachs
+whiting: all areas and quarters, stomach-weighted mean krill ration / GER Cmax 0.151 over 1800 stomachs

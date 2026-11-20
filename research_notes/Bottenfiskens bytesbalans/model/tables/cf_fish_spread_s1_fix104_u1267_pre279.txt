@@ -1,0 +1,37 @@
+seed 1; library /tmp/claude-1001/-home-simon-eco-evo/fbf4a34a-3803-4ba2-a6c2-91405d92c671/scratchpad/refuge_test/lib_base.yaml: exposed_share 0.2, k 2.50 /yr
+
+=== year 3 day 0: benth B/B0 1.31, Lloyd 49, grid A/K_A 0.803, A/K_A met by the mean benthivore tonne 0.413
+  clumped Lloyd  48.9 ->  49.2 (4 d); A/K_A met 0.413 | day 1: M2_all 0.264 eat 6.59 t/t/yr MJ  12208 inf 0.80 plk 0.0002 wht 0.0000 | days 1-4: M2_all 0.260 eat 6.59 t/t/yr MJ  12197 inf 0.80 plk 0.0001 wht 0.0000
+  3.0     Lloyd   3.0 ->  29.8 (4 d); A/K_A met 0.550 | day 1: M2_all 0.756 eat 6.55 t/t/yr MJ  12327 inf 0.77 plk 0.0029 wht 0.0002 | days 1-4: M2_all 0.517 eat 6.58 t/t/yr MJ  12282 inf 0.79 plk 0.0023 wht 0.0001
+  field   Lloyd   1.2 ->   7.0 (4 d); A/K_A met 0.744 | day 1: M2_all 0.874 eat 6.33 t/t/yr MJ  12222 inf 0.71 plk 0.0069 wht 0.0022 | days 1-4: M2_all 0.606 eat 6.35 t/t/yr MJ  12210 inf 0.73 plk 0.0066 wht 0.0025
+  clumped_fresh Lloyd  48.9 ->  41.3 (4 d); A/K_A met 0.777 | day 1: M2_all 0.253 eat 6.15 t/t/yr MJ  12168 inf 0.63 plk 0.0002 wht 0.0000 | days 1-4: M2_all 0.240 eat 6.15 t/t/yr MJ  12135 inf 0.64 plk 0.0001 wht 0.0000
+  3.0_fresh Lloyd   3.0 ->  48.9 (4 d); A/K_A met 0.777 | day 1: M2_all 0.755 eat 6.20 t/t/yr MJ  12339 inf 0.63 plk 0.0035 wht 0.0002 | days 1-4: M2_all 0.479 eat 6.17 t/t/yr MJ  12196 inf 0.64 plk 0.0025 wht 0.0002
+
+=== year 3 day 91: benth B/B0 1.31, Lloyd 56, grid A/K_A 0.798, A/K_A met by the mean benthivore tonne 0.360
+  clumped Lloyd  55.7 ->  53.0 (4 d); A/K_A met 0.360 | day 1: M2_all 0.073 eat 6.45 t/t/yr MJ  11866 inf 0.82 plk 0.0006 wht 0.0000 | days 1-4: M2_all 0.079 eat 6.51 t/t/yr MJ  11923 inf 0.82 plk 0.0004 wht 0.0000
+  3.0     Lloyd   2.9 ->  15.6 (4 d); A/K_A met 0.533 | day 1: M2_all 0.195 eat 6.52 t/t/yr MJ  12081 inf 0.80 plk 0.0042 wht 0.0001 | days 1-4: M2_all 0.153 eat 6.45 t/t/yr MJ  11954 inf 0.81 plk 0.0035 wht 0.0001
+  field   Lloyd   1.2 ->   8.5 (4 d); A/K_A met 0.728 | day 1: M2_all 0.269 eat 6.25 t/t/yr MJ  12124 inf 0.71 plk 0.0096 wht 0.0035 | days 1-4: M2_all 0.228 eat 6.27 t/t/yr MJ  12086 inf 0.72 plk 0.0083 wht 0.0035
+  clumped_fresh Lloyd  55.7 ->  54.1 (4 d); A/K_A met 0.767 | day 1: M2_all 0.072 eat 6.19 t/t/yr MJ  12065 inf 0.65 plk 0.0006 wht 0.0000 | days 1-4: M2_all 0.067 eat 6.24 t/t/yr MJ  12030 inf 0.67 plk 0.0004 wht 0.0000
+  3.0_fresh Lloyd   2.9 ->  22.6 (4 d); A/K_A met 0.767 | day 1: M2_all 0.196 eat 6.21 t/t/yr MJ  12249 inf 0.63 plk 0.0029 wht 0.0001 | days 1-4: M2_all 0.147 eat 6.18 t/t/yr MJ  12154 inf 0.64 plk 0.0029 wht 0.0001
+
+=== year 3 day 182: benth B/B0 1.35, Lloyd 38, grid A/K_A 0.793, A/K_A met by the mean benthivore tonne 0.362
+  clumped Lloyd  38.3 ->  33.7 (4 d); A/K_A met 0.362 | day 1: M2_all 0.032 eat 5.81 t/t/yr MJ  11235 inf 0.77 plk 0.0028 wht 0.0003 | days 1-4: M2_all 0.034 eat 5.93 t/t/yr MJ  11310 inf 0.79 plk 0.0043 wht 0.0004
+  3.0     Lloyd   2.9 ->  23.4 (4 d); A/K_A met 0.447 | day 1: M2_all 0.059 eat 5.99 t/t/yr MJ  11572 inf 0.78 plk 0.0144 wht 0.0012 | days 1-4: M2_all 0.039 eat 5.83 t/t/yr MJ  11364 inf 0.77 plk 0.0068 wht 0.0014
+  field   Lloyd   1.2 ->  11.4 (4 d); A/K_A met 0.717 | day 1: M2_all 0.144 eat 5.87 t/t/yr MJ  11712 inf 0.68 plk 0.0174 wht 0.0092 | days 1-4: M2_all 0.126 eat 5.89 t/t/yr MJ  11496 inf 0.71 plk 0.0098 wht 0.0116
+  clumped_fresh Lloyd  38.3 ->  38.9 (4 d); A/K_A met 0.760 | day 1: M2_all 0.030 eat 5.87 t/t/yr MJ  11573 inf 0.64 plk 0.0010 wht 0.0001 | days 1-4: M2_all 0.029 eat 5.85 t/t/yr MJ  11507 inf 0.65 plk 0.0043 wht 0.0001
+  3.0_fresh Lloyd   2.9 ->  30.4 (4 d); A/K_A met 0.760 | day 1: M2_all 0.058 eat 5.86 t/t/yr MJ  11772 inf 0.62 plk 0.0117 wht 0.0005 | days 1-4: M2_all 0.035 eat 5.85 t/t/yr MJ  11616 inf 0.63 plk 0.0054 wht 0.0003
+
+=== year 3 day 273: benth B/B0 1.43, Lloyd 51, grid A/K_A 0.783, A/K_A met by the mean benthivore tonne 0.537
+  clumped Lloyd  50.8 ->  50.8 (4 d); A/K_A met 0.537 | day 1: M2_all 0.093 eat 6.22 t/t/yr MJ  11722 inf 0.79 plk 0.0292 wht 0.0015 | days 1-4: M2_all 0.095 eat 6.27 t/t/yr MJ  11767 inf 0.79 plk 0.0232 wht 0.0011
+  3.0     Lloyd   2.9 ->  22.6 (4 d); A/K_A met 0.561 | day 1: M2_all 0.205 eat 6.18 t/t/yr MJ  12372 inf 0.74 plk 0.0593 wht 0.0023 | days 1-4: M2_all 0.151 eat 6.05 t/t/yr MJ  11908 inf 0.75 plk 0.0458 wht 0.0019
+  field   Lloyd   1.2 ->  11.0 (4 d); A/K_A met 0.715 | day 1: M2_all 0.405 eat 6.41 t/t/yr MJ  13127 inf 0.67 plk 0.0478 wht 0.0069 | days 1-4: M2_all 0.281 eat 5.99 t/t/yr MJ  12173 inf 0.69 plk 0.0452 wht 0.0053
+  clumped_fresh Lloyd  50.8 ->  54.2 (4 d); A/K_A met 0.753 | day 1: M2_all 0.096 eat 5.82 t/t/yr MJ  11761 inf 0.62 plk 0.0207 wht 0.0007 | days 1-4: M2_all 0.093 eat 6.03 t/t/yr MJ  11870 inf 0.65 plk 0.0109 wht 0.0007
+  3.0_fresh Lloyd   2.9 ->  29.6 (4 d); A/K_A met 0.753 | day 1: M2_all 0.205 eat 5.95 t/t/yr MJ  12457 inf 0.59 plk 0.0427 wht 0.0017 | days 1-4: M2_all 0.160 eat 5.94 t/t/yr MJ  12142 inf 0.61 plk 0.0263 wht 0.0015
+
+=== means over the 4 snapshots (spread minus clumped; benefit = extra M2 avoided by clumping, cost = intake given up by clumping; cost in /yr = 0.3 x d eat, the 278.6 growth-ration rule)
+  3.0       vs clumped       day 1   : benefit of clumping (M2 saved) +0.188 /yr | cost of clumping: eat +0.04 t/t/yr (+1% of clumped 6.27), MJ +331 (+3%) -> 0.3 x d eat = +0.013 /yr
+  3.0       vs clumped       days 1-4: benefit of clumping (M2 saved) +0.098 /yr | cost of clumping: eat -0.10 t/t/yr (-2% of clumped 6.33), MJ +78 (+1%) -> 0.3 x d eat = -0.030 /yr
+  field     vs clumped       day 1   : benefit of clumping (M2 saved) +0.307 /yr | cost of clumping: eat -0.05 t/t/yr (-1% of clumped 6.27), MJ +538 (+5%) -> 0.3 x d eat = -0.016 /yr
+  field     vs clumped       days 1-4: benefit of clumping (M2 saved) +0.193 /yr | cost of clumping: eat -0.20 t/t/yr (-3% of clumped 6.33), MJ +192 (+2%) -> 0.3 x d eat = -0.060 /yr
+  3.0_fresh vs clumped_fresh day 1   : benefit of clumping (M2 saved) +0.191 /yr | cost of clumping: eat +0.05 t/t/yr (+1% of clumped 6.01), MJ +313 (+3%) -> 0.3 x d eat = +0.014 /yr
+  3.0_fresh vs clumped_fresh days 1-4: benefit of clumping (M2 saved) +0.098 /yr | cost of clumping: eat -0.03 t/t/yr (-1% of clumped 6.07), MJ +141 (+1%) -> 0.3 x d eat = -0.010 /yr

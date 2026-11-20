@@ -1,0 +1,6 @@
+=== N57: GOV juvenile gadoids 5-25 cm, kg/h by class < 100 / 100-150 / 150-250 / >= 250: 90.5 (n3631) / 33.2 (n3662) / 6.0 (n1190) / 2.4 (n43)
+  clearance index rel. to 150-250 m (central FO): 0.05 / 0.22 / 1.00 / 1.87
+  < 100 : 150-250 m index 0.05 (FO-interval corners 0.02-0.11); density ratio < 100 : 150-250 15.0
+=== NE: GOV juvenile gadoids 5-25 cm, kg/h by class < 100 / 100-150 / 150-250 / >= 250: 89.4 (n1985) / 25.5 (n621) / 4.5 (n514) / 2.7 (n39)
+  clearance index rel. to 150-250 m (central FO): 0.04 / 0.19 / 1.00 / 1.28
+  < 100 : 150-250 m index 0.04 (FO-interval corners 0.02-0.13); density ratio < 100 : 150-250 19.9

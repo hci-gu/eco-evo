@@ -1,0 +1,36 @@
+predator,area,taxon,stomach_g_or_note,living_depth_class,basis,tag
+plaice,Skagerrak 2024 (ICES DB),Ophiuroidea,229.2,unknown (Amphiura arms or whole Ophiura),not identified,D
+plaice,Skagerrak 2024 (ICES DB),Bivalvia,127.14,unknown (not identified),not identified,D
+plaice,Skagerrak 2024 (ICES DB),Polychaeta,51.971,unknown (not identified),not identified,D
+plaice,Skagerrak 2024 (ICES DB),Echinoidea,45.52,unknown (small irregular urchins live 0-15 cm),not identified,D
+plaice,Skagerrak 2024 (ICES DB),Pectinaria,10.57,shallow 0-5 cm (head-down cone tube; the wide end near the surface),general biology,J
+plaice,Skagerrak 2024 (ICES DB),Aphrodita aculeata,3.76,surface (half-buried scale worm),general biology,J
+plaice,Skagerrak 2024 (ICES DB),Neoleanira tetragona,3.41,shallow (sigalionid),general biology,J
+plaice,Skagerrak 2024 (ICES DB),Scalibregmatidae,1.91,deep (Scalibregma inflatum: subsurface deposit feeder "buried deep in sand or mud" MarLIN 2185),secondary,S
+plaice,Skagerrak 2024 (ICES DB),Priapulida,1.26,deep (>5 cm burrower; may be a cropped part),general biology,J
+plaice,Skagerrak 2024 (ICES DB),Glyceridae,0.87,mobile 0-10 cm,general biology,J
+plaice,Skagerrak 2024 (ICES DB),Nephtyidae,0.35,mobile 0-10 cm,general biology,J
+plaice,Skagerrak 2024 (ICES DB),Polynoidae,0.23,surface,general biology,J
+plaice,Skagerrak 2024 (ICES DB),Terebellidae,0.2,surface tentacles (body in tube),general biology,J
+plaice,Skagerrak 2024 (ICES DB),Sigalion mathildae,0.19,shallow,general biology,J
+plaice,Skagerrak 2024 (ICES DB),Ophelina,0.17,shallow-mid,general biology,J
+plaice,Skagerrak 2024 (ICES DB),Maldanidae,0.14,deep head-down (tail end at surface; cropped part likely),general biology,J
+plaice,Skagerrak 2024 (ICES DB),Opheliidae,0.11,shallow-mid,general biology,J
+plaice,Skagerrak 2024 (ICES DB),Oweniidae,0.11,shallow tube,general biology,J
+plaice,Skagerrak 2024 (ICES DB),Phyllodocidae,0.09,surface,general biology,J
+plaice,Skagerrak 2024 (ICES DB),Capitellidae,0.04,deep (may be a cropped part),general biology,J
+plaice,Skagerrak 2024 (ICES DB),SUMMARY identified infaunal families,23.4 g of which deep 3.35 g (14.3 %) incl. Scalibregmatidae,deep families ~14 % (6 % without Scalibregmatidae) of the identified family mass; all of it could be cropped parts,arithmetic,J
+witch,Skagerrak 156-490 m (Bergstad et al. 2003),Polynoidae,listed main family,surface,general biology,J
+witch,Skagerrak 156-490 m (Bergstad et al. 2003),Sigalionidae,listed main family,shallow,general biology,J
+witch,Skagerrak 156-490 m (Bergstad et al. 2003),Capitellidae,listed main family,deep (small capitellids also shallow),general biology,J
+witch,Skagerrak 156-490 m (Bergstad et al. 2003),Opheliidae,listed main family,shallow-mid,general biology,J
+witch,Skagerrak 156-490 m (Bergstad et al. 2003),Cirratulidae,listed main family,surface palps (body 0-5 cm),Dauwe 1998 Tharyx upper 5 cm [F earlier note],J
+witch,Skagerrak 156-490 m (Bergstad et al. 2003),Ampharetidae,listed main family,surface tentacles (tube shallow),general biology,J
+witch,Skagerrak 156-490 m (Bergstad et al. 2003),Scrobiculariidae (Abra),main bivalve family,0-2 cm,Dauwe 1998 Abra nitida 0-2 cm [F earlier note],F
+witch,Skagerrak 156-490 m (Bergstad et al. 2003),Nuculanidae,main bivalve family,shallow 0-3 cm protobranch,general biology,J
+cod,Skagerrak and box 2000+ (ICES DB),Aphrodita aculeata,87.8 of 867.6 g total,surface,general biology,J
+haddock,NNS and NNS trench 2000+ (ICES DB),Polychaeta / Ophiuroidea / Echinidea,265 / 209 / 52 g (not identified further),unknown,not identified,D
+haddock,northern North Sea 2007 (Schuckel et al. 2010),Ophiocten affinis; Echinocyamus pusillus,'high abundances' as grinding elements,surface ophiurid; pea urchin in the top 1-2 cm of coarse sand,abstract + general biology,A
+haddock,northern North Sea 2007 (Schuckel et al. 2010),Spiophanes kroyeri; S. bombyx; Phoronis,'not consumed',deep tubes; withdraw 'below the feeding depths',abstract,A
+dab,Irish Sea mud (Johnson et al. 2015),Goneplax; Callianassa; Jaxea,'whole chelae only',deep burrowers; only appendages taken,full text,F
+dab,40 m Amphiura ground (Kaiser & Ramsay 1997),Amphiura spp.,arms in control fish; discs only after trawling,disc buried; arms exposed,full text,F

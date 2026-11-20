@@ -1,0 +1,41 @@
+krill counted per stomach (pool mean); top records per species; %BW at krill 0.15/0.23/0.30 g
+== whiting: 141 records with krill counts
+     50.0 krill/stomach  L  10.0 cm  W      7 g  N    3  1981-7  bed na  NW North Sea:  102.7/157.5/205.4 %BW
+     45.0 krill/stomach  L  10.0 cm  W      7 g  N    1  1981-2  bed 100-150  NE North Sea:  92.4/141.7/184.9 %BW
+     44.4 krill/stomach  L  15.0 cm  W     26 g  N   10  1981-7  bed na  NW North Sea:  26.0/39.8/51.9 %BW
+     12.0 krill/stomach  L  10.0 cm  W      7 g  N   10  1981-2  bed <100  C+S North Sea:  24.7/37.8/49.3 %BW
+     10.5 krill/stomach  L  10.0 cm  W      7 g  N   10  1981-2  bed <100  C+S North Sea:  21.6/33.1/43.1 %BW
+      7.5 krill/stomach  L  10.0 cm  W      7 g  N    2  1981-1  bed 100-150  NE North Sea:  15.4/23.6/30.8 %BW
+      7.3 krill/stomach  L  10.0 cm  W      7 g  N    7  1981-1  bed na  NE North Sea:  15.0/22.9/29.9 %BW
+      6.8 krill/stomach  L  10.0 cm  W      7 g  N    5  1981-10  bed na  C+S North Sea:  14.0/21.4/27.9 %BW
+== cod: 55 records with krill counts
+     18.0 krill/stomach  L  20.0 cm  W     77 g  N    1  2014-10  bed <100  other:  3.5/5.4/7.0 %BW
+      7.5 krill/stomach  L  20.0 cm  W     77 g  N   11  1981-2  bed <100  NE North Sea:  1.5/2.2/2.9 %BW
+     12.8 krill/stomach  L  25.0 cm  W    154 g  N   10  1981-2  bed <100  NE North Sea:  1.2/1.9/2.5 %BW
+      3.0 krill/stomach  L  16.0 cm  W     39 g  N    1  2025-2  bed <100  other:  1.2/1.8/2.3 %BW
+     11.5 krill/stomach  L  25.0 cm  W    154 g  N   10  1981-1  bed <100  NE North Sea:  1.1/1.7/2.2 %BW
+      2.0 krill/stomach  L  15.0 cm  W     32 g  N    4  1981-2  bed <100  C+S North Sea:  0.9/1.4/1.9 %BW
+      3.0 krill/stomach  L  20.0 cm  W     77 g  N    2  1981-1  bed <100  NE North Sea:  0.6/0.9/1.2 %BW
+      8.8 krill/stomach  L  30.0 cm  W    269 g  N   10  1981-1  bed <100  NE North Sea:  0.5/0.8/1.0 %BW
+== saithe: 87 records with krill counts
+    424.8 krill/stomach  L  40.0 cm  W    685 g  N   10  1982-10  bed na  NW North Sea:  9.3/14.3/18.6 %BW
+    203.9 krill/stomach  L  40.0 cm  W    685 g  N   25  1981-11  bed na  NE North Sea:  4.5/6.8/8.9 %BW
+    304.8 krill/stomach  L  50.0 cm  W   1353 g  N   25  1982-8  bed na  NW North Sea:  3.4/5.2/6.8 %BW
+    153.0 krill/stomach  L  40.0 cm  W    685 g  N    1  1982-10  bed na  NW North Sea:  3.4/5.1/6.7 %BW
+    146.2 krill/stomach  L  40.0 cm  W    685 g  N   25  1982-8  bed na  NE North Sea:  3.2/4.9/6.4 %BW
+     57.0 krill/stomach  L  30.0 cm  W    285 g  N   10  1982-10  bed na  NW North Sea:  3.0/4.6/6.0 %BW
+    720.0 krill/stomach  L  70.0 cm  W   3775 g  N    1  1981-11  bed na  NE North Sea:  2.9/4.4/5.7 %BW
+     48.3 krill/stomach  L  30.0 cm  W    285 g  N   18  1982-8  bed na  NE North Sea:  2.5/3.9/5.1 %BW
+== norway pout: 95 records with krill counts
+     29.5 krill/stomach  L  15.0 cm  W     35 g  N   22  1980-7  bed na  NW North Sea:  12.7/19.5/25.4 %BW
+      7.4 krill/stomach  L  10.0 cm  W     10 g  N    7  1980-7  bed na  NW North Sea:  11.6/17.8/23.2 %BW
+      5.7 krill/stomach  L  10.0 cm  W     10 g  N   21  1980-7  bed na  NE North Sea:  8.9/13.7/17.8 %BW
+      4.6 krill/stomach  L  10.0 cm  W     10 g  N    5  1980-7  bed na  NW North Sea:  7.2/11.0/14.4 %BW
+      1.2 krill/stomach  L   7.0 cm  W      3 g  N    8  1980-1  bed na  C+S North Sea:  6.0/9.3/12.1 %BW
+      3.8 krill/stomach  L  10.0 cm  W     10 g  N   25  1980-1  bed na  NE North Sea:  5.9/9.1/11.9 %BW
+      1.1 krill/stomach  L   7.0 cm  W      3 g  N    8  1980-1  bed na  NW North Sea:  5.4/8.3/10.9 %BW
+     30.3 krill/stomach  L  20.0 cm  W     87 g  N   21  1980-7  bed na  NW North Sea:  5.3/8.1/10.5 %BW
+== hake: 3 records with krill counts
+      3.0 krill/stomach  L  41.0 cm  W    599 g  N    1  2024-8  bed 150-250  Skagerrak:  0.1/0.1/0.2 %BW
+     10.0 krill/stomach  L  67.0 cm  W   2748 g  N    1  2024-8  bed <100  Kattegat:  0.1/0.1/0.1 %BW
+      2.0 krill/stomach  L  76.0 cm  W   4061 g  N    1  2024-8  bed <100  Kattegat:  0.0/0.0/0.0 %BW

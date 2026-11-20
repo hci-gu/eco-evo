@@ -1,0 +1,46 @@
+1. Andersen & Riis-Vestergaard whiting Wmax vs the model ceiling
+  120 g: Wmax 168.2 kJ/kg/d at 7.4 C = 1.34 x model ceiling
+  180 g: Wmax 151.0 kJ/kg/d at 7.4 C = 1.20 x model ceiling
+  250 g: Wmax 138.4 kJ/kg/d at 7.4 C = 1.10 x model ceiling
+  conversion used: 1 Wmax = 1.20 model ceilings (180 g)
+
+2. Mechanism 2: per-prey-group plateaus (Rindorf & Gislason 2005 [F]) on the model scale
+  clupeids (planktivores)                  0.10-0.17 Wmax = 0.12-0.20 of the model ceiling
+  gadoids (benthivore juveniles)           0.06-0.12 Wmax = 0.07-0.14 of the model ceiling
+  other food (krill, epifauna, copepods)   0.08-0.22 Wmax = 0.10-0.26 of the model ceiling
+  all three saturated and additive: 0.24-0.51 Wmax = 0.29-0.61 of the ceiling
+  observed total (5 stations x 3 sizes): 0.14-0.35 Wmax = 0.17-0.42
+  'other food' is an OBSERVED intake range (8-22 % of Wmax), not a fitted plateau: krill alone <= 0.26 only if it behaves like the fish plateaus [J]
+  whiting need band (fill 0.1-1): 0.275-0.388; uncapped today 0.664
+
+3. Dempster et al. 2011 [F]: wild vs farm-associated saithe (summer, coastal Norway)
+  stomach content ratio 2.35; linear evacuation: intake ratio 2.35 -> wild = 0.43 of the farm-fed intake
+  stomach content ratio 2.35; square-root evacuation (Andersen): intake ratio 1.53 -> wild = 0.65 of the farm-fed intake
+  if farm-fed saithe feed near their potential, wild potential = 0.43-0.65 of it; on the water
+  column's scale (farm fish at the model ceiling, J): 0.43-0.65 vs need band 0.350-0.435 and uncapped 0.731
+
+4. Field reserve series as fills, library convention (Svaltgrans och startreserv/model/derive_u.py):
+   fill = HSI x liver lipid share x 39.5 MJ/kg / ME 2000 MJ/t  (= HSI% x lipid x 0.1975)
+  saithe NIFES Norw. Sea Jan-Mar (61 cm) [F via Svaltgrans]      HSI  5.60 lipid 0.57 -> fill 0.63
+  saithe NIFES Apr-Jun (56 cm)                                   HSI  6.10 lipid 0.56 -> fill 0.67
+  saithe NIFES Sep (64 cm)                                       HSI  7.30 lipid 0.71 -> fill 1.02
+  saithe NIFES Oct-Dec (43 cm, box size)                         HSI  4.00 lipid 0.60 -> fill 0.47
+  saithe Mathers 1992 Aug 1989 (41-43 cm, box size; lipid 0.6 J) HSI  5.40 lipid 0.60 -> fill 0.64
+  saithe Mathers 1992 Aug 1989, second group                     HSI  5.95 lipid 0.60 -> fill 0.71
+  saithe Dempster 2011 wild summer low (lipid 0.6 J)             HSI  5.20 lipid 0.60 -> fill 0.62
+  saithe Dempster 2011 wild summer high                          HSI  6.00 lipid 0.60 -> fill 0.71
+  saithe Dempster 2011 farm-fed                                  HSI  9.20 lipid 0.60 -> fill 1.09
+  saithe Uglem 2020 control spring (62-69 cm; lipid 0.6 J)       HSI  6.20 lipid 0.60 -> fill 0.73
+  saithe Uglem 2020 control autumn                               HSI  6.85 lipid 0.60 -> fill 0.81
+  whiting Black Sea F Nov-Apr (lipid 0.50 J)                     HSI  5.95 lipid 0.50 -> fill 0.59
+  whiting Black Sea F May-Aug (lipid 0.50 J)                     HSI  2.70 lipid 0.50 -> fill 0.27
+  whiting Black Sea F Sep-Oct (lipid 0.50 J)                     HSI  4.10 lipid 0.50 -> fill 0.40
+  whiting Black Sea M Aug min (lipid 0.50 J)                     HSI  1.85 lipid 0.50 -> fill 0.18
+  whiting Black Sea F Nov-Apr (lipid 0.60 J)                     HSI  5.95 lipid 0.60 -> fill 0.71
+  whiting Black Sea F May-Aug (lipid 0.60 J)                     HSI  2.70 lipid 0.60 -> fill 0.32
+  whiting Black Sea F Sep-Oct (lipid 0.60 J)                     HSI  4.10 lipid 0.60 -> fill 0.49
+  whiting Black Sea M Aug min (lipid 0.60 J)                     HSI  1.85 lipid 0.60 -> fill 0.22
+  Reading: on the library's own convention the saithe cycle is ~0.63 (Q1) -> ~1.0 (Sep) in the
+  Norwegian Sea, ~0.62-0.81 in coastal controls, 0.47-0.71 at the box's size class; farm-fed
+  saithe exceed the library maximum (1.1). Whiting (Black Sea; lipid share unknown, J) ~0.27-0.32
+  in May-Aug, 0.41-0.49 Sep-Oct, 0.59-0.71 Nov-Apr: the haddock proxy's 0.30 -> 0.73 is in range.

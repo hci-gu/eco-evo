@@ -1,0 +1,136 @@
+question,species,quantity,low,central,high,unit,source,tag
+Q1,whiting (>= 20 cm),krill ration / GER Cmax in krill-dominated stomach records (krill >= 0.8 of counted prey); stomach-weighted mean of 44 records / 244 stomachs; North Sea + Skagerrak 1981 and 1991,0.38,0.90,,fraction of GER Cmax (model ceiling = 1.2 x GER Cmax),ICES stomach DB via records_linked.csv.gz; scripts/krill_pool_rations.py,[D]
+Q1,whiting (>= 20 cm),share of krill-dominated records at >= 1.0 of GER Cmax (central),,0.34,,fraction of records,scripts/krill_pool_rations.py,[D]
+Q1,whiting 32.5 cm (class mid),highest krill-dominated pool: 10 stomachs NW North Sea Jan 1981 bed 117 m; S 10.3-15.8 %BW,0.96,2.29,2.51,fraction of GER Cmax,scripts/krill_pool_rations.py,[D]
+Q1,saithe (35-70 cm),krill ration / GER Cmax in krill-dominated records; stomach-weighted mean of 48 records / 553 stomachs; N North Sea 1981-82 Q1/Q3/Q4,0.24,0.58,,fraction of GER Cmax (model ceiling = 1.23 x GER Cmax),scripts/krill_pool_rations.py,[D]
+Q1,saithe 45 cm (class mid),highest krill-dominated pool: 10 stomachs NW North Sea Oct 1982 bed 146 m; 425 krill per stomach; S 6.5-10.0 %BW,0.76,1.81,2.00,fraction of GER Cmax,scripts/krill_pool_rations.py,[D]
+Q1,saithe 45 cm (class mid),pool of 25 stomachs NE North Sea Nov 1981 bed 137 m; 204 krill per stomach; S 3.1-4.8 %BW,0.53,1.26,1.38,fraction of GER Cmax,scripts/krill_pool_rations.py,[D]
+Q1,Norway pout,krill ration / GER Cmax (whiting set as proxy) in krill-dominated records; 35 records / 465 stomachs 1980,0.15,0.33,1.00,fraction of GER Cmax,scripts/krill_pool_rations.py,[D]
+Q1,cod (15-45 cm; analogue),krill ration / GER Cmax in krill-dominated records; 14 records / 88 stomachs,0.19,0.40,0.89,fraction of GER Cmax,scripts/krill_pool_rations.py,[D]
+Q1,whiting and saithe,unit wet mass of krill in weighed stomach records (Skagerrak Apr 1991 whiting; N North Sea 1982 saithe),0.09,0.18,0.30,g per krill,records_linked.csv.gz (weighed records),[D]
+Q1,whiting 21 cm,maximum krill count in one stomach (Oslofjord 120 m site; Nov 2000 / Mar 2001),,40,,krill per stomach (= 6-12 g = 8-16 %BW at 0.15-0.30 g and 72 g fish),Onsrud et al. 2004 ICES JMS 61:1278 p. 1284,[F]/[D]
+Q1,saithe 60-110 cm,large saithe under Meganyctiphanes swarms of ~200 ind/m3 (~11 t per swarm) had fish and Gonatus squid in their stomachs (4 fish),,0,,krill in stomach,Kaartvedt et al. 2005 MEPS 299:1 p. 3-4,[F]
+Q1,whiting 20-35 cm,krill disappeared completely from stomachs after 24 / 31 / 42 h of sampling at Locations 1 / 3 / 4 (patchy prey),24,31,42,h,Rindorf 2003 MEPS 249:265 p. 267,[F]
+Q2,whiting 20-35 cm,timing of prey intake: bottom-dwelling prey mainly at night (4 of 5 locations); krill around dawn and early afternoon to some hours after dusk; free-swimming fish prey in daylight; no diel pattern for larger fish prey; no common diel pattern in catch rates,,,,qualitative,Rindorf 2003 MEPS 249:265 abstract and p. 268-273,[F]
+Q2,whiting 20-35 cm,at the deepest location (137 m; 8.6 C) no diel variation in benthic prey and virtual absence of crabs and flatfish: whiting perhaps did not forage on the bottom,,,,qualitative,Rindorf 2003 p. 273,[F]
+Q2,whiting,stomach fullness (partially digested food) depresses the probability of fresh food even below the physiological meal limit; no effect on meal size: the brake acts on search; c. 15 % of fish severely depressed,,0.15,,share of fish,Rindorf 2002 J Fish Biol 61:579 (abstract),[A]
+Q1,whiting (>= 20 cm),krill-dominated records on the MODEL-CEILING scale (GER ratio / 1.2): stomach-weighted mean,0.32,0.75,,fraction of model ceiling,scripts/krill_pool_rations.py,[D]
+Q1,whiting (>= 20 cm),share of krill-dominated stomachs above 0.25 of the model ceiling (low band / central),0.48,0.89,,fraction of stomachs,scripts/krill_pool_rations.py,[D]
+Q1,whiting (>= 20 cm),share of krill-dominated stomachs above 0.5 of the model ceiling (low band / central),0.24,0.62,,fraction of stomachs,scripts/krill_pool_rations.py,[D]
+Q1,whiting (all lengths),"krill-dominated records with weighed krill only (Skagerrak/Kattegat Apr 1991; 20 records, 54 stomachs): GER ratio",0.41,0.88,,fraction of GER Cmax,scripts/krill_pool_rations.py,[D]
+Q1,saithe (35-70 cm),krill-dominated records on the model-ceiling scale (GER ratio / 1.23): stomach-weighted mean (all counted records),0.20,0.47,,fraction of model ceiling,scripts/krill_pool_rations.py,[D]
+Q1,saithe (35-70 cm),share of krill-dominated stomachs above 0.25 of the model ceiling (low band / central),0.36,0.65,,fraction of stomachs,scripts/krill_pool_rations.py,[D]
+Q1,saithe (35-70 cm),share of krill-dominated stomachs above 0.5 of the model ceiling (low band / central),0.02,0.46,,fraction of stomachs,scripts/krill_pool_rations.py,[D]
+Q1,saithe (length missing; bracketed 35-55 cm),"three weighed krill pools, N North Sea Jul/Oct 1982 (9.1-13.9 g krill per stomach; 2-50 stomachs), model-ceiling scale",0.17,0.61,0.90,fraction of model ceiling (low = 55 cm low band; high = 35 cm central),scripts/krill_pool_rations.py,[D]
+Q1,whiting (>= 20 cm),population-mean krill ration over all stomachs (krill-free = 0); variants all records / without 2022 IBTS uploads / records with prey rows only,0.110,0.151,0.199,fraction of GER Cmax (divide by 1.2 for the model ceiling),scripts/krill_ration_population.py,[D]
+Q1,saithe,population-mean krill ration over all stomachs; variants all / no2022 / prey rows only,0.089,0.089,0.132,fraction of GER Cmax (divide by 1.23 for the model ceiling),scripts/krill_ration_population.py,[D]
+Q1,walleye pollock (stock-weighted; EBS summer),euphausiid partial stomach content (%W x fullness) 1987-2011 annual means,0.143,0.306,0.500,%BW,Buckley et al. 2016 DSR II 134:302 Table 2 doi:10.1016/j.dsr2.2015.10.009; scripts/q1_buckley_pf.py,D
+Q1,walleye pollock (stock-weighted; EBS summer),total stomach fullness 1987-2011 annual means,0.368,0.785,1.191,%BW,Buckley et al. 2016 Table 2,F
+Q1,walleye pollock >= 60 cm FL,correlation of euphausiid partial fullness with acoustic euphausiid(+hyperiid) biomass (2004; 2006-2010),,0.89,,r (P = 0.02),Buckley et al. 2016 manuscript p. 11 and Fig. 8,F
+Q1,walleye pollock 40-49 cm FL,correlation of stomach fullness with euphausiid %W (interannual),,-0.46,,r (P < 0.05),Buckley et al. 2016 manuscript p. 11,F
+Q1,Pacific hake (SW Vancouver Island),euphausiid biomass available to hake after 1993 (mean) relative to 1991,,0.27,,fraction of 1991,Tanasichuk 1999 Fish Oceanogr 8:150 doi:10.1046/j.1365-2419.1999.00100.x,A
+Q1,Pacific hake (SW Vancouver Island),euphausiid biomass available to hake in 1996 relative to 1991,,0.12,,fraction of 1991,Tanasichuk 1999 Fish Oceanogr 8:150,A
+Q1,Pacific hake (Barkley Sound),prey (euphausiid) availability for hake in 1996 relative to 1991,,0.13,,fraction of 1991,Tanasichuk 1998 MEPS 173:181 p. 194 doi:10.3354/meps173181,F
+Q1,Pacific hake (SW Vancouver Island),biomass of >17 mm T. spinifera in 1997 relative to 1991 (decrease of 75 %),,0.25,,fraction of 1991,Tanasichuk 2002 Fish Oceanogr 11:18 doi:10.1046/j.1365-2419.2002.00185.x,A
+Q1,Pacific hake (SW Vancouver Island),euphausiid share of daily ration (August 1985-98) while euphausiids declined,,0.89,,fraction of ration,Tanasichuk 2002 via Ressler et al. 2007 Mar Fish Rev 69:1 p. 13,S
+Q1,Pacific hake (SW Vancouver Island),euphausiid share of daily ration,,0.93,,fraction of ration,Tanasichuk et al. 1991 CJFAS 48:2118 via Tanasichuk 1998 MEPS 173:181 p. 182,S
+Q1,pelagic fish community (hake 60 %; SW Vancouver Island),August euphausiid consumption per tonne of fish 1985-97 (no relation to euphausiid biomass; unit/period not stated; ration inputs unverified),,0.93,,t euphausiids per t fish (as stated),Robinson 2000 J Plankton Res 22:1649 doi:10.1093/plankt/22.9.1649,A
+Q1,Pacific hake (juvenile and adult; literature),daily ration range,0.4,,3.5,%BW/d,Ressler et al. 2007 Mar Fish Rev 69:1 p. 13,S
+Q1,Pacific hake 35-39 to 55+ cm (Columbia area 1983),daily ration from Francis 1983 bioenergetics equations (model; not observed),0.40,,1.10,%BW/d,Rexstad & Pikitch 1986 Fish Bull 84:947 Table 1 p. 949,F
+Q1,Pacific hake ~500 mm (WA-OR summer 1967; 72-90 % euphausiids),daily ration (Elliott-Persson; 8.2 C; pooled 1967 set),,2.5,,%BW/d,Livingston 1983 Fish Bull 81:629 p. 635,F
+Q1,Pacific hake ~500 mm (WA July 1967),maximum mean stomach content in diel series (1800 h),,2.5,,%BW,Livingston 1983 p. 634,F
+Q1,Pacific hake ~500 mm (0.7-1.0 kg judged),total ration / Hansson cod Cmax (proxy; 8.2 C),1.14,,1.23,fraction of Cmax (wet mass),Livingston 1983 + Hansson et al. 1996; scripts/q1_cod_cmax.py (proxy species and weight are judgement),D
+Q1,Pacific hake ~500 mm (0.7-1.0 kg judged),total ration / Jobling cod Cmax (proxy; 8.2 C),0.78,,0.83,fraction of Cmax (wet mass),Livingston 1983 + Jobling 1988 (Neuenfeldt et al. 2020 eq. 2); scripts/q1_cod_cmax.py,D
+Q1,Pacific hake ~500 mm (0.7-1.0 kg judged),krill part of ration (x 0.72-0.90) / Hansson cod Cmax (proxy),0.82,,1.10,fraction of Cmax (wet mass),Livingston 1983 + Hansson et al. 1996; scripts/q1_cod_cmax.py,D
+Q1,Pacific hake ~500 mm (0.7-1.0 kg judged),krill part of ration (x 0.72-0.90) / Jobling cod Cmax (proxy),0.56,,0.75,fraction of Cmax (wet mass),Livingston 1983 + Jobling 1988; scripts/q1_cod_cmax.py,D
+Q1,Atlantic cod NEA (Rybachy Bank June 1988; 84.1 % euphausiids; 1.4-1.6 C),daily ration - dos Santos model,,0.64,,%BW/d,Dolgov et al. 1992 5th PINRO-IMR Symposium hdl:11250/107818 p. 4,F
+Q1,Atlantic cod NEA (Rybachy Bank June 1988),daily ration - Bajkov method,,2.10,,%BW/d,Dolgov et al. 1992 p. 4,F
+Q1,Atlantic cod NEA (Rybachy Bank June 1988),daily ration - Fortunatova method,,2.20,,%BW/d,Dolgov et al. 1992 p. 4,F
+Q1,Atlantic cod NEA (Rybachy Bank June 1988; 1.0-2.1 kg),krill part (dos Santos) / Hansson cod Cmax at 1.5 C,0.48,,0.56,fraction of Cmax (wet mass),Dolgov et al. 1992 + Hansson et al. 1996; scripts/q1_cod_cmax.py,D
+Q1,Atlantic cod NEA (Rybachy Bank June 1988; 1.0-2.1 kg),krill part (dos Santos) / Jobling cod Cmax at 1.5 C,0.34,,0.39,fraction of Cmax (wet mass),Dolgov et al. 1992 + Jobling 1988; scripts/q1_cod_cmax.py,D
+Q1,Atlantic cod NEA (Rybachy Bank June 1988; 1.0-2.1 kg),krill part (Bajkov and Fortunatova; judged inflated) / Hansson cod Cmax,1.58,,1.91,fraction of Cmax (wet mass),Dolgov et al. 1992 + Hansson et al. 1996; scripts/q1_cod_cmax.py,D
+Q1,Atlantic cod NEA (Rybachy Bank June 1988; 1.0-2.1 kg),krill part (Bajkov and Fortunatova; judged inflated) / Jobling cod Cmax,1.11,,1.35,fraction of Cmax (wet mass),Dolgov et al. 1992 + Jobling 1988; scripts/q1_cod_cmax.py,D
+Q1,Atlantic cod NEA (Murman shallow Aug 1989; acoustically recorded krill aggregations; 48.4 % euphausiids; 2.3-2.6 C),daily ration - Fortunatova method,,0.33,,%BW/d,Dolgov et al. 1992 p. 4,F
+Q1,Atlantic cod NEA (Murman shallow Aug 1989),daily ration - Bajkov method,,0.28,,%BW/d,Dolgov et al. 1992 p. 4,F
+Q1,Atlantic cod NEA (Murman shallow Aug 1989),daily ration - dos Santos model,,0.48,,%BW/d,Dolgov et al. 1992 p. 4,F
+Q1,Atlantic cod NEA (Murman shallow Aug 1989; 1.0-2.1 kg),krill part (three methods) / Hansson cod Cmax at 2.45 C,0.11,,0.22,fraction of Cmax (wet mass),Dolgov et al. 1992 + Hansson et al. 1996; scripts/q1_cod_cmax.py,D
+Q1,Atlantic cod NEA (Murman shallow Aug 1989; 1.0-2.1 kg),krill part (three methods) / Jobling cod Cmax at 2.45 C,0.08,,0.15,fraction of Cmax (wet mass),Dolgov et al. 1992 + Jobling 1988; scripts/q1_cod_cmax.py,D
+Q1,Atlantic cod NEA (Murman shallow Aug 1989; 1.0-2.1 kg),total ration (three methods) / Hansson cod Cmax,0.23,,0.45,fraction of Cmax (wet mass),Dolgov et al. 1992 + Hansson et al. 1996; scripts/q1_cod_cmax.py,D
+Q1,Atlantic cod NEA (Murman shallow Aug 1989; 1.0-2.1 kg),total ration (three methods) / Jobling cod Cmax,0.16,,0.32,fraction of Cmax (wet mass),Dolgov et al. 1992 + Jobling 1988; scripts/q1_cod_cmax.py,D
+Q1,Atlantic cod NEA (Demidov Bank July 1988; Themisto 74.1 %; 1.2-1.4 C),daily ration - Fortunatova method,,3.76,,%BW/d,Dolgov et al. 1992 p. 3,F
+Q1,Atlantic cod NEA (Demidov Bank July 1988),daily ration - Bajkov method,,3.61,,%BW/d,Dolgov et al. 1992 p. 3,F
+Q1,Atlantic cod NEA (Demidov Bank July 1988),daily ration - dos Santos model,,0.74,,%BW/d,Dolgov et al. 1992 p. 3,F
+Q1,Atlantic cod NEA (Demidov Bank July 1988; 1.0-2.1 kg),total ration Fortunatova and Bajkov / Hansson cod Cmax at 1.3 C (method check),3.30,,3.97,fraction of Cmax (wet mass),Dolgov et al. 1992 + Hansson et al. 1996; scripts/q1_cod_cmax.py,D
+Q1,Atlantic cod NEA (Demidov Bank July 1988; 1.0-2.1 kg),Themisto part (dos Santos) / Hansson cod Cmax at 1.3 C,0.50,,0.58,fraction of Cmax (wet mass),Dolgov et al. 1992 + Hansson et al. 1996; scripts/q1_cod_cmax.py,D
+Q1,Atlantic cod NEA (Demidov Bank July 1988; 1.0-2.1 kg),Themisto part (dos Santos) / Jobling cod Cmax at 1.3 C,0.35,,0.41,fraction of Cmax (wet mass),Dolgov et al. 1992 + Jobling 1988; scripts/q1_cod_cmax.py,D
+Q1,Atlantic cod NEA (Goose Bank Jul-Aug 1989; Themisto 64.5 %; 1.2-2.3 C),daily ration - Fortunatova method,,0.91,,%BW/d,Dolgov et al. 1992 p. 3,F
+Q1,Atlantic cod NEA (Goose Bank Jul-Aug 1989),daily ration - Bajkov method,,0.85,,%BW/d,Dolgov et al. 1992 p. 3,F
+Q1,Atlantic cod NEA (Goose Bank Jul-Aug 1989),daily ration - dos Santos model,,0.99,,%BW/d,Dolgov et al. 1992 p. 3,F
+Q1,Atlantic cod NEA (Goose Bank Jul-Aug 1989; 1.0-2.1 kg),Themisto part (three methods) / Hansson cod Cmax at 1.75 C,0.48,,0.64,fraction of Cmax (wet mass),Dolgov et al. 1992 + Hansson et al. 1996; scripts/q1_cod_cmax.py,D
+Q1,Atlantic cod NEA (Goose Bank Jul-Aug 1989; 1.0-2.1 kg),Themisto part (three methods) / Jobling cod Cmax at 1.75 C,0.34,,0.45,fraction of Cmax (wet mass),Dolgov et al. 1992 + Jobling 1988; scripts/q1_cod_cmax.py,D
+Q1,Atlantic cod NEA,Hansson cod Cmax at 1.0-2.1 kg and 1.5 C,0.97,,1.12,%BW/d,Hansson et al. 1996 ICES JMS 53:107 (FB4 parameters); scripts/q1_cod_cmax.py,D
+Q1,Atlantic cod NEA,Jobling cod Cmax at 1.0-2.1 kg and 1.5 C (kJ/d at 4.184 kJ/g),1.37,,1.59,%BW/d,Jobling 1988 via Neuenfeldt et al. 2020 eq. 2; scripts/q1_cod_cmax.py,D
+Q1,krill (Meganyctiphanes; Thysanoessa),wet-mass to energy factor E_prey/4.184 kJ/g applied to the wet-mass Cmax fractions,0.84,,1.08,ratio,judgement from 3.5-4.5 kJ/g wet (caller's evidence.md A1 uses 4-5),J
+Q1,Atlantic cod NEA (all length classes),capelin stock biomass below which annual mean liver condition index falls rapidly,,1,,million t,Yaragina & Marshall 2000 ICES JMS 57:42 p. 50 doi:10.1006/jmsc.1999.0493,F
+Q1,Atlantic cod NEA 41-60 cm,upper boundary of annual mean liver condition index (reached also when capelin scarce),6,,7,% (liver/body weight),Yaragina & Marshall 2000 p. 52,F
+Q1,whiting (lab),krill (Meganyctiphanes) evacuation rate relative to fish prey of equal energy density,,1,,ratio (similar),Andersen 1999 J Fish Biol 54:287 doi:10.1111/j.1095-8649.1999.tb00830.x,A
+Q1,European hake juveniles 9-12 cm TL (NW Mediterranean; euphausiids and mysids),daily ration - exponential evacuation model,,1.5,,%BW/d,Modica et al. 2011 MEPS 440:177 doi:10.3354/meps09341,A
+Q1,European hake juveniles 9-12 cm TL (NW Mediterranean),daily ration - square-root evacuation model,4.09,,5.09,%BW/d,Modica et al. 2011,A
+Q1,blue whiting (Norwegian Sea Apr-Sep; mostly euphausiids),realised ration back-calculated from growth (bioenergetics),,2.0,,%BW/d,Bachiller et al. 2018 PLoS ONE 13:e0190345 p. 13 via research_notes/Fiskgrupper i rutan/planktivores/evidence_cmax_energy.md,S
+Q1,70 Barents Sea fish species 2015 (non-empty stomachs),mean stomach content,,2.0,,%BW,Skjoldal et al. 2025 J Fish Biol 106:1734 doi:10.1111/jfb.16058,A
+Q1,70 Barents Sea fish species 2015 (non-empty stomachs),median stomach content,,1.1,,%BW,Skjoldal et al. 2025,A
+Q1,55 Barents Sea fish species 2015,maximum recorded stomach content by species,1,,34,%BW,Skjoldal et al. 2025,A
+Q2,whiting,site bed depth of the 5 diel stomach sites (Sept; 20-35 cm; n=7738),44,53,137,m,Rindorf 2003 MEPS 249:265 doi:10.3354/meps249265,F
+Q2,whiting,"civil-night window share of 24 h in which bed prey were eaten (4 of 5 sites, early Sept; R&G Table 1 clock times)",0.369,0.38,0.392,fraction of 24 h,Rindorf 2003 MEPS 249:265 doi:10.3354/meps249265; Rindorf & Gislason 2005 JEMBE doi:10.1016/j.jembe.2005.04.013; q2_daylength.py (astronomy),D
+Q2,whiting,benthic foraging at the 137 m site (no bed prey in stomachs),0,0,0,fraction of 24 h,Rindorf 2003 MEPS 249:265 doi:10.3354/meps249265,F
+Q2,whiting,"deviance share explained by the common diel term (bt), crab",,0.31,,fraction,Rindorf 2003 MEPS 249:265 doi:10.3354/meps249265,F
+Q2,whiting,"deviance share explained by location-specific diel terms (abloc,t), crab",,0.05,,fraction,Rindorf 2003 MEPS 249:265 doi:10.3354/meps249265,F
+Q2,whiting,"deviance share explained by the common diel term (bt), krill",,0.093,,fraction,Rindorf 2003 MEPS 249:265 doi:10.3354/meps249265,F
+Q2,whiting,"deviance share explained by location-specific diel terms (abloc,t), krill",,0.219,,fraction,Rindorf 2003 MEPS 249:265 doi:10.3354/meps249265,F
+Q2,whiting,"civil twilight hours per day (both ends), early Sept, R&G Table 1",1.23,,1.32,h,Rindorf & Gislason 2005 JEMBE doi:10.1016/j.jembe.2005.04.013; q2_daylength.py (astronomy),D
+Q2,whiting,fish-feeding window share of 24 h: bounds twilight only vs two 4-h sampling bins (width not resolved),0.051,,0.333,fraction of 24 h,Rindorf & Gislason 2005 JEMBE doi:10.1016/j.jembe.2005.04.013; q2_daylength.py (astronomy),D
+Q2,whiting,clupeid intake plateau (25-35 cm whiting),0.1,,0.17,fraction of max daily ration,Rindorf & Gislason 2005 JEMBE doi:10.1016/j.jembe.2005.04.013,F
+Q2,whiting,gadoid intake plateau (25-35 cm whiting),,0.06,,fraction of max daily ration,Rindorf & Gislason 2005 JEMBE doi:10.1016/j.jembe.2005.04.013,F
+Q2,whiting,"intake of other food (crustaceans, benthos)",0.08,,0.22,fraction of max daily ration,Rindorf & Gislason 2005 JEMBE doi:10.1016/j.jembe.2005.04.013,F
+Q2,whiting,correlation of fish vs other-food intake across sites (n.s.),-0.3,,0.73,r,Rindorf & Gislason 2005 JEMBE doi:10.1016/j.jembe.2005.04.013,F
+Q2,whiting,between-site range of fish intake (% of max) by length group,17,29,36,fold,Rindorf & Gislason 2005 JEMBE doi:10.1016/j.jembe.2005.04.013,F
+Q2,whiting,between-site range of other-food intake (max),,,3,fold,Rindorf & Gislason 2005 JEMBE doi:10.1016/j.jembe.2005.04.013,F
+Q2,whiting,maximum daily intake used (warm site; cold site ~3.1),3.1,,6.2,% body weight per day,Rindorf & Gislason 2005 JEMBE doi:10.1016/j.jembe.2005.04.013,F
+Q2,whiting,"sandeel feeding peak clock hour (May-Jun, 57.5 N, 25-30 cm)",22,23,24,h of day,Mergardt & Temming 1997 ICES JMS 54:226 doi:10.1006/jmsc.1996.0190,F
+Q2,whiting,minimum feeding clock hour,8,9,10,h of day,Mergardt & Temming 1997 ICES JMS 54:226 doi:10.1006/jmsc.1996.0190,F
+Q2,whiting,"specific daily ration, in situ evacuation (pelagic and demersal)",3.99,,10.31,% body weight per day,Pedersen 2000 J Fish Biol 57:402 doi:10.1006/jfbi.2000.1316,A
+Q2,whiting,"share of krill in stomach weight, day and night (Oslofjord, 120 m bed)",,0.82,0.99,fraction,Onsrud et al. 2004 ICES JMS 61:1278,F
+Q2,whiting,height above bed by day (krill layer z 70-110 m over 120 m bed),10,,50,m,Onsrud et al. 2004 ICES JMS 61:1278,D
+Q2,whiting,height above bed at night (upper 50 m over 120 m bed),70,,120,m,Onsrud et al. 2004 ICES JMS 61:1278,D
+Q2,whiting,swimming speed day (night 10-11),14,,16,cm/s,Onsrud et al. 2005 (held),S
+Q2,whiting,time-of-day effect on GOV catch rates of whiting > 20 cm (not significant),0,0,0,effect,Adlerstein & Ehrich 2000 ICES CM 2000/K:01,F
+Q2,saithe,"DST fish length (n=51 recovered, 268018 hourly depths)",42,54,83,cm,Armannsson & Jonsson 2012 ICES JMS 69:1372 doi:10.1093/icesjms/fss121,F
+Q2,saithe,"median residence depth, summer-autumn to Mar-Apr",,50,140,m,Armannsson & Jonsson 2012 ICES JMS 69:1372 doi:10.1093/icesjms/fss121,F
+Q2,saithe,"share of time in rapid vertical runs (> 3 m/min), 19 tags",0.002,0.15,0.33,fraction of time,Armannsson & Jonsson 2012 ICES JMS 69:1372 doi:10.1093/icesjms/fss121,F
+Q2,saithe,"share of days within free vertical range (above 0.22, below 0.02, both 0.13)",,0.63,,fraction of days,Armannsson & Jonsson 2012 ICES JMS 69:1372 doi:10.1093/icesjms/fss121,F
+Q2,saithe,underestimate of daily vertical range by hourly vs 1-min data,,0.7,,fraction,Armannsson & Jonsson 2012 ICES JMS 69:1372 doi:10.1093/icesjms/fss121,F
+Q2,saithe,"fish-months with no diel vertical migration (farm fish, 38-59 cm)",,0.382,,fraction,Skilbrei & Ottera 2016 ICES JMS 73:1186 doi:10.1093/icesjms/fsv261,F
+Q2,saithe,fish-months deeper by day,,0.174,,fraction,Skilbrei & Ottera 2016 ICES JMS 73:1186 doi:10.1093/icesjms/fsv261,F
+Q2,saithe,fish-months deeper by night,,0.236,,fraction,Skilbrei & Ottera 2016 ICES JMS 73:1186 doi:10.1093/icesjms/fsv261,F
+Q2,saithe,fish-months switching between day-deep and night-deep,,0.045,,fraction,Skilbrei & Ottera 2016 ICES JMS 73:1186 doi:10.1093/icesjms/fsv261,F
+Q2,saithe,observations away from the farm in daytime,,0.16,,fraction,Skilbrei & Ottera 2016 ICES JMS 73:1186 doi:10.1093/icesjms/fsv261,F
+Q2,saithe,individuals with a diel pattern part of the time (30 of 40),,0.75,,fraction,Skilbrei & Ottera 2016 ICES JMS 73:1186 doi:10.1093/icesjms/fsv261,F
+Q2,saithe,"December activity (SD of depth) at 7-10 h (night 18-4 h: 3.8, 3.3-4.4)",7.9,9.1,10.3,m,Skilbrei & Ottera 2016 ICES JMS 73:1186 doi:10.1093/icesjms/fsv261,F
+Q2,saithe,residence depth summer (winter 60-90),25,,50,m,Skilbrei & Ottera 2016 ICES JMS 73:1186 doi:10.1093/icesjms/fsv261,F
+Q2,saithe,"day scale height above bed, exponential profile (held)",9,15,31,m,research_notes Sejens hojd over botten / Sejens profil over djupa bottnar,S
+Q2,saithe,"night scale height above bed (Neilson 2003, day 15 m at same site)",,9,,m,research_notes Sejens hojd over botten / Sejens profil over djupa bottnar,S
+Q2,saithe,night surface hauls holding adults over beds >= 150 m (11/82; day 0/63),,0.134,,fraction of hauls,research_notes Sejens hojd over botten / Sejens profil over djupa bottnar,S
+Q2,saithe,"day-length (active window) share of 24 h at 58.15 N (manifest), 21 Dec / 5 Sep / 21 Jun",0.267,0.573,0.76,fraction of 24 h,q2_daylength.py (astronomy),D
+Q2,saithe,stomach content near salmon farms relative to away (Dempster 2011),,2.35,,ratio,research_notes Mattnad hos rovfisk (Dempster et al. 2011),S
+Q2,hake,"DST fish length (259 tagged 2006-07, 9 recovered, <= 81 d; mostly immature, no adult > 40 cm)",28.9,,39.5,cm,de Pontual et al. 2013 ICES JMS 70:1416 doi:10.1093/icesjms/fst102,F
+Q2,hake,temperature change during diel vertical movements,7,,,deg C,de Pontual et al. 2012 J Fish Biol 81:728 doi:10.1111/j.1095-8649.2012.03345.x,A
+Q2,hake,SST reached during diel vertical movements to forage,,20,,deg C,de Pontual et al. 2013 ICES JMS 70:1416 doi:10.1093/icesjms/fst102,F
+Q2,hake,pelagic-net catches of juveniles taken at night,,0.955,,fraction,Bozzano et al. 2005 Fish Res 73:29 doi:10.1016/j.fishres.2005.01.006,S
+Q2,hake,"juvenile low-feeding phase around sunset (1-3 h; catch times GMT, printed sunset likely local time)",0.04,,0.125,fraction of 24 h,Modica et al. 2011 MEPS 440:177 doi:10.3354/meps09341,D
+Q2,hake,empty stomachs at 20:25 GMT (rest phase),,0.345,,fraction,Modica et al. 2011 MEPS 440:177 doi:10.3354/meps09341,F
+Q2,hake,stomach content minimum (20:25) vs maximum (05:37),0.81,,3.49,% body wet weight,Modica et al. 2011 MEPS 440:177 doi:10.3354/meps09341,F
+Q2,hake,euphausiids in zooplankton prey at night (afternoon: mysids 0.954),,0.698,,fraction by number,Modica et al. 2011 MEPS 440:177 doi:10.3354/meps09341,F
+Q2,hake,"night window share of 24 h (pelagic euphausiid mode), 27 Jun 41 N",,0.324,,fraction of 24 h,Modica et al. 2011 MEPS 440:177 doi:10.3354/meps09341; q2_daylength.py (astronomy),D
+Q2,hake,juvenile daily ration (square-root model; exponential model 1.5),4.08,,5.09,% body wet weight per day,Modica et al. 2011 MEPS 440:177 doi:10.3354/meps09341,F
+Q2,hake,"day bed hauls holding hake in the area (32/43, Jun-Jul)",,0.744,,fraction of hauls,research_notes Sejens hojd over botten / Sejens profil over djupa bottnar,S
+Q2,whiting,effect of stomach fullness on meal size (none) vs on P(fresh food) (depressed),,,,qualitative,Rindorf 2002 J Fish Biol 61:579 doi:10.1111/j.1095-8649.2002.tb00897.x,A

@@ -1,0 +1,32 @@
+taxon_or_scope,quantity,low,central,high,unit,source,tag
+community Goban Spur Stn 12 185 m fine sand (org C; excl. very large ind.; 1 core),biomass_share_0_1cm,0.28,0.31,0.34,fraction,Flach & Heip 1996 MEPS 141:55 Fig 5f (digitized +-3%),F
+community Goban Spur Stn 12 185 m fine sand (org C; excl. very large ind.; 1 core),biomass_share_1_5cm,0.31,0.35,0.39,fraction,Flach & Heip 1996 MEPS 141:55 Fig 5f (digitized +-3%),F
+community Goban Spur Stn 12 185 m fine sand (org C; excl. very large ind.; 1 core),biomass_share_5_10cm,0.30,0.33,0.36,fraction,Flach & Heip 1996 MEPS 141:55 Fig 5f (digitized +-3%),F
+community Goban Spur Stn 12 185 m fine sand (org C; excl. very large ind.; 1 core),biomass_share_10_15cm,0.00,0.01,0.03,fraction,Flach & Heip 1996 MEPS 141:55 Fig 5f (digitized +-3%),F
+community Goban Spur Stn A 208 m fine sand ~90 um (org C; excl. very large ind.),biomass_share_0_1cm,0.29,0.32,0.35,fraction,Flach & Heip 1996 MEPS 141:55 Fig 5e/f (digitized +-3%),F
+community Goban Spur Stn A 208 m fine sand ~90 um (org C; excl. very large ind.),biomass_share_1_5cm,0.08,0.11,0.14,fraction,Flach & Heip 1996 MEPS 141:55 Fig 5e/f (digitized +-3%),F
+community Goban Spur Stn A 208 m fine sand ~90 um (org C; excl. very large ind.),biomass_share_5_10cm,0.06,0.09,0.12,fraction,Flach & Heip 1996 MEPS 141:55 Fig 5e/f (digitized +-3%),F
+community Goban Spur Stn A 208 m fine sand ~90 um (org C; excl. very large ind.),biomass_share_10_15cm,0.45,0.48,0.51,fraction,Flach & Heip 1996 MEPS 141:55 Fig 5e/f (digitized +-3%),F
+community Goban Spur Stn I 670 m (org C; excl. very large ind.),biomass_share_0_1cm,0.31,0.34,0.37,fraction,Flach & Heip 1996 MEPS 141:55 Fig 5e (digitized +-3%),F
+community Goban Spur Stn I 670 m (org C; excl. very large ind.),biomass_share_1_5cm,0.01,0.03,0.06,fraction,Flach & Heip 1996 MEPS 141:55 Fig 5e (digitized +-3%),F
+community Goban Spur Stn I 670 m (org C; excl. very large ind.),biomass_share_5_10cm,0.48,0.51,0.54,fraction,Flach & Heip 1996 MEPS 141:55 Fig 5e (digitized +-3%),F
+community Goban Spur Stn I 670 m (org C; excl. very large ind.),biomass_share_10_15cm,0.09,0.12,0.15,fraction,Flach & Heip 1996 MEPS 141:55 Fig 5e (digitized +-3%),F
+community Goban Spur 185-4460 m (all stations),density_share_0_1cm,0.40,,0.80,fraction,Flach & Heip 1996 MEPS 141:55 text,F
+community Skagerrak-like mud 70-300 m (J synthesis; SK 280 m mud central; bounds = named stations incl. fine-sand shelf edge; cores 15 vs 20 cm),biomass_share_0_2cm,0.27,0.27,0.42,fraction,J: low/central Dauwe 1998 SK; high = Flach & Heip 1996 Stn A 0-5 cm (ceiling of its 0-2 cm; its 0-1 cm 0.31-0.32),J
+community Skagerrak-like mud 70-300 m (J synthesis; SK 280 m mud central; bounds = named stations incl. fine-sand shelf edge; cores 15 vs 20 cm),biomass_share_0_5cm,0.43,0.51,0.66,fraction,J: Flach Stn A 0.43 / Dauwe SK 0.51 / Flach Stn 12 0.66,J
+community Skagerrak-like mud 70-300 m (J synthesis; SK 280 m mud central; bounds = named stations incl. fine-sand shelf edge; cores 15 vs 20 cm),biomass_share_5_10cm,0.09,0.30,0.33,fraction,J: Flach Stn A 0.09 / Dauwe SK 0.30 / Flach Stn 12 0.33,J
+community Skagerrak-like mud 70-300 m (J synthesis; SK 280 m mud central; bounds = named stations incl. fine-sand shelf edge; cores 15 vs 20 cm),biomass_share_below_10cm,0.01,0.19,0.48,fraction,J: Flach Stn 12 10-15 cm 0.01 / Dauwe SK 10-20 cm 0.19 / Flach Stn A 10-15 cm 0.48,J
+Amphiura filiformis (Galway Bay 22 m tidal muddy fine sand),excavation_max_depth,6.25,8.95,11.73,cm,Solan & Kennedy 2002 MEPS 228:179 Table 3 (n=8; 95% CI +-1.6),F
+Amphiura filiformis (Galway Bay 22 m tidal muddy fine sand),disc_chamber_depth,,9.15,,cm,Solan & Kennedy 2002 MEPS 228:179 (n=1),F
+Amphiura filiformis (Galway Bay 22 m tidal muddy fine sand),arm_extension_above_sediment,20,,,mm (lower bound),"Solan & Kennedy 2002 MEPS 228:179 ("">20 mm into the overlying water column"")",F
+Amphiura filiformis (Galway Bay 22 m tidal),fraction_of_time_arms_out,0.35,,0.68,fraction,J from Solan & Kennedy 2002 (feeding starts 1-2 h after and ends 1-2 h before each tide); tidal site - not transferable to deep Skagerrak,J
+Amphiura filiformis,arms_out_per_individual,2,,,arms (lower bound; cited),"Solan & Kennedy 2002 citing prior work (""at least 2 arms"")",S
+Microphiopholis gracillima (amphiurid analogue),disc_share_of_body_AFDW,0.10,0.12,0.12,fraction,Dobson et al. 1991 Biol Bull 180:167 Table I (0.12) and text (0.10),F
+Microphiopholis gracillima (amphiurid analogue),disc_share_of_body_DW,0.07,0.097,0.097,fraction,Dobson et al. 1991 Biol Bull 180:167 Table I (0.097) and text (0.07),F
+Microphiopholis gracillima (amphiurid analogue),arm_share_of_body_AFDW,0.85,0.85,0.88,fraction,Dobson et al. 1991 Table I: proximal 0.304 + medial 0.311 + distal 0.235 (high adds oral frame 0.025); text: arms+oral frame 0.90,F
+Microphiopholis gracillima (amphiurid analogue),distal_arm_third_share_of_body_AFDW,,0.235,,fraction (all 5 arms),Dobson et al. 1991 Table I (DW share 0.245),F
+Microphiopholis gracillima (amphiurid analogue),distal_arm_third_share_of_body_AFDW_per_arm,,0.047,,fraction,J: 0.235 / 5 arms from Dobson et al. 1991,J
+Amphiura filiformis,arm_mass_share_of_body,0.85,,0.90,fraction (organic),J transfer from Microphiopholis gracillima (Dobson et al. 1991); A. filiformis itself not measured,J
+Amphiura filiformis (adults; arms 60-100 mm),exposed_arm_mass_share_of_body_while_feeding,0.03,0.05,0.09,fraction (organic),J: 2 arms x 0.141 f; f = 10-20 mm out / 60-100 mm arm = 0.10-0.33; distal third 0.047 of AFDW per arm (Dobson 1991 analogue); uniform mass per length overstates tips; small animals (40 mm arms) up to 0.16; see log,J
+Amphiura filiformis,cropped_arm_wet_mass_per_piece,,2.0,,mg wet weight,J: 0.84 g ww m-2 yr-1 / 420 arms (Duineveld & Van Noort 1986 via marineinfo/search summary),S
+Amphiura chiajei (Killary Harbour),regenerated_tissue_share_of_body_weight_max,,0.579,,fraction (weight basis unverified),Munday 1993 Mar Biol 115:661 via search-engine snippet,S

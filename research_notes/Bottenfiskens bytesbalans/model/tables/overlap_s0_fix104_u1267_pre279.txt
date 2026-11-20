@@ -1,0 +1,9 @@
+seed 0; cells per bed class (<100 / 100-150 / 150-250 / >=250 m) 0.22/0.30/0.32/0.15
+  benthivorous_fish    class shares 0.31/0.40/0.29/0.00; overlap with benthivores: cell 66.42, class-only 1.62
+  planktivorous_fish   class shares 0.06/0.16/0.42/0.36; overlap with benthivores: cell 0.32, class-only 0.70
+  whiting              class shares 0.04/0.39/0.45/0.11; overlap with benthivores: cell 0.08, class-only 1.15
+  predatory_fish       class shares 0.38/0.43/0.17/0.02; overlap with benthivores: cell 1.90, class-only 1.25
+  krill                class shares 0.09/0.30/0.40/0.22; overlap with benthivores: cell 0.83, class-only 0.88
+  benthic_infauna      class shares 0.27/0.33/0.30/0.10; overlap with benthivores: cell 1.05, class-only 1.08
+  benthivore J           class shares 0.30/0.40/0.30/0.00
+field (GOV): benthivore adults 0.31/0.44/0.19/0.06, whiting 0.77/0.20/0.03/0.00, saithe 0.04/0.13/0.78/0.05; class-only overlap benthivore adults x whiting 1.38, x saithe 0.73

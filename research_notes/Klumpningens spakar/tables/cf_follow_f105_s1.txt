@@ -1,0 +1,70 @@
+
+=== seed 1 day 0 (month 10); benthivore Lloyd 22
+  fill trained pred trained: clumped M2 0.323 (WC 0.293) | 3.0 M2 0.440 (WC 0.388) | field M2 0.658 (WC 0.565) | saving L3 +0.117 field +0.335
+  fill trained pred w0.05  : clumped M2 0.425 (WC 0.380) | 3.0 M2 0.473 (WC 0.417) | field M2 0.663 (WC 0.565) | saving L3 +0.048 field +0.238
+  fill trained pred w0.1   : clumped M2 0.525 (WC 0.460) | 3.0 M2 0.507 (WC 0.446) | field M2 0.663 (WC 0.567) | saving L3 -0.018 field +0.139
+  fill trained pred w0.2   : clumped M2 0.660 (WC 0.565) | 3.0 M2 0.577 (WC 0.504) | field M2 0.671 (WC 0.574) | saving L3 -0.082 field +0.011
+  fill trained pred half   : clumped M2 1.004 (WC 0.814) | 3.0 M2 0.753 (WC 0.649) | field M2 0.675 (WC 0.592) | saving L3 -0.252 field -0.330
+  fill trained pred follow : clumped M2 1.543 (WC 1.226) | 3.0 M2 1.020 (WC 0.859) | field M2 0.725 (WC 0.640) | saving L3 -0.522 field -0.818
+  fill hungry  pred trained: clumped M2 0.746 (WC 0.710) | 3.0 M2 0.854 (WC 0.775) | field M2 1.229 (WC 1.079) | saving L3 +0.108 field +0.483
+  fill hungry  pred w0.05  : clumped M2 0.995 (WC 0.933) | 3.0 M2 0.932 (WC 0.844) | field M2 1.253 (WC 1.093) | saving L3 -0.063 field +0.258
+  fill hungry  pred w0.1   : clumped M2 1.232 (WC 1.141) | 3.0 M2 1.013 (WC 0.918) | field M2 1.270 (WC 1.111) | saving L3 -0.219 field +0.038
+  fill hungry  pred w0.2   : clumped M2 1.515 (WC 1.377) | 3.0 M2 1.166 (WC 1.056) | field M2 1.300 (WC 1.142) | saving L3 -0.348 field -0.215
+  fill hungry  pred half   : clumped M2 2.212 (WC 1.918) | 3.0 M2 1.563 (WC 1.406) | field M2 1.360 (WC 1.219) | saving L3 -0.650 field -0.853
+  fill hungry  pred follow : clumped M2 3.373 (WC 2.895) | 3.0 M2 2.116 (WC 1.877) | field M2 1.460 (WC 1.329) | saving L3 -1.257 field -1.913
+
+=== seed 1 day 91 (month 1); benthivore Lloyd 23
+  fill trained pred trained: clumped M2 0.122 (WC 0.104) | 3.0 M2 0.157 (WC 0.139) | field M2 0.281 (WC 0.229) | saving L3 +0.034 field +0.159
+  fill trained pred w0.05  : clumped M2 0.170 (WC 0.133) | 3.0 M2 0.178 (WC 0.153) | field M2 0.280 (WC 0.229) | saving L3 +0.008 field +0.110
+  fill trained pred w0.1   : clumped M2 0.221 (WC 0.164) | 3.0 M2 0.203 (WC 0.167) | field M2 0.282 (WC 0.229) | saving L3 -0.018 field +0.061
+  fill trained pred w0.2   : clumped M2 0.320 (WC 0.217) | 3.0 M2 0.249 (WC 0.191) | field M2 0.289 (WC 0.229) | saving L3 -0.072 field -0.031
+  fill trained pred half   : clumped M2 0.540 (WC 0.321) | 3.0 M2 0.380 (WC 0.256) | field M2 0.309 (WC 0.231) | saving L3 -0.160 field -0.230
+  fill trained pred follow : clumped M2 0.797 (WC 0.437) | 3.0 M2 0.585 (WC 0.344) | field M2 0.367 (WC 0.239) | saving L3 -0.212 field -0.430
+  fill hungry  pred trained: clumped M2 0.240 (WC 0.220) | 3.0 M2 0.257 (WC 0.234) | field M2 0.458 (WC 0.374) | saving L3 +0.017 field +0.218
+  fill hungry  pred w0.05  : clumped M2 0.340 (WC 0.288) | 3.0 M2 0.296 (WC 0.258) | field M2 0.460 (WC 0.376) | saving L3 -0.044 field +0.121
+  fill hungry  pred w0.1   : clumped M2 0.441 (WC 0.358) | 3.0 M2 0.339 (WC 0.282) | field M2 0.466 (WC 0.380) | saving L3 -0.102 field +0.025
+  fill hungry  pred w0.2   : clumped M2 0.627 (WC 0.476) | 3.0 M2 0.417 (WC 0.327) | field M2 0.480 (WC 0.386) | saving L3 -0.210 field -0.147
+  fill hungry  pred half   : clumped M2 1.003 (WC 0.680) | 3.0 M2 0.631 (WC 0.445) | field M2 0.518 (WC 0.406) | saving L3 -0.372 field -0.485
+  fill hungry  pred follow : clumped M2 1.405 (WC 0.883) | 3.0 M2 0.933 (WC 0.597) | field M2 0.585 (WC 0.431) | saving L3 -0.472 field -0.820
+
+=== seed 1 day 182 (month 4); benthivore Lloyd 19
+  fill trained pred trained: clumped M2 0.036 (WC 0.030) | 3.0 M2 0.042 (WC 0.036) | field M2 0.121 (WC 0.089) | saving L3 +0.006 field +0.085
+  fill trained pred w0.05  : clumped M2 0.073 (WC 0.046) | 3.0 M2 0.056 (WC 0.043) | field M2 0.121 (WC 0.089) | saving L3 -0.017 field +0.047
+  fill trained pred w0.1   : clumped M2 0.113 (WC 0.061) | 3.0 M2 0.071 (WC 0.049) | field M2 0.121 (WC 0.088) | saving L3 -0.042 field +0.008
+  fill trained pred w0.2   : clumped M2 0.180 (WC 0.084) | 3.0 M2 0.101 (WC 0.062) | field M2 0.122 (WC 0.087) | saving L3 -0.079 field -0.058
+  fill trained pred half   : clumped M2 0.375 (WC 0.151) | 3.0 M2 0.192 (WC 0.097) | field M2 0.131 (WC 0.086) | saving L3 -0.182 field -0.243
+  fill trained pred follow : clumped M2 0.573 (WC 0.218) | 3.0 M2 0.333 (WC 0.145) | field M2 0.169 (WC 0.083) | saving L3 -0.239 field -0.403
+  fill hungry  pred trained: clumped M2 0.052 (WC 0.046) | 3.0 M2 0.057 (WC 0.046) | field M2 0.204 (WC 0.147) | saving L3 +0.004 field +0.152
+  fill hungry  pred w0.05  : clumped M2 0.117 (WC 0.074) | 3.0 M2 0.079 (WC 0.055) | field M2 0.204 (WC 0.146) | saving L3 -0.037 field +0.087
+  fill hungry  pred w0.1   : clumped M2 0.179 (WC 0.098) | 3.0 M2 0.103 (WC 0.064) | field M2 0.204 (WC 0.146) | saving L3 -0.076 field +0.025
+  fill hungry  pred w0.2   : clumped M2 0.282 (WC 0.136) | 3.0 M2 0.149 (WC 0.081) | field M2 0.206 (WC 0.145) | saving L3 -0.133 field -0.076
+  fill hungry  pred half   : clumped M2 0.567 (WC 0.238) | 3.0 M2 0.288 (WC 0.126) | field M2 0.214 (WC 0.142) | saving L3 -0.279 field -0.353
+  fill hungry  pred follow : clumped M2 0.868 (WC 0.338) | 3.0 M2 0.503 (WC 0.194) | field M2 0.251 (WC 0.139) | saving L3 -0.365 field -0.617
+
+=== seed 1 day 273 (month 7); benthivore Lloyd 47
+  fill trained pred trained: clumped M2 0.271 (WC 0.260) | 3.0 M2 0.361 (WC 0.348) | field M2 0.256 (WC 0.214) | saving L3 +0.090 field -0.015
+  fill trained pred w0.05  : clumped M2 0.314 (WC 0.286) | 3.0 M2 0.378 (WC 0.356) | field M2 0.274 (WC 0.230) | saving L3 +0.065 field -0.040
+  fill trained pred w0.1   : clumped M2 0.367 (WC 0.317) | 3.0 M2 0.396 (WC 0.364) | field M2 0.288 (WC 0.243) | saving L3 +0.029 field -0.079
+  fill trained pred w0.2   : clumped M2 0.453 (WC 0.355) | 3.0 M2 0.429 (WC 0.378) | field M2 0.315 (WC 0.269) | saving L3 -0.023 field -0.137
+  fill trained pred half   : clumped M2 0.671 (WC 0.466) | 3.0 M2 0.500 (WC 0.397) | field M2 0.391 (WC 0.339) | saving L3 -0.171 field -0.280
+  fill trained pred follow : clumped M2 1.085 (WC 0.621) | 3.0 M2 0.609 (WC 0.428) | field M2 0.509 (WC 0.450) | saving L3 -0.476 field -0.576
+  fill hungry  pred trained: clumped M2 0.544 (WC 0.532) | 3.0 M2 0.668 (WC 0.651) | field M2 0.424 (WC 0.356) | saving L3 +0.124 field -0.120
+  fill hungry  pred w0.05  : clumped M2 0.612 (WC 0.583) | 3.0 M2 0.686 (WC 0.661) | field M2 0.446 (WC 0.375) | saving L3 +0.074 field -0.166
+  fill hungry  pred w0.1   : clumped M2 0.711 (WC 0.659) | 3.0 M2 0.710 (WC 0.675) | field M2 0.460 (WC 0.389) | saving L3 -0.001 field -0.250
+  fill hungry  pred w0.2   : clumped M2 0.823 (WC 0.725) | 3.0 M2 0.749 (WC 0.695) | field M2 0.487 (WC 0.417) | saving L3 -0.075 field -0.336
+  fill hungry  pred half   : clumped M2 1.151 (WC 0.948) | 3.0 M2 0.834 (WC 0.730) | field M2 0.561 (WC 0.493) | saving L3 -0.316 field -0.590
+  fill hungry  pred follow : clumped M2 1.783 (WC 1.326) | 3.0 M2 0.948 (WC 0.765) | field M2 0.679 (WC 0.612) | saving L3 -0.835 field -1.104
+
+=== means over the 4 snapshots: all-predator M2 on benthivores (clumped / Lloyd 3 / field) and the saving of clumping
+  fill trained pred trained: WC met per benth tonne / mean clumped   2.4 L3 1.09 | M2 0.188 / 0.250 / 0.329; saving L3 +0.062, field +0.141; ratio L3/clumped 1.33
+  fill trained pred w0.05  : WC met per benth tonne / mean clumped   3.7 L3 1.18 | M2 0.245 / 0.271 / 0.334; saving L3 +0.026, field +0.089; ratio L3/clumped 1.11
+  fill trained pred w0.1   : WC met per benth tonne / mean clumped   4.9 L3 1.27 | M2 0.306 / 0.294 / 0.338; saving L3 -0.012, field +0.032; ratio L3/clumped 0.96
+  fill trained pred w0.2   : WC met per benth tonne / mean clumped   7.5 L3 1.45 | M2 0.403 / 0.339 / 0.349; saving L3 -0.064, field -0.054; ratio L3/clumped 0.84
+  fill trained pred half   : WC met per benth tonne / mean clumped  15.1 L3 2.00 | M2 0.647 / 0.456 / 0.376; saving L3 -0.191, field -0.271; ratio L3/clumped 0.70
+  fill trained pred follow : WC met per benth tonne / mean clumped  27.7 L3 2.91 | M2 0.999 / 0.637 / 0.442; saving L3 -0.363, field -0.557; ratio L3/clumped 0.64
+  fill hungry  pred trained: WC met per benth tonne / mean clumped   2.4 L3 1.09 | M2 0.396 / 0.459 / 0.579; saving L3 +0.063, field +0.183; ratio L3/clumped 1.16
+  fill hungry  pred w0.05  : WC met per benth tonne / mean clumped   3.7 L3 1.18 | M2 0.516 / 0.498 / 0.591; saving L3 -0.017, field +0.075; ratio L3/clumped 0.97
+  fill hungry  pred w0.1   : WC met per benth tonne / mean clumped   4.9 L3 1.27 | M2 0.641 / 0.541 / 0.600; saving L3 -0.100, field -0.041; ratio L3/clumped 0.84
+  fill hungry  pred w0.2   : WC met per benth tonne / mean clumped   7.5 L3 1.45 | M2 0.812 / 0.620 / 0.618; saving L3 -0.191, field -0.194; ratio L3/clumped 0.76
+  fill hungry  pred half   : WC met per benth tonne / mean clumped  15.1 L3 2.00 | M2 1.233 / 0.829 / 0.663; saving L3 -0.404, field -0.570; ratio L3/clumped 0.67
+  fill hungry  pred follow : WC met per benth tonne / mean clumped  27.7 L3 2.91 | M2 1.857 / 1.125 / 0.744; saving L3 -0.732, field -1.114; ratio L3/clumped 0.61

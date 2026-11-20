@@ -1,0 +1,7 @@
+seed 0: cell overlap (1 = no association) of prey with predator, and the predator's Lloyd
+  benthivorous_fish  Lloyd   66.4  whiting: 0.08  planktivorous_fish: 0.32
+  predatory_fish     Lloyd    4.5  whiting: 1.11  planktivorous_fish: 0.59
+  whiting            Lloyd   55.4  planktivorous_fish: 0.57
+  mackerel           Lloyd   12.7  whiting: 0.80  planktivorous_fish: 2.55
+  seals              Lloyd   63.8  whiting: 0.91  planktivorous_fish: 2.44
+  porpoises          Lloyd   33.9  whiting: 0.60  planktivorous_fish: 0.97

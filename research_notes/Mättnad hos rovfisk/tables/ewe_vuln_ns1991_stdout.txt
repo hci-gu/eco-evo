@@ -1,0 +1,23 @@
+== page at line 4872: column 1 at char 66
+  6 Spurdog                        {'Cod': '6'}
+  9 Juvenile rays                  {'Cod': '6'}
+ 13 Juvenile Cod(0–2, 0–40cm)      {'JuvCod': '4', 'Cod': '6', 'JuvWhiting': '1.1', 'Whiting': '3', 'Haddock': '6'}
+ 14 Cod (adult)                    {'Cod': '6'}
+ 15 Juvenile Whiting (0–1, 0–20cm) {'JuvCod': '4', 'Cod': '6', 'JuvWhiting': '1.1', 'Whiting': '3', 'JuvSaithe': '2', 'Saithe': '6', 'Hake': '3'}
+ 16 Whiting (adult)                {'Cod': '6', 'Whiting': '3', 'Saithe': '6'}
+ 17 Juvenile Haddock (0–1, 0–20cm) {'JuvCod': '4', 'Cod': '6', 'JuvWhiting': '1.1', 'Whiting': '3', 'Haddock': '6', 'JuvSaithe': '2', 'Saithe': '6'}
+ 18 Haddock (adult)                {'Cod': '6', 'Saithe': '6'}
+ 19 Juvenile Saithe (0–3, 0–40cm)  {'Whiting': '3'}
+ 21 Hake                           {'Hake': '3'}
+ 22 Blue whiting                   {'Cod': '6', 'Saithe': '6', 'Hake': '3'}
+ 23 Norway pout                    {'JuvCod': '4', 'Cod': '6', 'JuvWhiting': '1.1', 'Whiting': '3', 'JuvHaddock': '1', 'Haddock': '6', 'JuvSaithe': '2', 'Saithe': '6', 'Hake': '3'}
+ 24 Other gadoids (large)          {'Haddock': '6'}
+ 25 Other gadoids (small)          {'JuvCod': '4', 'Cod': '6', 'JuvWhiting': '1.1', 'Whiting': '3', 'JuvHaddock': '1', 'Haddock': '6', 'JuvSaithe': '2', 'Saithe': '6', 'Hake': '3'}
+ 27 Gurnards                       {'JuvCod': '4', 'Cod': '6', 'Whiting': '3', 'JuvHaddock': '1', 'Saithe': '6', 'Hake': '3'}
+ 28 Herring (juvenile 0, 1)        {'JuvCod': '4', 'Cod': '6', 'JuvWhiting': '1.1', 'Whiting': '3', 'Haddock': '6', 'JuvSaithe': '2', 'Saithe': '6', 'Hake': '3'}
+ 29 Herring (adult)                {'JuvCod': '4', 'Cod': '6', 'Saithe': '6'}
+ 30 Sprat                          {'JuvCod': '4', 'Cod': '6', 'JuvWhiting': '1.1', 'Whiting': '3', 'Haddock': '6', 'JuvSaithe': '2', 'Saithe': '6', 'Hake': '3'}
+ 31 Mackerel                       {'Cod': '6', 'Saithe': '6', 'Hake': '3'}
+ 32 Horse mackerel                 {'JuvCod': '4', 'Cod': '6', 'JuvWhiting': '1.1', 'Whiting': '3', 'Hake': '3'}
+ 33 Sandeels                       {'JuvCod': '4', 'Cod': '6', 'JuvWhiting': '1.1', 'Whiting': '3', 'JuvHaddock': '1', 'Haddock': '6', 'JuvSaithe': '2', 'Saithe': '6'}
+ 34 Plaice                         {'JuvCod': '4', 'Cod': '6', 'Haddock': '6'}

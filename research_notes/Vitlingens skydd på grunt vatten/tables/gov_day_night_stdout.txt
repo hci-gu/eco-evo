@@ -1,0 +1,10 @@
+=== Q1+Q3 2000-2025, N of 56 N, whiting 10-30 cm
+  <100     matched strata   82: night/day (ratio of sums) 1.50 [0.93-2.51]; median log((N+1)/(D+1)) +0.11
+  100-150  matched strata  100: night/day (ratio of sums) 0.70 [0.47-1.05]; median log((N+1)/(D+1)) -0.13
+  150-250  matched strata   13: night/day (ratio of sums) 0.94 [0.58-1.26]; median log((N+1)/(D+1)) -0.33
+  all      matched strata  225: night/day (ratio of sums) 1.00 [0.72-1.40]; median log((N+1)/(D+1)) -0.06
+=== Q2+Q4 1991-97, N of 56 N, whiting 10-30 cm
+  <100     matched strata  117: night/day (ratio of sums) 0.77 [0.59-1.01]; median log((N+1)/(D+1)) -0.20
+  100-150  matched strata   60: night/day (ratio of sums) 0.59 [0.41-0.85]; median log((N+1)/(D+1)) -0.48
+  150-250  matched strata   27: night/day (ratio of sums) 0.60 [0.36-1.03]; median log((N+1)/(D+1)) -0.25
+  all      matched strata  233: night/day (ratio of sums) 0.74 [0.60-0.91]; median log((N+1)/(D+1)) -0.25

@@ -1,0 +1,26 @@
+taxon_or_scope,quantity,low,central,high,unit,source,tag
+haddock,reach_depth_into_mud,1,2,4,cm,upper bound: crops Amphiura arms not discs (Skold et al. 1994 citing Mattson 1992); spionids withdraw below feeding depth (Schuckel et al. 2010); feeding depth rises with size (Mattson 1992),J on S/A
+cod,reach_depth_into_mud,0,0.5,1,cm,food covered by sand not found (Brawn 1969); suction on and below the surface (Mattson 1990); box diet infauna 0.10 (ICES DB),J on A/D
+long_rough_dab,reach_depth_into_mud,0,0.5,1,cm,visual Bothidae-like feeder (de Groot 1969); epifaunal ophiuroids and crustaceans (ICES DB),J
+dab,reach_depth_into_mud,0,0.5,1,cm,arms not discs in undisturbed sediment (Kaiser & Ramsay 1997); chelae only of burrowing crabs (Johnson et al. 2015); buried fauna less likely ingested (Hinz et al. 2005),J on F bound
+plaice,reach_depth_into_mud,1,2,4,cm,head-down suction; whole Abra alba Glycera Nephtys (Johnson et al. 2015); siphon and tail cropping (de Vlas via earlier notes),J on F
+witch,reach_depth_into_mud,0.5,1,2,cm,Skagerrak prey families surface/shallow (Bergstad et al. 2003 Table 6 and text),J on F
+Amphiura filiformis (Kattegat-Skagerrak),disc_depth,3,4,6,cm,Rosenberg et al. 1997 MEPS 159:121 ('about 4 cm'; '3 to 4 cm depth covered by disks'); deep scenario 4-9 from Solan & Kennedy 2002 (Galway chamber 9.2 cm),F
+Amphiura filiformis,arm_share_of_body_organic_mass,0.85,0.875,0.90,fraction,Dobson et al. 1991 Biol Bull 180:167 on Microphiopholis gracillima (transfer J),J (F analogue)
+Amphiura filiformis,exposed_arm_tip_share_of_body,0.03,0.05,0.09,fraction,2 arms out 10-20 mm (Loo et al. 1996) x distal-third mass (Dobson analogue); vertical_rows.csv,J
+Amphiura filiformis,raised_arm_mass_per_cm_of_reach,,0.031,,fraction of body per cm,2 raised arms / (5 x 8 cm) x 0.875 x 0.7 distal thinning,J
+SK3 100 m without heart urchins,composition_amphiura_polychaete_bivalve_deep_crust_gastro,,0.654/0.166/0.122/0.040/0.010/0.008,,fraction of WW,SHARK SK3 1996-2011 via research_notes/Bentos och torskfiskar evidence_A_standing_stock.md,D
+SK3 100 m,abra_nitida_share_of_bivalves,,0.857,,fraction,same (40.2 of 46.9 g/m2),D
+grid (maps/depth.npz x library K 132->66 t/km2),weight_of_100m_composition,,0.743,,fraction,scripts/phi_reach.py,J (blend rule)
+benthic_infauna grid,phi_at_reach_0.5cm,0.072,0.093,0.127,share of B,scripts/phi_reach.py (profile low/central/high),J
+benthic_infauna grid,phi_at_reach_1cm,0.120,0.145,0.184,share of B,scripts/phi_reach.py,J
+benthic_infauna grid,phi_at_reach_2cm,0.217,0.251,0.298,share of B,scripts/phi_reach.py,J
+benthic_infauna grid,phi_at_reach_3cm,0.264,0.298,0.476,share of B,scripts/phi_reach.py,J
+benthic_infauna grid,phi_at_reach_4cm,0.311,0.479,0.645,share of B,scripts/phi_reach.py,J
+benthivores -> benthic_infauna,haddock_reach_equivalent_to_phi_0.20,,3.2,,cm,scripts/phi_reach.py (others at central; disc branch; about 3.9-4 cm in the arms-only branch where 4 cm gives 0.205),J
+benthivores -> benthic_infauna,group_phi_biomass_weighted_branch_discs,0.069,0.166,0.397,share of B,scripts/phi_reach.py (low = reach low + profile low; high = both high); haddock and dab take a disc above their reach,J
+benthivores -> benthic_infauna,group_phi_biomass_weighted_branch_arms_only,0.069,0.166,0.291,share of B,scripts/phi_reach.py (low = reach low + profile low; high = both high); haddock and dab never take discs (Kaiser & Ramsay 1997 F for dab; Skold et al. 1994 S for haddock),J on F/S
+benthivores -> benthic_infauna,group_phi_infauna_consumption_weighted_branch_discs,0.098,0.215,0.538,share of B,scripts/phi_reach.py (low = reach low + profile low; high = both high) (sensitivity; diet shares count epifaunal Ophiura/Ophiothrix as infauna),J
+benthivores -> benthic_infauna,group_phi_infauna_consumption_weighted_branch_arms_only,0.098,0.215,0.368,share of B,scripts/phi_reach.py (low = reach low + profile low; high = both high) (sensitivity),J
+benthivores -> benthic_infauna,top_heavy_0_1cm_sensitivity_central,,0.178,,share of B,scripts/phi_reach.py variant run inline: 0-1 cm holds 0.20 of biomass (Flach & Heip 1996 sand ~0.31; legend order inferred) and 0.75 of Abra,J
+benthivores -> benthic_infauna,recommended_exposed_share,0.07,0.20,0.29,share of B,keep 0.20; upper end 0.29 under the arms-only bound (0.40 if haddock take discs); central differs from 0.17 only through J reach,J
