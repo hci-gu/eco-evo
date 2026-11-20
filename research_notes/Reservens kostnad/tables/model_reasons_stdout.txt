@@ -1,0 +1,47 @@
+1. What a full reserve is worth to the learner (log-energy reward, one-year integral)
+   group          ME/(ec+ME)  dlogE/ds at s=1  growth term 0.5 P/(1-u)  reward(s=1) - reward(field mean)
+   planktivores       0.555            0.555                   0.358  +0.363 (field mean fill 0.63; = 6.6 months of P)
+   benthivores        0.333            0.333                   0.401  +0.291 (field mean fill 0.62; = 4.7 months of P)
+   whiting            0.339            0.339                   0.328  +0.308 (field mean fill 0.56; = 6.1 months of P)
+   water_column       0.324            0.324                   0.226  +0.164 (field mean fill 0.71; = 4.7 months of P)
+   mackerel           0.599            0.599                   0.208  +0.291 (field mean fill 0.67; = 8.9 months of P)
+   Reading: holding fill 1 instead of the field mean is worth +0.16 to +0.36 log units of reward,
+   i.e. the same as 4.5-9 months of the group's somatic production. Both terms are engine
+   conventions (reward currency; growth ceiling g (s - u) with g derived at s* = 1), not costs
+   or benefits a wild fish has in this form [D].
+
+2. Hazard-type cost: predation M2 (1 + beta s). beta a full fish would need for the learner's
+   optimum fill to fall to the field annual mean, and to the field spring low
+   group          M2 /yr  beta* (optimum < 1)  beta (field mean)  beta (spring low)  hazard full/empty at field mean
+   planktivores    0.420                 4.4               5.0               6.3       6.0x
+   benthivores     0.250                 5.9               6.3               6.3       7.3x
+   whiting         0.492                 2.7               3.0               3.0       4.0x
+   water_column    0.018                61.1              64.8              64.8      65.8x
+   mackerel        0.021                76.9              91.1             138.9      92.1x
+   Reading: for whiting, the group with the largest booked M2, a full fish would need a predation
+   hazard ~3.7-4x that of an empty one before the learner keeps it below fill 1 (planktivores
+   5.4-7x, benthivores 6.9-7.3x); the water column and mackerel (M2 ~0.02) would need 60-140x. Any such beta is season-constant, so it
+   gives a flat lower fill, not a spring low and an autumn high [D].
+
+3. The same as a fill-proportional extra loss mu * s on B and R (/yr), independent of M2
+   planktivores   mu* for optimum = field mean (0.63): 2.11 /yr extra mortality at fill 1
+   benthivores    mu* for optimum = field mean (0.62): 1.57 /yr extra mortality at fill 1
+   whiting        mu* for optimum = field mean (0.56): 1.45 /yr extra mortality at fill 1
+   water_column   mu* for optimum = field mean (0.71): 1.17 /yr extra mortality at fill 1
+   mackerel       mu* for optimum = field mean (0.67): 1.91 /yr extra mortality at fill 1
+
+4. Energy-type cost: extra metabolism k x RM x s (MJ/t/tick). With potential ~2x need it is paid out of
+   the spare intake; it binds only when k RM exceeds the spare capacity at fill 1 (yardstick)
+   group          need at s=1 (MJ/t/tick)  spare = need (2x yardstick)  k_crit = spare/RM
+   planktivores                    15.01                       15.01    1.88 (a full reserve would have to raise metabolism by 1.9x RM)
+   benthivores                      7.11                        7.11    2.14 (a full reserve would have to raise metabolism by 2.1x RM)
+   whiting                          7.43                        7.43    1.92 (a full reserve would have to raise metabolism by 1.9x RM)
+   water_column                     8.24                        8.24    2.51 (a full reserve would have to raise metabolism by 2.5x RM)
+   mackerel                         5.94                        5.94    1.29 (a full reserve would have to raise metabolism by 1.3x RM)
+   Below k_crit an energy cost lowers no fill; it only lengthens foraging, whose risk cost is
+   0.01-0.05 of the production at stake ('Vilans avkastning' fill_tradeoff) [S/D].
+
+5. What the model already charges for a full reserve
+   benthivores tonne price at s=1 7326 vs s=0.33 6494 MJ/t (x1.128); other groups: no c, price ec at any fill
+   losses take the reserve pro rata: the fraction of E lost per tick is the same at any fill (no cost in log E)
+   the reserve room cap discards surplus at fill 1: no cost, only a ceiling

@@ -1,0 +1,6 @@
+main_rows.csv: 41 rows, 0 malformed
+appetite_raw.csv: 96 rows, 0 malformed
+inlayer_raw.csv: 211 rows, 0 malformed
+seasonal_raw.csv: 371 rows, 0 malformed
+tags: {'F': 412, 'D': 235, 'S': 61, 'A': 11}
+evidence.csv rows: 719

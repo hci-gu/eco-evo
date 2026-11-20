@@ -1,0 +1,97 @@
+source,doi,species,region,season,method,quantity,value,unit,tag
+Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,autumn (2014; month unknown),"UA 5-10 km from farms, jig, 68 cm, ambient T",HSI UA,6.9,%,F
+Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,autumn (2014; month unknown),"FA <500 m from farm, jig, 60 cm",HSI FA,5.6,%,F
+Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,autumn (2014; month unknown),"UA, gillnet 15-17 h soak, 68 cm",HSI UA,6.8,%,F
+Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,autumn (2014; month unknown),"FA, gillnet, 66 cm",HSI FA,8.2,%,F
+Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,spring (2015; month unknown),"FA, jig, 69 cm (no UA jig sample)",HSI FA,6.1,%,F
+Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,spring (2015; month unknown),"UA, gillnet, 66 cm",HSI UA,6.2,%,F
+Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,spring (2015; month unknown),"FA, gillnet, 68 cm",HSI FA,10.0,%,F
+Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,summer (month unknown),"UA, jig, 62 cm",HSI UA,6.0,%,F
+Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,summer (month unknown),"FA, jig, 68 cm",HSI FA,10.0,%,F
+Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,summer (month unknown),"UA, gillnet, 69 cm",HSI UA,6.8,%,F
+Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,summer (month unknown),"FA, gillnet, 66 cm",HSI FA,10.7,%,F
+Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,autumn,"FA, jig, n 31",pellet prevalence,29,% of fish,F
+Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,autumn,"FA, gillnet, n 30",pellet prevalence,33,% of fish,F
+Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,spring,"FA, jig, n 30",pellet prevalence,60,% of fish,F
+Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,spring,"FA, gillnet, n 30",pellet prevalence,50,% of fish,F
+Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,summer,"FA, jig, n 25",pellet prevalence,88,% of fish,F
+Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,summer,"FA, gillnet, n 48",pellet prevalence,23,% of fish,F
+Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,autumn,"FA, jig, mean W 2.14 kg",pellet mass in stomach (fish with pellets),56,g,F
+Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,autumn,"FA, gillnet, mean W 3.1 kg",pellet mass in stomach (fish with pellets),141,g,F
+Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,spring,"FA, jig, mean W 3.09 kg",pellet mass in stomach (fish with pellets),166,g,F
+Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,spring,"FA, gillnet, mean W 3.19 kg",pellet mass in stomach (fish with pellets),89,g,F
+Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,summer,"FA, jig, mean W 3.18 kg",pellet mass in stomach (fish with pellets),78,g,F
+Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,summer,"FA, gillnet, mean W 2.92 kg",pellet mass in stomach (fish with pellets),96,g,F
+Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,autumn,"FA, jig",pellets in diet,100.0,% of stomach mass,F
+Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,spring,"FA, jig",pellets in diet,93.6,% of stomach mass,F
+Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,summer,"FA, jig",pellets in diet,92.0,% of stomach mass,F
+Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,spring (all areas),"181 spring fish, both areas",share with GSI > 2,8.2,%,F
+Uglem2020,10.1111/are.14519,saithe (proxy),Ryfylke Norway,spring,"FA, gillnet, 57 cm",HSI FA,9.1,%,F
+Uglem2020,10.1111/are.14519,saithe (proxy),Ryfylke Norway,spring,"'UA' with 7% pellet prevalence, gillnet, 62 cm",HSI UA (farm-influenced),12.0,%,F
+Uglem2020,10.1111/are.14519,saithe (proxy),Ryfylke Norway,autumn,"'UA' with 19% pellet prevalence, gillnet, 59 cm",HSI UA (farm-influenced),8.9,%,F
+Uglem2020,10.1111/are.14519,saithe (proxy),Ryfylke Norway,autumn,"FA, gillnet, 57 cm",HSI FA,8.0,%,F
+OtteraSkilbrei2014,10.1093/icesjms/fsu096,saithe (proxy),SW Norway fjord,Nov-Jan 2010-12,"acoustic tags, 38-59 cm, ambient 3 C winter surface; full text via WebFetch tool extraction",share of saithe in area with farm connection,82,%,S
+OtteraSkilbrei2014,10.1093/icesjms/fsu096,saithe (proxy),SW Norway fjord,summer 2010-11,"acoustic tags, 38-59 cm; full text via WebFetch tool extraction",share of saithe in area with farm connection,64,%,S
+SkilbreiOttera2016,10.1093/icesjms/fsv261,saithe (proxy),SW Norway fjord,summer,"acoustic depth tags, farm-associated; cages 30-40 m deep; full text via WebFetch tool extraction",typical residence depth (min of range),25,m,S
+SkilbreiOttera2016,10.1093/icesjms/fsv261,saithe (proxy),SW Norway fjord,summer,"acoustic depth tags, farm-associated; cages 30-40 m deep; full text via WebFetch tool extraction",typical residence depth (max of range),50,m,S
+SkilbreiOttera2016,10.1093/icesjms/fsv261,saithe (proxy),SW Norway fjord,winter,"acoustic depth tags, farm-associated; full text via WebFetch tool extraction",typical residence depth (min of range),60,m,S
+SkilbreiOttera2016,10.1093/icesjms/fsv261,saithe (proxy),SW Norway fjord,winter,"acoustic depth tags, farm-associated; full text via WebFetch tool extraction",typical residence depth (max of range),90,m,S
+Uglem2009,10.3354/meps08001,saithe (proxy),mid-Norway fjord,Jul-Oct,acoustic tags at farms,time close to sea-cages when resident (min of range),8,h/d,F
+Uglem2009,10.3354/meps08001,saithe (proxy),mid-Norway fjord,Jul-Oct,acoustic tags at farms,time close to sea-cages when resident (max of range),10,h/d,F
+Hoines1992,none (ICES CM 1992/G:9),haddock (proxy),Karmoy SW Norway,Mar-Apr 1991 (herring spawning),"stomachs, >30 cm, all stomachs incl. empty, trawl (Mar) + Danish seine (Apr)",mean stomach content,13.83,g,F
+Hoines1992,none (ICES CM 1992/G:9),haddock (proxy),Karmoy SW Norway,"Oct, Dec 1990; Feb, Jun, Jul, Oct 1991","stomachs, >30 cm, all incl. empty, outside herring season",mean stomach content,2.22,g,F
+Hoines1992,none (ICES CM 1992/G:9),haddock (proxy),Karmoy SW Norway,Mar-Apr 1991,"stomachs, <30 cm",mean stomach content,0.76,g,F
+Hoines1992,none (ICES CM 1992/G:9),haddock (proxy),Karmoy SW Norway,outside herring season,"stomachs, <30 cm",mean stomach content,0.48,g,F
+Hoines1992,none (ICES CM 1992/G:9),haddock (proxy),Karmoy SW Norway,Mar-Apr 1991,"stomachs, >30 cm, n 496",empty stomachs,41,count,F
+Hoines1992,none (ICES CM 1992/G:9),haddock (proxy),Karmoy SW Norway,outside herring season,"stomachs, >30 cm, n 470",empty stomachs,60,count,F
+Hoines1992,none (ICES CM 1992/G:9),cod (proxy),Karmoy SW Norway,Mar 1991,"stomachs, >30 cm, n 126, research trawl",mean stomach content,79.04,g,F
+Hoines1992,none (ICES CM 1992/G:9),cod (proxy),Karmoy SW Norway,Mar 1991,"stomachs, <30 cm, n 51",mean stomach content,1.98,g,F
+Hoines1992,none (ICES CM 1992/G:9),cod (proxy),Karmoy SW Norway,outside herring season,"stomachs, <30 cm, n 55",mean stomach content,1.10,g,F
+Hoines1992,none (ICES CM 1992/G:9),haddock (proxy),Karmoy SW Norway,Feb 1991 (pre-herring),"Fig 7 read off, 40-49 cm, Danish seine",mean stomach content,0.7,g,F
+Hoines1992,none (ICES CM 1992/G:9),haddock (proxy),Karmoy SW Norway,Feb 1991 (pre-herring),"Fig 7 read off, >50 cm, Danish seine",mean stomach content,0.6,g,F
+Hoines1992,none (ICES CM 1992/G:9),haddock (proxy),Karmoy SW Norway,Mar 1991,"Fig 7 read off, 40-49 cm, trawl",mean stomach content,14.7,g,F
+Hoines1992,none (ICES CM 1992/G:9),haddock (proxy),Karmoy SW Norway,Mar 1991,"Fig 7 read off, >50 cm, trawl",mean stomach content,14.9,g,F
+Hoines1992,none (ICES CM 1992/G:9),haddock (proxy),Karmoy SW Norway,Apr 1991,"Fig 7 read off, 40-49 cm, Danish seine",mean stomach content,21.2,g,F
+Hoines1992,none (ICES CM 1992/G:9),haddock (proxy),Karmoy SW Norway,Apr 1991,"Fig 7 read off, >50 cm, Danish seine",mean stomach content,23.9,g,F
+Hoines1992,none (ICES CM 1992/G:9),haddock (proxy),Karmoy SW Norway,Jul 1991,"Fig 7 read off, >50 cm, trawl",mean stomach content,5.5,g,F
+Hoines1992,none (ICES CM 1992/G:9),haddock (proxy),Karmoy SW Norway,Dec 1990,"Fig 7 read off, >50 cm, Danish seine",mean stomach content,7.6,g,F
+Hoines1992,none (ICES CM 1992/G:9),haddock (proxy),Karmoy SW Norway,Oct 1990/91,"Fig 7 read off, >50 cm, Danish seine",mean stomach content,1.2,g,F
+Hoines1992,none (ICES CM 1992/G:9),cod (proxy),Karmoy SW Norway,Mar 1991,"Fig 8 read off, 30-49 cm",mean stomach content,23,g,F
+Hoines1992,none (ICES CM 1992/G:9),cod (proxy),Karmoy SW Norway,Jul 1991,"Fig 8 read off, 30-49 cm",mean stomach content,10,g,F
+Hoines1992,none (ICES CM 1992/G:9),cod (proxy),Karmoy SW Norway,Mar 1991,"Fig 8 read off, 50-69 cm",mean stomach content,78,g,F
+Hoines1992,none (ICES CM 1992/G:9),cod (proxy),Karmoy SW Norway,Jul 1991,"Fig 8 read off, 50-69 cm",mean stomach content,43,g,F
+Vandendriessche2013,none (RBINS report chapter 14),pouting T. luscus (proxy),Belgian North Sea wind farm,season pooled (not stated),"stomach fullness index, turbines vs sandy Gootebank",fullness index turbines,1.5,index,F
+Vandendriessche2013,none (RBINS report chapter 14),pouting T. luscus (proxy),Belgian North Sea sandy area,season pooled,"stomach fullness index, reference",fullness index sandy,0.6,index,F
+Nedreaas1985,none (ICES CM 1985/G:22),saithe 2-3 yr immature (proxy),Taelavaag W Norway area A,1 Jun 1982,"Fig 5 read off, 30-34 cm, handline/purse seine, all stomachs",mean stomach content,1.35,g,F
+Nedreaas1985,none (ICES CM 1985/G:22),saithe 2-3 yr immature (proxy),Taelavaag W Norway area A,Jun-Sep 1982 (25 Jun),"Fig 5 read off, 30-34 cm",mean stomach content,3.8,g,F
+Nedreaas1985,none (ICES CM 1985/G:22),saithe 2-3 yr immature (proxy),Taelavaag W Norway area A,Jun-Sep 1982 (25 Jun),"Fig 5 read off, 35-39 cm",mean stomach content,1.4,g,F
+Nedreaas1985,none (ICES CM 1985/G:22),saithe 2-3 yr immature (proxy),Taelavaag W Norway area A,Jun-Sep 1982 (29 Jul),"Fig 5 read off, 30-34 cm",mean stomach content,1.9,g,F
+Nedreaas1985,none (ICES CM 1985/G:22),saithe 2-3 yr immature (proxy),Taelavaag W Norway area A,Jun-Sep 1982 (29 Jul),"Fig 5 read off, 35-39 cm",mean stomach content,2.0,g,F
+Nedreaas1985,none (ICES CM 1985/G:22),saithe 2-3 yr immature (proxy),Taelavaag W Norway area A,Jun-Sep 1982 (31 Aug),"Fig 5 read off, 30-34 cm",mean stomach content,0.6,g,F
+Nedreaas1985,none (ICES CM 1985/G:22),saithe 2-3 yr immature (proxy),Taelavaag W Norway area A,Jun-Sep 1982 (31 Aug),"Fig 5 read off, 35-39 cm",mean stomach content,1.7,g,F
+Nedreaas1985,none (ICES CM 1985/G:22),saithe 2-3 yr immature (proxy),Taelavaag W Norway area A,Jun-Sep 1982 (30 Sep),"Fig 5 read off, 30-34 cm",mean stomach content,3.5,g,F
+Nedreaas1985,none (ICES CM 1985/G:22),saithe 2-3 yr immature (proxy),Taelavaag W Norway area A,Jun-Sep 1982 (30 Sep),"Fig 5 read off, 35-39 cm",mean stomach content,4.1,g,F
+Nedreaas1985,none (ICES CM 1985/G:22),saithe 3 yr immature (proxy),Taelavaag W Norway area A,1 Mar 1983,"Fig 5 read off, 30-34 cm; krill main food; starvation signs",mean stomach content,2.1,g,F
+Nedreaas1985,none (ICES CM 1985/G:22),saithe 3 yr immature (proxy),Taelavaag W Norway area A,1 Mar 1983,"Fig 5 read off, 35-39 cm; krill main food; starvation signs",mean stomach content,2.0,g,F
+Nedreaas1985,none (ICES CM 1985/G:22),saithe 2-3 yr (proxy),Taelavaag W Norway area A,1 Jun 1982 - 1 Mar 1983,mean length of the 1980 year class,length increment,3.1,cm,F
+Nedreaas1985,none (ICES CM 1985/G:22),saithe 2-3 yr (proxy),W Norway areas A+B,1982-83,328 stomachs,empty stomachs,0.6,%,F
+Albert1994,10.1006/jmsc.1994.1005,Norway pout,Norwegian Deep incl. Skagerrak,winter (31 Jan - 13 Apr 1986-87),"stomachs, <14 cm",empty stomachs,33.6,%,S
+Albert1994,10.1006/jmsc.1994.1005,Norway pout,Norwegian Deep incl. Skagerrak,winter (31 Jan - 13 Apr 1986-87),"stomachs, >=14 cm",empty stomachs,24.5,%,S
+Albert1994,10.1006/jmsc.1994.1005,Norway pout,Norwegian Deep incl. Skagerrak,summer,"stomachs, <14 cm",empty stomachs,27.8,%,S
+Albert1994,10.1006/jmsc.1994.1005,Norway pout,Norwegian Deep incl. Skagerrak,summer,"stomachs, >=14 cm",empty stomachs,18.6,%,S
+Albert1994,10.1006/jmsc.1994.1005,Norway pout,Norwegian Deep incl. Skagerrak,winter (31 Jan - 13 Apr),"non-empty stomachs, >=14 cm",mean content dry weight,57.8,mg,S
+Albert1994,10.1006/jmsc.1994.1005,Norway pout,Norwegian Deep incl. Skagerrak,summer,"non-empty stomachs, >=14 cm",mean content dry weight,31.2,mg,S
+Albert1994,10.1006/jmsc.1994.1005,Norway pout,Norwegian Deep incl. Skagerrak,winter,"stomachs, >=14 cm",euphausiids share of content,81.4,% by weight,S
+derived:Hoines1992,none (ICES CM 1992/G:9),haddock (proxy),Karmoy SW Norway,Mar-Apr vs rest of year,"13.83 / 2.22 g, Table 2, >30 cm (app_derive.py)",stomach content ratio herring season / outside,6.2,ratio,D
+derived:Hoines1992,none (ICES CM 1992/G:9),cod (proxy),Karmoy SW Norway,Mar vs Jul,"Fig 8 read off, 30-49 cm (app_derive.py)",stomach content ratio Mar / Jul,2.3,ratio,D
+derived:Hoines1992,none (ICES CM 1992/G:9),cod (proxy),Karmoy SW Norway,Mar vs Jul,"Fig 8 read off, 50-69 cm (app_derive.py)",stomach content ratio Mar / Jul,1.8,ratio,D
+derived:Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,autumn,jig; FA fish 8 cm shorter (app_derive.py),HSI ratio FA / UA,0.81,ratio,D
+derived:Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,autumn,gillnet (app_derive.py),HSI ratio FA / UA,1.21,ratio,D
+derived:Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,spring,gillnet (app_derive.py),HSI ratio FA / UA,1.61,ratio,D
+derived:Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,summer,jig (app_derive.py),HSI ratio FA / UA,1.67,ratio,D
+derived:Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,summer,gillnet (app_derive.py),HSI ratio FA / UA,1.57,ratio,D
+derived:Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,autumn,"jig, pellet-eating fish, / mean FA W (app_derive.py)",pellet mass in stomach as % of body weight,2.6,% BW,D
+derived:Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,spring,"jig, pellet-eating fish, / mean FA W (app_derive.py)",pellet mass in stomach as % of body weight,5.4,% BW,D
+derived:Uglem2020,10.1111/are.14519,saithe (proxy),Hitra Norway,summer,"jig, pellet-eating fish, / mean FA W (app_derive.py)",pellet mass in stomach as % of body weight,2.5,% BW,D
+derived:Nedreaas1985,none (ICES CM 1985/G:22),saithe 3 yr immature (proxy),Taelavaag W Norway area A,1 Mar 1983,2.0-2.1 g / W 349 g (W = 0.0085 L^3 at 34.5 cm) (app_derive.py),stomach content as % of body weight (min of range),0.57,% BW wet,D
+derived:Nedreaas1985,none (ICES CM 1985/G:22),saithe 3 yr immature (proxy),Taelavaag W Norway area A,1 Mar 1983,2.0-2.1 g / W 349 g (app_derive.py),stomach content as % of body weight (max of range),0.60,% BW wet,D

@@ -1,0 +1,61 @@
+Whiting, optimal fill by month (J F M A M J J A S O N D), survivors' mean;
+effort = mean foraging share; starved/yr = annual starvation probability under the policy
+  field (start_fill)                           mean 0.56  0.69 0.69 0.56 0.43 0.30 0.30 0.30 0.52 0.73 0.73 0.73 0.71
+
+A. Degenerate case: flat potential 2x need, food without gaps. The reserve has no insurance
+   value, so its level is arbitrary at beta 0 (stays at the start, 0.5) and any beta > 0 empties it
+  beta 0.0                                     mean 0.50  0.50 0.50 0.50 0.50 0.50 0.50 0.50 0.50 0.50 0.50 0.50 0.50 | effort 0.43, starved/yr 0.000
+  beta 0.5                                     mean 0.00  0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 | effort 0.43, starved/yr 0.000
+
+B. Flat potential 2x need (the brief's model yardstick), patchy food (bad spells with no food)
+  bad share 0.3, spell 5 d, beta 0.0           mean 0.85  0.85 0.85 0.85 0.85 0.85 0.85 0.85 0.85 0.85 0.85 0.85 0.85 | effort 0.26, starved/yr 0.000
+  bad share 0.3, spell 5 d, beta 0.3           mean 0.30  0.30 0.30 0.30 0.30 0.30 0.30 0.30 0.30 0.30 0.30 0.30 0.30 | effort 0.26, starved/yr 0.006
+  bad share 0.3, spell 5 d, beta 1.0           mean 0.25  0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25 | effort 0.26, starved/yr 0.021
+  bad share 0.3, spell 5 d, beta 3.0           mean 0.21  0.21 0.21 0.21 0.21 0.21 0.21 0.21 0.21 0.21 0.21 0.21 0.21 | effort 0.26, starved/yr 0.060
+  bad share 0.3, spell 20 d, beta 0.0          mean 0.94  0.94 0.94 0.94 0.94 0.94 0.94 0.94 0.94 0.94 0.94 0.94 0.94 | effort 0.27, starved/yr 0.012
+  bad share 0.3, spell 20 d, beta 0.3          mean 0.81  0.81 0.81 0.81 0.81 0.81 0.81 0.81 0.81 0.81 0.81 0.81 0.81 | effort 0.26, starved/yr 0.028
+  bad share 0.3, spell 20 d, beta 1.0          mean 0.62  0.62 0.62 0.62 0.62 0.62 0.62 0.62 0.62 0.62 0.62 0.62 0.62 | effort 0.26, starved/yr 0.086
+  bad share 0.3, spell 20 d, beta 3.0          mean 0.46  0.46 0.46 0.46 0.46 0.46 0.46 0.46 0.46 0.46 0.46 0.46 0.46 | effort 0.25, starved/yr 0.238
+  bad share 0.5, spell 40 d, beta 0.0          mean 0.84  0.84 0.84 0.84 0.84 0.84 0.84 0.84 0.84 0.84 0.84 0.84 0.84 | effort 0.16, starved/yr 0.241
+  bad share 0.5, spell 40 d, beta 0.3          mean 0.84  0.84 0.84 0.84 0.84 0.84 0.84 0.84 0.84 0.84 0.84 0.84 0.84 | effort 0.16, starved/yr 0.241
+  bad share 0.5, spell 40 d, beta 1.0          mean 0.84  0.84 0.84 0.84 0.84 0.84 0.84 0.84 0.84 0.84 0.84 0.84 0.84 | effort 0.16, starved/yr 0.241
+  bad share 0.5, spell 40 d, beta 3.0          mean 0.67  0.67 0.67 0.67 0.67 0.67 0.67 0.67 0.67 0.67 0.67 0.67 0.67 | effort 0.15, starved/yr 0.433
+  bad 0.3, 20 d, metabolic k 0.1 x RM per unit fill mean 0.93  0.93 0.93 0.93 0.93 0.93 0.93 0.93 0.93 0.93 0.93 0.93 0.93 | effort 0.29, starved/yr 0.017
+  bad 0.3, 20 d, metabolic k 0.3 x RM per unit fill mean 0.92  0.92 0.92 0.92 0.92 0.92 0.92 0.92 0.92 0.92 0.92 0.92 0.92 | effort 0.32, starved/yr 0.028
+  bad 0.3, 20 d, metabolic k 1.0 x RM per unit fill mean 0.87  0.87 0.87 0.87 0.87 0.87 0.87 0.87 0.87 0.87 0.87 0.87 0.87 | effort 0.44, starved/yr 0.095
+  bad 0.3, 20 d, beta 1, activity risk r 1.0   mean 0.62  0.62 0.62 0.62 0.62 0.62 0.62 0.62 0.62 0.62 0.62 0.62 0.62 | effort 0.26, starved/yr 0.086
+  bad 0.3, 20 d, beta 1, activity risk r 1.5   mean 0.61  0.61 0.61 0.61 0.61 0.61 0.61 0.61 0.61 0.61 0.61 0.61 0.61 | effort 0.26, starved/yr 0.094
+
+C. Seasonal potential (SMS whiting ration shape, annual mean kpot x need) + patchy food
+   (bad share 0.3, spells 10 d); cost at the bottom-layer temperature; growth even over the year
+  kpot 1.0, beta 0.0                           mean 0.87  0.88 0.85 0.82 0.82 0.81 0.80 0.85 0.91 0.93 0.93 0.92 0.91 | effort 0.59, starved/yr 0.007
+  kpot 1.0, beta 0.3                           mean 0.67  0.72 0.67 0.63 0.60 0.57 0.54 0.59 0.68 0.76 0.79 0.78 0.76 | effort 0.58, starved/yr 0.025
+  kpot 1.0, beta 1.0                           mean 0.51  0.56 0.51 0.48 0.46 0.43 0.41 0.43 0.50 0.57 0.60 0.61 0.60 | effort 0.58, starved/yr 0.076
+  kpot 1.0, beta 3.0                           mean 0.38  0.42 0.38 0.35 0.34 0.33 0.31 0.33 0.36 0.40 0.43 0.45 0.45 | effort 0.58, starved/yr 0.207
+  kpot 1.1, beta 0.0                           mean 0.89  0.91 0.89 0.87 0.85 0.84 0.80 0.86 0.93 0.94 0.94 0.93 0.93 | effort 0.53, starved/yr 0.002
+  kpot 1.1, beta 0.3                           mean 0.61  0.65 0.61 0.58 0.56 0.54 0.51 0.54 0.59 0.65 0.69 0.69 0.68 | effort 0.52, starved/yr 0.020
+  kpot 1.1, beta 1.0                           mean 0.47  0.51 0.47 0.45 0.44 0.42 0.41 0.42 0.45 0.49 0.52 0.53 0.53 | effort 0.52, starved/yr 0.063
+  kpot 1.1, beta 3.0                           mean 0.36  0.38 0.36 0.34 0.33 0.33 0.32 0.33 0.34 0.37 0.38 0.40 0.40 | effort 0.52, starved/yr 0.175
+  kpot 1.3, beta 0.0                           mean 0.89  0.93 0.90 0.86 0.84 0.81 0.77 0.85 0.92 0.95 0.95 0.94 0.94 | effort 0.43, starved/yr 0.001
+  kpot 1.3, beta 0.3                           mean 0.55  0.57 0.55 0.53 0.52 0.52 0.50 0.52 0.54 0.57 0.60 0.60 0.60 | effort 0.43, starved/yr 0.016
+  kpot 1.3, beta 1.0                           mean 0.44  0.46 0.43 0.42 0.42 0.41 0.41 0.41 0.43 0.45 0.46 0.47 0.48 | effort 0.43, starved/yr 0.052
+  kpot 1.3, beta 3.0                           mean 0.34  0.35 0.34 0.33 0.33 0.33 0.32 0.33 0.34 0.35 0.36 0.36 0.37 | effort 0.43, starved/yr 0.147
+  kpot 2.0, beta 0.0                           mean 0.89  0.93 0.89 0.86 0.83 0.80 0.75 0.88 0.95 0.96 0.95 0.94 0.94 | effort 0.26, starved/yr 0.000
+  kpot 2.0, beta 0.3                           mean 0.51  0.52 0.50 0.49 0.49 0.49 0.48 0.50 0.51 0.53 0.53 0.53 0.53 | effort 0.27, starved/yr 0.013
+  kpot 2.0, beta 1.0                           mean 0.41  0.42 0.41 0.40 0.40 0.40 0.40 0.41 0.42 0.43 0.43 0.43 0.43 | effort 0.27, starved/yr 0.043
+  kpot 2.0, beta 3.0                           mean 0.33  0.33 0.32 0.32 0.32 0.31 0.32 0.32 0.33 0.34 0.34 0.34 0.35 | effort 0.27, starved/yr 0.124
+
+D. As C, with field growth timing [J]: somatic growth x0.3 / 1.5 / 1.5 / 0.7 by quarter, paid
+   before the reserve (growth priority, as in the material law's food-first rule)
+  kpot 1.0, beta 0.0                           mean 0.88  0.90 0.89 0.88 0.87 0.84 0.80 0.83 0.89 0.91 0.92 0.92 0.92 | effort 0.59, starved/yr 0.006
+  kpot 1.0, beta 0.3                           mean 0.66  0.72 0.69 0.66 0.63 0.59 0.55 0.57 0.63 0.69 0.73 0.74 0.74 | effort 0.58, starved/yr 0.025
+  kpot 1.0, beta 1.0                           mean 0.50  0.56 0.54 0.52 0.49 0.45 0.41 0.43 0.47 0.51 0.54 0.56 0.57 | effort 0.58, starved/yr 0.075
+  kpot 1.1, beta 0.0                           mean 0.90  0.92 0.91 0.90 0.88 0.85 0.81 0.85 0.92 0.94 0.94 0.94 0.93 | effort 0.52, starved/yr 0.002
+  kpot 1.1, beta 0.3                           mean 0.60  0.64 0.62 0.61 0.58 0.55 0.52 0.53 0.58 0.62 0.65 0.66 0.66 | effort 0.52, starved/yr 0.020
+  kpot 1.1, beta 1.0                           mean 0.47  0.50 0.49 0.48 0.46 0.43 0.41 0.42 0.45 0.47 0.49 0.51 0.51 | effort 0.52, starved/yr 0.062
+  kpot 1.3, beta 0.0                           mean 0.89  0.93 0.91 0.88 0.85 0.82 0.77 0.85 0.92 0.94 0.95 0.95 0.95 | effort 0.42, starved/yr 0.001
+  kpot 1.3, beta 0.3                           mean 0.55  0.57 0.55 0.55 0.53 0.52 0.50 0.51 0.54 0.57 0.58 0.59 0.59 | effort 0.43, starved/yr 0.016
+  kpot 1.3, beta 1.0                           mean 0.44  0.45 0.44 0.43 0.43 0.42 0.40 0.41 0.43 0.45 0.46 0.47 0.46 | effort 0.43, starved/yr 0.052
+  kpot 2.0, beta 0.0                           mean 0.88  0.93 0.89 0.86 0.83 0.79 0.75 0.86 0.91 0.94 0.94 0.94 0.95 | effort 0.26, starved/yr 0.000
+  kpot 2.0, beta 0.3                           mean 0.51  0.52 0.50 0.50 0.49 0.49 0.48 0.49 0.51 0.53 0.54 0.54 0.53 | effort 0.26, starved/yr 0.013
+  kpot 2.0, beta 1.0                           mean 0.41  0.42 0.41 0.40 0.40 0.40 0.39 0.40 0.41 0.43 0.44 0.43 0.43 | effort 0.26, starved/yr 0.043

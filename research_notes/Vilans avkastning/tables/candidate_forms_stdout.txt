@@ -1,0 +1,33 @@
+Per-pair floors by form (V: motionless rest; M: motion detection; VM: both). Today = library floor.
+pair                                     M2  today  V(wst)  V(whv)    M c     M lo-hi   VM c  VM lo
+water column -> planktivores         0.1740   1.00   0.971   0.971  0.940 0.760-1.000  0.913  0.738
+benthivores -> planktivores          0.1023   1.00   0.931   0.931  0.940 0.760-1.000  0.875  0.707
+whiting -> planktivores              0.0545   1.00   0.963   0.963  0.940 0.760-1.000  0.905  0.732
+mackerel -> planktivores             0.0186   1.00   1.000   1.000  1.000 1.000-1.000  1.000  1.000
+water column -> benthivores          0.0580   1.00   0.950   0.950  0.900 0.600-1.000  0.855  0.570
+whiting -> benthivores               0.1067   1.00   0.938   0.938  0.900 0.600-1.000  0.844  0.563
+water column -> whiting              0.1570   1.00   0.951   1.000  0.900 0.600-1.000  0.856  0.571
+benthivores -> whiting               0.1800   1.00   0.885   1.000  0.900 0.600-1.000  0.796  0.531
+water column -> mackerel             0.0210   1.00   1.000   1.000  1.000 1.000-1.000  1.000  1.000
+seals -> benthivores                 0.0373   0.90    ~1.0    ~1.0   0.61  0.30- 0.95  0.610  0.300
+seals -> whiting                     0.0139   0.85    ~1.0    ~1.0   0.70  0.25- 1.00  0.700  0.250
+seals -> water column                0.0033   0.70    ~1.0    ~1.0   0.75  0.33- 1.00  0.750  0.330
+seals -> planktivores                0.0050   0.35    ~1.0    ~1.0   0.90  0.50- 1.00  0.900  0.500
+porpoises -> benthivores             0.0476   0.75    ~1.0    ~1.0   0.76  0.60- 0.93  0.760  0.600
+porpoises -> whiting                 0.1407   0.90    ~1.0    ~1.0   0.95  0.77- 1.00  0.950  0.770
+porpoises -> water column            0.0147   0.90    ~1.0    ~1.0   0.95  0.77- 1.00  0.950  0.770
+porpoises -> planktivores            0.0662   1.00    ~1.0    ~1.0   1.00  0.83- 1.00  1.000  0.830
+V(wst) = whiting stops at rest; V(whv) = whiting hovers at rest (f = 1 for whiting as prey).
+V for mammals ~0.99-1.0 (search 1.0-1.2 m/s vs prey 0.1-0.2 m/s; rest_payoff_stdout.txt part D).
+
+Payoff per unit rest share, sum_p M2_p (1 - f_p) (/yr), and at the yardstick rho (%/yr of biomass)
+prey                    today         V only     VM central   VM low-floor  of which mammals (VM c)
+planktivores   0.0033  0.18% 0.0174  0.96% 0.0337  1.85% 0.1039  5.72%  0.0005
+benthivores    0.0156  0.55% 0.0252  0.88% 0.0510  1.79% 0.1167  4.09%  0.0260
+whiting        0.0162  0.86% 0.0446  2.36% 0.0705  3.74% 0.1947 10.32%  0.0112
+water column   0.0025  0.12% 0.0025  0.12% 0.0016  0.08% 0.0056  0.27%  0.0016
+mackerel       0.0000  0.00% 0.0000  0.00% 0.0000  0.00% 0.0000  0.00%  0.0000
+
+Seals -> planktivores: today's 0.35 is the schooling stand-in of the seal a (no F), not a rest value;
+the VM columns replace it with 0.9 for rest only, which drops 0.0028 of today's planktivore payoff.
+All M2 are BOOKED (upper bounds); realised fish-pair M2 is lower for several pairs.

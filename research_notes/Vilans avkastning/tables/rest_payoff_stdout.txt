@@ -1,0 +1,192 @@
+====================================================================================================
+A. Booked M2 on each fish group by predator, today's floors, and the rest payoff already in the model
+====================================================================================================
+
+planktivores: booked M2 fish 0.3494  mammals 0.0712  total 0.4206 /yr
+  predator            M2  share  floor    (key)  r=1/f  M2(1-f)  stage_access [J, A]
+  water column    0.1740   0.41   1.00     pair   1.00   0.0000  [0.6484, 0.1732]
+  benthivores     0.1023   0.24   1.00     pair   1.00   0.0000  [0.62, 0.18]
+  porpoises       0.0662   0.16   1.00     pair   1.00   0.0000  None
+  whiting         0.0545   0.13   1.00     pair   1.00   0.0000  [0.18, 0.0073]
+  mackerel        0.0186   0.04   1.00     pair   1.00   0.0000  [0.02, 0.0029]
+  seals           0.0050   0.01   0.35  species   2.86   0.0033  None
+  rest payoff in the model today: 0.0033 /yr of biomass per unit rest share (0.33 %/yr if the whole group rested all year)
+
+benthivores: booked M2 fish 0.1647  mammals 0.0849  total 0.2496 /yr
+  predator            M2  share  floor    (key)  r=1/f  M2(1-f)  stage_access [J, A]
+  whiting         0.1067   0.43   1.00  species   1.00   0.0000  [0.038, 0.0064]
+  water column    0.0580   0.23   1.00  species   1.00   0.0000  [0.3711, 0.01256]
+  porpoises       0.0476   0.19   0.75     pair   1.33   0.0119  [1.0, 0.63]
+  seals           0.0373   0.15   0.90     pair   1.11   0.0037  [1.0, 0.5]
+  rest payoff in the model today: 0.0156 /yr of biomass per unit rest share (1.56 %/yr if the whole group rested all year)
+
+whiting: booked M2 fish 0.3370  mammals 0.1546  total 0.4916 /yr
+  predator            M2  share  floor    (key)  r=1/f  M2(1-f)  stage_access [J, A]
+  benthivores     0.1800   0.37   1.00  species   1.00   0.0000  [0.68, 0.24]
+  water column    0.1570   0.32   1.00  species   1.00   0.0000  [0.4066, 0.07179]
+  porpoises       0.1407   0.29   0.90     pair   1.11   0.0141  [1.0, 0.95]
+  seals           0.0139   0.03   0.85     pair   1.18   0.0021  [1.0, 0.84]
+  rest payoff in the model today: 0.0162 /yr of biomass per unit rest share (1.62 %/yr if the whole group rested all year)
+
+water column: booked M2 fish 0.0000  mammals 0.0180  total 0.0180 /yr
+  predator            M2  share  floor    (key)  r=1/f  M2(1-f)  stage_access [J, A]
+  porpoises       0.0147   0.82   0.90     pair   1.11   0.0015  [0.054, 0.054]
+  seals           0.0033   0.18   0.70     pair   1.43   0.0010  [0.029, 0.029]
+  rest payoff in the model today: 0.0025 /yr of biomass per unit rest share (0.25 %/yr if the whole group rested all year)
+
+mackerel: booked M2 fish 0.0210  mammals 0.0000  total 0.0210 /yr
+  predator            M2  share  floor    (key)  r=1/f  M2(1-f)  stage_access [J, A]
+  water column    0.0210   1.00   1.00  species   1.00   0.0000  [0.14, 0.14]
+  rest payoff in the model today: 0.0000 /yr of biomass per unit rest share (0.00 %/yr if the whole group rested all year)
+
+M2 on juveniles vs adults: the engine has ONE rest share per cell for J and A; stage_access above
+shows that most fish-pair predation falls on J (f_J >> f_A), while Q2's activity data are for adults.
+
+====================================================================================================
+B. Payoff of a uniform activity-risk ratio r per predator class, at the yardstick rest share rho
+====================================================================================================
+rho = 1 - (foraging share at need) = 1 - realised / S, S = uncapped / T; fix105 yardstick (sizing only)
+  planktivores  T 0.93  S (while foraging) 0.581  realised 0.261  foraging share at need 0.45  rho 0.55
+  benthivores   T 0.95  S (while foraging) 0.979  realised 0.638  foraging share at need 0.65  rho 0.35
+  whiting       T 0.89  S (while foraging) 0.826  realised 0.389  foraging share at need 0.47  rho 0.53
+  water column  T 0.97  S (while foraging) 0.779  realised 0.397  foraging share at need 0.51  rho 0.49
+  mackerel      T 0.97  S (while foraging) 0.572  realised 0.283  foraging share at need 0.49  rho 0.51
+
+Saving per unit rested time (/yr) and payoff at rho (%/yr of biomass); class r applied to that class only,
+others at r = 1.  enc = a is the active prey's encounter (fish pairs); avg(T_f) = a is a field average
+over activity share T_f (mammal pairs; a set from diets), mu_act = M2/(T_f + (1-T_f)/r).
+
+planktivores (fish M2 0.3494, mammal M2 0.0712, rho 0.55)
+  r       fish enc: save  pay%  mam avg0.50: save  pay%  mam avg0.75: save  pay%  mam avg0.90: save  pay%
+  1.05           0.0166  0.92               0.0035  0.19             0.0034  0.19             0.0034  0.19
+  1.10           0.0318  1.75               0.0068  0.37             0.0066  0.36             0.0065  0.36
+  1.20           0.0582  3.21               0.0129  0.71             0.0124  0.68             0.0121  0.66
+  1.33           0.0867  4.77               0.0202  1.11             0.0188  1.04             0.0181  1.00
+  1.50           0.1165  6.41               0.0285  1.57             0.0259  1.43             0.0246  1.35
+  2.00           0.1747  9.62               0.0475  2.61             0.0407  2.24             0.0375  2.06
+  3.00           0.2329 12.82               0.0712  3.92             0.0570  3.14             0.0509  2.80
+
+benthivores (fish M2 0.1647, mammal M2 0.0849, rho 0.35)
+  r       fish enc: save  pay%  mam avg0.50: save  pay%  mam avg0.75: save  pay%  mam avg0.90: save  pay%
+  1.05           0.0078  0.27               0.0041  0.14             0.0041  0.14             0.0041  0.14
+  1.10           0.0150  0.52               0.0081  0.28             0.0079  0.28             0.0078  0.27
+  1.20           0.0274  0.96               0.0154  0.54             0.0148  0.51             0.0144  0.50
+  1.33           0.0409  1.42               0.0240  0.84             0.0225  0.78             0.0216  0.75
+  1.50           0.0549  1.91               0.0340  1.18             0.0309  1.08             0.0293  1.02
+  2.00           0.0824  2.87               0.0566  1.97             0.0485  1.69             0.0447  1.56
+  3.00           0.1098  3.82               0.0849  2.96             0.0679  2.37             0.0606  2.11
+
+whiting (fish M2 0.3370, mammal M2 0.1546, rho 0.53)
+  r       fish enc: save  pay%  mam avg0.50: save  pay%  mam avg0.75: save  pay%  mam avg0.90: save  pay%
+  1.05           0.0160  0.85               0.0075  0.40             0.0075  0.39             0.0074  0.39
+  1.10           0.0306  1.62               0.0147  0.78             0.0144  0.76             0.0142  0.75
+  1.20           0.0562  2.97               0.0281  1.49             0.0269  1.42             0.0262  1.39
+  1.33           0.0836  4.42               0.0438  2.32             0.0409  2.16             0.0393  2.08
+  1.50           0.1123  5.94               0.0618  3.27             0.0562  2.97             0.0533  2.82
+  2.00           0.1685  8.91               0.1031  5.45             0.0883  4.67             0.0814  4.30
+  3.00           0.2247 11.88               0.1546  8.18             0.1237  6.54             0.1104  5.84
+
+water column (fish M2 0.0000, mammal M2 0.0180, rho 0.49)
+  r       fish enc: save  pay%  mam avg0.50: save  pay%  mam avg0.75: save  pay%  mam avg0.90: save  pay%
+  1.05           0.0000  0.00               0.0009  0.04             0.0009  0.04             0.0009  0.04
+  1.10           0.0000  0.00               0.0017  0.08             0.0017  0.08             0.0017  0.08
+  1.20           0.0000  0.00               0.0033  0.16             0.0031  0.15             0.0031  0.15
+  1.33           0.0000  0.00               0.0051  0.25             0.0048  0.23             0.0046  0.22
+  1.50           0.0000  0.00               0.0072  0.35             0.0065  0.32             0.0062  0.30
+  2.00           0.0000  0.00               0.0120  0.59             0.0103  0.50             0.0095  0.46
+  3.00           0.0000  0.00               0.0180  0.88             0.0144  0.71             0.0129  0.63
+
+mackerel (fish M2 0.0210, mammal M2 0.0000, rho 0.51)
+  r       fish enc: save  pay%  mam avg0.50: save  pay%  mam avg0.75: save  pay%  mam avg0.90: save  pay%
+  1.05           0.0010  0.05               0.0000  0.00             0.0000  0.00             0.0000  0.00
+  1.10           0.0019  0.10               0.0000  0.00             0.0000  0.00             0.0000  0.00
+  1.20           0.0035  0.18               0.0000  0.00             0.0000  0.00             0.0000  0.00
+  1.33           0.0052  0.26               0.0000  0.00             0.0000  0.00             0.0000  0.00
+  1.50           0.0070  0.35               0.0000  0.00             0.0000  0.00             0.0000  0.00
+  2.00           0.0105  0.53               0.0000  0.00             0.0000  0.00             0.0000  0.00
+  3.00           0.0140  0.71               0.0000  0.00             0.0000  0.00             0.0000  0.00
+
+====================================================================================================
+C. Energy: one foraging tick at need vs the mortality saving of one rested tick (MJ/t/tick)
+====================================================================================================
+forage value = S x ceiling x (1 - sda) - (feeding_cost - 1) RM  (upper bound: assimilation < 1 ignored)
+saving value = (M2_total (1 - 1/r)) / 1460 x (E_lean + 1.0 x ME)  (enc form, all predators at r)
+
+planktivores: ceiling 86.5, S 0.58, RM 8.0, feeding_cost 1.65, sda 0.11 -> forage value 39.5 MJ/t/tick; extra foraging cost (fc-1)RM 5.20
+  tonne value E + ME = 8990 MJ; total booked M2 0.4206: complete safety at rest (r = inf) saves 2.590 MJ/t/tick = 0.0656 of the forage value
+    r 1.10: saving 0.2354 MJ/t/tick (0.00596 of the forage value; 0.045 of the extra foraging cost)
+    r 1.50: saving 0.8633 MJ/t/tick (0.02185 of the forage value; 0.166 of the extra foraging cost)
+    r 2.00: saving 1.2950 MJ/t/tick (0.03278 of the forage value; 0.249 of the extra foraging cost)
+  -> at need rest never pays by risk (saving << forage value); at exact surplus the forage value of the
+     marginal tick is ~0 (reserve-room cap) and only the saving remains: any r > 1 pays in theory.
+
+benthivores: ceiling 26.2, S 0.98, RM 3.33, feeding_cost 1.02, sda 0.1 -> forage value 23.0 MJ/t/tick; extra foraging cost (fc-1)RM 0.07
+  tonne value E + ME = 5400 MJ; total booked M2 0.2496: complete safety at rest (r = inf) saves 0.923 MJ/t/tick = 0.0401 of the forage value
+    r 1.10: saving 0.0839 MJ/t/tick (0.00365 of the forage value; 1.260 of the extra foraging cost)
+    r 1.50: saving 0.3077 MJ/t/tick (0.01338 of the forage value; 4.621 of the extra foraging cost)
+    r 2.00: saving 0.4616 MJ/t/tick (0.02007 of the forage value; 6.931 of the extra foraging cost)
+  -> at need rest never pays by risk (saving << forage value); at exact surplus the forage value of the
+     marginal tick is ~0 (reserve-room cap) and only the saving remains: any r > 1 pays in theory.
+
+whiting: ceiling 31.3, S 0.83, RM 3.87, feeding_cost 1.5, sda 0.12 -> forage value 20.8 MJ/t/tick; extra foraging cost (fc-1)RM 1.94
+  tonne value E + ME = 5900 MJ; total booked M2 0.4916: complete safety at rest (r = inf) saves 1.987 MJ/t/tick = 0.0953 of the forage value
+    r 1.10: saving 0.1806 MJ/t/tick (0.00866 of the forage value; 0.093 of the extra foraging cost)
+    r 1.50: saving 0.6622 MJ/t/tick (0.03177 of the forage value; 0.342 of the extra foraging cost)
+    r 2.00: saving 0.9933 MJ/t/tick (0.04765 of the forage value; 0.513 of the extra foraging cost)
+  -> at need rest never pays by risk (saving << forage value); at exact surplus the forage value of the
+     marginal tick is ~0 (reserve-room cap) and only the saving remains: any r > 1 pays in theory.
+
+water column: ceiling 29.8, S 0.78, RM 3.29, feeding_cost 2.14, sda 0.12 -> forage value 16.7 MJ/t/tick; extra foraging cost (fc-1)RM 3.75
+  tonne value E + ME = 6180 MJ; total booked M2 0.0180: complete safety at rest (r = inf) saves 0.076 MJ/t/tick = 0.0046 of the forage value
+    r 1.10: saving 0.0069 MJ/t/tick (0.00042 of the forage value; 0.002 of the extra foraging cost)
+    r 1.50: saving 0.0254 MJ/t/tick (0.00152 of the forage value; 0.007 of the extra foraging cost)
+    r 2.00: saving 0.0381 MJ/t/tick (0.00228 of the forage value; 0.010 of the extra foraging cost)
+  -> at need rest never pays by risk (saving << forage value); at exact surplus the forage value of the
+     marginal tick is ~0 (reserve-room cap) and only the saving remains: any r > 1 pays in theory.
+
+mackerel: ceiling 66.2, S 0.57, RM 4.59, feeding_cost 1.02, sda 0.12 -> forage value 33.3 MJ/t/tick; extra foraging cost (fc-1)RM 0.09
+  tonne value E + ME = 11650 MJ; total booked M2 0.0210: complete safety at rest (r = inf) saves 0.168 MJ/t/tick = 0.0050 of the forage value
+    r 1.10: saving 0.0152 MJ/t/tick (0.00046 of the forage value; 0.166 of the extra foraging cost)
+    r 1.50: saving 0.0559 MJ/t/tick (0.00168 of the forage value; 0.608 of the extra foraging cost)
+    r 2.00: saving 0.0838 MJ/t/tick (0.00252 of the forage value; 0.913 of the extra foraging cost)
+  -> at need rest never pays by risk (saving << forage value); at exact surplus the forage value of the
+     marginal tick is ~0 (reserve-room cap) and only the saving remains: any r > 1 pays in theory.
+
+====================================================================================================
+D. Gerritsen-Strickler encounter ratio r_enc = v_rel(v, u) / v_rel(v, 0) (rest = motionless prey)
+====================================================================================================
+
+  prey u 0.10 m/s (pout, juvenile gadoids, whiting)
+    saithe day 1.0 BL/s x 0.50 m               v 0.500: r_enc 1.013  (floor-equivalent 0.987)
+    saithe night x0.6                          v 0.300: r_enc 1.037  (floor-equivalent 0.964)
+    saithe low 0.5 BL/s x0.3 night             v 0.075: r_enc 1.583  (floor-equivalent 0.632)
+    whiting 0.8 BL/s x 0.28 m                  v 0.224: r_enc 1.066  (floor-equivalent 0.938)
+    whiting 0.6 BL/s x 0.25 m (293 reading)    v 0.150: r_enc 1.148  (floor-equivalent 0.871)
+    cod 0.4 BL/s x 0.40 m (benthivores)        v 0.160: r_enc 1.130  (floor-equivalent 0.885)
+    cod low 0.2 BL/s x 0.40 m                  v 0.080: r_enc 1.517  (floor-equivalent 0.659)
+    mackerel 1.8 BL/s x 0.32 m                 v 0.576: r_enc 1.010  (floor-equivalent 0.990)
+    hake 0.5 BL/s x 0.50 m                     v 0.250: r_enc 1.053  (floor-equivalent 0.949)
+    spurdog 0.5 BL/s x 0.70 m                  v 0.350: r_enc 1.027  (floor-equivalent 0.974)
+    harbour seal search ~1.0 m/s [J]           v 1.000: r_enc 1.003  (floor-equivalent 0.997)
+    harbour porpoise search ~1.2 m/s [J]       v 1.200: r_enc 1.002  (floor-equivalent 0.998)
+
+  prey u 0.20 m/s (herring)
+    saithe day 1.0 BL/s x 0.50 m               v 0.500: r_enc 1.053  (floor-equivalent 0.949)
+    saithe night x0.6                          v 0.300: r_enc 1.148  (floor-equivalent 0.871)
+    saithe low 0.5 BL/s x0.3 night             v 0.075: r_enc 2.792  (floor-equivalent 0.358)
+    whiting 0.8 BL/s x 0.28 m                  v 0.224: r_enc 1.266  (floor-equivalent 0.790)
+    whiting 0.6 BL/s x 0.25 m (293 reading)    v 0.150: r_enc 1.583  (floor-equivalent 0.632)
+    cod 0.4 BL/s x 0.40 m (benthivores)        v 0.160: r_enc 1.517  (floor-equivalent 0.659)
+    cod low 0.2 BL/s x 0.40 m                  v 0.080: r_enc 2.633  (floor-equivalent 0.380)
+    mackerel 1.8 BL/s x 0.32 m                 v 0.576: r_enc 1.040  (floor-equivalent 0.961)
+    hake 0.5 BL/s x 0.50 m                     v 0.250: r_enc 1.213  (floor-equivalent 0.824)
+    spurdog 0.5 BL/s x 0.70 m                  v 0.350: r_enc 1.109  (floor-equivalent 0.902)
+    harbour seal search ~1.0 m/s [J]           v 1.000: r_enc 1.013  (floor-equivalent 0.987)
+    harbour porpoise search ~1.2 m/s [J]       v 1.200: r_enc 1.009  (floor-equivalent 0.991)
+
+  bed ambusher (anglerfish; prey must swim into the strike zone, v -> 0): r_enc -> infinity for a
+  motionless prey; anglerfish is a small share of every water-column pair's a (0.044 of the take on
+  benthivores, research_notes/'Bottenfiskens och vattenpelarens golv' D1) [S/J].
+  obligate swimmers (herring schools 0.25-0.42 m/s even when not feeding; mackerel): 'rest' is not
+  motionless, r_enc = 1 by this route [S, research_notes/'Planktivorernas golv' E8, 'Makrillens
+  antipredatorbeteende'].

@@ -1,0 +1,46 @@
+== whiting, all sizes: cruises 10, hauls 181, records 457, stomachs 3221
+   share of hauls with krill (cruises with any krill): 0.392; record share 0.280
+   P(krill in another length class | one) = 0.619 vs cruise-marginal expectation 0.354 (pair weight 307); ICC on cruise-centred presence = 0.39 (hauls 127, n0 3.2)
+   per-fish FO bounds inside krill-positive hauls (n 71, 1450 stomachs): lower 0.088 (positive records / stomachs), upper 0.646 (stomachs in positive records / stomachs)
+   krill per stomach (hauls with counts, n 181): mean 2.19, CV 3.66; top 10% of hauls (18) hold 0.85 of the summed per-stomach means; positive hauls (n 71) median 1.43, p90 14.1, max 83.0
+   same rectangle, <= 3 days: P(j krill | i krill) = 0.34 over 29 ordered pairs; haul marginal 0.39
+== whiting, target sizes: cruises 10, hauls 152, records 292, stomachs 2026
+   share of hauls with krill (cruises with any krill): 0.309; record share 0.260
+   P(krill in another length class | one) = 0.667 vs cruise-marginal expectation 0.330 (pair weight 114); ICC on cruise-centred presence = 0.51 (hauls 87, n0 2.6)
+   per-fish FO bounds inside krill-positive hauls (n 47, 770 stomachs): lower 0.099 (positive records / stomachs), upper 0.723 (stomachs in positive records / stomachs)
+   krill per stomach (hauls with counts, n 152): mean 2.66, CV 3.73; top 10% of hauls (15) hold 0.90 of the summed per-stomach means; positive hauls (n 47) median 1.67, p90 27.9, max 93.2
+   same rectangle, <= 3 days: P(j krill | i krill) = 0.20 over 20 ordered pairs; haul marginal 0.31
+== saithe, all sizes: cruises 33, hauls 256, records 510, stomachs 6283
+   share of hauls with krill (cruises with any krill): 0.590; record share 0.557
+   P(krill in another length class | one) = 0.836 vs cruise-marginal expectation 0.676 (pair weight 567); ICC on cruise-centred presence = 0.42 (hauls 146, n0 2.7)
+   per-fish FO bounds inside krill-positive hauls (n 151, 5073 stomachs): lower 0.056 (positive records / stomachs), upper 0.848 (stomachs in positive records / stomachs)
+   krill per stomach (hauls with counts, n 157): mean 10.73, CV 2.83; top 10% of hauls (16) hold 0.84 of the summed per-stomach means; positive hauls (n 52) median 11.36, p90 110.1, max 174.0
+   same rectangle, <= 3 days: P(j krill | i krill) = 0.85 over 47 ordered pairs; haul marginal 0.59
+== saithe, target sizes: cruises 29, hauls 198, records 338, stomachs 3347
+   share of hauls with krill (cruises with any krill): 0.571; record share 0.544
+   P(krill in another length class | one) = 0.873 vs cruise-marginal expectation 0.732 (pair weight 275); ICC on cruise-centred presence = 0.43 (hauls 98, n0 2.4)
+   per-fish FO bounds inside krill-positive hauls (n 113, 2546 stomachs): lower 0.072 (positive records / stomachs), upper 0.877 (stomachs in positive records / stomachs)
+   krill per stomach (hauls with counts, n 124): mean 12.61, CV 2.76; top 10% of hauls (12) hold 0.86 of the summed per-stomach means; positive hauls (n 39) median 10.17, p90 124.2, max 174.0
+   same rectangle, <= 3 days: P(j krill | i krill) = 0.79 over 38 ordered pairs; haul marginal 0.57
+== Norway pout, all sizes: cruises 3, hauls 54, records 127, stomachs 1742
+   share of hauls with krill (cruises with any krill): 0.759; record share 0.748
+   P(krill in another length class | one) = 0.853 vs cruise-marginal expectation 0.757 (pair weight 204); ICC on cruise-centred presence = 0.14 (hauls 40, n0 2.8)
+   per-fish FO bounds inside krill-positive hauls (n 41, 1466 stomachs): lower 0.065 (positive records / stomachs), upper 0.869 (stomachs in positive records / stomachs)
+   krill per stomach (hauls with counts, n 54): mean 1.44, CV 2.90; top 10% of hauls (5) hold 0.65 of the summed per-stomach means; positive hauls (n 41) median 0.61, p90 4.0, max 29.9
+== Norway pout, target sizes: cruises 3, hauls 54, records 127, stomachs 1742
+   share of hauls with krill (cruises with any krill): 0.759; record share 0.748
+   P(krill in another length class | one) = 0.853 vs cruise-marginal expectation 0.757 (pair weight 204); ICC on cruise-centred presence = 0.14 (hauls 40, n0 2.8)
+   per-fish FO bounds inside krill-positive hauls (n 41, 1466 stomachs): lower 0.065 (positive records / stomachs), upper 0.869 (stomachs in positive records / stomachs)
+   krill per stomach (hauls with counts, n 54): mean 1.44, CV 2.90; top 10% of hauls (5) hold 0.65 of the summed per-stomach means; positive hauls (n 41) median 0.61, p90 4.0, max 29.9
+== cod, all sizes: cruises 4, hauls 89, records 232, stomachs 1300
+   share of hauls with krill (cruises with any krill): 0.247; record share 0.190
+   P(krill in another length class | one) = 0.579 vs cruise-marginal expectation 0.300 (pair weight 121); ICC on cruise-centred presence = 0.43 (hauls 55, n0 3.6)
+   per-fish FO bounds inside krill-positive hauls (n 22, 516 stomachs): lower 0.085 (positive records / stomachs), upper 0.610 (stomachs in positive records / stomachs)
+   krill per stomach (hauls with counts, n 89): mean 0.38, CV 3.86; top 10% of hauls (9) hold 0.92 of the summed per-stomach means; positive hauls (n 22) median 0.32, p90 3.7, max 9.5
+   same rectangle, <= 3 days: P(j krill | i krill) = 0.67 over 3 ordered pairs; haul marginal 0.25
+== cod, target sizes: cruises 4, hauls 80, records 199, stomachs 1162
+   share of hauls with krill (cruises with any krill): 0.263; record share 0.211
+   P(krill in another length class | one) = 0.627 vs cruise-marginal expectation 0.315 (pair weight 102); ICC on cruise-centred presence = 0.46 (hauls 52, n0 3.3)
+   per-fish FO bounds inside krill-positive hauls (n 21, 481 stomachs): lower 0.087 (positive records / stomachs), upper 0.642 (stomachs in positive records / stomachs)
+   krill per stomach (hauls with counts, n 80): mean 0.42, CV 3.66; top 10% of hauls (8) hold 0.91 of the summed per-stomach means; positive hauls (n 21) median 0.33, p90 3.7, max 9.5
+   same rectangle, <= 3 days: P(j krill | i krill) = 0.67 over 3 ordered pairs; haul marginal 0.26

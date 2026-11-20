@@ -1,0 +1,79 @@
+species year Q area: records, stomachs, weighed records, krill-bearing records, weighed krill-bearing
+cod          1981 Q1 C+S North Sea  rec    92 stom    279 weighed    87 krill   12 weighed+krill   12
+cod          1981 Q1 NE North Sea   rec   100 stom    447 weighed    96 krill   26 weighed+krill   26
+cod          1981 Q1 Skagerrak      rec     6 stom     22 weighed     6 krill    6 weighed+krill    6
+cod          1981 Q4 C+S North Sea  rec   103 stom    417 weighed   100 krill    3 weighed+krill    3
+cod          1981 Q4 NE North Sea   rec    39 stom    105 weighed    37 krill    1 weighed+krill    1
+cod          1981 Q4 NW North Sea   rec     6 stom     46 weighed     6 krill    1 weighed+krill    1
+cod          1986 Q1 C+S North Sea  rec    19 stom    117 weighed     0 krill    1 weighed+krill    0
+cod          2014 Q4 other          rec   623 stom    623 weighed   403 krill    1 weighed+krill    1
+cod          2023 Q3 Skagerrak      rec   232 stom    232 weighed    40 krill    2 weighed+krill    2
+cod          2024 Q1 Kattegat       rec   123 stom    123 weighed    71 krill    1 weighed+krill    1
+cod          2025 Q1 other          rec   198 stom    198 weighed   170 krill    1 weighed+krill    1
+haddock      2025 Q1 NE North Sea   rec   276 stom    440 weighed   180 krill    2 weighed+krill    2
+hake         2024 Q3 Kattegat       rec    67 stom     67 weighed    28 krill    2 weighed+krill    2
+hake         2024 Q3 Skagerrak      rec   107 stom    107 weighed    48 krill    1 weighed+krill    1
+norway pout  1980 Q1 C+S North Sea  rec    15 stom    171 weighed    15 krill    6 weighed+krill    6
+norway pout  1980 Q1 NE North Sea   rec    22 stom    433 weighed    22 krill   17 weighed+krill   17
+norway pout  1980 Q1 NW North Sea   rec    64 stom    822 weighed    61 krill   47 weighed+krill   47
+norway pout  1980 Q2 C+S North Sea  rec     5 stom     45 weighed     5 krill    3 weighed+krill    3
+norway pout  1980 Q3 NE North Sea   rec     8 stom    116 weighed     8 krill    6 weighed+krill    6
+norway pout  1980 Q3 NW North Sea   rec    18 stom    197 weighed    18 krill   16 weighed+krill   16
+norway pout  1991 Q3 NW North Sea   rec     2 stom      2 weighed     2 krill    0 weighed+krill    0
+saithe       1981 Q1 NE North Sea   rec    17 stom     78 weighed     0 krill    8 weighed+krill    0
+saithe       1981 Q1 NW North Sea   rec    13 stom     48 weighed     0 krill    4 weighed+krill    0
+saithe       1981 Q2 NE North Sea   rec    17 stom    141 weighed     0 krill   12 weighed+krill    0
+saithe       1981 Q3 unknown        rec     8 stom     81 weighed     0 krill    6 weighed+krill    0
+saithe       1981 Q4 C+S North Sea  rec     3 stom    202 weighed     0 krill    1 weighed+krill    0
+saithe       1981 Q4 NE North Sea   rec    18 stom    146 weighed     0 krill   10 weighed+krill    0
+saithe       1981 Q4 unknown        rec     2 stom     24 weighed     0 krill    1 weighed+krill    0
+saithe       1982 Q1 NW North Sea   rec    16 stom    130 weighed     0 krill    1 weighed+krill    0
+saithe       1982 Q3 NE North Sea   rec    28 stom    406 weighed    11 krill   11 weighed+krill    7
+saithe       1982 Q3 NW North Sea   rec    54 stom    805 weighed    19 krill   21 weighed+krill   12
+saithe       1982 Q4 NW North Sea   rec    42 stom    435 weighed    15 krill   12 weighed+krill    6
+saithe       1983 Q1 NE North Sea   rec    23 stom     71 weighed     0 krill    1 weighed+krill    0
+saithe       1983 Q1 NW North Sea   rec    30 stom    144 weighed     0 krill    1 weighed+krill    0
+saithe       1984 Q1 NE North Sea   rec     1 stom      2 weighed     1 krill    1 weighed+krill    1
+saithe       1984 Q3 NE North Sea   rec    57 stom    814 weighed    14 krill   11 weighed+krill   11
+saithe       1984 Q3 NW North Sea   rec    89 stom    869 weighed    22 krill    3 weighed+krill    3
+saithe       1986 Q3 NE North Sea   rec   174 stom   2612 weighed     0 krill   12 weighed+krill    0
+saithe       1986 Q3 NW North Sea   rec   221 stom   2089 weighed     0 krill    6 weighed+krill    0
+saithe       1987 Q1 NW North Sea   rec    15 stom     34 weighed     0 krill    1 weighed+krill    0
+saithe       1987 Q3 NE North Sea   rec    45 stom    455 weighed     0 krill    3 weighed+krill    0
+saithe       1991 Q2 C+S North Sea  rec     5 stom      9 weighed     0 krill    1 weighed+krill    0
+saithe       2026 Q1 NE North Sea   rec   134 stom    324 weighed    99 krill   46 weighed+krill   46
+saithe       2026 Q1 NW North Sea   rec    73 stom    146 weighed    54 krill   19 weighed+krill   19
+whiting      1981 Q1 C+S North Sea  rec    87 stom    626 weighed     0 krill   19 weighed+krill    0
+whiting      1981 Q1 NE North Sea   rec    95 stom    570 weighed     0 krill   42 weighed+krill    0
+whiting      1981 Q1 NW North Sea   rec    40 stom    339 weighed     0 krill   19 weighed+krill    0
+whiting      1981 Q1 Skagerrak      rec     6 stom     51 weighed     0 krill    2 weighed+krill    0
+whiting      1981 Q3 NW North Sea   rec    28 stom    178 weighed     0 krill    4 weighed+krill    0
+whiting      1981 Q4 C+S North Sea  rec   112 stom    921 weighed     0 krill   18 weighed+krill    0
+whiting      1981 Q4 NE North Sea   rec    28 stom    160 weighed     0 krill    2 weighed+krill    0
+whiting      1981 Q4 NW North Sea   rec     3 stom     27 weighed     0 krill    2 weighed+krill    0
+whiting      1986 Q1 C+S North Sea  rec    10 stom     79 weighed     0 krill    0 weighed+krill    0
+whiting      1986 Q1 NE North Sea   rec    13 stom     99 weighed     0 krill    1 weighed+krill    0
+whiting      1986 Q1 NW North Sea   rec     3 stom     23 weighed     0 krill    0 weighed+krill    0
+whiting      1991 Q1 C+S North Sea  rec     1 stom      5 weighed     1 krill    0 weighed+krill    0
+whiting      1991 Q1 NE North Sea   rec     3 stom      7 weighed     0 krill    0 weighed+krill    0
+whiting      1991 Q1 NW North Sea   rec     8 stom     35 weighed     0 krill    0 weighed+krill    0
+whiting      1991 Q2 C+S North Sea  rec   171 stom   1271 weighed     0 krill    0 weighed+krill    0
+whiting      1991 Q2 Kattegat       rec    46 stom    148 weighed    46 krill    5 weighed+krill    5
+whiting      1991 Q2 NE North Sea   rec    33 stom    275 weighed     0 krill    0 weighed+krill    0
+whiting      1991 Q2 NW North Sea   rec    41 stom    301 weighed     0 krill    0 weighed+krill    0
+whiting      1991 Q2 Skagerrak      rec    46 stom    130 weighed    46 krill   23 weighed+krill   23
+whiting      2020 Q4 Kattegat       rec    36 stom     36 weighed    15 krill    0 weighed+krill    0
+whiting      2020 Q4 other          rec   307 stom    307 weighed   193 krill    0 weighed+krill    0
+whiting      2021 Q1 other          rec    57 stom     57 weighed    31 krill    0 weighed+krill    0
+whiting      2022 Q1 C+S North Sea  rec   358 stom    358 weighed   221 krill    0 weighed+krill    0
+whiting      2022 Q1 Kattegat       rec   251 stom    251 weighed     0 krill    0 weighed+krill    0
+whiting      2022 Q1 NE North Sea   rec    40 stom     40 weighed    16 krill    0 weighed+krill    0
+whiting      2022 Q1 Skagerrak      rec   255 stom    255 weighed    25 krill    0 weighed+krill    0
+whiting      2022 Q3 C+S North Sea  rec   336 stom    336 weighed   238 krill    0 weighed+krill    0
+whiting      2022 Q3 Kattegat       rec   361 stom    361 weighed    18 krill    2 weighed+krill    2
+whiting      2022 Q3 NE North Sea   rec    51 stom     51 weighed     4 krill    0 weighed+krill    0
+whiting      2022 Q3 Skagerrak      rec   284 stom    284 weighed    15 krill    2 weighed+krill    2
+whiting      2022 Q4 C+S North Sea  rec    58 stom     58 weighed    48 krill    0 weighed+krill    0
+whiting      2023 Q1 C+S North Sea  rec   276 stom    276 weighed   172 krill    0 weighed+krill    0
+whiting      2023 Q1 other          rec    82 stom     82 weighed    46 krill    0 weighed+krill    0
+whiting      2024 Q1 other          rec   569 stom    569 weighed   168 krill    0 weighed+krill    0

@@ -1,0 +1,44 @@
+group                T     unc    S     X_eff   feed(need) field | k_a need/field | tau need/field
+planktivorous_fish   0.931  0.532 0.572    1.34   0.262    0.231 | 0.293 / 0.247  | 0.49 / 0.43
+benthivorous_fish    0.954  0.928 0.973   36.31   0.633    0.521 | 0.054 / 0.033  | 0.68 / 0.56
+whiting              0.898  0.751 0.837    5.13   0.390    0.455 | 0.150 / 0.200  | 0.52 / 0.61
+predatory_fish       0.970  0.756 0.779    3.53   0.397    0.375 | 0.197 / 0.179  | 0.53 / 0.50
+mackerel             0.972  0.550 0.566    1.30   0.282    0.137 | 0.313 / 0.126  | 0.51 / 0.25
+
+Per prey (seed-mean share of the uncapped handling time -> x_j = share X; wo = potential without prey j)
+k_a(j) = factor on that prey's a alone to reach need / field ('none' = even removing it leaves the potential above the target)
+
+planktivorous_fish  (X 1.34, T 0.931, need 0.262, field 0.231)
+   krill                share 0.386  x_j   0.52  wo 0.390  k_a(j) need   none  field   none
+   zooplankton          share 0.614  x_j   0.82  wo 0.320  k_a(j) need   none  field   none
+
+benthivorous_fish  (X 36.31, T 0.954, need 0.633, field 0.521)
+   benthic_infauna      share 0.475  x_j  17.26  wo 0.907  k_a(j) need   none  field   none
+   krill                share 0.039  x_j   1.41  wo 0.926  k_a(j) need   none  field   none
+   mobile_epifauna      share 0.342  x_j  12.41  wo 0.923  k_a(j) need   none  field   none
+   norway_lobster       share 0.119  x_j   4.33  wo 0.923  k_a(j) need   none  field   none
+   planktivorous_fish   share 0.024  x_j   0.88  wo 0.927  k_a(j) need   none  field   none
+   whiting              share 0.001  x_j   0.03  wo 0.928  k_a(j) need   none  field   none
+
+whiting  (X 5.13, T 0.898, need 0.390, field 0.455)
+   benthivorous_fish    share 0.003  x_j   0.01  wo 0.751  k_a(j) need   none  field   none
+   krill                share 0.823  x_j   4.22  wo 0.470  k_a(j) need   none  field   none
+   mobile_epifauna      share 0.119  x_j   0.61  wo 0.720  k_a(j) need   none  field   none
+   planktivorous_fish   share 0.046  x_j   0.24  wo 0.743  k_a(j) need   none  field   none
+   zooplankton          share 0.009  x_j   0.05  wo 0.749  k_a(j) need   none  field   none
+
+predatory_fish  (X 3.53, T 0.970, need 0.397, field 0.375)
+   benthivorous_fish    share 0.111  x_j   0.39  wo 0.726  k_a(j) need   none  field   none
+   krill                share 0.441  x_j   1.56  wo 0.570  k_a(j) need   none  field   none
+   mackerel             share 0.000  x_j   0.00  wo 0.756  k_a(j) need   none  field   none
+   planktivorous_fish   share 0.360  x_j   1.27  wo 0.609  k_a(j) need   none  field   none
+   whiting              share 0.085  x_j   0.30  wo 0.726  k_a(j) need   none  field   none
+   zooplankton          share 0.003  x_j   0.01  wo 0.755  k_a(j) need   none  field   none
+
+mackerel  (X 1.30, T 0.972, need 0.282, field 0.137)
+   krill                share 0.681  x_j   0.89  wo 0.272  k_a(j) need     ~0  field   none
+   planktivorous_fish   share 0.134  x_j   0.17  wo 0.516  k_a(j) need   none  field   none
+   zooplankton          share 0.185  x_j   0.24  wo 0.500  k_a(j) need   none  field   none
+
+Ratio of the needed generic a-factor between groups (max/min, need): 5.8x; tau (max/min): 1.39x
+Ratio (field target): a-factor 7.4x; tau 2.43x

@@ -1,0 +1,31 @@
+1. Energy-type carrying cost k (fraction of RM at fill 1): evidence vs the learner's k_crit
+   group          k low / central / high      k_crit   central / k_crit
+   benthivores    +0.00 / +0.05 / +0.11       2.14   +0.023
+   whiting        +0.00 / +0.05 / +0.11       1.92   +0.026
+   water_column   +0.00 / +0.05 / +0.11       2.51   +0.020
+   planktivores   -0.15 / -0.06 / +0.04       1.88   -0.029
+   mackerel       -0.45 / -0.21 / -0.02       1.29   -0.163
+   Field fish (optimal_fill B, 20-d gaps): k 0.1 moves the optimum 0.94 -> 0.93, k 1.0 -> 0.87,
+   so the evidenced gadoid k (<= 0.11) moves a field optimum by <= ~0.01 [D].
+
+2. Hazard-type cost beta (predation hazard at fill 1 / at fill 0, minus 1)
+   evidence in target species: none measured within fill 0-1; lean fish swim worse and are
+   taken more at the LOW end (cod K 0.54 endurance x0.30 [A]; PROXY smolts RR 1.8-3.0 [F/D];
+   PROXY damselfish RR 3.0 [A/D]); in-range cod K 0.68 -> 0.92: Ucrit up, sprint unchanged [A];
+   Pacific herring (PROXY) lipid x2: Ucrit unchanged [F]. Sign of beta: <= 0 [J].
+   group          beta needed: learner (D1)   field optimum at field mean (D2, 10-20 d gaps)
+   planktivores        4.4                     ~0.3-1 (whiting dynamic programme only)
+   benthivores         5.9                     ~0.3-1 (whiting dynamic programme only)
+   whiting             2.7                     ~0.3-1 (whiting dynamic programme only)
+   water_column       61.1                     ~0.3-1 (whiting dynamic programme only)
+   mackerel           76.9                     ~0.3-1 (whiting dynamic programme only)
+
+3. Inertia (the one bird-mechanism leg that transfers to water): a full reserve adds mass
+   to accelerate in a fast start. Mass added at fill 1 per lean mass [D, J]: gadoid liver
+   lipid ~0.05 (HSI 8 % x 0.6), herring ~0.12-0.14 lipid, mackerel ~0.18 lipid. PROXY gonad
+   slope (mosquitofish): -0.37 % Ucrit per % mass [A/D] -> Ucrit -2 / -5 / -7 % if lipid acted
+   like gonad mass. Gonad mass is dense and bulges the abdomen; lipid is lighter than water
+   and spread in muscle and liver, so this is an upper bracket, not an estimate [J].
+   gadoid    mass +0.05 -> Ucrit -1.8 %
+   herring   mass +0.13 -> Ucrit -4.8 %
+   mackerel  mass +0.18 -> Ucrit -6.7 %

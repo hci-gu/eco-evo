@@ -1,0 +1,56 @@
+Norway pout: refuge 0-1.5 m vs forage uniform 0-10 m (Albert 1994 layers)
+  day (rule A light)
+    saithe (WC)          floor = refuge/forage exposure  1.167
+    hake (WC)            floor = refuge/forage exposure  1.447
+    cod (benthivores)    floor = refuge/forage exposure  4.085
+    whiting              floor = refuge/forage exposure  0.927
+    harbour seal         floor = refuge/forage exposure  1.970
+    harbour porpoise     floor = refuge/forage exposure  1.824
+  night (dark: vision at R_nv)
+    saithe (WC)          floor = refuge/forage exposure  1.304
+    hake (WC)            floor = refuge/forage exposure  1.597
+    cod (benthivores)    floor = refuge/forage exposure  4.200
+    whiting              floor = refuge/forage exposure  1.000
+    harbour seal         floor = refuge/forage exposure  1.970
+    harbour porpoise     floor = refuge/forage exposure  1.824
+
+Norway pout: refuge 0-1.5 m vs forage uniform 5-10 m (strict reading)
+  day (rule A light)
+    saithe (WC)          floor = refuge/forage exposure  1.294
+    hake (WC)            floor = refuge/forage exposure  1.902
+    cod (benthivores)    floor = refuge/forage exposure 17.843
+    whiting              floor = refuge/forage exposure  0.890
+    harbour seal         floor = refuge/forage exposure 66.333
+    harbour porpoise     floor = refuge/forage exposure 10.333
+  night (dark: vision at R_nv)
+    saithe (WC)          floor = refuge/forage exposure  1.562
+    hake (WC)            floor = refuge/forage exposure  2.291
+    cod (benthivores)    floor = refuge/forage exposure 21.000
+    whiting              floor = refuge/forage exposure  1.000
+    harbour seal         floor = refuge/forage exposure 66.333
+    harbour porpoise     floor = refuge/forage exposure 10.333
+
+0-group cod/haddock: refuge 0-0.5 m vs forage 3-5 m (Lough 1989, PROXY stage)
+  day (rule A light)
+    saithe (WC)          floor = refuge/forage exposure  1.141
+    hake (WC)            floor = refuge/forage exposure  1.419
+    cod (benthivores)    floor = refuge/forage exposure 19.010
+    whiting              floor = refuge/forage exposure  0.932
+    harbour seal         floor = refuge/forage exposure  1.000
+    harbour porpoise     floor = refuge/forage exposure  1.000
+  night (dark: vision at R_nv)
+    saithe (WC)          floor = refuge/forage exposure  1.283
+    hake (WC)            floor = refuge/forage exposure  1.594
+    cod (benthivores)    floor = refuge/forage exposure 21.000
+    whiting              floor = refuge/forage exposure  1.000
+    harbour seal         floor = refuge/forage exposure  1.000
+    harbour porpoise     floor = refuge/forage exposure  1.000
+
+Check (not a fit): can a mix w x refuge + (1 - w) x forage reproduce the library's pout share in the
+bottom 10 m (0.7 by day, 0.4 by night, [J], krill_pairs_wc.py pout_prof)? Both Albert layers lie inside
+the bottom 10 m, so every mix gives a bottom-10-m share of 1.0:
+  w 0.0: bottom-10-m share 1.00
+  w 0.5: bottom-10-m share 1.00
+  w 1.0: bottom-10-m share 1.00
+-> the library's pout profile is not a mix of these two layers (it spreads the remainder over midwater
+   after Onsrud et al. 2004, Oslofjord, where pout sit in midwater at night with no fullness difference).

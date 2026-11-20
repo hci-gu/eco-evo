@@ -1,0 +1,23 @@
+base done
+bl_day done
+bl_night done
+abs_day done
+abs_night done
+night_only done
+
+Factor on each whiting pair's a (absolute band a vs the chain's 0.8 BL/s); night/day new (base)
+  pair                                bl_day    bl_night     abs_day   abs_night  night_only
+  whiting->krill                       0.762       0.762       0.876       0.876       1.000
+  whiting->planktivorous_fish          0.819       0.790       0.815       0.787       0.957
+  whiting->benthivorous_fish           0.794       0.731       0.790       0.728       0.906
+  whiting->mobile_epifauna             0.761       0.655       1.097       0.938       0.857
+
+night/day (rule A day/night of the pair's band a): base -> each reading
+  whiting->krill                 0.041 -> 0.041 / 0.041 / 0.048 / 0.048 / 0.041
+  whiting->planktivorous_fish    0.235 -> 0.228 / 0.182 / 0.227 / 0.182 / 0.179
+  whiting->benthivorous_fish     0.641 -> 0.641 / 0.517 / 0.641 / 0.517 / 0.494
+
+stage shares of the base band a (fish pairs):
+  whiting->planktivorous_fish: {'whiting|adult': 1.0}
+  whiting->benthivorous_fish: {'whiting|adult': 1.0}
+  whiting->krill: juvenile 0.16, adult 0.84 (sum check 1.000)

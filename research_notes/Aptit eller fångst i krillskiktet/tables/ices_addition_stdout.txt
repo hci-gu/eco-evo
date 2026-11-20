@@ -1,0 +1,86 @@
+Weighed records (incl. recorded empties), whiting >= 20 cm. Per stratum: krill-bearing (K) vs krill-free (0):
+records, stomachs, stomach-weighted mean total content %BW, mean non-krill %BW, mean sqrt-ration ratio K/0
+cod          1981 Q1 C+S North Sea  K: rec  12 stom    67 tot  0.44 nonkrill  0.39 | 0: rec  80 stom   212 tot  1.16  | tot K/0  0.38  nonkrill K/0  0.33  sqrt-ration K/0  0.68
+cod          1981 Q1 NE North Sea   K: rec  26 stom   191 tot  0.86 nonkrill  0.64 | 0: rec  74 stom   256 tot  1.40  | tot K/0  0.62  nonkrill K/0  0.45  sqrt-ration K/0  0.89
+cod          1981 Q4 C+S North Sea  K: rec   3 stom    24 tot  0.27 nonkrill  0.27 | 0: rec 100 stom   393 tot  1.15  | tot K/0  0.24  nonkrill K/0  0.24  sqrt-ration K/0  0.48
+cod          1981 Q4 NE North Sea   K: rec   1 stom     2 tot  1.98 nonkrill  1.98 | 0: rec  38 stom   103 tot  1.98  | tot K/0  1.00  nonkrill K/0  1.00  sqrt-ration K/0  1.20
+cod          1981 Q4 NW North Sea   K: rec   1 stom    10 tot  1.16 nonkrill  1.15 | 0: rec   5 stom    36 tot  1.78  | tot K/0  0.65  nonkrill K/0  0.65  sqrt-ration K/0  0.82
+cod          2014 Q4 other          K: rec   1 stom     1 tot  2.30 nonkrill  0.34 | 0: rec 494 stom   494 tot  0.81  | tot K/0  2.83  nonkrill K/0  0.41  sqrt-ration K/0  2.23
+cod          2023 Q3 Skagerrak      K: rec   2 stom     2 tot  1.22 nonkrill  1.06 | 0: rec  40 stom    40 tot  1.68  | tot K/0  0.72  nonkrill K/0  0.63  sqrt-ration K/0  0.95
+cod          2024 Q1 Kattegat       K: rec   1 stom     1 tot  0.01 nonkrill  0.00 | 0: rec  70 stom    70 tot  0.60  | tot K/0  0.02  nonkrill K/0  0.00  sqrt-ration K/0  0.19
+cod          2025 Q1 other          K: rec   1 stom     1 tot  0.28 nonkrill  0.00 | 0: rec 197 stom   197 tot  0.86  | tot K/0  0.33  nonkrill K/0  0.00  sqrt-ration K/0  0.75
+haddock      2025 Q1 NE North Sea   K: rec   2 stom     3 tot  0.60 nonkrill  0.17 | 0: rec 274 stom   437 tot  0.24  | tot K/0  2.50  nonkrill K/0  0.71  sqrt-ration K/0  2.05
+norway pout  1980 Q1 C+S North Sea  K: rec   6 stom    75 tot  0.12 nonkrill  0.02 | 0: rec   9 stom    96 tot  0.11  | tot K/0  1.12  nonkrill K/0  0.20  sqrt-ration K/0  1.09
+norway pout  1980 Q1 NE North Sea   K: rec  17 stom   308 tot  0.49 nonkrill  0.29 | 0: rec   5 stom   125 tot  1.21  | tot K/0  0.40  nonkrill K/0  0.24  sqrt-ration K/0  0.79
+norway pout  1980 Q1 NW North Sea   K: rec  47 stom   590 tot  0.20 nonkrill  0.11 | 0: rec  14 stom   201 tot  0.14  | tot K/0  1.41  nonkrill K/0  0.77  sqrt-ration K/0  1.41
+norway pout  1980 Q2 C+S North Sea  K: rec   3 stom    25 tot  0.65 nonkrill  0.35 | 0: rec   2 stom    20 tot  1.58  | tot K/0  0.41  nonkrill K/0  0.22  sqrt-ration K/0  0.59
+norway pout  1980 Q3 NE North Sea   K: rec   6 stom    90 tot  0.25 nonkrill  0.17 | 0: rec   2 stom    26 tot  0.06  | tot K/0  4.19  nonkrill K/0  2.77  sqrt-ration K/0  2.17
+norway pout  1980 Q3 NW North Sea   K: rec  16 stom   186 tot  0.84 nonkrill  0.03 | 0: rec   2 stom    11 tot  0.34  | tot K/0  2.45  nonkrill K/0  0.09  sqrt-ration K/0  1.42
+saithe       2026 Q1 NE North Sea   K: rec  46 stom   128 tot  0.31 nonkrill  0.21 | 0: rec  84 stom   186 tot  0.51  | tot K/0  0.61  nonkrill K/0  0.42  sqrt-ration K/0  1.05
+saithe       2026 Q1 NW North Sea   K: rec  19 stom    38 tot  2.51 nonkrill  2.33 | 0: rec  54 stom   108 tot  1.05  | tot K/0  2.39  nonkrill K/0  2.21  sqrt-ration K/0  2.19
+whiting      1991 Q2 Kattegat       K: rec   3 stom    13 tot  0.84 nonkrill  0.15 | 0: rec  31 stom    87 tot  0.78  | tot K/0  1.07  nonkrill K/0  0.19  sqrt-ration K/0  1.07
+whiting      1991 Q2 Skagerrak      K: rec  17 stom    42 tot  2.39 nonkrill  0.38 | 0: rec  19 stom    48 tot  0.78  | tot K/0  3.05  nonkrill K/0  0.48  sqrt-ration K/0  1.93
+whiting      2022 Q3 Skagerrak      K: rec   1 stom     1 tot  6.35 nonkrill  6.34 | 0: rec  23 stom    23 tot  1.02  | tot K/0  6.22  nonkrill K/0  6.21  sqrt-ration K/0  5.13
+
+Same strata, fed records only (records with any prey mass; empty records dropped from both groups, since
+holding krill selects recently fed fish):
+cod          1981 Q1 C+S North Sea  K: rec  12 tot  0.44 nonkrill  0.39 | 0: rec  75 tot  1.21  | tot K/0  0.37  nonkrill K/0  0.32
+cod          1981 Q1 NE North Sea   K: rec  26 tot  0.86 nonkrill  0.64 | 0: rec  70 tot  1.43  | tot K/0  0.60  nonkrill K/0  0.44
+cod          1981 Q4 C+S North Sea  K: rec   3 tot  0.27 nonkrill  0.27 | 0: rec  97 tot  1.16  | tot K/0  0.24  nonkrill K/0  0.24
+cod          1981 Q4 NE North Sea   K: rec   1 tot  1.98 nonkrill  1.98 | 0: rec  36 tot  2.04  | tot K/0  0.97  nonkrill K/0  0.97
+cod          1981 Q4 NW North Sea   K: rec   1 tot  1.16 nonkrill  1.15 | 0: rec   5 tot  1.78  | tot K/0  0.65  nonkrill K/0  0.65
+cod          2014 Q4 other          K: rec   1 tot  2.30 nonkrill  0.34 | 0: rec 402 tot  1.00  | tot K/0  2.30  nonkrill K/0  0.34
+cod          2023 Q3 Skagerrak      K: rec   2 tot  1.22 nonkrill  1.06 | 0: rec  38 tot  1.77  | tot K/0  0.69  nonkrill K/0  0.60
+cod          2024 Q1 Kattegat       K: rec   1 tot  0.01 nonkrill  0.00 | 0: rec  70 tot  0.60  | tot K/0  0.02  nonkrill K/0  0.00
+cod          2025 Q1 other          K: rec   1 tot  0.28 nonkrill  0.00 | 0: rec 169 tot  1.01  | tot K/0  0.28  nonkrill K/0  0.00
+haddock      2025 Q1 NE North Sea   K: rec   2 tot  0.60 nonkrill  0.17 | 0: rec 178 tot  0.37  | tot K/0  1.61  nonkrill K/0  0.46
+norway pout  1980 Q1 C+S North Sea  K: rec   6 tot  0.12 nonkrill  0.02 | 0: rec   9 tot  0.11  | tot K/0  1.12  nonkrill K/0  0.20
+norway pout  1980 Q1 NE North Sea   K: rec  17 tot  0.49 nonkrill  0.29 | 0: rec   5 tot  1.21  | tot K/0  0.40  nonkrill K/0  0.24
+norway pout  1980 Q1 NW North Sea   K: rec  47 tot  0.20 nonkrill  0.11 | 0: rec  14 tot  0.14  | tot K/0  1.41  nonkrill K/0  0.77
+norway pout  1980 Q2 C+S North Sea  K: rec   3 tot  0.65 nonkrill  0.35 | 0: rec   2 tot  1.58  | tot K/0  0.41  nonkrill K/0  0.22
+norway pout  1980 Q3 NE North Sea   K: rec   6 tot  0.25 nonkrill  0.17 | 0: rec   2 tot  0.06  | tot K/0  4.19  nonkrill K/0  2.77
+norway pout  1980 Q3 NW North Sea   K: rec  16 tot  0.84 nonkrill  0.03 | 0: rec   2 tot  0.34  | tot K/0  2.45  nonkrill K/0  0.09
+saithe       2026 Q1 NE North Sea   K: rec  46 tot  0.31 nonkrill  0.21 | 0: rec  53 tot  0.81  | tot K/0  0.39  nonkrill K/0  0.27
+saithe       2026 Q1 NW North Sea   K: rec  19 tot  2.51 nonkrill  2.33 | 0: rec  35 tot  1.56  | tot K/0  1.62  nonkrill K/0  1.50
+whiting      1991 Q2 Kattegat       K: rec   3 tot  0.84 nonkrill  0.15 | 0: rec  31 tot  0.78  | tot K/0  1.07  nonkrill K/0  0.19
+whiting      1991 Q2 Skagerrak      K: rec  17 tot  2.39 nonkrill  0.38 | 0: rec  19 tot  0.78  | tot K/0  3.05  nonkrill K/0  0.48
+whiting      2022 Q3 Skagerrak      K: rec   1 tot  6.35 nonkrill  6.34 | 0: rec  11 tot  2.13  | tot K/0  2.97  nonkrill K/0  2.97
+
+Counted-only records with prey (no weights): share of records holding fish prey, krill-bearing vs krill-free
+saithe       1981 Q1 NE North Sea   K: rec   8 fish-occ 0.75 | 0: rec   5 fish-occ 0.80
+saithe       1981 Q1 NW North Sea   K: rec   4 fish-occ 0.50 | 0: rec   6 fish-occ 0.83
+saithe       1981 Q2 NE North Sea   K: rec  12 fish-occ 1.00 | 0: rec   3 fish-occ 1.00
+saithe       1981 Q4 NE North Sea   K: rec  10 fish-occ 1.00 | 0: rec   6 fish-occ 0.83
+saithe       1982 Q3 NE North Sea   K: rec   4 fish-occ 0.75 | 0: rec   6 fish-occ 1.00
+saithe       1982 Q3 NW North Sea   K: rec   9 fish-occ 0.89 | 0: rec   9 fish-occ 1.00
+saithe       1982 Q4 NW North Sea   K: rec   6 fish-occ 0.83 | 0: rec  15 fish-occ 1.00
+saithe       1986 Q3 NE North Sea   K: rec  12 fish-occ 0.58 | 0: rec  56 fish-occ 0.98
+saithe       1986 Q3 NW North Sea   K: rec   6 fish-occ 1.00 | 0: rec  79 fish-occ 1.00
+saithe       1987 Q3 NE North Sea   K: rec   3 fish-occ 1.00 | 0: rec  20 fish-occ 1.00
+whiting      1981 Q1 C+S North Sea  K: rec   3 fish-occ 0.00 | 0: rec  31 fish-occ 0.39
+whiting      1981 Q1 NE North Sea   K: rec  29 fish-occ 0.45 | 0: rec  31 fish-occ 0.77
+whiting      1981 Q1 NW North Sea   K: rec  12 fish-occ 0.42 | 0: rec  19 fish-occ 0.84
+whiting      1981 Q4 C+S North Sea  K: rec  13 fish-occ 0.77 | 0: rec  61 fish-occ 0.84
+
+Within-haul pairs: hauls holding both krill-bearing and krill-free weighed records of the species.
+Per stratum: number of hauls, stomachs K / 0, haul-averaged ratio of mean total content K/0 (geometric mean
+over hauls with a non-zero krill-free total), mean non-krill K/0, and the hauls where K > 0 in total
+cod          1981 Q1 C+S North Sea hauls   7 (usable   6) stom K   67 / 0   83  total K/0 geo-mean  0.17  non-krill(K)/total(0) geo-mean  0.06  hauls with K > 0: 0/6
+cod          1981 Q1 NE North Sea  hauls  11 (usable  11) stom K  146 / 0   95  total K/0 geo-mean  0.53  non-krill(K)/total(0) geo-mean  0.43  hauls with K > 0: 4/11
+cod          1981 Q4 C+S North Sea hauls   1 (usable   1) stom K   24 / 0   11  total K/0 geo-mean  0.49  non-krill(K)/total(0) geo-mean  0.49  hauls with K > 0: 0/1
+cod          1981 Q4 NE North Sea  hauls   1 (usable   1) stom K    2 / 0    3  total K/0 geo-mean  6.61  non-krill(K)/total(0) geo-mean  6.60  hauls with K > 0: 1/1
+cod          1981 Q4 NW North Sea  hauls   1 (usable   1) stom K   10 / 0   36  total K/0 geo-mean  0.65  non-krill(K)/total(0) geo-mean  0.65  hauls with K > 0: 0/1
+cod          2014 Q4 other         hauls   1 (usable   1) stom K    1 / 0   29  total K/0 geo-mean  1.85  non-krill(K)/total(0) geo-mean  0.27  hauls with K > 0: 1/1
+cod          2023 Q3 Skagerrak     hauls   1 (usable   1) stom K    2 / 0   11  total K/0 geo-mean  0.84  non-krill(K)/total(0) geo-mean  0.73  hauls with K > 0: 0/1
+cod          2024 Q1 Kattegat      hauls   1 (usable   1) stom K    1 / 0   12  total K/0 geo-mean  0.02  non-krill(K)/total(0) geo-mean  0.00  hauls with K > 0: 0/1
+cod          2025 Q1 other         hauls   1 (usable   1) stom K    1 / 0   21  total K/0 geo-mean  2.51  non-krill(K)/total(0) geo-mean  0.00  hauls with K > 0: 1/1
+haddock      2025 Q1 NE North Sea  hauls   2 (usable   2) stom K    3 / 0   29  total K/0 geo-mean  1.48  non-krill(K)/total(0) geo-mean  0.01  hauls with K > 0: 1/2
+norway pout  1980 Q1 C+S North Sea hauls   4 (usable   4) stom K   75 / 0   41  total K/0 geo-mean  5.02  non-krill(K)/total(0) geo-mean  0.72  hauls with K > 0: 3/4
+norway pout  1980 Q1 NE North Sea  hauls   2 (usable   2) stom K   46 / 0   50  total K/0 geo-mean  5.30  non-krill(K)/total(0) geo-mean  3.55  hauls with K > 0: 2/2
+norway pout  1980 Q1 NW North Sea  hauls   8 (usable   8) stom K  162 / 0   92  total K/0 geo-mean  0.87  non-krill(K)/total(0) geo-mean  0.57  hauls with K > 0: 4/8
+norway pout  1980 Q2 C+S North Sea hauls   1 (usable   1) stom K   25 / 0   10  total K/0 geo-mean  0.92  non-krill(K)/total(0) geo-mean  0.50  hauls with K > 0: 0/1
+saithe       2026 Q1 NE North Sea  hauls   7 (usable   7) stom K  110 / 0   39  total K/0 geo-mean  7.96  non-krill(K)/total(0) geo-mean  0.82  hauls with K > 0: 6/7
+saithe       2026 Q1 NW North Sea  hauls   2 (usable   2) stom K    4 / 0   16  total K/0 geo-mean  0.10  non-krill(K)/total(0) geo-mean  0.01  hauls with K > 0: 0/2
+whiting      1991 Q2 Kattegat      hauls   1 (usable   1) stom K    4 / 0    1  total K/0 geo-mean  0.01  non-krill(K)/total(0) geo-mean  0.00  hauls with K > 0: 0/1
+whiting      1991 Q2 Skagerrak     hauls   2 (usable   2) stom K   10 / 0    9  total K/0 geo-mean  1.63  non-krill(K)/total(0) geo-mean  0.56  hauls with K > 0: 2/2
+whiting      2022 Q3 Skagerrak     hauls   1 (usable   1) stom K    1 / 0    4  total K/0 geo-mean  2.09  non-krill(K)/total(0) geo-mean  2.09  hauls with K > 0: 1/1

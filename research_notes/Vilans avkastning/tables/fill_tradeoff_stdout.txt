@@ -1,0 +1,10 @@
+whiting: foraging share to hold fill 0.1 0.333, fill 1.0 0.470; extra 0.137 of time
+  production given up at fill 0.1 vs 1.0: 0.590 /yr of biomass
+  risk saved by resting that extra time, form V           : 0.0061 /yr (0.61 %/yr) = 0.0103 of the production at stake
+  risk saved by resting that extra time, form VM central  : 0.0096 /yr (0.96 %/yr) = 0.0163 of the production at stake
+  risk saved by resting that extra time, form VM low-floor: 0.0266 /yr (2.66 %/yr) = 0.0451 of the production at stake
+water column: foraging share to hold fill 0.1 0.449, fill 1.0 0.558; extra 0.109 of time
+  production given up at fill 0.1 vs 1.0: 0.406 /yr of biomass
+  risk saved by resting that extra time, form today       : 0.0003 /yr (0.03 %/yr) = 0.0007 of the production at stake
+  risk saved by resting that extra time, form VM low-floor: 0.0006 /yr (0.06 %/yr) = 0.0015 of the production at stake
+-> at any r in the evidence range the fish keeps its reserve full: the payoff lowers T, not fill.

@@ -1,0 +1,40 @@
+== whiting: hauls 366, cruises with >= 3 hauls and >= 1 krill haul: 11, their hauls 194, share positive in them 0.402 (all hauls 0.213)
+   P(j positive | i positive) by distance (ordered pairs within 3 days):
+         size   mean  marginal_j
+bin                             
+0-10       35  0.343       0.254
+10-25       2  0.000       0.200
+25-50      20  0.300       0.294
+50-100    321  0.555       0.421
+100-200   374  0.583       0.458
+>200      228  0.325       0.249
+== saithe: hauls 337, cruises with >= 3 hauls and >= 1 krill haul: 28, their hauls 303, share positive in them 0.541 (all hauls 0.504)
+   P(j positive | i positive) by distance (ordered pairs within 3 days):
+         size   mean  marginal_j
+bin                             
+0-10       46  0.826       0.657
+10-25       4  0.500       0.500
+25-50      12  0.333       0.375
+50-100    356  0.601       0.527
+100-200   491  0.550       0.496
+>200      332  0.524       0.488
+== Norway pout: hauls 57, cruises with >= 3 hauls and >= 1 krill haul: 2, their hauls 53, share positive in them 0.755 (all hauls 0.719)
+   P(j positive | i positive) by distance (ordered pairs within 3 days):
+         size   mean  marginal_j
+bin                             
+0-10        0    NaN         NaN
+10-25       0    NaN         NaN
+25-50       1  0.000       0.500
+50-100    110  0.927       0.833
+100-200   282  0.901       0.860
+>200      767  0.902       0.878
+== cod: hauls 425, cruises with >= 3 hauls and >= 1 krill haul: 5, their hauls 118, share positive in them 0.220 (all hauls 0.064)
+   P(j positive | i positive) by distance (ordered pairs within 3 days):
+         size   mean  marginal_j
+bin                             
+0-10       11  0.182       0.096
+10-25       0    NaN       0.000
+25-50       0    NaN       0.000
+50-100     81  0.444       0.247
+100-200   135  0.370       0.288
+>200      159  0.214       0.210

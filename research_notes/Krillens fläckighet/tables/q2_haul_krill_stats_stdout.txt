@@ -1,0 +1,49 @@
+=== (a) pooled records, 1980-91
+-- whiting: records 469, hauls 186, stomachs 3328
+   share of hauls with krill in any length class: 0.382
+   share of records (length class x haul) with krill: 0.273
+   hauls with >= 2 classes: 130; P(krill in another class | krill in one) = 0.619 vs marginal 0.281; ICC(record presence) = 0.44 (n0 3.2)
+   krill counted: 7879; share in top 10% of hauls (19): 0.88; krill per stomach over hauls: mean 2.13, CV 3.72; among krill hauls median 1.43, p90 14.1
+-- saithe: records 533, hauls 273, stomachs 6419
+   share of hauls with krill in any length class: 0.553
+   share of records (length class x haul) with krill: 0.533
+   hauls with >= 2 classes: 150; P(krill in another class | krill in one) = 0.836 vs marginal 0.588; ICC(record presence) = 0.51 (n0 2.7)
+   krill counted: 55803; share in top 10% of hauls (27): 0.97; krill per stomach over hauls: mean 6.21, CV 3.81; among krill hauls median 5.81, p90 107.1
+-- Norway pout: records 128, hauls 55, stomachs 1752
+   share of hauls with krill in any length class: 0.745
+   share of records (length class x haul) with krill: 0.742
+   hauls with >= 2 classes: 40; P(krill in another class | krill in one) = 0.853 vs marginal 0.814; ICC(record presence) = 0.13 (n0 2.8)
+   krill counted: 2943; share in top 10% of hauls (6): 0.74; krill per stomach over hauls: mean 1.41, CV 2.93; among krill hauls median 0.61, p90 4.0
+-- cod: records 297, hauls 135, stomachs 1635
+   share of hauls with krill in any length class: 0.163
+   share of records (length class x haul) with krill: 0.148
+   hauls with >= 2 classes: 69; P(krill in another class | krill in one) = 0.579 vs marginal 0.186; ICC(record presence) = 0.51 (n0 3.3)
+   krill counted: 826; share in top 10% of hauls (14): 0.98; krill per stomach over hauls: mean 0.25, CV 4.81; among krill hauls median 0.32, p90 3.7
+=== (b) single-stomach records
+-- saithe: fed stomachs 137, hauls 107, FO overall 0.307, years [1981, 1982, 1983, 1984, 1986, 1987, 1991, 2024, 2026]
+   share of hauls with any krill: 0.336 (hauls with >= 3 fed: 0.600, n 5)
+   inside krill-positive hauls (>= 3 fed): mean FO 0.578, median 0.400, range 0.33-1.00, n hauls 3, fish 11
+   ICC(krill presence, fed fish, hauls >= 3 fed) = 0.43 (n0 3.6)
+-- whiting: fed stomachs 923, hauls 220, FO overall 0.014, years [1981, 1986, 1991, 2020, 2022, 2023]
+   share of hauls with any krill: 0.055 (hauls with >= 3 fed: 0.029, n 137)
+   inside krill-positive hauls (>= 3 fed): mean FO 0.198, median 0.167, range 0.12-0.33, n hauls 4, fish 23
+   ICC(krill presence, fed fish, hauls >= 3 fed) = 0.01 (n0 5.3)
+-- cod: fed stomachs 1620, hauls 356, FO overall 0.006, years [1981, 1986, 1987, 1989, 1991, 2021, 2022, 2023, 2024, 2025]
+   share of hauls with any krill: 0.017 (hauls with >= 3 fed: 0.018, n 167)
+   inside krill-positive hauls (>= 3 fed): mean FO 0.410, median 0.154, range 0.08-1.00, n hauls 3, fish 29
+   ICC(krill presence, fed fish, hauls >= 3 fed) = 0.50 (n0 8.2)
+-- hake: fed stomachs 109, hauls 52, FO overall 0.028, years [2024]
+   share of hauls with any krill: 0.038 (hauls with >= 3 fed: 0.091, n 11)
+   inside krill-positive hauls (>= 3 fed): mean FO 0.667, median 0.667, range 0.67-0.67, n hauls 1, fish 3
+   ICC(krill presence, fed fish, hauls >= 3 fed) = 0.60 (n0 4.8)
+-- horse mackerel: fed stomachs 140, hauls 62, FO overall 0.029, years [1988, 1991, 2023]
+   share of hauls with any krill: 0.016 (hauls with >= 3 fed: 0.053, n 19)
+   inside krill-positive hauls (>= 3 fed): mean FO 1.000, median 1.000, range 1.00-1.00, n hauls 1, fish 4
+   ICC(krill presence, fed fish, hauls >= 3 fed) = 1.00 (n0 4.5)
+-- mackerel: fed stomachs 1052, hauls 20, FO overall 0.001, years [2022, 2025]
+   share of hauls with any krill: 0.050 (hauls with >= 3 fed: 0.000, n 19)
+   ICC(krill presence, fed fish, hauls >= 3 fed) = nan (n0 53.7)
+-- haddock: fed stomachs 137, hauls 23, FO overall 0.007, years [1982, 2025]
+   share of hauls with any krill: 0.043 (hauls with >= 3 fed: 0.050, n 20)
+   inside krill-positive hauls (>= 3 fed): mean FO 0.143, median 0.143, range 0.14-0.14, n hauls 1, fish 7
+   ICC(krill presence, fed fish, hauls >= 3 fed) = -0.01 (n0 6.7)

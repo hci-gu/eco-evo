@@ -1,0 +1,41 @@
+(1) spherical correlation at lag h (km), no nugget
+  range  2 km: h=1: 0.31, h=2: 0.00, h=3: 0.00, h=5: 0.00
+  range  5 km: h=1: 0.70, h=2: 0.43, h=3: 0.21, h=5: 0.00
+  range 10 km: h=1: 0.85, h=2: 0.70, h=3: 0.56, h=5: 0.31
+  range 15 km: h=1: 0.90, h=2: 0.80, h=3: 0.70, h=5: 0.52
+(2) advection decorrelation rho(lag) = exp(-lag*U/L)
+  U    2 cm/s (0.07 km/h) L  1 km: T=  13.9 h  rho6h 0.65 rho1d 0.18 rho3d 0.01
+  U    2 cm/s (0.07 km/h) L  2 km: T=  27.8 h  rho6h 0.81 rho1d 0.42 rho3d 0.07
+  U    2 cm/s (0.07 km/h) L  5 km: T=  69.4 h  rho6h 0.92 rho1d 0.71 rho3d 0.35
+  U    2 cm/s (0.07 km/h) L 10 km: T= 138.9 h  rho6h 0.96 rho1d 0.84 rho3d 0.60
+  U    2 cm/s (0.07 km/h) L 15 km: T= 208.3 h  rho6h 0.97 rho1d 0.89 rho3d 0.71
+  U    5 cm/s (0.18 km/h) L  1 km: T=   5.6 h  rho6h 0.34 rho1d 0.01 rho3d 0.00
+  U    5 cm/s (0.18 km/h) L  2 km: T=  11.1 h  rho6h 0.58 rho1d 0.12 rho3d 0.00
+  U    5 cm/s (0.18 km/h) L  5 km: T=  27.8 h  rho6h 0.81 rho1d 0.42 rho3d 0.07
+  U    5 cm/s (0.18 km/h) L 10 km: T=  55.6 h  rho6h 0.90 rho1d 0.65 rho3d 0.27
+  U    5 cm/s (0.18 km/h) L 15 km: T=  83.3 h  rho6h 0.93 rho1d 0.75 rho3d 0.42
+  U   10 cm/s (0.36 km/h) L  1 km: T=   2.8 h  rho6h 0.12 rho1d 0.00 rho3d 0.00
+  U   10 cm/s (0.36 km/h) L  2 km: T=   5.6 h  rho6h 0.34 rho1d 0.01 rho3d 0.00
+  U   10 cm/s (0.36 km/h) L  5 km: T=  13.9 h  rho6h 0.65 rho1d 0.18 rho3d 0.01
+  U   10 cm/s (0.36 km/h) L 10 km: T=  27.8 h  rho6h 0.81 rho1d 0.42 rho3d 0.07
+  U   10 cm/s (0.36 km/h) L 15 km: T=  41.7 h  rho6h 0.87 rho1d 0.56 rho3d 0.18
+  U   15 cm/s (0.54 km/h) L  1 km: T=   1.9 h  rho6h 0.04 rho1d 0.00 rho3d 0.00
+  U   15 cm/s (0.54 km/h) L  2 km: T=   3.7 h  rho6h 0.20 rho1d 0.00 rho3d 0.00
+  U   15 cm/s (0.54 km/h) L  5 km: T=   9.3 h  rho6h 0.52 rho1d 0.07 rho3d 0.00
+  U   15 cm/s (0.54 km/h) L 10 km: T=  18.5 h  rho6h 0.72 rho1d 0.27 rho3d 0.02
+  U   15 cm/s (0.54 km/h) L 15 km: T=  27.8 h  rho6h 0.81 rho1d 0.42 rho3d 0.07
+  U   20 cm/s (0.72 km/h) L  1 km: T=   1.4 h  rho6h 0.01 rho1d 0.00 rho3d 0.00
+  U   20 cm/s (0.72 km/h) L  2 km: T=   2.8 h  rho6h 0.12 rho1d 0.00 rho3d 0.00
+  U   20 cm/s (0.72 km/h) L  5 km: T=   6.9 h  rho6h 0.42 rho1d 0.03 rho3d 0.00
+  U   20 cm/s (0.72 km/h) L 10 km: T=  13.9 h  rho6h 0.65 rho1d 0.18 rho3d 0.01
+  U   20 cm/s (0.72 km/h) L 15 km: T=  20.8 h  rho6h 0.75 rho1d 0.32 rho3d 0.03
+(3) Poisson lower bound on between-cell CV from swarm counts
+  1.0 swarms/km of track, width 40 m -> ~25 swarms per km2 cell, CV >= 0.20
+  1.0 swarms/km of track, width 50 m -> ~20 swarms per km2 cell, CV >= 0.22
+  1.0 swarms/km of track, width 120 m -> ~8 swarms per km2 cell, CV >= 0.35
+  1.35 swarms/km of track, width 40 m -> ~34 swarms per km2 cell, CV >= 0.17
+  1.35 swarms/km of track, width 50 m -> ~27 swarms per km2 cell, CV >= 0.19
+  1.35 swarms/km of track, width 120 m -> ~11 swarms per km2 cell, CV >= 0.30
+  2.0 swarms/km of track, width 40 m -> ~50 swarms per km2 cell, CV >= 0.14
+  2.0 swarms/km of track, width 50 m -> ~40 swarms per km2 cell, CV >= 0.16
+  2.0 swarms/km of track, width 120 m -> ~17 swarms per km2 cell, CV >= 0.24

@@ -1,0 +1,77 @@
+source,doi,species,predator,method,quantity,value,unit,tag
+Wieskotten et al. 2010a,10.1242/jeb.041699,artificial fin (paddle 227 mm2),harbour seal,lab 1 blindfolded seal,max trail age with direction above chance,35,s,F
+Wieskotten et al. 2010a,10.1242/jeb.041699,artificial fin,harbour seal,lab 1 seal,correct direction at 5 s,93.7,%,F
+Wieskotten et al. 2010a,10.1242/jeb.041699,artificial fin,harbour seal,lab 1 seal,correct direction at 35 s,70.6,%,F
+Wieskotten et al. 2010a,10.1242/jeb.041699,artificial fin,harbour seal,PIV,wake width at 5 s,20,cm,F
+Wieskotten et al. 2010a,10.1242/jeb.041699,artificial fin,harbour seal,PIV,wake width at 35 s,50,cm,F
+Wieskotten et al. 2010a,10.1242/jeb.041699,artificial fin,harbour seal,PIV,mean wake velocity at 35 s,2,mm/s,F
+Wieskotten et al. 2010b,10.1242/jeb.047134,submarine trail,harbour seal,lab 1 seal,following success continuous trail at 15 s,62.3,%,F
+Wieskotten et al. 2010b,10.1242/jeb.047134,submarine trail,harbour seal,lab 1 seal,following success glide trail at 15 s,43.1,%,F
+Wieskotten et al. 2010b,10.1242/jeb.047134,submarine trail,harbour seal,lab 1 seal,following success continuous trail at 25 s,33.3,%,F
+Wieskotten et al. 2010b,10.1242/jeb.047134,submarine trail,harbour seal,lab 1 seal,following success glide trail at 25 s,21.1,%,F
+Wieskotten et al. 2010b,10.1242/jeb.047134,submarine trail,harbour seal,PIV,glide trail width max,30,cm,F
+Wieskotten et al. 2010b,10.1242/jeb.047134,submarine trail,harbour seal,PIV,continuous trail width max,50,cm,F
+Schulte-Pelkum et al. 2007,10.1242/jeb.02708,conspecific seal trail,harbour seal,lab 2 seals,trail-following success,90,%,F
+Schulte-Pelkum et al. 2007,10.1242/jeb.02708,conspecific seal trail,harbour seal,lab 2 seals,trail course length,10.5-15,m,F
+Schulte-Pelkum et al. 2007,10.1242/jeb.02708,conspecific seal trail,harbour seal,PIV,lateral spread each side in first 5 s,80,cm,F
+Schulte-Pelkum et al. 2007 citing Hanke et al. 2000,10.1242/jeb.02708,goldfish 10 cm,harbour seal,lab flow measurement,fish wake persistence,>180,s,S
+Dehnhardt et al. 2001 via Wieskotten 2010a,10.1126/science.1060514,miniature submarine trail,harbour seal,lab blindfolded,trail length followed,up to 40,m,S
+Niesterok et al. 2017 (220:174),10.1242/jeb.148676,artificial flatfish breathing current,harbour seal,lab 3 seals,stimulus peak velocity,20-25,cm/s,F
+Niesterok et al. 2017 (220:174),10.1242/jeb.148676,flounder 18 cm,harbour seal,flow measurement cited,breathing current peak velocity,20,cm/s,F
+Niesterok et al. 2017 (220:174),10.1242/jeb.148676,fish ~18 cm,harbour seal,flow measurement cited,wake velocity successive tail strokes,6,cm/s,F
+Niesterok et al. 2017 (220:174),10.1242/jeb.148676,artificial flatfish breathing current,harbour seal,lab 3 seals,blindfolded detection constant current (seal Henry),224/280,trials,F
+Niesterok et al. 2017 (220:174),10.1242/jeb.148676,artificial flatfish breathing current,harbour seal,lab,spatial extension at vibrissa level,1-3,cm,F
+Niesterok et al. 2017 (220:2364),10.1242/jeb.158055,artificial flatfish breathing current,harbour seal,lab 2 blindfolded seals,detection threshold peak velocity (Henry),4.2,cm/s,F
+Niesterok et al. 2017 (220:2364),10.1242/jeb.158055,artificial flatfish breathing current,harbour seal,lab 2 blindfolded seals,detection threshold peak velocity (Luca),3.7,cm/s,F
+Niesterok et al. 2017 (220:2364),10.1242/jeb.158055,flounder 16 cm,harbour seal,extrapolated flow,current at 36 cm path distance,2-2.5,cm/s,F
+Niesterok et al. 2017 (220:2364),10.1242/jeb.158055,artificial flatfish breathing current,harbour seal,lab,swim speed successful near-threshold trials (Henry),19-51,cm/s,F
+Bowen et al. 2002,10.3354/meps244235,cryptic sand lance,harbour seal,Crittercam field 30-37 m daylight,capture success,63.7,%,F
+Bowen et al. 2002,10.3354/meps244235,flounder (buried),harbour seal,Crittercam field,capture success,79.9,%,F
+Bowen et al. 2002,10.3354/meps244235,schooling sand lance,harbour seal,Crittercam field,capture success,37.5,%,F
+Bowen et al. 2002,10.3354/meps244235,cryptic sand lance,harbour seal,Crittercam field,capture attempts per 10-min unit,5.5,n,F
+Bowen et al. 2002,10.3354/meps244235,flounder (buried),harbour seal,Crittercam field,capture attempts per 10-min unit,1.9,n,F
+Bowen et al. 2002,10.3354/meps244235,schooling sand lance,harbour seal,Crittercam field,capture attempts per 10-min unit,9.2,n,F
+Bowen et al. 2002,10.3354/meps244235,cryptic sand lance,harbour seal,Crittercam field,search time per unit,235,s (inferred; Table 2 column labelled min),F
+Bowen et al. 2002,10.3354/meps244235,schooling sand lance,harbour seal,Crittercam field,search time per unit,135,s (inferred; Table 2 column labelled min),F
+Bowen et al. 2002,10.3354/meps244235,flounder (buried),harbour seal,Crittercam field,flounders hidden until strike,14/15,cases,F
+Bowen et al. 2002 (derived),10.3354/meps244235,cryptic vs schooling sand lance,harbour seal,attempts x success,captures per 10-min unit cryptic sand lance,3.50,n,D
+Bowen et al. 2002 (derived),10.3354/meps244235,cryptic vs schooling sand lance,harbour seal,attempts x success,captures per 10-min unit schooling sand lance,3.45,n,D
+Bowen et al. 2002 (derived),10.3354/meps244235,schooling vs cryptic sand lance,harbour seal,ratio,capture success schooling / cryptic,0.59,ratio,D
+this note D1,,cruising fish,seal or porpoise,gas-model encounter,active/rest encounter ratio (v 1.0-1.9 m/s; u 0.2-0.5 m/s),1.00-1.08,ratio,D
+this note D2,,fish moving vs still,harbour seal,trail vs breathing-current width (2D),detection width ratio moving/still 2D (low case),2.8,ratio,D
+this note D2,,fish moving vs still,harbour seal,trail vs breathing-current width (2D),detection width ratio moving/still 2D (central case),9.4,ratio,D
+this note D2,,fish moving vs still,harbour seal,trail vs breathing-current width (2D),detection width ratio moving/still 2D (high case),59,ratio,D
+this note D2,,fish moving vs still,harbour seal,trail vs breathing-current area (3D),detection area ratio moving/still 3D (low case),4.7,ratio,D
+this note D2,,fish moving vs still,harbour seal,trail vs breathing-current area (3D),detection area ratio moving/still 3D (central case),25,ratio,D
+this note D2,,fish moving vs still,harbour seal,trail vs breathing-current area (3D),detection area ratio moving/still 3D (high case),320,ratio,D
+Davis et al. 1999,10.1126/science.283.5404.993,Pagothenia borchgrevinki (PROXY),Weddell seal (PROXY),animal-borne video,hidden fish flushed from ice crevices by exhaled air,qualitative,-,A
+DeRuiter et al. 2009,10.1242/jeb.030825,dead drifting herring capelin sprat,harbour porpoise,captive,successful captures of motionless prey,67/71,trials,F
+DeRuiter et al. 2009,10.1242/jeb.030825,dead drifting fish,harbour porpoise,captive,capture time with eyecups,19.6,s,F
+DeRuiter et al. 2009,10.1242/jeb.030825,dead drifting fish,harbour porpoise,captive,capture time without eyecups,15.9,s,F
+DeRuiter et al. 2009,10.1242/jeb.030825,dead drifting fish,harbour porpoise,captive,buzz onset distance,1-2,body lengths,F
+Kastelein et al. 1999 via Au review,,7.62 cm water-filled steel sphere (stationary),harbour porpoise,captive detection,50 % detection range,26,m,S
+Kastelein et al. 1999 via Au review,,5.08 cm sphere (stationary),harbour porpoise,captive detection,50 % detection range,16,m,S
+Au et al. 2007,10.1121/1.2734487,Atlantic cod,harbour porpoise,model from measured TS,detection range quiet (tail-on to broadside),15-27,m,A
+Wisniewska et al. 2016,10.1016/j.cub.2016.03.069,fish < 5 cm,harbour porpoise,DTAG field,distance from rostrum at prey's escape response,50,cm,F
+Wisniewska et al. 2016,10.1016/j.cub.2016.03.069,fish < 5 cm,harbour porpoise,DTAG field,closing speed,1.4,m/s,F
+Wisniewska et al. 2016,10.1016/j.cub.2016.03.069,small fish,harbour porpoise,DTAG field night dive,probable captures in one 75-s dive,24/24,buzzes,F
+Kastelein et al. 2002,10.1121/1.1480835,-,harbour porpoise,audiogram,best threshold 100-140 kHz,33,dB re 1 uPa,A
+Kastelein et al. 2002,10.1121/1.1480835,-,harbour porpoise,audiogram,slope below 16 kHz,10,dB/octave,A
+this note D4,10.1121/1.1480835,-,harbour porpoise,extrapolated audiogram,extrapolated hearing threshold at 250 Hz,103,dB re 1 uPa,D
+this note D4,10.1121/1.1480835,-,harbour porpoise,extrapolated audiogram,extrapolated hearing threshold at 500 Hz,93,dB re 1 uPa,D
+this note D4,10.1121/1.1480835,-,harbour porpoise,extrapolated audiogram,extrapolated hearing threshold at 1 kHz,83,dB re 1 uPa,D
+Sci Rep 2017 (snippet),10.1038/s41598-017-14743-9,Atlantic cod,harbour porpoise (listener),field recordings,grunt fundamental frequency,53,Hz,S
+Sci Rep 2017 (snippet),10.1038/s41598-017-14743-9,haddock,harbour porpoise (listener),field recordings,knock peak frequency mean (range),258 (184-356),Hz,S
+Wilson Batty & Dill 2004,10.1098/rsbl.2003.0107,Pacific and Atlantic herring,harbour porpoise (listener),captive recordings,FRT sound frequency band,1.7-22,kHz,A
+Wilson Batty & Dill 2004,10.1098/rsbl.2003.0107,Pacific herring,harbour porpoise (listener),captive recordings,FRT duration,0.6-7.6,s,A
+Gannon et al. 2005 and Wells et al. 2009,10.1016/j.anbehav.2004.06.020,soniferous fishes (PROXY),bottlenose dolphin (PROXY),field diet vs availability,soniferous share of available prey,~6,%,S
+Gannon et al. 2005 and Wells et al. 2009,10.1016/j.anbehav.2004.06.020,soniferous fishes (PROXY),bottlenose dolphin (PROXY),field diet vs availability,soniferous share of diet,>50,%,S
+Rojano-Donate et al. 2024 (floors note),10.1126/sciadv.adj7132,mixed small fish,harbour porpoise,DTAG field,buzz rate day,48,per h,S
+Rojano-Donate et al. 2024 (floors note),10.1126/sciadv.adj7132,mixed small fish,harbour porpoise,DTAG field,buzz rate night,142,per h,S
+Rojano-Donate et al. 2024 (floors note),10.1126/sciadv.adj7132,mixed small fish,harbour porpoise,DTAG field,share of feeding dives at night,65,%,S
+Schaffeld et al. 2016,10.3354/meps11627,mixed,harbour porpoise,passive acoustic 5 sites 1 yr,foraging rhythm,nocturnal only,-,S
+Iorio-Merlo et al. 2022,10.1098/rspb.2021.2261,benthic prey,harbour seal,accelerometry field,dives with at least one prey encounter,69.45,%,F
+Vance et al. 2021 eLife,10.7554/eLife.68825,evasive prey,toothed whales incl. harbour porpoise,DTAG field and trained porpoises,click-rate response latency to prey escape,50-200,ms,A
+this note (judgement),,bed gadoids,harbour seal,judgement between lab bound and field value,activity-risk ratio r central,2,ratio,J
+this note (judgement),,flatfish,harbour seal,judgement,activity-risk ratio r central,1.3,ratio,J
+this note (derived),,benthivores (seal window 0.57 gadoids / 0.43 flatfish),harbour seal,weighted 1/r,floor f weighted,0.61,ratio,D

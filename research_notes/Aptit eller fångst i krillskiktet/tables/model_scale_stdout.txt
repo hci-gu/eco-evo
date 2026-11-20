@@ -1,0 +1,130 @@
+=== A. Units ===
+ceiling 31.34 MJ/t/tick = 125.4 kJ/kg/d; krill-equivalent at 5.0 / 6.0 / 4.3 kJ/g: 2.51 / 2.09 / 2.92 %BW/d
+maintenance (cost only) 0.272; need (cost + P at fill 1) 0.388 of the ceiling
+krill alone at the yardstick X_k: T X/(1+X) = 0.740; other prey alone 0.448; both 0.765
+
+=== B. Field whiting on the model scale (fraction of the ceiling, energy; krill at 5 kJ/g, the E the GER
+    rations already assume; SMS totals at a diet E of 4.0-5.5 kJ/g [J]) ===
+  whiting Oslofjord Nov 2000, krill only                0.23- 0.54 %BW/d -> 0.09-0.22 of ceiling [D from F] (Onsrud 2004; GER 7 C; onsrud_three_months.py)
+  whiting Oslofjord Mar 2001, krill only                0.65- 1.51 %BW/d -> 0.26-0.60 of ceiling [D from F] (as above)
+  whiting Oslofjord Jun 2001, krill only                0.20- 0.46 %BW/d -> 0.08-0.18 of ceiling [D from F] (as above; thin, see evidence E1)
+  whiting Oslofjord Nov, total (krill 0.82 by mass)     0.28- 0.66 %BW/d -> 0.11-0.26 of ceiling [D] (krill/0.82, other prey at krill E [J])
+  whiting Oslofjord Mar, total                          0.79- 1.84 %BW/d -> 0.32-0.73 of ceiling [D] (as above)
+  whiting North Sea Q1 1981, krill only (counts)        0.34- 0.52 %BW/d -> 0.14-0.21 of ceiling [D] (Krillparen E4 upper bounds NE/NW)
+  whiting Skagerrak Q1 1981, krill only (counts)        0.11- 0.16 %BW/d -> 0.04-0.06 of ceiling [D] (Krillparen E4, 51 stomachs)
+  whiting SMS key run, North Sea Q1 total, 0.2 kg       0.78- 0.78 %BW/d -> 0.25-0.34 of ceiling [S] (WGSAM 2024 via Krillparen E3; North Sea Q1 T ~6-7 C)
+  whiting SMS key run, North Sea Q2 total               0.83- 0.83 %BW/d -> 0.26-0.36 of ceiling [S] (T ~7-9 C)
+  whiting SMS key run, North Sea Q3 total               1.24- 1.24 %BW/d -> 0.40-0.54 of ceiling [S] (T ~9-12 C: above the box bottom layer)
+  whiting SMS key run, North Sea Q4 total               1.05- 1.05 %BW/d -> 0.34-0.46 of ceiling [S] (T ~9-11 C)
+  On the GER Cmax scale (model ceiling = 1.2 GER Cmax for whiting, 'Krillintag och jaktsatt'):
+  whiting krill-dominated stomachs >= 20 cm, low / central band    GER 0.38-0.90 -> model 0.32-0.75 [D]
+  whiting krill-dominated, weighed only                            GER 0.41-0.88 -> model 0.34-0.73 [D]
+  whiting all stomachs, population krill ration, NE / NW North Sea Q1 GER 0.28-0.31 -> model 0.23-0.26 [D]
+  whiting Skagerrak Q2 (April 1991), population krill ration       GER 0.36-0.36 -> model 0.30-0.30 [D]
+  whiting North Sea Q2-Q4, population krill ration                 GER 0.00-0.08 -> model 0.00-0.07 [D]
+
+=== C. Mechanisms, each in its own model slot (yardstick only) ===
+C1. a-side factor f on the krill pair only (capture p, escape, vigilance, detection, patch occupancy,
+    local voids): potential T (XO + f XK)/(1 + XO + f XK); floor at f = 0 is 0.448 (> need 0.388)
+    f 1.500: potential 0.801, of which krill 0.699
+    f 1.000: potential 0.765, of which krill 0.627
+    f 0.800: potential 0.742, of which krill 0.582
+    f 0.500: potential 0.690, of which krill 0.480
+    f 0.300: potential 0.632, of which krill 0.365
+    f 0.100: potential 0.532, of which krill 0.167
+    f 0.050: potential 0.494, of which krill 0.092
+    f 0.020: potential 0.468, of which krill 0.039
+    f 0.010: potential 0.458, of which krill 0.020
+    f 0.005: potential 0.453, of which krill 0.010
+    f 0.000: potential 0.448, of which krill 0.000
+    target 0.55: f = 0.1274
+    target 0.50: f = 0.0570
+    target 0.47: f = 0.0225
+    target 0.46: f = 0.0120
+    Sized inputs: capture p 0.4-0.75 vs 0.5 -> f 0.8-1.5 (Krillens flykt) [S]; field-implied krill a,
+    library/field 76-203 on the shelf, 104-261 in the fjord (Krillparen, JANUARY, 100-150 m beds) -> f 0.004-0.013 [S];
+    patch occupancy p 0.77-0.9 (acoustic) or 0.1-0.3 (stomach) (Krillens flackighet) [S].
+    field-implied a, f 0.004       potential 0.452, of which krill 0.008
+    field-implied a, f 0.013       potential 0.461, of which krill 0.026
+    stomach occupancy p 0.1        potential 0.532, of which krill 0.167
+    stomach occupancy p 0.3        potential 0.632, of which krill 0.365
+    acoustic p 0.77                potential 0.738, of which krill 0.575
+    NOTE: the January f 0.004-0.013 is a local inversion on 100-150 m beds; on the box-aggregate X it gives a
+    krill intake of 0.01-0.03 of the ceiling, far below whiting's own field krill intake. Solve f instead from
+    the field krill intake I_k on this yardstick: f = I_k (1 + XO) / (XK (T - I_k)).
+    (Assumes the field krill intake is acquisition-limited; if appetite also acts, f is a lower bound.)
+    booked field flow: M2 0.1873 x 5.0 t/km2 / 0.446 t/km2 = 2.10 t/t/yr of krill -> 0.229 of the ceiling (booked in 245 from the in-area diet share 0.50 x field Q/B 4.2) [S/D]
+    I_k 0.020 (North Sea Q2-Q4 population mean (not in-area)       ): f  0.010, potential 0.458
+    I_k 0.062 (North Sea annual, quarterly mean low (not in-area)  ): f  0.032, potential 0.479
+    I_k 0.085 (North Sea annual, quarterly mean high (not in-area) ): f  0.046, potential 0.491
+    I_k 0.050 (IN-AREA Skagerrak Q1 1981 (51 stomachs)             ): f  0.026, potential 0.473
+    I_k 0.143 (Oslofjord layer, Nov/Mar/Jun mean low               ): f  0.083, potential 0.520
+    I_k 0.229 (IN-AREA booked field flow (diet share x Q/B)        ): f  0.150, potential 0.564
+    I_k 0.250 (North Sea Q1 1981 population mean                   ): f  0.169, potential 0.574
+    I_k 0.300 (IN-AREA Skagerrak Apr 1991 (36 records)             ): f  0.220, potential 0.599
+    I_k 0.333 (Oslofjord layer, Nov/Mar/Jun mean high              ): f  0.258, potential 0.616
+    I_k 0.400 (Oslofjord Mar alone, ~0.40                          ): f  0.351, potential 0.650
+    I_k 0.750 (krill-dominated stomachs, central 0.75 (selected fish)): f  2.143, potential 0.827
+    Field refill-season bound on the potential ('Mattnad hos rovfisk'): 0.44-0.55.
+
+C2. krill-specific ceiling c x the model ceiling (armour, slower evacuation per J, a per-prey plateau
+    written as handling): h_k -> h_k / c, so with shared handling and fixed attack (p = 1 on every prey)
+    level = T (XK + XO) / (1 + XK/c + XO): krill handling crowds out the other prey.
+    c 1.00: level 0.765
+    c 0.80: level 0.652
+    c 0.67: level 0.570
+    c 0.60: level 0.523
+    c 0.50: level 0.452
+    c 0.45: level 0.414
+    c 0.42: level 0.391
+    c 0.35: level 0.334
+    c 0.25: level 0.248
+    target 0.500: c = 0.567
+    target 0.450: c = 0.498
+    target 0.388: c = 0.417
+    Sized inputs: whiting evacuate krill like fish of equal energy (Andersen 1999 [A]) -> c ~1; GER
+    armament M 1-1.5 -> c 0.67-1 [J]; the krill-dominated stomachs reach 0.32-0.75 of the model ceiling
+    on krill alone ('Krillintag och jaktsatt') -> a krill plateau below ~0.3 is contradicted centrally.
+
+C3. exclusive foraging modes: share tau of the foraging time in the krill layer, 1 - tau on the bed and
+    fish prey (no krill met outside the layer, no bed prey inside it):
+    level = T [tau XK/(1+XK) + (1-tau) XO/(1+XO)]
+    tau 1.0: level 0.740
+    tau 0.8: level 0.681
+    tau 0.5: level 0.594
+    tau 0.3: level 0.535
+    tau 0.2: level 0.506
+    tau 0.1: level 0.477
+    tau 0.0: level 0.448
+    Note [J]: the yardstick XK already carries the band overlap and the bed-depth access of the krill
+    pair, so a mode share stacked on it would count the vertical separation twice.
+
+C4. appetite term (lipostatic / seasonal / light-cued): it caps REALISED intake, not the potential.
+    Under reserve_room the realised intake is already capped at the reserve room; an appetite term
+    would act earlier, below fill 1. Field winter whiting rations on this scale:
+    SMS Q1 total 0.78 %BW/d at 4.0-5.5 kJ/g  0.25-0.34 vs maintenance 0.272, need 0.388
+    Oslofjord Nov total                      0.11-0.32 vs maintenance 0.272, need 0.388
+    Oslofjord Mar total                      0.27-0.88 vs maintenance 0.272, need 0.388
+    winter cap at 0.272 for 120 d:   1187 MJ/t of net energy below the need (cost + P at fill 1) = 0.59 x the 2000 MJ/t reserve (whiting max_energy_reserve); at the cap = cost this is production not paid, not a reserve loss
+    winter cap at 0.300 for 120 d:    900 MJ/t of net energy below the need (cost + P at fill 1) = 0.45 x the 2000 MJ/t reserve (whiting max_energy_reserve); at the cap = cost this is production not paid, not a reserve loss
+    winter cap at 0.340 for 120 d:    491 MJ/t of net energy below the need (cost + P at fill 1) = 0.25 x the 2000 MJ/t reserve (whiting max_energy_reserve); at the cap = cost this is production not paid, not a reserve loss
+
+C5. krill escape / vigilance as local voids around predators (Onsrud 2004: 'voids' near deep fish
+    assemblages by day; Christiansen 2024: -68 % under schools > 10 m by day, ~0 at night): an a-side factor.
+    void factor 0.32 in a daytime share 0.50 -> f 0.66, potential 0.721
+    void factor 0.32 in a daytime share 0.33 -> f 0.78, potential 0.739
+    void factor 0.60 in a daytime share 0.50 -> f 0.80, potential 0.742
+    void factor 0.60 in a daytime share 0.33 -> f 0.87, potential 0.751
+    void factor 0.88 in a daytime share 0.50 -> f 0.94, potential 0.759
+    void factor 0.88 in a daytime share 0.33 -> f 0.96, potential 0.761
+
+C6. spawning-bound intake cut (the library's whiting spawning entry, section 279): share 0.344 of the group,
+    fast_cut 0.5 of normal intake, 40 spawning days per fish, window Feb-Jun (8.0 h rising to 17.8 h falling).
+    In the engine it closes the reserve room (lib/world/spawning.py), so it binds only where the room binds.
+    40 of a fish's spawning days inside one quarter: group intake x0.924 in that quarter
+    20 of a fish's spawning days inside one quarter: group intake x0.962 in that quarter
+    Field, whiting: SMS Q1 / Q3 ration/Cmax 0.43 / 0.49 (x0.88); Robb et al. 1994, 1991 adults 200-400 mm:
+    Q1 0.42 vs Q2-Q4 0.78-0.83 (x0.52; x0.60 with regurgitated as empty); Hislop 1983, 1981: no between-quarter
+    difference in food weights. Mature adults only: 0.5 x (40-70 d)/91 -> x0.62-0.78 in the quarter [D].
+    mature adults fasting at fast_cut 0.5 for 40 d of the quarter: x0.78; full fast: x0.56
+    mature adults fasting at fast_cut 0.5 for 70 d of the quarter: x0.62; full fast: x0.23

@@ -1,0 +1,27 @@
+Area means: krill density from Table 2 [D]
+year area   ind/m2   g/m2 (x plankton krill wt)   Age-1+ pollock krill/fish/d   capelin   eulachon
+2000 NEin     106.7     2.60                          7.11                         0.29      0.68
+2000 NEmid    339.1     5.02                         23.59                         0.10      2.74
+2000 SWin      58.6     1.22                          8.42                         0.15      1.68
+2000 SWmid    147.3     3.71                          1.18                         0.21      0.93
+2000 Slope    261.6     3.82                          0.00                         0.57      0.00
+2001 NEin     141.6     3.81                         49.41                         0.77      5.85
+2001 NEmid   1025.4    13.74                         58.84                         2.27      4.62
+2001 SWin     147.0     2.73                         63.86                         0.06      1.31
+2001 SWmid    863.1     8.80                         21.62                         0.81      0.70
+2001 Slope    426.2     4.82                          0.00                         0.00      0.00
+2003 NEin      55.1     2.02                         12.92                         0.55      1.53
+2003 NEmid    141.7     4.48                          0.00                         0.04      1.25
+2003 SWin      34.9     1.35                          0.00                         0.05      0.45
+2003 SWmid     45.7     1.23                          7.80                         0.07      0.92
+Spearman rho, area krill g/m2 vs Age-1+ pollock per capita krill numbers (n=12 areas x years, slope excluded): 0.41; vs ind/m2: 0.51
+Spearman rho, area krill g/m2 vs Age-0 pollock per capita krill numbers (n=12 areas x years, slope excluded): 0.43; vs ind/m2: 0.48
+Spearman rho, area krill g/m2 vs capelin per capita krill numbers (n=12 areas x years, slope excluded): 0.42; vs ind/m2: 0.44
+Spearman rho, area krill g/m2 vs eulachon per capita krill numbers (n=12 areas x years, slope excluded): 0.33; vs ind/m2: 0.36
+  (per capita numbers carry the fixed ration and the stomach-krill size; see the docstring)
+
+Fig. 2 x-axis spans, (ind/m2)^0.25 read off the plotted points [D, read off figure, +-0.3]:
+  Age-1+ pollock  x 2.5-7.0 -> 39-2401 ind/m2; at the Table 2 krill weights 0.010-0.039 g: up to 24-93 g/m2
+  capelin         x 0.0-9.0 -> 0-6561 ind/m2; at the Table 2 krill weights 0.010-0.039 g: up to 67-254 g/m2
+  Age-0 pollock   x 0.0-9.5 -> 0-8145 ind/m2; at the Table 2 krill weights 0.010-0.039 g: up to 83-315 g/m2
+  For comparison: 5 g/m2 = 5 t/km2 (the box's krill outside density); 2401 ind/m2 over a 100-200 m column = 12-24 ind/m3

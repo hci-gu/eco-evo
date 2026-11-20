@@ -26585,3 +26585,124 @@ remain open exactly as described in 71.9 / 71.11.
     record's net exchange via _assert_parity(exchange=True)), test_gpu_trainer (NaN/inf pairs, null logging).
     Open (biology, not changed): recruits arriving in an empty cell below the threshold are always swept, so the
     import alone cannot re-seed a collapsed open-population group on a uniform recruit map.
+
+293 Krill patchiness at the model grain, and whiting's in-situ search speed (research agent + main agent; nothing
+    applied; research_notes/"Krillens flackighet" (a-umlaut; summary.md saved by the main agent, data/ ~34 MB not
+    to be committed) and "Intag under fodosok"/model/ (o-umlaut twice: speed_factors.py, speed_potential.py)).
+    Question: is krill patchy enough at 1 km x 6 h to explain 291's "eats a lot when it meets krill, meets it only
+    sometimes", and do gadoids track patches? Only the residual within a bed-depth class and season counts (the
+    depth table and the quarterly season are in the model).
+    - Acoustics: every regional description is a continuous diffuse day layer (Oslofjord, Skagen, Gullmarsfjord);
+      swarms of 50-120 m are sub-cell. The one cell-scale measurement (Gullmarsfjord, 8-10 Sept 2003, Everson
+      et al. 2007 Table 5, transect length judged ~1-2 km): between-transect CV 0.54 by day, 0.35 at night ->
+      occupancy p_eff 0.77 (0.65-0.90) by day, 0.89 at night, in-patch multiplier 1.1-1.5. Persistence: the 1-2 km
+      pattern held at r 0.62-0.85 over 6-12 h, 0.78-0.99 over 32-49 h; decorrelation 1 / 3 / 8 ticks [D/J];
+      correlation length 1 / 5 / 10-15 cells (proxies).
+    - Stomachs (ICES DB 1981-91): krill is a between-haul prey (hauls with krill: whiting >= 20 cm 0.35, saithe
+      0.52; the top 10 % of hauls hold 0.84-0.91 of the krill), clustered at ICES-rectangle scale (~55 km;
+      within-rectangle variance share saithe 0.17 vs null 0.59, whiting 0.41 vs 0.63). Stomach-implied p per
+      cell-tick 0.06-0.42 (central ~0.2), a lower bound (it is occupancy x P(eats | in krill)). Inside a
+      continuous Oslofjord layer whiting FO 0.35-0.80 with half-full stomachs (Onsrud 2004).
+    - Tracking: no whiting or saithe co-occurrence coefficient at any scale; proxies (hake, pollock, cod) weak,
+      adjacent or negative. Kaartvedt et al. 2005 (MEPS 299:1) is the Norwegian Sea, saithe under swarms had eaten
+      fish. 291's "0.32-0.75 vs 0.09-0.17" mixed bands: central against central the ratio is 0.15-0.27.
+    - Yardstick (untracked krill, other prey smooth, 289/291 X): whiting at the acoustic p x0.93-0.97 on the
+      potential (negligible); at the stomach p 0.1-0.3 x0.64-0.74 (potential 0.47-0.55); p -> 0 floor 0.43; the
+      water column x0.86-0.99 at any p.
+    Verdict [J]: the one cell-scale measurement says 1 km patchiness is too small to matter; the stomach pattern is
+    real but mostly regional (10-50 km, weeks) plus fish not eating krill that is present. The rival reading, an
+    in-layer limit (access, vertical position, appetite, escape), is supported at least as well as patch finding;
+    no evidence gadoids track krill. A patchy krill field in the model is not supported as planned. Settling datum:
+    box or open-Skagerrak echosounder lines (38/120/200 kHz, 1 km EDSUs, >= 20 km, repeated 2-3 d) with stomachs
+    on the same line; partial routes: Oslofjord WBAT raw data (PANGAEA 973718), HERAS / IBTS raw files.
+    Whiting search speed (291's x0.75, night x0.525, corrected): Onsrud, Kaartvedt & Breien 2005 (CJFAS 62:1822,
+    doi:10.1139/f05-090) give speed modes of "deep-living fish, mainly Norway pout and whiting", 14-16 cm/s by day,
+    10-11 cm/s at night, species and lengths not separated (also a speed-vs-range artefact); 0.6 BL/s holds only if
+    all were 25 cm whiting, and the upper-layer night fish (16-24 cm/s) included whiting, so the night x0.7 is
+    doubtful for whiting. 291 called it measured; it is a judged reading. Sized with the chain's own machinery
+    (band_pairs.py definitions, rule A, K_deep 0.09, vrel per stage; the chain's ratio eq / a_enc_lib carries the
+    speed in both terms and cancels, so the absolute band a's were compared):
+      reading                    krill   planktivores  benthivores  epifauna   whiting potential (0.765 now)
+      0.6 BL/s day               x0.76   x0.82         x0.79        x0.76      0.730
+      0.6 BL/s + night x0.7      x0.76   x0.79         x0.73        x0.66      0.729
+      15 cm/s every stage        x0.88   x0.82         x0.79        x1.10      0.749
+      15 cm/s + night 10.5       x0.88   x0.79         x0.73        x0.94      0.747
+      night x0.7 only            1.00    x0.96         x0.91        x0.86      0.763
+    (juveniles carry 0.16 of the krill pair and none of the fish pairs; the krill members carry no night speed;
+    epifauna by vrel per stage outside the chain.) Effect -0.02 to -0.04 on the potential, krill share of X
+    0.81-0.83 (0.82 now); the potential stays ~2x the need 0.388, so the room cap binds and fill stays ~1. Not
+    worth a library change (checkpoints invalid for 0.02-0.04). Not run in the frozen model.
+    Next (user): research agent on appetite vs capture inside the krill layer and whether the low krill intake
+    holds outside winter (research_notes/"Aptit eller fangst i krillskiktet", a-ring), reconciling "Krillparen mot
+    vintermagar" verdict C with Dempster 2011.
+    Correction (294's encounter agent read the full text, held at "Krillens flackighet"/data/onsrud2005): the
+    tracked krill-layer fish were 14-15 cm, so 15-16 cm/s by day and ~10 at night are ~1 BL/s and ~0.7 BL/s
+    ("larger fish somewhat lower"). Whiting's factor on the chain's 0.8 BL/s depends on the length assumed: x0.75
+    at adult length (25 cm), x1.25 at the tracked juveniles; central x0.9 (0.6-1.25), so the table above is the
+    low end, not the reading. Norway pout's chain speed 0.33 BL/s is ~2.6x (1-3.9) below the in-situ ~1 BL/s: the
+    chain is LOW there, which would raise the planktivore krill a x1.72 and the copepod a x1.05. Neither applied.
+
+294 Why the fish over-eat: all groups, rest, encounter excess, carrying cost, seasonal potential (2026-11-20;
+    user: "Varfor diskuterar vi bara vitlingens krillpar?", then "Kor steg 1", "Gor nasta steg", "hur gora vila
+    lonsam?", "1 och 2", "Ja"; diagnostics and research only, nothing applied). Frozen fix105 (scratchpad
+    bedlight/fix105_frozen), live library, seeds 0/1, one year after the warm-up. Model scripts and tables in
+    research_notes/"Mattnad hos rovfisk"/model (a-umlaut); research in "Aptit eller fangst i krillskiktet" (a-ring),
+    "Vilans avkastning", "Motesteorins overskott" (o-umlaut twice), "Reservens kostnad" (summary.md saved by the
+    main agent each time; data/ not committed).
+294.1 Every fish group, not whiting's krill pair (fill_decomp_all.py, pair_vs_field.py). Uncapped feeding level
+    against the field ration (FIELD_QB): planktivores 2.31, benthivores 1.78, whiting 1.65, water column 2.01
+    (against the need 1.5-2.3x); realised 0.86-1.22 (the room cap and 271's set point hold them at need).
+    Mackerel 4.02 against its presence-weighted field ration (realised 2.06; ~2x its need 0.282). Removing any single prey
+    leaves the potential above need in every group except mackerel without krill. Per-pair unc/field ratios are
+    mostly diet shares; the prey-side outliers are benthivores -> Nephrops (realised M2 ~7-8x booked) and water
+    column -> whiting (~3x).
+294.2 Forced rest (forced_rest.py: eat shares x k after the policy, the rest to rest, forage recomputed): at k 0.5
+    T falls to 0.51 (whiting) - 0.65 (water column) and fill stays 0.97-0.99 (planktivores 0.90 unchanged); only
+    the benthivores lose (fill 0.83, B end 0.97 vs 1.10 below T ~0.73); mackerel loses a little. Rest is
+    energy-neutral at surplus food; its one benefit went to prey (whiting M2 0.78 -> 0.65). Research ("Vilans
+    avkastning"): activity-dependent risk supported in direction only (Gerritsen-Strickler r <= 1.33, no measured
+    ratio for any model species); motionless-prey floors 0.885-0.97 worth <= 2.4 %/yr to whiting; the vertical
+    refuge is not state-dependent (pout's near-bed layer is the riskier one: cod, seals). Rest lowers T, not fill.
+294.3 Appetite or capture in the krill layer (research): whiting's krill intake is acquisition-limited all year,
+    no winter or lipostat appetite (Oslofjord Nov 0.09-0.22, Mar 0.26-0.60, Jun 0.08-0.18 of the ceiling; SMS
+    ration/Cmax flat 0.42-0.49 by quarter; the gadoid appetite depression is spawning-bound). "Krillparen mot
+    vintermagar" verdict C is revised for whiting (it rested on herring proxies without krill).
+294.4 Encounter-theory excess (research, "Motesteorins overskott"): no single term of a = scan x area x v_rel x T
+    x N_t x p x F x light x overlap carries it; the sized corrections explain 1-26 %. The excess is common within
+    each predator: an unmeasured search-effort / encounter-realisation factor x0.25-0.35 (planktivores, whiting,
+    water column, mackerel); the field constrains only the whole product (herring clearance, krill in winter, cod
+    on capelin, whiting plateaus). Benthivores are separate (would need x0.03-0.06; the ceiling side or saturated
+    beds). A time share 0.5-0.68 is rejected (predator_share; a gut buffer is open). 293's speed reading corrected
+    (see 293).
+294.5 Cost of carrying reserve (research, "Reservens kostnad"): none of field size. Gadoid liver ~+0.05 RM at fill 1,
+    herring and mackerel SAVE on lift; no measured risk rising with reserve within fill 0-1 (lean fish are eaten
+    more); fish on easy food fatten (farm saithe HSI x1.4-1.8). A learner would need a risk 3-7x larger full than
+    empty to leave fill 1; the field sign is <= 0. The model's fill ~1 has three causes: surplus potential, the
+    reward counting a stored MJ like lean tissue, and the growth ceiling B g (s - u) p with g derived at s* = 1
+    (growth rises linearly with fill above u; field P only at s = 1, ~0.46 of it at s 0.5). The last two are worth
+    about half each of what a full reserve is worth to the learner (0.16-0.36 log units), but they only decide where
+    a surplus goes; the surplus itself is the potential. Field lean spring = acquisition + spawning + an allocation
+    order (grow first, refill the liver after). Settling datum: immature whiting / haddock / saithe on excess food,
+    monthly HSI.
+294.6 Seasonal shape of the potential (potential_season.py: per month and prey the engine's a, the visible prey met
+    by the foraging tonnes, X = a B_vis h, S, and both Q10 factors). Whiting is deeply saturated while foraging
+    (X 17-33, krill 0.84 of it); its potential peaks Feb-Jun and dips in Sep because the TRAINED placement meets
+    krill at 3.4x the grid's relative level in March and 1.3x in September, while the grid krill (the open pool's
+    quarterly season) is lowest in June (0.60) and highest in Dec (1.30); Q10 is small at the bed (0.93-1.08).
+    A generic factor on X (annual mean potential = need): trained placement gives a reserve maximum in April and
+    minimum in Oct-Nov (wrong phase); a follower meeting krill in proportion to the grid gives a maximum in March and
+    a minimum in Jul-Aug (field: full Nov-Apr, lean May-Jul) - close. Benthivores: X 70-110 on beds that do not vary,
+    so the potential is flat all year (a factor x0.05 still leaves S ~0.82-0.84 flat); their cycle must come from
+    the need side (spawning 279, temperature) and is not reached by an acquisition factor. Planktivores: zooplankton
+    (X 0.05 Jan -> 12 May) and the summer Q10 give a spring-summer potential. The phase table given to the user
+    before this run (whiting max Jul / min Jan, benthivores max May / min Nov) is withdrawn: it used the realised
+    feeding as the need, which the spawning cut and the set point distort, and the sated placement.
+    Reading [J]: a sated policy's placement says nothing about where a hungry one would forage, so a frozen test of a
+    lower potential cannot judge the fill cycle; that needs retraining. The krill supply season itself is in the
+    field's phase for whiting.
+294.7 Recommended path (user's choice pending): the root of both over-eating and clumping is the surplus
+    potential (288: hungry predators that follow their prey reverse the swamping payoff). Next: a derivation of
+    the encounter-realisation factor per group from field whole-product data (the user decides whether that is
+    allowed; it uses the field ration's information), applied to a library copy and tested frozen for hunger and the
+    following payoff, then retraining; in parallel the water column -> benthivores pair (J at the bed ~2x field
+    flow, 278.9). The engine conventions (reward currency, s* in g) come after the potential.

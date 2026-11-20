@@ -1,0 +1,44 @@
+source,doi,species,predator,method,quantity,value,unit,tag
+rest_payoff.py A,NA,whiting,seals+porpoises,library floors,rest payoff per unit rest share at today's floors,0.0162,/yr,D
+rest_payoff.py A,NA,benthivores,seals+porpoises,library floors,rest payoff per unit rest share at today's floors,0.0156,/yr,D
+rest_payoff.py A,NA,planktivores,seals,library floors (species 0.35),rest payoff per unit rest share at today's floors,0.0033,/yr,D
+rest_payoff.py A,NA,water column,seals+porpoises,library floors,rest payoff per unit rest share at today's floors,0.0025,/yr,D
+rest_payoff.py A,NA,mackerel,water column,library floors,rest payoff per unit rest share at today's floors,0,/yr,D
+rest_payoff.py B,NA,planktivores,NA,fix105 yardstick,rest share a full fish could take (rho),0.55,fraction,D
+rest_payoff.py B,NA,benthivores,NA,fix105 yardstick,rest share a full fish could take (rho),0.35,fraction,D
+rest_payoff.py B,NA,whiting,NA,fix105 yardstick,rest share a full fish could take (rho),0.53,fraction,D
+rest_payoff.py B,NA,water column,NA,fix105 yardstick,rest share a full fish could take (rho),0.49,fraction,D
+rest_payoff.py B,NA,mackerel,NA,fix105 yardstick,rest share a full fish could take (rho),0.51,fraction,D
+rest_payoff.py B,NA,whiting,fish predators,enc form,payoff at rho for r 1.2 on fish pairs,2.97,%/yr of biomass,D
+rest_payoff.py B,NA,planktivores,fish predators,enc form,payoff at rho for r 1.2 on fish pairs,3.21,%/yr of biomass,D
+rest_payoff.py B,NA,benthivores,fish predators,enc form,payoff at rho for r 1.2 on fish pairs,0.96,%/yr of biomass,D
+rest_payoff.py B,NA,water column,mammals,avg form T_f 0.75,payoff at rho for r 2 (any r: max 0.88),0.50,%/yr of biomass,D
+rest_payoff.py C,NA,whiting,all,energy,complete safety at rest as share of one foraging tick at need,0.095,fraction,D
+rest_payoff.py C,NA,planktivores,all,energy,complete safety at rest as share of one foraging tick at need,0.066,fraction,D
+rest_payoff.py D,NA,whiting (prey 0.1 m/s),cod 0.16 m/s,Gerritsen-Strickler,floor-equivalent of a motionless prey,0.885,fraction,D
+rest_payoff.py D,NA,small fish (0.1 m/s),saithe 0.5 m/s,Gerritsen-Strickler,floor-equivalent of a motionless prey,0.987,fraction,D
+rest_payoff.py D,NA,herring (0.2 m/s),cod 0.16 m/s,Gerritsen-Strickler,floor-equivalent of a motionless prey,0.659,fraction,D
+rest_payoff.py D,NA,fish (0.1-0.2 m/s),seal/porpoise 1.0-1.2 m/s,Gerritsen-Strickler,floor-equivalent of a motionless prey,0.987-0.998,fraction,D
+candidate_forms.py,NA,whiting,benthivores,form V (whiting stops),pair floor,0.885,fraction,D
+candidate_forms.py,NA,whiting,water column,form V (whiting stops),pair floor,0.951,fraction,D
+candidate_forms.py,NA,benthivores,whiting,form V,pair floor,0.938,fraction,D
+candidate_forms.py,NA,benthivores,water column,form V (anglerfish 0.03 at 0),pair floor,0.950,fraction,D
+candidate_forms.py,NA,planktivores,benthivores,form V (pout 0.6 stops; schools do not),pair floor,0.931,fraction,D
+candidate_forms.py,NA,planktivores,water column,form V,pair floor,0.971,fraction,D
+candidate_forms.py,NA,planktivores,whiting,form V,pair floor,0.963,fraction,D
+candidate_forms.py,NA,whiting,all,form V,payoff at rho,2.36,%/yr of biomass,D
+candidate_forms.py,NA,whiting,all,form VM central,payoff at rho,3.74,%/yr of biomass,D/J
+candidate_forms.py,NA,planktivores,all,form VM central,payoff at rho,1.85,%/yr of biomass,D/J
+candidate_forms.py,NA,benthivores,all,form VM central,payoff at rho,1.79,%/yr of biomass,D/J
+candidate_forms.py,NA,water column,all,form VM central,payoff at rho,0.08,%/yr of biomass,D/J
+lit_mammals.md,NA,benthivores,seals,trail vs gill current; seal window 0.57 gadoids / 0.43 flatfish,pair floor (rest only),0.61 (0.3-0.95),fraction,D/J
+vertical_refuge.py,NA,Norway pout,saithe,refuge 0-1.5 m vs forage 0-10 m (Albert 1994 layers),exposure ratio rest/forage (day),1.17,ratio,D/J
+vertical_refuge.py,NA,Norway pout,cod,refuge 0-1.5 m vs forage 0-10 m,exposure ratio rest/forage (day),4.1,ratio,D/J
+vertical_refuge.py,NA,Norway pout,whiting,refuge 0-1.5 m vs forage 0-10 m,exposure ratio rest/forage (day),0.93,ratio,D/J
+vertical_refuge.py,NA,Norway pout,harbour seal,refuge 0-1.5 m vs forage 0-10 m,exposure ratio rest/forage,1.97,ratio,D/J
+vertical_refuge.py,NA,0-group gadoids,cod (pair unchecked: not applicable),refuge 0-0.5 m vs forage 3-5 m (PROXY stage),exposure ratio rest/forage (day),19,ratio,D/J
+vertical_refuge.py,NA,0-group gadoids,hake,refuge 0-0.5 m vs forage 3-5 m (PROXY stage),exposure ratio rest/forage (day),1.42,ratio,D/J
+vertical_refuge.py,NA,0-group gadoids,whiting,refuge 0-0.5 m vs forage 3-5 m (PROXY stage),exposure ratio rest/forage (day),0.93,ratio,D/J
+vertical_refuge.py,NA,0-group gadoids,saithe,refuge 0-0.5 m vs forage 3-5 m (PROXY stage),exposure ratio rest/forage (day),1.14,ratio,D/J
+fill_tradeoff.py,NA,whiting,all,form V,risk saved by resting the extra foraging a full reserve costs,0.61,%/yr of biomass,D
+fill_tradeoff.py,NA,whiting,NA,growth law,production given up at fill 0.1 vs 1.0,0.59,/yr of biomass,D

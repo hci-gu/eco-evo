@@ -1,0 +1,58 @@
+Haul-to-haul spread of krill catches in and near the box, from tables already transcribed in
+research_notes/"Krill i Skagerrak"/tables (read-only):
+- bohle1991_table1_box.csv: Bohle & Moksness 1991 (ICES CM 1991/L:4) Table 1, IKMT night hauls 5-65 m (oblique,
+  ~30 min at 2.5 kn = ~2.3 km of tow), litres per haul, min / max / mean per station and winter, Dec-Apr 1987-91.
+  Repeated hauls at a FIXED station across cruises of one winter: a temporal (weeks) spread at one place.
+- nsec_mnorvegica.csv: IMR North Sea ecosystem cruise macroplankton trawl, M. norvegica g/m3 x 1e4 per station,
+  Norwegian Trench and Skagerrak, April-May 2023 and 2025: a spatial spread between stations tens of km apart.
+
+Derived [D]:
+- share of station-winters with at least one zero haul (min 0) and max/mean;
+- the two-state occupancy estimate p2 = mean/max: if a station holds krill at density D_in in a share p of hauls and
+  ~0 otherwise, mean = p D_in and max = D_in, so p = mean/max (biased low when the in-patch density itself varies,
+  high when n is small and no haul hit a patch; n is 2-7 here);
+- lognormal sigma implied by E[max]/mean for n draws (simulated; saturates at sigma 4 when one haul holds nearly
+  all the catch, i.e. max/mean close to n: then read p2 only);
+- CV and log-sd of the NSEC station values; Lloyd's patchiness 1 + CV^2 and the two-state occupancy
+  p_eff = 1 / (1 + CV^2) at that support.
+
+
+== Bohle & Moksness 1991, fixed stations, repeated night IKMT hauls within one winter
+station winter bed_m n min max mean max/mean implied_lognormal_sigma CV_lognormal in_box
+  31 88-89  110 n 7 min  0.00 max  0.70 mean  0.47 max/mean 1.49 p2 0.67 sigma 0.32 CV 0.33 box
+  32 88-89   97 n 7 min  0.00 max  0.50 mean  0.10 max/mean 5.00 p2 0.20 sigma 3.19 CV 162.15 box
+  33 88-89  111 n 5 min  0.00 max  0.50 mean  0.23 max/mean 2.17 p2 0.46 sigma 0.89 CV 1.10 box
+  34 88-89  190 n 5 min  0.50 max  2.80 mean  1.38 max/mean 2.03 p2 0.49 sigma 0.78 CV 0.92 box
+  35 88-89  288 n 5 min 0.9 max 0.9 mean 1.18: mean > max, skipped
+  50 88-89   90 n 2 min  0.00 max  2.20 mean  1.10 max/mean 2.00 p2 0.50 sigma  nan CV  nan box
+  50 89-90   90 n 4 min  0.00 max  8.00 mean  2.37 max/mean 3.38 p2 0.30 sigma 4.00 CV 2980.96 box
+  51 88-89   92 n 2 min  0.00 max  0.10 mean  0.05 max/mean 2.00 p2 0.50 sigma  nan CV  nan box
+  51 89-90   92 n 3 min  0.00 max 30.00 mean 10.43 max/mean 2.88 p2 0.35 sigma 4.00 CV 2980.96 box
+  52 88-89   82 n 2 min  0.00 max  0.30 mean  0.15 max/mean 2.00 p2 0.50 sigma  nan CV  nan box
+  52 89-90   82 n 3 min  0.00 max  5.00 mean  1.66 max/mean 3.01 p2 0.33 sigma 4.00 CV 2980.96 box
+  53 89-90   90 n 4 min  0.00 max  2.20 mean  0.50 max/mean 4.40 p2 0.23 sigma 4.00 CV 2980.96 out
+  54 89-90   56 n 4 min  0.00 max  9.00 mean  2.25 max/mean 4.00 p2 0.25 sigma 4.00 CV 2980.96 out
+  30 88-89  100 n 5 min  0.00 max  9.50 mean  2.00 max/mean 4.75 p2 0.21 sigma 4.00 CV 2980.96 out
+  36 88-89  527 n 7 min  0.00 max  2.80 mean  1.10 max/mean 2.55 p2 0.39 sigma 0.91 CV 1.13 box
+  37 88-89  514 n 6 min  0.25 max  3.95 mean  1.73 max/mean 2.28 p2 0.44 sigma 0.85 CV 1.03 out
+  38 88-89  527 n 6 min  0.50 max  2.40 mean  1.26 max/mean 1.90 p2 0.53 sigma 0.61 CV 0.67 out
+  39 88-89  530 n 6 min  0.40 max  1.90 mean  1.15 max/mean 1.65 p2 0.61 sigma 0.45 CV 0.47 out
+  40 88-89  538 n 6 min  0.30 max  1.50 mean  1.00 max/mean 1.50 p2 0.67 sigma 0.35 CV 0.36 out
+  41 88-89  380 n 6 min  0.10 max  3.00 mean  1.20 max/mean 2.50 p2 0.40 sigma 0.99 CV 1.29 out
+  42 88-89  310 n 7 min  0.15 max  1.50 mean  0.81 max/mean 1.85 p2 0.54 sigma 0.52 CV 0.56 out
+  43 88-89  155 n 6 min  0.00 max  0.80 mean  0.15 max/mean 5.33 p2 0.19 sigma 4.00 CV 2980.96 out
+station-winters: 22; with at least one zero haul: 14
+implied lognormal sigma (n >= 3 stations, excluding zeros): min 0.32 median 0.99 max 4.00; CV at the median 1.29; p_eff = 1/(1+CV^2) = 0.38
+two-state occupancy p2 = mean/max over station-winters (n 21): min 0.19 quartiles 0.30 / 0.44 / 0.50 max 0.67
+  p2 cannot fall below 1/n (one positive haul). Stations with n >= 5 only (floor <= 0.2): n 13, min 0.19 median 0.46 max 0.67
+  beds >= 150 m: median p2 0.49 (n 9); beds < 150 m: median p2 0.35 (n 12)
+in-box station-winter means (n 12): CV between stations 1.62; p_eff 0.28
+  without st. 51 1989-90 (one 30 l haul in 3, flagged by the authors): n 11 CV 0.81; p_eff 0.61
+
+== IMR NSEC macroplankton trawl, M. norvegica, stations tens of km apart, April-May
+all                n 18 mean   48.6 median   26.7 CV 1.98 log-sd 1.27 Lloyd 1+CV^2 4.93 p_eff 0.20; max/mean  9.1
+2023               n 10 mean   18.4 median    9.8 CV 0.87 log-sd 1.14 Lloyd 1+CV^2 1.75 p_eff 0.57; max/mean  2.3
+2025               n  8 mean   86.4 median   38.3 CV 1.56 log-sd 0.91 Lloyd 1+CV^2 3.42 p_eff 0.29; max/mean  5.1
+west/north trench  n 10 mean   31.8 median   31.2 CV 0.46 log-sd 0.66 Lloyd 1+CV^2 1.21 p_eff 0.82; max/mean  1.8
+east / Skagerrak   n  8 mean   69.7 median   13.2 CV 2.02 log-sd 1.71 Lloyd 1+CV^2 5.09 p_eff 0.20; max/mean  6.3
+all without the 440 outlier (st. 418) n 17 CV 0.66 p_eff 0.70

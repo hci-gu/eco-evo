@@ -1,0 +1,34 @@
+== Uglem 2020, Hitra: what the 'pellet weight' column is
+  autumn jig  p 0.29 mean    56 g -> if all-fish mean, SD >=    88 g
+  autumn net  p 0.33 mean   141 g -> if all-fish mean, SD >=   201 g
+  spring jig  p 0.60 mean   166 g -> if all-fish mean, SD >=   136 g
+  spring net  p 0.50 mean    89 g -> if all-fish mean, SD >=    89 g
+  summer jig  p 0.88 mean    78 g -> if all-fish mean, SD >=    29 g
+  summer net  p 0.23 mean    96 g -> if all-fish mean, SD >=   176 g
+  reported SDs: autumn jig 77, autumn net 163, spring jig 106, spring net 63, summer jig 87, summer net 112
+  mean of the six occasion means 104.3 g (text: 105 g)
+== Uglem 2020, Hitra: pellet meal as % of mean FA body weight (W from Table 1)
+  autumn FA, jig         56 g / 2.14 kg = 2.6 % BW
+  autumn FA, gillnet    141 g / 3.10 kg = 4.5 % BW
+  spring FA, jig        166 g / 3.09 kg = 5.4 % BW
+  spring FA, gillnet     89 g / 3.19 kg = 2.8 % BW
+  summer FA, jig         78 g / 3.18 kg = 2.5 % BW
+  summer FA, gillnet     96 g / 2.92 kg = 3.3 % BW
+== Uglem 2020, Hitra: HSI FA/UA within gear
+  autumn jig      FA  5.6 / UA  6.9 = 0.81
+  autumn gillnet  FA  8.2 / UA  6.8 = 1.21
+  spring gillnet  FA 10.0 / UA  6.2 = 1.61
+  summer jig      FA 10.0 / UA  6.0 = 1.67
+  summer gillnet  FA 10.7 / UA  6.8 = 1.57
+== Hoines et al. 1992, Karmoy: haddock and cod stomach contents
+  haddock >30 cm herring season / outside = 13.83 / 2.22 = 6.2
+  haddock >30 cm empty share: herring season 8.3 %, outside 12.8 %
+  (Feb-based ratios below are NOT used: Feb values lie inside the +-0.5 g read-off error)
+  haddock 40-49 cm Feb 0.7 g -> Mar 14.7 g (x21) -> Apr 21.2 g (x30, same gear as Feb)
+  haddock >50 cm   Feb 0.6 g -> Mar 14.9 g (x25) -> Apr 23.9 g (x40, same gear as Feb)
+  cod 30-49 cm Mar / Jul = 23 / 10 = 2.3
+  cod 50-69 cm Mar / Jul = 78 / 43 = 1.8
+== Nedreaas 1985, Taelavaag: stomach content of 30-39 cm saithe, March vs summer (Fig 5 read off)
+  March 2.0-2.1 g; Jun-Sep occasion means 0.6-4.1 g
+  at W = 0.0085 L^3, L 34.5 cm: 349 g; March content = 0.57-0.60 % BW wet
+== Fordham/Trippel etc.: no numbers derived (secondary)

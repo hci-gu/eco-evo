@@ -1,0 +1,87 @@
+
+=== planktivorous_fish: uncapped 0.532, need 0.262, field ration 0.231; X_eff 1.34; needed generic a-factor 0.293 (field 0.247), time share 0.49 (0.43)
+  term                               form  prey                         w/c/s factor       potential w/c/s      share of needed (c)
+  speed in situ on copepods (pout 0.03 of the pair's a) a     zooplankton                  1.57/1.05/0.71     0.599/0.539/0.487   -0.02   [D on F/J]
+  speed in situ on krill (pout 0.45 of the pair's a) a     krill                        2.58/1.72/0.84     0.635/0.587/0.518   -0.14   [D on F/J]
+  search phase of an up-down cycle (herring only) copepods a     zooplankton                  1.00/0.76/0.52     0.532/0.496/0.452    0.10   [D on J]
+  search phase of an up-down cycle (herring only) krill a     krill                        1.00/0.86/0.73     0.532/0.520/0.507    0.03   [D on J]
+  detection R in situ                a     all                          1.00/0.90/0.70     0.532/0.508/0.450    0.07   [J]
+  capture on copepods                a     zooplankton                  1.20/1.00/0.80     0.558/0.532/0.502    0.00   [J on F]
+  capture on krill                   a     krill                        1.40/1.00/0.60     0.565/0.532/0.494    0.00   [J]
+  fine-scale overlap krill (voids under schools) a     krill                        1.00/0.90/0.80     0.532/0.523/0.514    0.02   [D on S]
+  fine-scale overlap copepods        a     zooplankton                  1.20/1.00/0.80     0.558/0.532/0.502    0.00   [J]
+  a-side product                                                                           0.733/0.509/0.181    0.06   (need 0.262, field 0.231)
+  a-side, not in chain                                                                     0.558/0.471/0.364    0.17   (need 0.262, field 0.231)
+  all terms                                                                                0.733/0.509/0.181    0.06   (need 0.262, field 0.231)
+  residual after all central corrections: generic a-factor 0.324, or time share 0.51; upper-bound form min(1, T X) (s3; a bound, not a need) a-factor 0.233
+  needed with no correction, upper-bound form min(1, T X): a-factor 0.210
+
+=== benthivorous_fish: uncapped 0.928, need 0.633, field ration 0.521; X_eff 36.31; needed generic a-factor 0.054 (field 0.033), time share 0.68 (0.56)
+  term                               form  prey                         w/c/s factor       potential w/c/s      share of needed (c)
+  speed in situ (cod/haddock modal 0.4; flatfish move+pause) a     all                          2.00/1.00/0.50     0.941/0.928/0.904    0.00   [F/J]
+  within-bout search share (round fish 0.7 of group) a     all                          1.00/0.93/0.79     0.928/0.926/0.922    0.01   [J]
+  bed detection width                a     benthic_infauna;mobile_epifa 1.20/1.00/0.70     0.932/0.928/0.919    0.00   [J]
+  detection R on fish and krill      a     krill;planktivorous_fish;whi 1.00/1.00/0.85     0.928/0.928/0.928    0.00   [D]
+  capture on fish                    a     planktivorous_fish;whiting   1.00/0.80/0.40     0.928/0.928/0.928    0.00   [J]
+  capture on bed prey                a     benthic_infauna;mobile_epifa 1.00/1.00/0.50     0.928/0.928/0.907    0.00   [J]
+  habitat structure (lab proxy; applicability to mud J) a     benthic_infauna;mobile_epifa 1.00/1.00/0.20     0.928/0.928/0.859    0.00   [S held/J]
+  fine-scale overlap bed prey        a     benthic_infauna;mobile_epifa 1.30/1.00/0.70     0.934/0.928/0.919    0.00   [J]
+  fine-scale overlap fish prey       a     planktivorous_fish;whiting   1.60/1.00/0.70     0.929/0.928/0.928    0.00   [J/S]
+  daily idle time (engine form; gut buffer removes it) time  all                          1.00/1.00/0.50     0.928/0.928/0.464    0.00   [S held/J]
+  a-side product                                                                           0.945/0.926/0.523    0.01   (need 0.633, field 0.521)
+  time-side product                                                                        0.928/0.928/0.464    0.00   (need 0.633, field 0.521)
+  a-side, not in chain                                                                     0.934/0.926/0.804    0.01   (need 0.633, field 0.521)
+  all terms                                                                                0.945/0.926/0.262    0.01   (need 0.633, field 0.521)
+  residual after all central corrections: generic a-factor 0.059, or time share 0.68; upper-bound form min(1, T X) (s3; a bound, not a need) a-factor 0.020
+  needed with no correction, upper-bound form min(1, T X): a-factor 0.018
+
+=== whiting: uncapped 0.751, need 0.390, field ration 0.455; X_eff 5.13; needed generic a-factor 0.150 (field 0.200), time share 0.52 (0.61)
+  term                               form  prey                         w/c/s factor       potential w/c/s      share of needed (c)
+  speed in situ                      a     all                          1.25/0.90/0.60     0.777/0.738/0.678    0.03   [F/D/J]
+  within-bout search share           a     all                          1.00/0.90/0.70     0.751/0.738/0.702    0.03   [J]
+  detection R in situ                a     all                          1.00/1.00/0.80     0.751/0.751/0.722    0.00   [D/J]
+  capture on fish                    a     planktivorous_fish;benthivor 1.00/0.80/0.40     0.751/0.750/0.748    0.00   [J]
+  capture on krill and epifauna      a     krill;mobile_epifauna;zoopla 1.20/1.00/0.60     0.771/0.751/0.683    0.00   [J]
+  fine-scale overlap krill           a     krill                        1.20/1.00/0.80     0.769/0.751/0.728    0.00   [J/S]
+  fine-scale overlap fish prey       a     planktivorous_fish;benthivor 1.50/1.00/0.70     0.754/0.751/0.749    0.00   [J/S]
+  fine-scale overlap epifauna        a     mobile_epifauna              1.30/1.00/0.70     0.756/0.751/0.747    0.00   [J]
+  prey vulnerability window residual (fish) a     planktivorous_fish;benthivor 1.00/0.50/0.25     0.751/0.748/0.747    0.01   [J held]
+  prey vulnerability window residual (krill) a     krill                        1.00/0.75/0.50     0.751/0.721/0.674    0.06   [J held]
+  a-side product                                                                           0.811/0.683/0.275    0.15   (need 0.390, field 0.455)
+  a-side, not in chain                                                                     0.774/0.701/0.545    0.11   (need 0.390, field 0.455)
+  all terms                                                                                0.811/0.683/0.275    0.15   (need 0.390, field 0.455)
+  residual after all central corrections: generic a-factor 0.242, or time share 0.57; upper-bound form min(1, T X) (s3; a bound, not a need) a-factor 0.137
+  needed with no correction, upper-bound form min(1, T X): a-factor 0.085
+
+=== predatory_fish: uncapped 0.756, need 0.397, field ration 0.375; X_eff 3.53; needed generic a-factor 0.197 (field 0.179), time share 0.53 (0.50)
+  term                               form  prey                         w/c/s factor       potential w/c/s      share of needed (c)
+  speed in situ (saithe; hake 0.05)  a     all                          1.50/1.00/0.50     0.816/0.756/0.619    0.00   [S/J]
+  within-bout search share (saithe 1.0; hake ambush 0.7) a     all                          1.00/0.98/0.77     0.756/0.752/0.709    0.01   [J]
+  detection R in situ                a     all                          1.00/1.00/0.80     0.756/0.756/0.716    0.00   [D/J]
+  capture on fish                    a     planktivorous_fish;benthivor 1.00/0.80/0.30     0.756/0.735/0.662    0.04   [J]
+  capture on krill                   a     krill;zooplankton            1.40/1.00/0.60     0.782/0.756/0.721    0.00   [J]
+  fine-scale overlap krill           a     krill                        1.20/1.00/0.80     0.769/0.756/0.740    0.00   [J/S]
+  fine-scale overlap fish prey       a     planktivorous_fish;benthivor 1.50/1.00/0.70     0.794/0.756/0.724    0.00   [J/S]
+  prey vulnerability window residual (fish) a     planktivorous_fish;benthivor 1.00/0.50/0.25     0.756/0.696/0.653    0.13   [J held]
+  prey vulnerability window residual (krill) a     krill                        1.00/0.75/0.50     0.756/0.736/0.711    0.04   [J held]
+  a-side product                                                                           0.866/0.638/0.125    0.26   (need 0.397, field 0.375)
+  a-side, not in chain                                                                     0.803/0.658/0.416    0.21   (need 0.397, field 0.375)
+  all terms                                                                                0.866/0.638/0.125    0.26   (need 0.397, field 0.375)
+  residual after all central corrections: generic a-factor 0.361, or time share 0.62; upper-bound form min(1, T X) (s3; a bound, not a need) a-factor 0.213
+  needed with no correction, upper-bound form min(1, T X): a-factor 0.116
+
+=== mackerel: uncapped 0.550, need 0.282, field ration 0.137; X_eff 1.30; needed generic a-factor 0.313 (field 0.126), time share 0.51 (0.25)
+  term                               form  prey                         w/c/s factor       potential w/c/s      share of needed (c)
+  speed in situ (fish and krill pairs; zoo is measured clearance) a     krill;planktivorous_fish     1.20/1.00/0.60     0.586/0.550/0.454    0.00   [S/J]
+  detection R in situ                a     krill;planktivorous_fish     1.00/1.00/0.80     0.550/0.550/0.507    0.00   [J]
+  capture on fish                    a     planktivorous_fish           1.00/0.80/0.40     0.550/0.543/0.530    0.02   [J]
+  capture on krill                   a     krill                        1.40/1.00/0.60     0.606/0.550/0.473    0.00   [J]
+  fine-scale overlap krill (voids under schools) a     krill                        1.00/0.90/0.80     0.550/0.533/0.515    0.05   [D on S/J]
+  fine-scale overlap fish prey       a     planktivorous_fish           1.50/1.00/0.70     0.565/0.550/0.540    0.00   [J]
+  fine-scale overlap copepods        a     zooplankton                  1.20/1.00/0.80     0.559/0.550/0.541    0.00   [J]
+  prey vulnerability window residual (fish) a     planktivorous_fish           1.00/0.50/0.25     0.550/0.533/0.524    0.05   [J held]
+  a-side product                                                                           0.658/0.511/0.279    0.11   (need 0.282, field 0.137)
+  a-side, not in chain                                                                     0.573/0.515/0.469    0.10   (need 0.282, field 0.137)
+  all terms                                                                                0.658/0.511/0.279    0.11   (need 0.282, field 0.137)
+  residual after all central corrections: generic a-factor 0.368, or time share 0.55; upper-bound form min(1, T X) (s3; a bound, not a need) a-factor 0.261
+  needed with no correction, upper-bound form min(1, T X): a-factor 0.223

@@ -1,0 +1,84 @@
+== 120 kHz, dSv 6-12 dB
+survey date period | all 8: mean CV logsd max/mean Lloyd | transects 2-8: mean CV logsd max/mean Lloyd
+1 08-Sep day   | 0.293 0.51 0.62 1.93 1.26 | 0.325 0.40 0.38 1.74 1.16
+2 08-Sep day   | 0.420 0.84 1.02 2.42 1.71 | 0.474 0.73 0.75 2.15 1.53
+3 08-Sep night | 0.335 0.20 0.19 1.32 1.04 | 0.323 0.19 0.18 1.37 1.04
+4 08-Sep night | 0.440 0.45 0.43 1.80 1.20 | 0.389 0.37 0.37 1.66 1.14
+5 10-Sep day   | 0.513 0.78 0.80 2.69 1.61 | 0.574 0.68 0.58 2.40 1.46
+6 10-Sep day   | 0.387 0.50 0.76 1.90 1.25 | 0.434 0.34 0.31 1.69 1.12
+7 10-Sep night | 0.485 0.48 0.48 1.76 1.23 | 0.507 0.48 0.51 1.69 1.23
+8 10-Sep night | 0.526 0.35 0.33 1.52 1.12 | 0.547 0.34 0.34 1.46 1.12
+  day: mean CV all 0.66, mean CV 2-8 0.54, mean logsd all 0.80, logsd 2-8 0.50
+  night: mean CV all 0.37, mean CV 2-8 0.35, mean logsd all 0.36, logsd 2-8 0.35
+  survey totals (mean of 8): 1:0.293, 2:0.420, 3:0.335, 4:0.440, 5:0.513, 6:0.387, 7:0.485, 8:0.526
+  pattern correlation between surveys (transects 2-8; Pearson on log, Spearman), lag in h:
+    1(d)-2(d) lag   6.0 h  r_log +0.85  rho_s +0.79
+    1(d)-3(n) lag  11.8 h  r_log +0.62  rho_s +0.64
+    1(d)-4(n) lag  15.5 h  r_log -0.38  rho_s -0.29
+    1(d)-5(d) lag  48.0 h  r_log +0.06  rho_s +0.07
+    1(d)-6(d) lag  52.5 h  r_log -0.02  rho_s -0.14
+    1(d)-7(n) lag  60.0 h  r_log -0.37  rho_s -0.21
+    1(d)-8(n) lag  64.1 h  r_log -0.27  rho_s -0.29
+    2(d)-3(n) lag   5.8 h  r_log +0.76  rho_s +0.79
+    2(d)-4(n) lag   9.5 h  r_log -0.20  rho_s -0.14
+    2(d)-5(d) lag  42.0 h  r_log +0.12  rho_s -0.18
+    2(d)-6(d) lag  46.5 h  r_log +0.09  rho_s -0.32
+    2(d)-7(n) lag  54.0 h  r_log -0.26  rho_s -0.25
+    2(d)-8(n) lag  58.1 h  r_log -0.22  rho_s -0.32
+    3(n)-4(n) lag   3.7 h  r_log +0.21  rho_s -0.14
+    3(n)-5(d) lag  36.2 h  r_log +0.52  rho_s +0.11
+    3(n)-6(d) lag  40.7 h  r_log +0.52  rho_s -0.04
+    3(n)-7(n) lag  48.2 h  r_log -0.07  rho_s -0.39
+    3(n)-8(n) lag  52.3 h  r_log +0.12  rho_s -0.18
+    4(n)-5(d) lag  32.5 h  r_log +0.86  rho_s +0.71
+    4(n)-6(d) lag  37.0 h  r_log +0.88  rho_s +0.79
+    4(n)-7(n) lag  44.5 h  r_log +0.86  rho_s +0.86
+    4(n)-8(n) lag  48.6 h  r_log +0.93  rho_s +0.93
+    5(d)-6(d) lag   4.5 h  r_log +0.99  rho_s +0.96
+    5(d)-7(n) lag  12.0 h  r_log +0.78  rho_s +0.64
+    5(d)-8(n) lag  16.1 h  r_log +0.90  rho_s +0.86
+    6(d)-7(n) lag   7.5 h  r_log +0.79  rho_s +0.75
+    6(d)-8(n) lag  11.6 h  r_log +0.90  rho_s +0.93
+    7(n)-8(n) lag   4.1 h  r_log +0.95  rho_s +0.86
+== 38 kHz, dSv 6-12 dB
+survey date period | all 8: mean CV logsd max/mean Lloyd | transects 2-8: mean CV logsd max/mean Lloyd
+1 08-Sep day   | 0.248 0.46 0.58 1.76 1.21 | 0.275 0.34 0.34 1.59 1.12
+2 08-Sep day   | 0.337 0.79 0.99 2.24 1.63 | 0.379 0.68 0.69 1.99 1.46
+3 08-Sep night | 0.296 0.19 0.18 1.30 1.03 | 0.286 0.18 0.17 1.35 1.03
+4 08-Sep night | 0.389 0.46 0.45 1.85 1.21 | 0.342 0.38 0.38 1.68 1.15
+5 10-Sep day   | 0.467 0.88 0.82 3.00 1.78 | 0.522 0.79 0.64 2.69 1.63
+6 10-Sep day   | 0.351 0.55 0.78 2.07 1.31 | 0.394 0.42 0.36 1.85 1.17
+7 10-Sep night | 0.427 0.51 0.50 1.86 1.26 | 0.447 0.51 0.53 1.78 1.26
+8 10-Sep night | 0.469 0.36 0.35 1.56 1.13 | 0.487 0.36 0.36 1.50 1.13
+  day: mean CV all 0.67, mean CV 2-8 0.56, mean logsd all 0.79, logsd 2-8 0.51
+  night: mean CV all 0.38, mean CV 2-8 0.36, mean logsd all 0.37, logsd 2-8 0.36
+  survey totals (mean of 8): 1:0.248, 2:0.337, 3:0.296, 4:0.389, 5:0.467, 6:0.351, 7:0.427, 8:0.469
+  pattern correlation between surveys (transects 2-8; Pearson on log, Spearman), lag in h:
+    1(d)-2(d) lag   6.0 h  r_log +0.85  rho_s +0.82
+    1(d)-3(n) lag  11.8 h  r_log +0.56  rho_s +0.75
+    1(d)-4(n) lag  15.5 h  r_log -0.27  rho_s -0.11
+    1(d)-5(d) lag  48.0 h  r_log +0.19  rho_s +0.32
+    1(d)-6(d) lag  52.5 h  r_log +0.10  rho_s +0.11
+    1(d)-7(n) lag  60.0 h  r_log -0.23  rho_s -0.11
+    1(d)-8(n) lag  64.1 h  r_log -0.21  rho_s -0.07
+    2(d)-3(n) lag   5.8 h  r_log +0.70  rho_s +0.64
+    2(d)-4(n) lag   9.5 h  r_log -0.20  rho_s -0.07
+    2(d)-5(d) lag  42.0 h  r_log +0.16  rho_s +0.00
+    2(d)-6(d) lag  46.5 h  r_log +0.09  rho_s -0.14
+    2(d)-7(n) lag  54.0 h  r_log -0.23  rho_s -0.07
+    2(d)-8(n) lag  58.1 h  r_log -0.24  rho_s -0.21
+    3(n)-4(n) lag   3.7 h  r_log +0.29  rho_s -0.11
+    3(n)-5(d) lag  36.2 h  r_log +0.57  rho_s +0.14
+    3(n)-6(d) lag  40.7 h  r_log +0.54  rho_s +0.00
+    3(n)-7(n) lag  48.2 h  r_log -0.01  rho_s -0.29
+    3(n)-8(n) lag  52.3 h  r_log +0.14  rho_s -0.11
+    4(n)-5(d) lag  32.5 h  r_log +0.86  rho_s +0.75
+    4(n)-6(d) lag  37.0 h  r_log +0.91  rho_s +0.82
+    4(n)-7(n) lag  44.5 h  r_log +0.86  rho_s +0.86
+    4(n)-8(n) lag  48.6 h  r_log +0.95  rho_s +0.93
+    5(d)-6(d) lag   4.5 h  r_log +0.99  rho_s +0.96
+    5(d)-7(n) lag  12.0 h  r_log +0.77  rho_s +0.71
+    5(d)-8(n) lag  16.1 h  r_log +0.88  rho_s +0.89
+    6(d)-7(n) lag   7.5 h  r_log +0.80  rho_s +0.82
+    6(d)-8(n) lag  11.6 h  r_log +0.91  rho_s +0.96
+    7(n)-8(n) lag   4.1 h  r_log +0.96  rho_s +0.86

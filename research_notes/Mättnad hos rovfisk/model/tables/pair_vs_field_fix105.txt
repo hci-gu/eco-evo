@@ -1,0 +1,37 @@
+
+planktivorous_fish: uncapped 0.532, realised 0.262; booked total 0.205, field total 0.231 (Q/B 6.20 vs booked 5.51, source-consistent Q/B (5.8-6.6), section 268); realised / field 1.13, uncapped / field 2.31
+  prey                       unc    real   field unc/field real/field  diet model  field
+  zooplankton              0.327   0.161   0.133      2.46       1.21       0.614  0.577
+  krill                    0.206   0.101   0.098      2.11       1.04       0.386  0.423
+
+benthivorous_fish: uncapped 0.928, realised 0.633; booked total 0.504, field total 0.521 (Q/B 4.46 vs booked 4.31, 223.9 budget); realised / field 1.22, uncapped / field 1.78
+  prey                       unc    real   field unc/field real/field  diet model  field
+  benthic_infauna          0.441   0.301   0.192      2.29       1.57       0.475  0.369
+  mobile_epifauna          0.317   0.217   0.244      1.30       0.89       0.342  0.468
+  norway_lobster           0.111   0.075   0.014      8.10       5.53       0.119  0.026
+  krill                    0.036   0.025   0.015      2.43       1.66       0.039  0.028
+  planktivorous_fish       0.022   0.015   0.050      0.45       0.31       0.024  0.096
+  whiting                  0.001   0.001   0.007      0.11       0.08       0.001  0.013
+
+whiting: uncapped 0.751, realised 0.390; booked total 0.409, field total 0.455 (Q/B 4.20 vs booked 3.77, SMS 2023, Lauerburg 2018 (3.3-5.6)); realised / field 0.86, uncapped / field 1.65
+  prey                       unc    real   field unc/field real/field  diet model  field
+  krill                    0.618   0.321   0.255      2.42       1.26       0.823  0.562
+  mobile_epifauna          0.090   0.047   0.059      1.52       0.79       0.119  0.129
+  planktivorous_fish       0.034   0.018   0.091      0.38       0.20       0.046  0.200
+  zooplankton              0.007   0.004   0.009      0.76       0.39       0.009  0.020
+  benthivorous_fish        0.002   0.001   0.040      0.05       0.03       0.003  0.088
+
+predatory_fish: uncapped 0.756, realised 0.397; booked total 0.346, field total 0.375 (Q/B 2.83 vs booked 2.61, params_split_223 (2.6-3.6)); realised / field 1.06, uncapped / field 2.01
+  prey                       unc    real   field unc/field real/field  diet model  field
+  krill                    0.333   0.175   0.120      2.77       1.46       0.441  0.320
+  planktivorous_fish       0.272   0.143   0.216      1.26       0.66       0.360  0.575
+  benthivorous_fish        0.084   0.044   0.016      5.20       2.73       0.111  0.043
+  whiting                  0.064   0.034   0.014      4.74       2.49       0.085  0.036
+  zooplankton              0.002   0.001   0.003      0.75       0.39       0.003  0.008
+  mackerel                 0.000   0.000   0.007      0.03       0.02       0.000  0.018
+
+mackerel: uncapped 0.550, realised 0.282; booked total 0.093, field total 0.137 (Q/B 2.75 vs booked 1.87, stock Q/B 2.2 presence-weighted, section 268); realised / field 2.06, uncapped / field 4.02
+  prey                       unc    real   field unc/field real/field  diet model  field
+  krill                    0.374   0.192   0.056      6.69       3.43       0.681  0.409
+  zooplankton              0.102   0.052   0.071      1.44       0.74       0.185  0.516
+  planktivorous_fish       0.074   0.038   0.010      7.23       3.70       0.134  0.075

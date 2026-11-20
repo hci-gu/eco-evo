@@ -1,0 +1,14 @@
+source,doi,region,proxy,method,support,quantity,value,unit,tag,note
+ICES stomach DB (this note S1),,North Sea and Skagerrak,no,haul presence of krill in whiting >= 20 cm stomachs 1981-91,haul (~1-4 km tow) x ~1 d stomach window,share of hauls with krill,0.35 (strata 0.10-0.62; krill strata 0.53-0.62),fraction,D,hauls with prey rows only
+ICES stomach DB (this note S1),,North Sea and Skagerrak,no,haul presence of krill in saithe stomachs 1981-87 2026,haul x ~1 d,share of hauls with krill,0.52 (strata median 0.50),fraction,D,
+ICES stomach DB (this note S1),,North Sea and Skagerrak,no,variance split of haul krill presence,rectangle x year x quarter,share of presence variance within ICES rectangles (null without clustering),whiting 0.41 (0.63); saithe 0.17 (0.59); cod 0.25 (0.76),fraction,D,both clustered by rectangle; saithe most
+ICES stomach DB (this note S1),,North Sea and Skagerrak,no,single-fish records,fish,saithe FO of krill beside a krill-eating haul-mate (leave-one-out),0.55 (n 20),fraction,D,overall single-fish FO 0.34 (n 122)
+ICES stomach DB (this note S1),,North Sea and Skagerrak,no,ration index sqrt(S/S_max),haul,population ration / ration in krill-positive hauls,whiting 0.45 (krill strata 0.57-0.71); saithe >= 0.42,ratio,D,band cancels; saithe a lower bound
+ICES stomach DB (this note S1),,North Sea and Skagerrak,no,ration index sqrt(S/S_max),record,population ration / krill-dominated mean,whiting 0.22 (krill strata 0.28-0.43); saithe 0.23,ratio,D,
+ICES stomach DB (this note S1),,North Sea and Skagerrak,yes,haul presence,haul,share of hauls with krill: Norway pout / cod / haddock,0.75 / 0.07 / 0.04,fraction,D,proxies
+Bohle & Moksness 1991 Table 1 (this note S2),,Skagerrak box,no,IKMT night 5-65 m repeated at fixed stations,2.3 km tow; weeks lag,two-state occupancy mean/max (stations n >= 5),median 0.46 (0.19-0.67),fraction,D,upper bound on patchiness: DVM and gear
+Bohle & Moksness 1991 Table 1 (this note S2),,Skagerrak box,no,IKMT station-winter means,station season mean,CV between in-box stations,1.62 (0.81 without one 30 l haul),CV,D,
+IMR NSEC 2023/2025 Table 6 (this note S2),,Norwegian Trench and Skagerrak,no,macroplankton trawl,station tens of km apart,CV between stations,west 0.46; east 2.02; all without st. 418 0.66,CV,D,
+WGSAM 2024 GER (this note S3),,North Sea,no,gastric evacuation model whiting set 28 cm 8.4 C,stomach,time to evacuate 90 % of a krill meal,0.2 g krill 7-9 h; 1 %BW 22-29 h; 3 %BW 37-49 h,h,D,detection window 12-36 h
+model_grain.py (this note G),,Gullmarsfjord (Everson 2007),no,change of support transect -> 1 km cell,1 km x 6 h,p_eff = 1/(1+CV^2) at the cell,day 0.76-0.77; night 0.88-0.89,fraction,D,
+model_grain.py (this note G),,North Sea and Skagerrak stomachs,no,stomach FO -> cell-tick occupancy,1 km x 6 h,p per cell-tick (lower bound),0.06-0.42 (central ~0.2),fraction,D,J inputs rho 0.8 and L 5 km

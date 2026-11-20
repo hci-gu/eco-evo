@@ -1,0 +1,27 @@
+D1 gas-model encounter ratio active/rest = <|v-u|> / v
+  v=0.5 m/s  u=0.2: 3D 1.05 2D 1.04; u=0.5: 3D 1.33 2D 1.27; u=1.0: 3D 2.17 2D 2.13
+  v=1.0 m/s  u=0.2: 3D 1.01 2D 1.01; u=0.5: 3D 1.08 2D 1.06; u=1.0: 3D 1.33 2D 1.27
+  v=1.4 m/s  u=0.2: 3D 1.01 2D 1.01; u=0.5: 3D 1.04 2D 1.03; u=1.0: 3D 1.17 2D 1.13
+  v=1.9 m/s  u=0.2: 3D 1.00 2D 1.00; u=0.5: 3D 1.02 2D 1.02; u=1.0: 3D 1.09 2D 1.07
+
+D2 seal vibrissae: detection width (2D bed) and area (3D) moving vs still
+  low     R_b 0.40 a 0.10 u 0.2 T   10 -> L 2.0 m; 2D width 2.27/0.80 = 2.8x; 3D area 2.36/0.503 = 4.7x
+  central R_b 0.25 a 0.20 u 0.3 T   20 -> L 6.0 m; 2D width 4.72/0.50 = 9.4x; 3D area 4.88/0.196 = 24.8x
+  high    R_b 0.10 a 0.25 u 0.5 T   35 -> L 17.5 m; 2D width 11.84/0.20 = 59.2x; 3D area 10.01/0.031 = 318.5x
+
+D3 Bowen et al. 2002 Table 2, per video-sampling unit (VSU, 10 min)
+  cryptic sand lance    attempts 5.5 x success 0.637 = captures 3.50; search 235 s
+  flounder              attempts 1.9 x success 0.799 = captures 1.52; search 180 s
+  schooling sand lance  attempts 9.2 x success 0.375 = captures 3.45; search 135 s
+  capture-success ratio schooling/cryptic sand lance = 0.59; schooling/flounder = 0.47
+  search-time ratio cryptic/schooling sand lance = 1.74
+
+D4 porpoise threshold below 16 kHz (best ~33 dB at 100-140 kHz; within 10 dB over 16-140 kHz;
+   -10 dB/octave below 16 kHz; Kastelein et al. 2002 abstract)
+   16000 Hz: ~43 dB re 1 uPa (taking 43 dB at 16 kHz)
+    8000 Hz: ~53 dB re 1 uPa (taking 43 dB at 16 kHz)
+    4000 Hz: ~63 dB re 1 uPa (taking 43 dB at 16 kHz)
+    2000 Hz: ~73 dB re 1 uPa (taking 43 dB at 16 kHz)
+    1000 Hz: ~83 dB re 1 uPa (taking 43 dB at 16 kHz)
+     500 Hz: ~93 dB re 1 uPa (taking 43 dB at 16 kHz)
+     250 Hz: ~103 dB re 1 uPa (taking 43 dB at 16 kHz)

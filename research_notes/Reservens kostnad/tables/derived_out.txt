@@ -1,0 +1,36 @@
+upward force per kg lipid: 0.1032 kgf
+herring: bladder 0.026 sinking 1.000 -> tissue 1.0534, lean (0 % oil) 1.0728
+herring: bladder 0.028 sinking 1.004 -> tissue 1.0598, lean (0 % oil) 1.0803
+herring: bladder 0.030 sinking 1.008 -> tissue 1.0662, lean (0 % oil) 1.0879
+
+gadoid   lean excess 50.9 kgf/t; reserve lipid 51 kg/t; excess empty 50.5 -> full 45.2 (cut 10 %, quadratic 20 %); volume +5.9 %, wetted area (girth only) +2.9 %
+          lipid needed for neutral buoyancy without gas: 493 kg/t lean (33 % of body)
+herring  lean excess 50.0 kgf/t; reserve lipid 126 kg/t; excess empty 47.9 -> full 34.9 (cut 27 %, quadratic 47 %); volume +14.3 %, wetted area (girth only) +6.9 %
+          lipid needed for neutral buoyancy without gas: 484 kg/t lean (33 % of body)
+mackerel lean excess 54.4 kgf/t; reserve lipid 177 kg/t; excess empty 53.3 -> full 35.1 (cut 34 %, quadratic 57 %); volume +20.4 %, wetted area (girth only) +9.7 %
+          lipid needed for neutral buoyancy without gas: 527 kg/t lean (35 % of body)
+
+herring deep (bladder compressed), 0.30 m/s   L/D 10 eta 0.20: lift 6.1 MJ/t/d = 0.19 RM
+herring deep (bladder compressed), 0.30 m/s   L/D  5 eta 0.20: lift 12.2 MJ/t/d = 0.38 RM
+herring deep (bladder compressed), 0.30 m/s   L/D  5 eta 0.10: lift 24.4 MJ/t/d = 0.76 RM
+herring deep (bladder compressed), 0.30 m/s   L/D  3 eta 0.10: lift 40.6 MJ/t/d = 1.27 RM
+mackerel 35 cm at 1 BL/s                      L/D 10 eta 0.20: lift 7.9 MJ/t/d = 0.43 RM
+mackerel 35 cm at 1 BL/s                      L/D  5 eta 0.20: lift 15.8 MJ/t/d = 0.86 RM
+mackerel 35 cm at 1 BL/s                      L/D  5 eta 0.10: lift 31.7 MJ/t/d = 1.72 RM
+mackerel 35 cm at 1 BL/s                      L/D  3 eta 0.10: lift 52.8 MJ/t/d = 2.87 RM
+
+HSI 2 % lipid 20 %: moisture 65.7 %, other 14.3 %; non-lipid liver 1.60 % BW, non-lipid-non-water 0.29 % BW; lipid 4 kg/t lean -> 159 MJ/t
+HSI 4 % lipid 40 %: moisture 48.3 %, other 11.7 %; non-lipid liver 2.40 % BW, non-lipid-non-water 0.47 % BW; lipid 16 kg/t lean -> 642 MJ/t
+HSI 8 % lipid 60 %: moisture 31.0 %, other 9.0 %; non-lipid liver 3.20 % BW, non-lipid-non-water 0.72 % BW; lipid 50 kg/t lean -> 1992 MJ/t
+porgy 1 kg: liver 5.45, white muscle 0.63, whole body 1.49 umol/g/h; liver mass 18.0 g (1.8 % BW) = 6.6 % of whole O2; liver/whole per g 3.67
+added non-lipid liver 1.60 % BW x 4.08 (lean liver/whole per g, /0.9 for its lipid) = +6.5 % SMR
+added liver protein-etc 0.43 % BW = 3.03 % BW lean-liver equivalent (14.3 % other) -> +11.1 % SMR
+  gadoid RM 13 MJ/t/d: +5 % = 0.65 MJ/t/d per full fill (2000 MJ/t) = 0.0325 % of the store per day
+  gadoid RM 16 MJ/t/d: +5 % = 0.80 MJ/t/d per full fill (2000 MJ/t) = 0.0400 % of the store per day
+
+herring  adipose 149 kg/t x (0.35 x 0.42) = +2.2 % RM at full fill (upper; carp: fat negligible)
+mackerel adipose 208 kg/t x (0.35 x 0.42) = +3.0 % RM at full fill (upper; carp: fat negligible)
+
+lipid deposition 1/kL 1.10 -> kL 0.91, loss 10 % of deposited energy
+lipid deposition 1/kL 1.31 -> kL 0.76, loss 31 % of deposited energy
+mobilisation: 2 ATP (FA activation) / 106 ATP (palmitate) = 1.9 %

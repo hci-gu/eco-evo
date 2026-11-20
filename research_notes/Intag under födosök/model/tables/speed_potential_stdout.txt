@@ -1,0 +1,6 @@
+base: X 5.45, uncapped 0.765, need 0.388
+bl_day     : X krill 3.40 other 0.78 -> uncapped 0.730 (change -0.034); krill share of X 0.814 (base 0.820)
+bl_night   : X krill 3.40 other 0.73 -> uncapped 0.729 (change -0.036); krill share of X 0.824 (base 0.820)
+abs_day    : X krill 3.92 other 0.89 -> uncapped 0.749 (change -0.016); krill share of X 0.816 (base 0.820)
+abs_night  : X krill 3.92 other 0.81 -> uncapped 0.747 (change -0.018); krill share of X 0.828 (base 0.820)
+night_only : X krill 4.47 other 0.90 -> uncapped 0.763 (change -0.002); krill share of X 0.832 (base 0.820)

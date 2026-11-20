@@ -1,0 +1,42 @@
+source,doi,species,region,season,method,quantity,value,unit,tag
+Onsrud et al. 2004,10.1016/j.icesjms.2004.09.005,whiting,Oslofjord 120 m,Nov 2000,stomachs Table 3 day/night,krill per stomach with krill,1.82/3.47,count,F
+Onsrud et al. 2004,10.1016/j.icesjms.2004.09.005,whiting,Oslofjord 120 m,Mar 2001,stomachs Table 3 day/night,krill per stomach with krill,3.95/5.92,count,F
+Onsrud et al. 2004,10.1016/j.icesjms.2004.09.005,whiting,Oslofjord 120 m,Nov 2000,stomachs Table 3 day/night,share of stomachs with krill,42.31/35.19,%,F
+Onsrud et al. 2004,10.1016/j.icesjms.2004.09.005,whiting,Oslofjord 120 m,Mar 2001,stomachs Table 3 day/night,share of stomachs with krill,75.51/79.69,%,F
+Onsrud et al. 2004,10.1016/j.icesjms.2004.09.005,whiting,Oslofjord 120 m,Nov 2000,stomachs Table 3 day/night,empty stomachs,25.00/14.81,%,F
+Onsrud et al. 2004,10.1016/j.icesjms.2004.09.005,whiting,Oslofjord 120 m,Mar 2001,stomachs Table 3 day/night,empty stomachs,8.16/6.25,%,F
+Onsrud et al. 2004,10.1016/j.icesjms.2004.09.005,whiting,Oslofjord 120 m,Nov 2000 / other surveys,light profile,1% light depth,4 / 12-15,m,F
+Onsrud et al. 2004,10.1016/j.icesjms.2004.09.005,whiting,Oslofjord 120 m,Nov 2000,CTD,minimum midwater oxygen saturation (62 m),22.8,%,F
+Onsrud et al. 2004,10.1016/j.icesjms.2004.09.005,whiting,Oslofjord 120 m,Nov-Mar,stomachs,maximum krill in one stomach (21 cm fish),40,count,F
+Onsrud et al. 2004 via Krillparen,10.1016/j.icesjms.2004.09.005,whiting,Oslofjord 120 m,Nov 2000,GER at 7 C on counts x 0.15-0.30 g,krill ration,0.23-0.54,%BW/d,D
+Onsrud et al. 2004 via Krillparen,10.1016/j.icesjms.2004.09.005,whiting,Oslofjord 120 m,Mar 2001,GER at 7 C on counts x 0.15-0.30 g,krill ration,0.65-1.51,%BW/d,D
+this note model_scale.py,,whiting,Oslofjord 120 m,Nov 2000,krill ration / 2.51 %BW/d ceiling (5-6 kJ/g),krill ration as fraction of model ceiling,0.09-0.26,fraction,D
+this note model_scale.py,,whiting,Oslofjord 120 m,Mar 2001,krill ration / ceiling (4.3-6 kJ/g),krill ration as fraction of model ceiling,0.22-0.72,fraction,D
+this note model_scale.py,,whiting,Oslofjord 120 m,Nov 2000,total = krill/0.82,total ration as fraction of model ceiling,0.11-0.32,fraction,D
+this note model_scale.py,,whiting,Oslofjord 120 m,Mar 2001,total = krill/0.82,total ration as fraction of model ceiling,0.27-0.88,fraction,D
+WGSAM 2024 SMS key run via Krillparen,,whiting,North Sea,Q1,SMS quarterly ration 0.2 kg at 4.0-5.5 kJ/g,total ration as fraction of model ceiling,0.25-0.34,fraction,D
+Krillintag och jaktsatt (ICES stomach DB),,whiting,NE+NW North Sea,Q1 1981,population krill ration / GER Cmax / 1.2,krill ration as fraction of model ceiling,0.23-0.26,fraction,D
+Krillintag och jaktsatt (ICES stomach DB),,whiting,North Sea/Skagerrak/Kattegat,1980-82 and 1991,krill-dominated stomachs >= 20 cm (low/central),krill ration as fraction of model ceiling,0.32/0.75,fraction,D
+ICES stomach DB (this note ices_addition.py),,whiting >= 20 cm,Skagerrak,Apr 1991,weighed records krill-bearing vs krill-free,total content ratio K/0,3.05,ratio,D
+ICES stomach DB (this note ices_addition.py),,whiting >= 20 cm,Skagerrak,Apr 1991,weighed records krill-bearing vs krill-free,non-krill content ratio K/0,0.48,ratio,D
+ICES stomach DB (this note ices_addition.py),,whiting >= 20 cm,Skagerrak,Apr 1991,within-haul (2 hauls),total content ratio K/0 geometric mean,1.63,ratio,D
+ICES stomach DB (this note ices_addition.py),,whiting >= 20 cm,Kattegat,Apr 1991,weighed records krill-bearing vs krill-free,total content ratio K/0,1.07,ratio,D
+ICES stomach DB (this note ices_addition.py),,Norway pout (PROXY),North Sea three areas,Q1 1980,weighed records krill-bearing vs krill-free,total content ratio K/0,0.40-1.41,ratio,D
+ICES stomach DB (this note ices_addition.py),,saithe (PROXY),NE North Sea,Q1 2026,within-haul (7 hauls),total content ratio K/0 geometric mean,7.96,ratio,D
+ICES stomach DB (this note ices_addition.py),,cod (PROXY),C+S and NE North Sea,Q1 1981,within-haul (17 hauls),total content ratio K/0 geometric mean,0.17-0.53,ratio,D
+ICES stomach DB (this note ices_addition.py),,whiting >= 20 cm,NE / NW North Sea,Q1 1981,counted records,share of records with fish prey krill-bearing vs krill-free,0.45 vs 0.77 / 0.42 vs 0.84,share,D
+Klemetsen 1982 via Torskfiskars ljusberoende,10.1093/icesjms/40.2.101,cod (PROXY),Balsfjord 69 N,one year,stomach fullness by month,seasonal trend in stomach fullness,none,-,A
+Larsen et al. 2023 via Torskfiskars ljusberoende,10.1007/s00300-023-03167-z,cod and haddock (PROXY),Svalbard fjords 78-80 N,January polar night,stomachs,share of individuals feeding,>0.70,share,S
+Temming et al. 2004,10.1111/j.0022-1112.2004.00400.x,whiting,northern North Sea 15 x 20 nm,July 1996,GOV hauls and grabs,aggregative response of whiting to a sandeel patch,present,-,A
+Mergardt & Temming 1997,10.1006/jmsc.1996.0190,whiting,North Sea,not given in abstract,partly digested prey back-calculation,feeding peak / minimum,22-24 h / 08-10 h,clock,A
+Rindorf 2002,10.1111/j.1095-8649.2002.tb00897.x,whiting,North Sea and lab,-,fresh-food probability vs fullness,lab demand-feeding resumes at stomach fullness,0.4,fraction,A
+Onsrud et al. 2004,10.1016/j.icesjms.2004.09.005,whiting,Oslofjord 120 m,Jun 2001,stomachs Table 3 day/night,krill per stomach with krill,2.17/1.44,count,F
+Onsrud et al. 2004,10.1016/j.icesjms.2004.09.005,whiting,Oslofjord 120 m,Jun 2001,stomachs Table 3 day/night,share of stomachs with krill,42.86/34.62,%,F
+Onsrud et al. 2004,10.1016/j.icesjms.2004.09.005,whiting,Oslofjord 120 m,Jun 2001,stomachs Table 3 day/night,stomach fullness (1-5),3.08/2.23,index,F
+Onsrud et al. 2004,10.1016/j.icesjms.2004.09.005,whiting,Oslofjord 120 m,Jun 2001,stomachs Table 3 day/night,empty stomachs,7.14/26.92,%,F
+this note onsrud_three_months.py,10.1016/j.icesjms.2004.09.005,whiting,Oslofjord 120 m,Jun 2001,GER at 7 C on counts x 0.15-0.30 g; 21-28 cm [J],krill ration,0.20-0.46,%BW/d,D
+this note onsrud_three_months.py,,whiting,Oslofjord 120 m,Jun 2001,krill ration / 2.51 %BW/d,krill ration as fraction of model ceiling,0.08-0.18,fraction,D
+Robb et al. 1994 via lit_seasonal,,whiting 200-400 mm,North Sea,Q1 vs Q2-Q4 1991,GER on Robb Tables 2-5 (sea_quarterly_rations.py),ration / GER Cmax,0.42 vs 0.78-0.83,ratio,D
+this note model_scale.py,,whiting,yardstick,annual,f = I_k (1+XO)/(XK (T-I_k)) at field krill intake 0.05-0.15,krill a factor f and potential,0.026-0.088 -> 0.47-0.52,fraction,D
+this note model_scale.py,,whiting,yardstick,-,krill-specific ceiling c for potential 0.45 / need 0.388,c,0.50 / 0.42,fraction,D
+this note model_scale.py,,whiting,library spawning entry,spawning quarter,share 0.344 x fast_cut 0.5 x 40/91 d,group intake factor in the quarter,0.92,factor,D
