@@ -77,6 +77,20 @@ def regenerate_plots(trainer, directory, options):
     _regenerate_biomass_html(str(directory), fallback_meta=meta)
 
 
+def resolve_init_from(path):
+    """``--init-from`` directory: a bare run name (one relative path part)
+    is looked up as ``results/<name>`` first, then as given; any other path
+    is used as given. Raises if the directory does not exist."""
+    path = Path(path)
+    candidates = [path]
+    if not path.is_absolute() and len(path.parts) == 1:
+        candidates.insert(0, Path("results") / path)
+    for candidate in candidates:
+        if candidate.is_dir():
+            return candidate
+    raise ValueError("--init-from: no directory " + " or ".join(str(c) for c in candidates))
+
+
 def build_parser():
     parser = argparse.ArgumentParser(description=__doc__)
     add_common_arguments(parser)
@@ -86,7 +100,9 @@ def build_parser():
     parser.add_argument("--run-name", "--run_name", dest="run_name", default="gpu")
     parser.add_argument("--output", type=Path, help="Override results/<run-name>")
     parser.add_argument("--resume", action="store_true", help="Resume the complete GPU trainer checkpoint")
-    parser.add_argument("--init-from", type=Path, help="Warm-start from existing policy_<species>.pth files")
+    parser.add_argument("--init-from", type=Path,
+                        help="Warm-start from existing policy_<species>.pth files: a directory, "
+                             "or a run name looked up as results/<name> first")
     parser.add_argument("--log-every", type=positive_int, default=1)
     parser.add_argument("--checkpoint-every", type=positive_int, default=1, help="Save every N generations")
     parser.add_argument("--snapshot-every", type=int, default=0, help="Save one ecosystem snapshot every N generations; 0 disables")
@@ -149,7 +165,9 @@ def main(argv=None, *, on_step=None):
             if within >= args.iter_per_gen:
                 generation, within = generation + 1, 0
         elif args.init_from:
-            print("Loaded policies:", ", ".join(trainer.import_policies(args.init_from)), flush=True)
+            source = resolve_init_from(args.init_from)
+            print("Loaded policies from", str(source) + ":",
+                  ", ".join(trainer.import_policies(source)), flush=True)
         directory.mkdir(parents=True, exist_ok=True)
     except (ValueError, RuntimeError, OSError, argparse.ArgumentTypeError) as error:
         parser.error(str(error))
