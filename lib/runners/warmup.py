@@ -117,7 +117,7 @@ def add_warmup_argument(parser):
               "after the same warm-up (section 274)."))
 
 
-def run_warmup(env, ticks, seed=None, progress=None):
+def run_warmup(env, ticks, seed=None, progress=None, pump=None):
     """Advance a CPU env ``ticks`` ticks with its current policies.
 
     The tick reads the env's batched copy of the weights when it has one, so
@@ -137,6 +137,11 @@ def run_warmup(env, ticks, seed=None, progress=None):
     (the GPU trainer never merges warm-up observations either).
 
     ``progress(done, ticks)`` is called about every tenth of the warm-up.
+
+    ``pump(done, ticks)`` is called after every tick (a viewer's event
+    pump, :func:`viewer_pump`, so its window keeps answering); an
+    explicit False stops the warm-up there. Returns True when every tick
+    ran, False when ``pump`` stopped it.
     """
     saved = None
     snapshot = reanchor_snapshot(env) if int(ticks) > 0 else {}
@@ -145,6 +150,7 @@ def run_warmup(env, ticks, seed=None, progress=None):
         np.random.seed((int(seed) ^ 0x5EED200) & 0x7FFFFFFF)
     ticks = int(ticks)
     every = max(1, ticks // 10)
+    completed = True
     try:
         for done in range(1, ticks + 1):
             observation = env.get_observation()
@@ -152,10 +158,14 @@ def run_warmup(env, ticks, seed=None, progress=None):
             env.step(actions)
             if progress is not None and (done % every == 0 or done == ticks):
                 progress(done, ticks)
+            if pump is not None and pump(done, ticks) is False:
+                completed = False
+                break
     finally:
         if saved is not None:
             np.random.set_state(saved)
     _finish_warmup(env, snapshot)
+    return completed
 
 
 def _finish_warmup(env, snapshot):
@@ -199,7 +209,7 @@ def rebase_calendar(env):
 
 
 def settle(env, ticks, seed=None, policies=None, obs=None, engine="cpu", device="cuda",
-           progress=None):
+           progress=None, pump=None):
     """The training warm-up for a probe or inference world (section 274).
 
     Runs ``ticks`` ticks with ``policies`` (default the env's own) and the
@@ -213,21 +223,28 @@ def settle(env, ticks, seed=None, policies=None, obs=None, engine="cpu", device=
     faster at 60 x 60, equal to the CPU warm-up to float32 rounding per
     tick; the re-anchoring and the rest are the same. ``progress(done,
     ticks)`` reports the ticks run.
+
+    ``pump(done, ticks)`` keeps a viewer answering while the warm-up runs
+    on the main thread (:func:`viewer_pump`): after every CPU tick, and
+    every ~50 ms while the tensor engine computes. An explicit False
+    stops the warm-up early (the world is then finished as if the warm-up
+    had been that long); the return value is False in that case, True
+    otherwise.
     """
     ticks = int(ticks or 0)
     if ticks <= 0:
-        return
+        return True
     if engine == "gpu":
         from lib.gpu.inference import warm_up
         snapshot = reanchor_snapshot(env)
         mean, var = obs if obs is not None else (getattr(env, "obs_mean", None),
                                                  getattr(env, "obs_var", None))
-        warm_up(env, ticks, policies if policies is not None else env.policies,
-                mean, var, device=device, progress=progress)
+        completed = warm_up(env, ticks, policies if policies is not None else env.policies,
+                            mean, var, device=device, progress=progress, pump=pump)
         _finish_warmup(env, snapshot)
         rebase_calendar(env)
         _reset_books(env)
-        return
+        return completed
     saved_policies = saved_obs = None
     if policies is not None:
         saved_policies = env.policies
@@ -238,7 +255,7 @@ def settle(env, ticks, seed=None, policies=None, obs=None, engine="cpu", device=
     if policies is not None and hasattr(env, "rebuild_batched_weights"):
         env.rebuild_batched_weights()
     try:
-        run_warmup(env, ticks, seed=seed, progress=progress)
+        completed = run_warmup(env, ticks, seed=seed, progress=progress, pump=pump)
     finally:
         if saved_policies is not None:
             env.policies = saved_policies
@@ -248,3 +265,45 @@ def settle(env, ticks, seed=None, policies=None, obs=None, engine="cpu", device=
             env.obs_mean, env.obs_var = saved_obs
     rebase_calendar(env)
     _reset_books(env)
+    return completed
+
+
+def viewer_pump(viz, stop=None):
+    """A ``pump`` for :func:`settle` that keeps a live viewer answering.
+
+    The warm-up runs on the viewer's thread, so without it the window
+    stopped answering (the OS marked it "not responding") until the
+    warm-up was done. Each call drains the viewer's events
+    (``viz.pump_events``, frame-capped repaint) and shows the warm-up's
+    progress as the status row's ``warmup`` entry, changed only when the
+    whole percent moves so the CPU warm-up pays for at most ~100 repaints.
+    The entry is removed with :func:`clear_viewer_pump`.
+
+    ``stop()`` (optional) is asked after each pump: True stops the
+    warm-up early (inference.py: the window was closed or a control that
+    restarts the rollout was released, so the warm-up is already stale).
+    Without ``stop`` the warm-up always runs to its end (the training
+    probes record their result). None for ``viz`` gives None.
+    """
+    if viz is None:
+        return None
+    shown = [None]
+
+    def pump(done, ticks):
+        percent = int(100 * int(done) // max(1, int(ticks)))
+        if percent != shown[0]:
+            shown[0] = percent
+            update = getattr(viz, "update_status", None)
+            if update is not None:
+                update(warmup=percent)
+        viz.pump_events()
+        return not (stop is not None and stop())
+
+    return pump
+
+
+def clear_viewer_pump(viz):
+    """Remove the warm-up entry :func:`viewer_pump` put in the status row."""
+    update = getattr(viz, "update_status", None)
+    if update is not None:
+        update(warmup=None)

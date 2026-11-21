@@ -168,7 +168,7 @@ def mirror_state(model, runner, envs, staged=None):
 
 
 def warm_up(env, ticks, policies, obs_mean, obs_var, device="cuda", progress=None,
-            block=24):
+            block=24, pump=None):
     """Section 277: run the warm-up of ``env``'s world on the tensor engine.
 
     ``ticks`` ticks with the frozen ``policies`` and observation statistics,
@@ -176,20 +176,55 @@ def warm_up(env, ticks, policies, obs_mean, obs_var, device="cuda", progress=Non
     the state is copied back into ``env`` with ``tick_count`` = ``ticks``,
     as ``warmup.run_warmup`` leaves it before the re-anchoring. The world
     matches the CPU warm-up to float32 rounding per tick, not bit for bit.
+
+    ``pump(done, ticks)`` (a viewer's event pump, ``warmup.viewer_pump``)
+    is called every ~50 ms while a block computes on the device, so a
+    window on this thread keeps answering; an explicit False stops after
+    that block and the world reached so far is copied back (``tick_count``
+    = the ticks run). Returns True when every tick ran.
     """
     ticks = int(ticks)
     model, runner = build_runner(env, policies, obs_mean, obs_var, None, device=device)
+    completed = True
     try:
         done = 0
         while done < ticks:
             n = min(int(block), ticks - done)
             runner.run(n)
+            if pump is not None and not _pump_until_done(runner, pump, done, ticks):
+                completed = False
             done += n
             if progress is not None:
                 progress(done, ticks)
+            if not completed:
+                break
         mirror_state(model, runner, [env])
     finally:
         runner.close()
+    return completed
+
+
+def _pump_until_done(runner, pump, done, ticks, interval=0.05):
+    """Call ``pump`` until the work queued on the runner's device is done.
+
+    The block's kernels are queued asynchronously, so without the wait the
+    host would queue every block at once and then block in the copy back,
+    with no event drained. Returns False when ``pump`` asked to stop.
+    """
+    import time
+    device = runner.model.device
+    if device.type != "cuda":
+        return pump(done, ticks) is not False
+    event = torch.cuda.Event()
+    event.record(torch.cuda.current_stream(device))
+    keep = True
+    while True:
+        finished = event.query()
+        if pump(done, ticks) is False:
+            keep = False
+        if finished:
+            return keep
+        time.sleep(interval)
 
 
 def _dead_threshold(env):

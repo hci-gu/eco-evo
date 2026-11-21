@@ -801,8 +801,22 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
     # Section 274: the run's training warm-up, the listed groups re-anchored
     # to their start totals; the probe scores from the settled state.
     _warm = int(getattr(probe_builder, 'warmup_ticks', 0) or 0)
+    from lib.runners.warmup import settle as _settle_world, viewer_pump, clear_viewer_pump
+
+    def _settle(e, ticks, **kw):
+        # The warm-up runs on the viewer's thread: pump its events so the
+        # window keeps answering (it stopped for the whole warm-up). No
+        # early stop: the probe's record is written either way. On the
+        # probe's engine (train_gpu.py --visual: the tensor engine, ~6x
+        # faster at 60 x 60, equal to float32 rounding; section 277).
+        try:
+            return _settle_world(e, ticks, pump=viewer_pump(viz), engine=engine,
+                                 device=device, **kw)
+        finally:
+            if viz is not None:
+                clear_viewer_pump(viz)
+
     if _warm > 0:
-        from lib.runners.warmup import settle as _settle
         _settle(env, _warm, seed=getattr(probe_builder, 'PROBE_SEED', None))
 
     fg_ids = list(env.fgs.keys())

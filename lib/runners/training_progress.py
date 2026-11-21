@@ -34,7 +34,7 @@ from lib.environments.ecosystem_env.population_change import (
     LEGACY_MASS_BALANCE)
 from lib.world.impact_maps import active_baseline_signature, training_probe_impact_maps
 from lib.world.tick_time import LIBRARY_TICK_HOURS, ticks_per_day, ticks_per_year
-from lib.runners.warmup import settle
+from lib.runners.warmup import clear_viewer_pump, settle, viewer_pump
 
 # Length of the progress probe (section 223.12).
 PROBE_YEARS = 3
@@ -720,7 +720,13 @@ class TrainingProgress:
                                    self.seed)
             install_current_policies(env, trainer, self.backend)
             env.softmax_temperature = self.temperature
-            settle(env, (self.config or {}).get("warmup_ticks", 0), seed=self.seed)
+            try:
+                # Pumped as the rollout is, so the viewer keeps answering.
+                settle(env, (self.config or {}).get("warmup_ticks", 0), seed=self.seed,
+                       pump=viewer_pump(self.visualizer))
+            finally:
+                if self.visualizer is not None:
+                    clear_viewer_pump(self.visualizer)
             pump = self.visualizer.pump_events if self.visualizer is not None else None
             return run_probe(env, self.ticks, self.lower, self.upper, pump_events=pump)
 

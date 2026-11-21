@@ -26849,3 +26849,29 @@ remain open exactly as described in 71.9 / 71.11.
     behaviour. The derived g and the growth budget do not read a. Checkpoints before 295/296 are invalid; the
     user retrains. Note: train_gpu --profile sanity (16 deltas x 3 worlds, 60 x 60) runs out of memory on the
     12 GB GPU before and after 295 (encounter_view); 4 deltas x 1 world runs.
+
+297 THE VIEWERS ANSWER DURING THE WARM-UP (2026-11-21; user: the training and inference viewers stop answering
+    while the warm-up runs)
+    The warm-up (274) runs on the viewer's thread - inference.py --visual (the world and each --rnd_baseline
+    world), the training viewer's probe in train.py's _probe_biomass (train.py and train_gpu.py --visual) and
+    the in-process long-run probe - and nothing drained the window's events until it was done (60 days at
+    60 x 60: ~25 s CPU, ~4 s GPU, per world; solo baselines once per DM).
+    lib/runners/warmup.py: settle / run_warmup take pump(done, ticks), called after every CPU tick; the tensor
+    warm-up (lib/gpu/inference.warm_up) calls it every ~50 ms while a block's kernels run (a CUDA event, so the
+    host no longer queues every block and then blocks in the copy back). An explicit False stops the warm-up
+    early; the world is finished as a warm-up of the ticks run (re-anchored, tick 0 on that day); settle
+    returns False then. viewer_pump(viz, stop) pumps the viewer and shows "warm-up = N %" in the status row
+    (sv "uppvarmning", it "riscaldamento"; changed only when the percent moves, so the CPU warm-up pays ~100
+    repaints); clear_viewer_pump removes it (update_status(key=None) now removes a status entry).
+    inference.py stops the warm-up once the window is closed or a control that restarts the rollout is released,
+    and clears the change flags BEFORE reading the controls (was after the warm-up: a slider released during
+    it was shown but never applied); the rollout then stops at its first tick and the loop starts over. The
+    training probes never stop early (their record is written). The RNG streams are untouched (the viewer
+    draws no random numbers): pumping leaves the settled world bit-identical. Measured at 60 x 60: longest gap
+    between pumps 0.12 s CPU, 0.05 s GPU after the tensor runner is built (~1.8 s before the first pump).
+    tests/test_warmup_viewer_pump.py, tests/test_inference_warmup_viewer.py.
+297.1 The viewer probe's warm-up on the probe's engine (user: "Ja tack"): _probe_biomass passes its
+    engine/device to settle, so train_gpu.py --visual on CUDA warms the probe world and every rnd baseline on
+    the tensor engine (~6x faster at 60 x 60; equal to float32 rounding, no longer bit-equal to the CPU
+    warm-up). train.py's probe keeps the CPU engine. inference.py --engine gpu already warmed up on the tensor
+    engine (277), its baseline worlds too.

@@ -1544,12 +1544,32 @@ def main():
         print(f"\r    warm-up {done}/{total} ticks ({100 * done // total} %)",
               end="\n" if done >= total else "", flush=True)
 
-    def settle(e, ticks, seed=None, policies=None, obs=None, quiet=False):
+    def settle(e, ticks, seed=None, policies=None, obs=None, quiet=False, viz=None):
         """Section 277: the warm-up on the run's --engine (the tensor
-        engine is ~10x faster at 60 x 60), with a progress line."""
-        _settle(e, ticks, seed=seed, policies=policies, obs=obs, engine=args.engine,
-                device=args.cuda_device,
-                progress=None if (quiet or not verbose) else _warm_progress)
+        engine is ~10x faster at 60 x 60), with a progress line. With the
+        viewer its events are pumped meanwhile (the window had stopped
+        answering for the whole warm-up), and the warm-up stops early once
+        the window is closed or a control that restarts the rollout was
+        released: the rollout then stops at its first tick and the loop
+        below starts over. Returns False when it stopped early."""
+        from lib.runners.warmup import clear_viewer_pump, viewer_pump
+
+        def stale():
+            return getattr(viz, "_quit", False) or _restart_requested(viz)
+
+        if viz is not None and ticks and stale():
+            # Already stale (a baseline world after the main one stopped):
+            # the rollout stops at its first tick anyway.
+            return False
+        pump = viewer_pump(viz, stop=stale)
+        try:
+            return _settle(e, ticks, seed=seed, policies=policies, obs=obs,
+                           engine=args.engine, device=args.cuda_device,
+                           progress=None if (quiet or not verbose) else _warm_progress,
+                           pump=pump)
+        finally:
+            if viz is not None:
+                clear_viewer_pump(viz)
     if verbose and warm_ticks:
         print(f"Warm-up:      {args.warmup_days:g} days = {warm_ticks} ticks before the "
               f"recorded rollout (re-anchored: simulation_settings.warmup.reanchor)")
@@ -1667,6 +1687,18 @@ def main():
                 # Rebuild the static cache fields needed before refreshing
                 # batched policy weights.
                 env.build_static_caches()
+            # Clear the change flags before the controls are read: this
+            # rollout runs with what they show now. A control released
+            # after this point - during the warm-up too, which pumps the
+            # viewer - leaves its flag set, so the rollout stops at its
+            # first tick and the loop starts over with the new value
+            # (cleared after the warm-up, such a change was lost).
+            if viz is not None:
+                viz.consume_b0_change()
+                viz.consume_ticks_change()
+                viz.consume_spawn_change()
+                viz.consume_impact_change()
+                viz.consume_impact_live_change()
             # Apply visualizer b0 overrides before the first environment
             # transition, preserving each FG's spatial biomass distribution.
             b0_overrides = (viz.get_b0_overrides() if viz is not None else {})
@@ -1720,13 +1752,13 @@ def main():
                 # The same warm-up as the trained world (same seed, the
                 # trained policies), then its random DMs take over.
                 settle(e, warm_ticks, seed=args.seed, policies=policies, obs=(mean, var),
-                       quiet=True)
+                       quiet=True, viz=viz)
                 return e
 
             # Section 274: settle the world (overrides and impact scales
             # already applied, so the re-anchoring honours the b0 sliders);
             # the recorded rollout starts from the settled state.
-            settle(env, warm_ticks, seed=args.seed, policies=policies, obs=(mean, var))
+            settle(env, warm_ticks, seed=args.seed, policies=policies, obs=(mean, var), viz=viz)
 
             rnd_env = None
             rnd_solo_envs = None
@@ -1734,16 +1766,6 @@ def main():
                 rnd_env = _baseline_env()
             elif args.rnd_baseline == "solo":
                 rnd_solo_envs = {fid: _baseline_env() for fid in env.dm_ids}
-
-            # Konsumera ev. dirty-flaggor som råkade vara satta vid start
-            # av ny iteration — vi vill bara reagera på drag som sker EFTER
-            # denna rollout är klar.
-            if viz is not None:
-                viz.consume_b0_change()
-                viz.consume_ticks_change()
-                viz.consume_spawn_change()
-                viz.consume_impact_change()
-                viz.consume_impact_live_change()
 
             # Rollout-längd: använd slider-värdet om det är satt, annars
             # CLI-default. Slidern kan ändras efter rolloutens slut, vilket

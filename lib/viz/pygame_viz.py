@@ -1736,9 +1736,14 @@ class LiveVisualizer:
             self._log_once(f"update_action_fracs failed: {e!r}")
 
     def update_status(self, **kw) -> None:
+        """Set status-row entries; a None value removes that entry."""
         if not self.enabled:
             return
-        self._status.update(kw)
+        for key, value in kw.items():
+            if value is None:
+                self._status.pop(key, None)
+            else:
+                self._status[key] = value
         self._dirty = True
 
     # ---- b0-slider API -----------------------------------------------
@@ -4221,6 +4226,12 @@ class LiveVisualizer:
                     parts.append(f"{k} = {v:.3f}")
                 else:
                     parts.append(f"{k} = {v}")
+        if "warmup" in self._status:
+            # A warm-up running on this thread (lib/runners/warmup.py,
+            # viewer_pump): the maps stay on the previous rollout until it
+            # is done, and this says why.
+            parts.append(self._t("warm-up = {percent} %",
+                                 percent=self._status["warmup"]))
         if calendar:
             parts.append(self._t("daylight = {hours} h",
                                  hours=f"{calendar['day_length_h']:.1f}"))
