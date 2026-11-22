@@ -1618,6 +1618,16 @@ FIELD_HELP = {
         "costs while the policies cannot see it.\n"
         "Changing it alters the input size: retraining is required."
     ),
+    "impact_observed_by": (
+        "Observed by: the decision makers that see this observable impact, "
+        "as comma-separated group ids (e.g. predatory_fish). Empty = every "
+        "decision maker.\n\n"
+        "Every policy keeps the impact's 5 inputs; a group outside the list "
+        "reads them as zero. The impact's cost and mortality act on every "
+        "group with an Impact Table, seen or not. Section 300: the water "
+        "column's shallow-bed habitat term is seen by the water column only.\n"
+        "Changing it changes what the inputs mean: retraining is required."
+    ),
     "impact_baseline_map": (
         "Baseline map: today's field of this impact as a .npz, one value "
         "per cell (e.g. fishing effort in the cell).\n\n"

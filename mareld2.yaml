@@ -241,6 +241,16 @@ impact_variables:
     value_min: 0
     value_max: 1
     muted: true
+  # Section 300: the water column's habitat term (fg_library.yaml
+  # predatory_fish_impacted_by_shallow_beds). Present in every training world,
+  # the probes and inference; only the water column observes it.
+  - impact_id: shallow_beds
+    value_min: 0.0
+    value_max: 1.0
+    baseline_map: maps/shallow_beds.npz
+    observable: true
+    observed_by:
+      - predatory_fish
   - impact_id: windfarm_noise
     value_min: 0.0
     value_max: 140.0
@@ -309,3 +319,4 @@ inference:
     rotor: vindparker.npz
     bottom_trawling: maps/fishing_bottom_otter_trawls.npz
     pelagic_trawling: maps/fishing_pelagic.npz
+    shallow_beds: maps/shallow_beds.npz

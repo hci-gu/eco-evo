@@ -226,6 +226,20 @@ fabricates mass.
   0.087/yr (sections 218, 221, 223.15).
   Porpoise gillnet bycatch (~0.017/yr, met outside the grid) rides on
   the bottom-trawl map too (section 165).
+  Section 300 (the user's explicit exception to the learned-behaviour
+  rule, as 271): impact `shallow_beds`, map maps/shallow_beds.npz = 1 over
+  beds < 150 m (tools/make_habitat_map.py from maps/depth.npz), baseline
+  map of training, probes and inference; only
+  `predatory_fish_impacted_by_shallow_beds` acts, energy_factor 0.5 (every
+  water-column action cost x1.5 there). f is SIZED from the library's own
+  policy-free shallow/deep gradient (indifference 0.16-0.52 by month),
+  not measured: field saithe stand over 150-250 m for no known reason
+  (research_notes/"Sejens djuplage", a-umlaut) and the shallow water
+  column ate whiting at 2-3.4x booked M2 (299.1). GOV placement is its
+  target, no longer a test. An observable impact may carry `observed_by`
+  (DM ids; absent = all): same layout for every DM, the others read its
+  slots as zero (both engines, FG editor field; shallow_beds: water
+  column only). Checkpoints before 300 are invalid.
 - Holling ceiling is 1/h (`energy_balance.intake_ceiling`); `max_intake_rate`
   is the attack rate a. A pair may override it (`<pred>_preys_on_<prey>:
   max_intake_rate`) to set the half-saturation 1/(a h) (Type III:

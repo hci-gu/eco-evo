@@ -581,6 +581,40 @@ def project_impact_ranges(project):
     return impact_ranges
 
 
+def impact_observed_by(project):
+    """``{impact_id: set of DM ids, or None}`` of the active observable impacts.
+
+    Section 300: ``observed_by`` on an ``impact_variables`` entry lists the
+    decision makers that observe the impact; None (no list) is every DM.
+    Refuses an id that is not an active decision maker of the project, an
+    empty list, and the key on an impact that is not observable.
+    """
+    dms = {fg.get('group_id') for fg in (project.get('decision_makers') or [])
+           if isinstance(fg, dict) and not fg.get('muted')}
+    out = {}
+    for iv in project.get('impact_variables', []) or []:
+        if not isinstance(iv, dict) or iv.get('muted'):
+            continue
+        listed = iv.get('observed_by')
+        if listed is None:
+            if iv.get('observable'):
+                out[iv['impact_id']] = None
+            continue
+        if not iv.get('observable'):
+            raise ValueError(f"{iv['impact_id']}: observed_by needs observable: true (section 300)")
+        if isinstance(listed, str):
+            listed = [listed]
+        listed = [str(x) for x in listed]
+        if not listed:
+            raise ValueError(f"{iv['impact_id']}: observed_by is empty (section 300)")
+        unknown = [x for x in listed if x not in dms]
+        if unknown:
+            raise ValueError(f"{iv['impact_id']}: observed_by names {unknown}, not active "
+                             "decision makers of the project (section 300)")
+        out[iv['impact_id']] = set(listed)
+    return out
+
+
 def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', grid_size=(60, 60), seed=None, mode='train',
                         spawn_seed=None, allowed_mask=None, project_config=None, library_config=None,
                         tick_hours=LIBRARY_TICK_HOURS, apply_natural_mortality=True):
@@ -664,6 +698,10 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
         iv['impact_id'] for iv in project.get('impact_variables', [])
         if isinstance(iv, dict) and not iv.get('muted') and iv.get('observable')
     ]
+    # Section 300: an observable impact may name the decision makers that
+    # observe it (``observed_by``; absent = every DM). The channel layout
+    # stays the same for every DM; the others read it as zero.
+    impact_observers = impact_observed_by(project)
 
     # Reference-grid scaling: biomass values entered in the FG editor and the
     # Inference tab are defined relative to a reference grid (Rx x Ry cells)
@@ -841,6 +879,10 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
                 if 'impact' not in params: params['impact'] = {}
                 params['impact'][impact_id] = idef
         params['observes'] = observes_list if observes_seen_any else None
+        params['unobserved_impacts'] = [
+            impact_id for impact_id in observable_impact_vars
+            if impact_observers.get(impact_id) is not None
+            and sid not in impact_observers[impact_id]]
 
         # growth_rate is derived from r_max, natural_mortality and the
         # checked predation pairs whose predator is active in THIS project

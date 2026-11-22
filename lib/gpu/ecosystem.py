@@ -649,17 +649,23 @@ class TensorEcosystem:
                 visible.append(juvenile_base + j if j == own else
                                juvenile_visible_base + (d * self.G + j if pair else j))
             channels = [own, energy_base + own] + visible + impacts
+            # Section 300: a DM outside an impact's ``observed_by`` reads its
+            # slots as zero (``env.dm_impact_obs``), centre and neighbours.
+            imp_seen = [float(x) for x in getattr(env, "dm_impact_obs", np.ones((self.D, len(impacts))))[d]]
             for k, channel in enumerate(channels):
                 obs_indices[d, :, k] = channel * self.C + cells
-                obs_valid[d, :, k] = 1.0
+                obs_valid[d, :, k] = imp_seen[k - (len(channels) - len(impacts))] if k >= len(channels) - len(impacts) else 1.0
             offset = len(channels)
             weights = (list(nbr_w[d]) if nbr_w is not None
                        else [1.0] * (1 + len(visible)))
             weights = weights + [1.0] * len(impacts)
             for direction in range(4):
-                for k, channel in enumerate([own] + visible + impacts):
+                nbr_channels = [own] + visible + impacts
+                for k, channel in enumerate(nbr_channels):
                     obs_indices[d, :, offset] = channel * self.C + neighbors[direction]
-                    obs_valid[d, :, offset] = valid[direction]
+                    obs_valid[d, :, offset] = valid[direction] * (
+                        imp_seen[k - (len(nbr_channels) - len(impacts))]
+                        if k >= len(nbr_channels) - len(impacts) else 1.0)
                     obs_centre[d, :, offset] = channel * self.C + cells
                     obs_weight[d, :, offset] = weights[k]
                     offset += 1

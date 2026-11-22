@@ -393,11 +393,20 @@ class FGConfigApp:
         obs_lbl = ttk.Label(self.impact_editor_frame, text="Observable by policy")
         obs_lbl.grid(row=2, column=0, sticky="w", padx=5, pady=2)
         self.impact_observable_var = tk.BooleanVar(value=False)
-        obs_cb = ttk.Checkbutton(self.impact_editor_frame,
+        obs_row = ttk.Frame(self.impact_editor_frame)
+        obs_row.grid(row=2, column=1, sticky="w", padx=5, pady=2)
+        obs_cb = ttk.Checkbutton(obs_row,
                                  variable=self.impact_observable_var,
                                  command=self._on_impact_observable_toggled)
-        obs_cb.grid(row=2, column=1, sticky="w", padx=5, pady=2)
+        obs_cb.pack(side="left")
         attach_help([obs_lbl, obs_cb], "impact_observable")
+        # Section 300: the decision makers that observe it (empty = all).
+        by_lbl = ttk.Label(obs_row, text="Observed by")
+        by_lbl.pack(side="left", padx=(12, 4))
+        self.impact_observed_by_var = tk.StringVar(value="")
+        by_entry = ttk.Entry(obs_row, textvariable=self.impact_observed_by_var, width=36)
+        by_entry.pack(side="left")
+        attach_help([by_lbl, by_entry], "impact_observed_by")
 
         base_lbl = ttk.Label(self.impact_editor_frame, text="Baseline map")
         base_lbl.grid(row=3, column=0, sticky="w", padx=5, pady=2)
@@ -2633,6 +2642,8 @@ class FGConfigApp:
         self.impact_value_min_var.set(_fmt(entry.get('value_min')))
         self.impact_value_max_var.set(_fmt(entry.get('value_max')))
         self.impact_observable_var.set(bool(entry.get('observable', False)))
+        by = entry.get('observed_by')
+        self.impact_observed_by_var.set(", ".join([by] if isinstance(by, str) else (by or [])))
         self._update_baseline_map_view(entry)
         # Populate the spawn-strategy editor from the impact's spawn block
         # (project override). Missing/invalid blocks fall back to uniform.
@@ -2698,12 +2709,30 @@ class FGConfigApp:
                 "Could not apply impact changes:\n\n" + "\n".join(spawn_errors))
             return
 
+        # Section 300: observed_by, refused as the loader refuses it.
+        from lib.config.config_loader import impact_observed_by
+        by_ids = [x.strip() for x in self.impact_observed_by_var.get().split(",") if x.strip()]
+        trial = dict(entry, observable=new_observable)
+        if by_ids:
+            trial['observed_by'] = by_ids
+        else:
+            trial.pop('observed_by', None)
+        try:
+            impact_observed_by(dict(self.project_data, impact_variables=[trial]))
+        except ValueError as exc:
+            messagebox.showerror("Invalid Observed by", str(exc))
+            return
+
         entry['value_min'] = mn
         entry['value_max'] = mx
         if new_observable:
             entry['observable'] = True
         else:
             entry.pop('observable', None)
+        if by_ids:
+            entry['observed_by'] = by_ids
+        else:
+            entry.pop('observed_by', None)
         # Persist spawn block. Drop the entry entirely when the mode is
         # uniform with no extra params (legacy i.i.d. uniform sampling).
         if isinstance(spawn_dict, dict) and spawn_dict:

@@ -408,6 +408,14 @@ def build_static_caches(env):
     # Number of impact observation channels. Stored here so observation
     # dim calculations stay consistent in one place.
     n_obs_imp = len(env.observable_impact_vars)
+    # Section 300: 1 where the DM observes the impact, 0 where its slots read
+    # zero (``unobserved_impacts`` from the loader's ``observed_by``).
+    env.dm_impact_obs = np.ones((env.N_dm, n_obs_imp), dtype=env.dtype)
+    for i, fid in enumerate(env.dm_ids):
+        blind = set(env.fgs[fid].params.get('unobserved_impacts') or ())
+        for k, impact_id in enumerate(env.observable_impact_vars):
+            if impact_id in blind:
+                env.dm_impact_obs[i, k] = 0.0
     # Per-DM input dimension. Each DM sees:
     #   center : [B_own, E_own, B_obs_others (k_i), J (m_i), impacts (n_obs_imp)]
     #   neighbour (N/E/S/W) : [B_own, B_obs_others (k_i), J (m_i), impacts]

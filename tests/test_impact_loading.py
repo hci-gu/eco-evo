@@ -43,18 +43,19 @@ def test_load_project_config_returns_four_values():
     assert len(out) == 4
     fgs, impact_vars, impact_ranges, observable_impact_vars = out
     assert fgs
-    # Only the fishery is active in the shipped project, and the policies
-    # do not observe it.
-    assert impact_vars == ['bottom_trawling', 'pelagic_trawling']
-    assert set(impact_ranges) == {'bottom_trawling', 'pelagic_trawling'}
-    assert observable_impact_vars == []
+    # The fishery is active in the shipped project and the policies do not
+    # observe it; section 300's habitat term is observable (by the water
+    # column only, ``observed_by``).
+    assert impact_vars == ['bottom_trawling', 'pelagic_trawling', 'shallow_beds']
+    assert set(impact_ranges) == {'bottom_trawling', 'pelagic_trawling', 'shallow_beds'}
+    assert observable_impact_vars == ['shallow_beds']
 
 
 def test_unmuted_project_yields_impact_metadata(unmuted_project):
     fgs, impact_vars, impact_ranges, observable = load_project_config(
         unmuted_project, grid_size=GRID, seed=1)
     assert 'windfarm_noise' in impact_vars
-    assert observable == ['windfarm_noise']
+    assert observable == ['shallow_beds', 'windfarm_noise']  # 300 first, manifest order
     vmin, vmax = impact_ranges['windfarm_noise']
     assert vmin == pytest.approx(0.0)
     assert vmax > vmin

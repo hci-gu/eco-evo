@@ -26959,3 +26959,97 @@ remain open exactly as described in 71.9 / 71.11.
     light: twilight only, expected small). Checkpoints before 299 are invalid (night/day payoffs and a move);
     the user retrains (60 x 60). Confidence in the Ke value is low; budget_gate's 298 block is the check if a
     measurement of gadoid detection in near-darkness turns up.
+
+299.1 Section 299 after retraining (fix108): whiting moved, the water column did not (2026-11-22)
+    Run: fix108 (pzbpgp248nsrpfix108), train_gpu 30 x 30 from scratch on the 299 library, the same flags as
+    fix106 except lr 0.03 (fix106 0.05), so a difference from fix106 is not the library alone. Checked at u550
+    and u650 against fix106 at u585 and u862; single checkpoints are noisy samples (fix106's west-edge clump
+    came and went between them), so a change is claimed only where all three seeds fall outside both fix106
+    checkpoints.
+    Long-run probe (30 x 30, unfished, u300-580 vs fix106 at the same updates): all 15 groups viable, V ~0.15
+    in both; rations unchanged (water column 3.2 t/t/yr vs field Q/B 2.83, planktivores 7.2, whiting 3.6,
+    benthivores 6.1, mackerel 6.3) at reserve fill 0.95-0.98: the intake stops at the reserve room, so the
+    higher a of 299 does not show in the ration. The water column's realised diet moved from krill 0.62 to
+    0.53 and planktivores 0.23 to 0.31 (booked 0.37 / 0.51); budget_gate's encounter shares are unchanged by
+    299 (krill 0.38, planktivores 0.45), so this is placement and prey depletion, not the new a.
+    60 x 60 inference (fished, default spawn, currents on, seeds 123 / 1 / 2, one year), bed-depth shares
+    < 100 / 100-150 / 150-250 / >= 250 m:
+      whiting < 100 m           u550 0.38-0.52, u650 0.51-0.61; fix106 0.03-0.20; GOV 0.77  -> moved
+      water column 150-250 m    u550 0.20-0.23, u650 0.13-0.19; fix106 0.13-0.17; GOV 0.78  -> not moved
+      benthivores 150-250 m     u650 0.59-0.70 (< 100 m 0.01-0.04); fix106 0.42-0.61; GOV 0.19 (0.31) -> not moved
+      benthivore Lloyd          16-21; fix106 9-29; GOV 3.1                                -> not moved
+    The u550 water-column rise was noise (gone at u650).
+    Why the water column did not move: 299 fixed the LEVEL at depth (the field spread now pays the field
+    ration, section 298 block 1.41x), but the placement follows the GRADIENT. The policy-free shallow / deep
+    intake ratio was still 1.5-1.9 after 299 (section 299 said so), and with the fill at the ceiling any
+    gradient > 1 favours the shallow beds, where the room fills with the least foraging time. The outcome was
+    therefore predictable from section 299's own numbers. What is left of the gradient is the vision term at
+    the bed in near-darkness, where the field bracket (Ke 2e-4 to ~0.07 lx) settles nothing; further a moves
+    there would be fits to the outcome, not biology.
+    Decision (user): no further a moves on the water column (fix108 was then stopped at u767 for section 300). The
+    shallow water column is NOT a harmless defect, though (test below): it drives whiting's decline.
+    Test (frozen fix108 u650, the long-run probe exactly: 30 x 30, unfished, seed 20260530, the viewer's spawn
+    overrides, 60-day warm-up; base reproduces the live probe at u650, whiting 0.54 vs 0.52 at year 3). One
+    pair changed in a library copy, predatory_fish -> whiting a; whiting year-end ratio / realised M2 by the
+    water column, years 1-3:
+      base   (a 0.0164)            0.90 / 0.75 / 0.54    M2 0.38 / 0.51 / 0.54   (booked 0.157)
+      booked (a x0.275)            1.04 / 0.97 / 0.81    M2 0.22 / 0.32 / 0.34
+      off    (a ~0)                1.28 / 1.53 / 1.43    M2 0
+    Every other group unchanged within 0.05 (the water column's ration 3.0-3.2 in all arms: whiting is a minor
+    item for it). So the water column's realised predation, 2-3.4x its booking while budget_gate gives the pair
+    1.0-1.3x at equal cells and at the field spread, is the main cause of the unfished decline: co-location on
+    the shallow beds (298.1), not the pair's a. Two smaller terms remain: in the booked arm the whiting's total
+    realised M2 (0.54 at year 3, porpoises 0.005 of their booked 0.14 offsetting the rest) is near its booked
+    0.49 and it still falls 17 % in year 3 (its own production; not measured); and the benthivores grow to
+    1.5x start in 3 years in every arm, raising their M2 on whiting from 0.01 to 0.15-0.20.
+    Slope entry (research_notes/"Sejens djuplage" (a-umlaut) mechanism 2, the only candidate there with a
+    form in the engine): the water column's outside_entry cut to the 150-250 m edge cells (west 0.30-0.466,
+    north 0.534-0.70; 10 cells at 30 x 30, 20 at 60 x 60, all in that class), same probe. Water column on
+    150-250 m beds 0.18 / 0.17 / 0.18 by year vs base 0.18 / 0.16 / 0.16; whiting 0.89 / 0.73 / 0.58 vs
+    0.90 / 0.75 / 0.54; nothing else moves. The immigrants leave the slope within days (relocation tau 0.073):
+    where they arrive does not set where they stand. Not applied. The probe's whiting stands at its field
+    spread (0.77-0.80 over < 100 m in years 2-3), so the overlap is the water column's half alone.
+    Consequence for scenarios: the deep benthivores stand over high-effort trawl beds, so their realised F in
+    fished inference is ~0.31-0.36 /yr against the booked 0.17 (fix106 work; tables calibrated on the maps'
+    mean effort, section 161.9). Fishing-scenario results for the benthivores overstate fishing's effect while
+    the placement defect stands, and should be reported with that caveat.
+
+300 THE WATER COLUMN'S SHALLOW-BED HABITAT TERM, f 0.5 (2026-11-22; user: "Infor termen med f 0,5, observerbar,
+    undantag")
+    Why (299.1): the trained water column stands over beds < 150 m (0.13-0.19 on 150-250 m against GOV saithe
+    0.78) and there eats whiting at 2-3.4x its booked M2; a frozen probe with that pair at a x0.275 keeps whiting
+    at 0.81 and with the pair off at 1.43 of start at year 3 (base 0.54). research_notes/"Sejens djuplage"
+    (a-umlaut, 2026-11-09) found the field pattern strong and its cause unknown (bottom T within 0.5-1 C across
+    the classes, no O2 gradient, more fish prey over the shallow beds, no predation risk found for adults);
+    slope entry, its one candidate with a form in the engine, moved nothing (299.1). The library's encounter
+    terms pay the water column 1.5-1.9x more food per tonne over beds < 150 m.
+    What: the user's explicit exception to the learned-behaviour rule (as section 271's set point): a habitat
+    COST, so the behaviour is still learned from a payoff. New impact `shallow_beds` (manifest impact_variables,
+    library impact_definitions): map maps/shallow_beds.npz = 1 over beds < 150 m (field_diet.bed_class 0-1),
+    0 elsewhere, from maps/depth.npz by tools/make_habitat_map.py (the impact loader's nearest-neighbour
+    resample selects the depth map's own cells at 16, 30 and 60 cells, checked); the baseline map of every
+    training world, the probes and (inference.impact_maps) inference. Only `predatory_fish_impacted_by_shallow_beds`
+    acts: energy_factor 0.5 at value 1, so every action cost of the water column is x1.5 there (the impact cost
+    factor, both engines); the other groups carry empty rows. Outside the growth budget, as every impact.
+    Size (scratchpad habterm.py on wc_ration_field.py's policy-free potentials, 299 library, 60 x 60): the water
+    column fills its reserve at the realised ration 3.2 t/t/yr, so the shallow beds pay through foraging time
+    ((feeding_cost 2.14 - 1) RM 3.29 x R (1/P_deep - 1/P_shallow)) plus, Dec-Apr, the deep beds' shortfall
+    (R - P_deep) x E_net (E_net ~3430 MJ/t prey [J]). Indifference f over < 100 / 100-150 m against 150-250 m:
+    0.16-0.52 by month (max January), mean 0.32 / 0.28 (0.15-0.42 at the field Q/B 2.83). f 0.5 sits at or above
+    it in every month but January (0.52), a margin, not a measurement: indifference does not make 0.78 of the
+    group stand deep, and the group's own depletion of shallow prey cuts the real gradient; only the retrained
+    run tells which dominates. f 0.5 is +4.9 C at Q10 2.3, so it is not a temperature effect.
+    Observable by the water column only. Observable impacts were seen by every decision maker; new key
+    `observed_by` (list of DM ids, absent = all) on an observable impact_variables entry
+    (config_loader.impact_observed_by: refuses an id that is not an active DM, an empty list, the key on a
+    non-observable impact). The channel layout stays the same for every DM; a DM outside the list reads the
+    impact's five slots as zero (state.py `env.dm_impact_obs`, observations.py; GPU `obs_valid` 0 on those
+    slots), and a constant zero input stays zero through the ARS obs normalisation. So no other group gains a
+    bed-depth sense from the test. FG editor: an Observed by field next to Observable by policy (comma-separated
+    ids; Apply refuses what the loader refuses). tests/test_impact_observed_by.py (CPU/GPU parity with one DM
+    blind, the refusals, the mareld2 term: cost 1.5 / 1.0, map = depth classes, only the water column sees it).
+    Consequences: GOV placement is now the term's target, not an independent test of the water column; the
+    tests that remain are whiting's unfished trajectory, the diets and M2 against booking (probe_diets), and
+    the benthivores' placement and crowding. Every DM gains five input slots (all zero but the water column's):
+    checkpoints before 300 are invalid; retrain under a new run name (no --resume / --init-from fix108). The
+    final 299 policies (fix108 u767) are copied in the session scratchpad (fix108_final_299) as the baseline.

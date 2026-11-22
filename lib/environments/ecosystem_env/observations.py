@@ -159,8 +159,9 @@ def build_observation_batch(env):
         obs[i, 1] = own_energy
         if n_other > 0:
             obs[i, 2:2 + n_other] = observed_biomass
+        imp_mask = env.dm_impact_obs[i] if n_obs_imp else None
         for k, layer in enumerate(impact_layers):
-            obs[i, 2 + n_other + k] = layer
+            obs[i, 2 + n_other + k] = layer * imp_mask[k]
 
         channels = [own_biomass] + [observed_biomass[k] for k in range(n_other)]
         enc = env.obs_encounter[i] if getattr(env, "_has_encounter", False) else None
@@ -174,7 +175,7 @@ def build_observation_batch(env):
                 for k in range(len(channels)):
                     obs[i, base + k] = neighbour[direction_index][k]
                 for k, layer_shift in enumerate(impact_shifts[DIRECTIONS[direction_index]]):
-                    obs[i, base + 1 + n_other + k] = layer_shift
+                    obs[i, base + 1 + n_other + k] = layer_shift * imp_mask[k]
             channels = None
 
         nbr_w = env.obs_nbr_w[i] if getattr(env, "_has_nbr_w", False) else None
@@ -189,7 +190,7 @@ def build_observation_batch(env):
                         field + nbr_w[k] * (shifted - field))
                 obs[i, base + k] = shifted
             for k, layer_shift in enumerate(impact_shifts[direction]):
-                obs[i, base + 1 + n_other + k] = layer_shift
+                obs[i, base + 1 + n_other + k] = layer_shift * imp_mask[k]
 
         set_point_obs = bool(getattr(env, "dm_set_point_obs", None) is not None
                              and env.dm_set_point_obs[i])
