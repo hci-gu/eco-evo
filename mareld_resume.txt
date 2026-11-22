@@ -26907,3 +26907,23 @@ remain open exactly as described in 71.9 / 71.11.
     Dec-Mar over 150-250 m beds - a lower bound, not a value to set.
     Tests: tests/test_potential_ration.py (Holling II and III, shared handling, the ceiling bound,
     monotone in a, interference, weights, budget_gate's block).
+298.1 The water column's shortfall at depth: a known defect, left open (2026-11-22; user: option b)
+    research_notes/"Sejens motesfaktor" (o-umlaut): no clean water-column anchor for 296's x0.16. Saithe on
+    Norway pout, NS-IBTS Q1 2026 (G.O. Sars, February, 203 stomachs in 29 hauls, Walker q as the library):
+    factor 0.081 (haul bootstrap 0.022-0.19), a probable UPPER bound (96 % stage-0 pout, 8-11 cm: codend
+    feeding [J]). Krill, the other fish prey, hake and spurdog: no paired consumption / density data. On
+    library copies (298 block, water column x field Q/B): all pairs 0.08 -> 0.76 (12 months short), 0.16
+    (live) 1.10 (5), 0.19 -> 1.20 (2), 0.30 -> 1.47 (0); no new OFF pair. So the field data do not support a
+    higher level. The pout catchability is no way out: the stomach slope measures intake per unit catch, so a
+    consistent q moves the pool density and the anchored a in opposite directions and their product (the
+    Type II encounter) barely moves; with the water column's chain a (q-free) a lower pout density only
+    deepens the shortfall, and the 243.3 upper corner (2.70 t/km2) adds ~10-15 % at most [D, rough].
+    Standing: field saithe eat their ration over 150-250 m beds; the library lets the model's saithe at most
+    just do so foraging full time (298), so the trained water column stands over < 150 m beds (fix106 u862 at
+    60 x 60: 0.33-0.34 / 0.48-0.50 / 0.15-0.17 / 0.02) and the benthivores avoid it, deep (realised F above
+    booked). Candidates, all unmeasured: the vision term at the bed (Ke, R_nv in near-darkness; research_notes/
+    "Djupgradientens barare", a-umlaut), krill encounter at depth (no anchor), prey near deep beds. Left as
+    is until such data exist; budget_gate's 298 block shows whether a future change gives the water column
+    headroom at its field spread. Note: fix106's 60 x 60 west-edge clump (u585: enrichment 1.7-5.5) was a
+    checkpoint sample: u862 at 60 x 60 gives 1.0-1.5 on the same three seeds (benthivore crowding 9-11,
+    inland peaks 147-514 t/cell). fix107 continues fix106 at 60 x 60 (train_gpu --init-from, 0994139).

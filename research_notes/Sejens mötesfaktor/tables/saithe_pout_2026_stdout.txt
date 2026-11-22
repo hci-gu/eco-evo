@@ -1,0 +1,61 @@
+pout prey mass by DigestionStage (g): {'0': 3195.4, '1': 128.0} ; all other prey: {'0': 127.4, '1': 959.2, '2': 23.7}
+saithe 2026 rows 207, after dropping regurgitated 203; hauls 29
+  length 33.5-93.0 cm (median 46.0); weight median 732 g
+  empty (S_tot 0) 50; with pout 41; pout share of all prey mass 0.750; of fish prey 0.818
+  'Number' field values {'2': 134, '3': 45, '1': 13, '4': 11} (read as a code; rows are single fish: individual 0.5-cm lengths and weights) [J]
+pout LW-implied / recorded catch weight, median over hauls: 1.56
+
+G.O. Sars Q1 2026 hauls 37; swept area median 0.0701 km2 (wing 19.0 m)
+
+chain: a_pre296 0.02348 x saithe scale 1.150 x pout access 0.95 x m_Feb 0.815 x q(T) 0.887 at 7.0 C; depth factor <100 2.47, 100-150 1.08, 150-250 0.24 (box-normalised)
+summed prey / FullStomWgt per fed fish: median 0.39; fish with prey > FullStomWgt 30 of 153; of the fish > 5 %BW pout 20 of 21
+
+per haul (sorted by pout density; P = pout ration g/g/d at T 7, E 4.6; D t/km2 Walker-q; chain per day)
+        Gear  Depth  n_fish     L  S_pout_pct         P    cmax   catch_g     D_q1       D  chain_day
+HaulNo                                                                                               
+152      GOV    169       7 49.71       1.395  0.006164 0.02178         0        0       0    0.01772
+147      GOV    156       2 40.25           0         0 0.02243       147 0.002053 0.01175    0.01772
+151      GOV    127       8 41.31           0         0 0.02236       303 0.004054 0.02113    0.08041
+119      GOV    149       7 46.36           0         0 0.02104       170 0.002109 0.03185    0.08041
+141      GOV    159       4 46.25           0         0  0.0216       380 0.005122  0.0406    0.01772
+120      GOV    124       6 43.67           0         0 0.02191       547 0.007687 0.09977    0.08041
+125      GOV    135      11 54.41     0.06373 0.0006442 0.02028       550 0.008263   0.108    0.08041
+146      GOV    159       9 52.61           0         0 0.02097      1750  0.02447  0.1275    0.01772
+115      GOV    106      10    47           0         0 0.02219      1260  0.01687  0.1373    0.08041
+136      GOV    112      10  43.7           0         0 0.02173       977  0.01392  0.1641    0.08041
+122      GOV     99       5  42.5           0         0 0.02319      2054  0.03104   0.253      0.183
+145      GOV    147       1    38           0         0 0.02369      4701    0.067  0.3578    0.08041
+123     JTDS    102       7 41.29           0         0  0.0228      4270   0.0547  0.4127    0.08041
+126      GOV     90       2  71.5       4.002   0.01689 0.01858      5747  0.07025  0.8826      0.183
+129      GOV     80       2 44.25           0         0 0.02317      4513  0.06986  0.9551      0.183
+135      GOV    106       8 45.44           0         0 0.02121      6248  0.08997   1.184    0.08041
+113      GOV    142      10  52.4           0         0 0.02151      8570    0.123   1.455    0.08041
+134      GOV     82       5  40.7       0.166  0.001387 0.02256      9510   0.1429   1.742      0.183
+116      GOV    114       9 45.33       1.141  0.005639 0.02099 1.066e+04   0.1432   1.848    0.08041
+150      GOV    166      13 57.62      0.1396 0.0009818 0.02014  1.64e+04   0.2507    2.05    0.01772
+140      GOV    129       7 42.64       3.867   0.01662 0.02117 1.241e+04   0.1811   2.685    0.08041
+137     JTDS    126       8 46.69        12.5   0.03629  0.0213 1.504e+04   0.2145   2.853    0.08041
+143     JTDS    143       4 45.88           0         0 0.02191 3.753e+04   0.5676   2.992    0.08041
+139      GOV    113       7  45.5           0         0 0.02226 1.705e+04   0.2476   3.543    0.08041
+142     JTDS    131       3 43.17       3.534   0.01726 0.02222 5.473e+04   0.7113   3.774    0.08041
+144     JTDS    137      10 47.15       7.043   0.02145 0.02149 3.721e+04   0.5211   7.739    0.08041
+118     JTDS    128       8 47.19       2.849   0.01231 0.02106 5.775e+04   0.8245   11.68    0.08041
+149     JTDS    130      12 56.12       4.857   0.01817 0.02025 3.352e+04   0.8985   12.74    0.08041
+138     JTDS    122       8 45.12      0.6779  0.003708 0.02193 5.783e+04   0.8721   12.91    0.08041
+hauls without a DATRAS match: 0
+
+fit, haul means (n 29):
+  ratio estimator sum P / sum D = 0.002164 g/g/d per t/km2 -> factor 0.0258 (vs each haul's chain)
+  Type II: low-density slope s 0.006764 per t/km2/d, plateau Pmax 0.01766 g/g/d (0.82 of GER Cmax); factor s / density-weighted chain 0.0806; factor fitted on each haul's chain 0.0812
+  bootstrap ratio factor: median 0.0253, 5-95 % 0.0146-0.0429
+  bootstrap Type II factor (haul chain): median 0.0776, 5-95 % 0.0223-0.187
+  bootstrap Type II slope: median 0.00676, 5-95 % 0.00184-0.0162
+  bootstrap Pmax: median 0.0201, 5-95 % 0.0106-0.155
+  T 6 / E 5.4 (low ration): ratio factor 0.0208, Type II factor 0.0645
+  T 8.5 / E 4.2 (high ration): ratio factor 0.0315, Type II factor 0.0977
+  pout past DigestionStage 0 only (net-feeding bound): ratio factor 0.00155, Type II factor 0.00101
+  stomach content capped at FullStomWgt: ratio factor 0.0197, Type II factor 0.0645
+  at GOV q = 1 (density x11.81 lower): ratio factor 0.309, Type II factor 1.03 (not the library's convention)
+  low-density half (D <= 0.955, n 15): ratio factor 0.0481
+
+corr(P, D) Spearman 0.57; hauls with pout in stomachs 13, with pout in the catch 28

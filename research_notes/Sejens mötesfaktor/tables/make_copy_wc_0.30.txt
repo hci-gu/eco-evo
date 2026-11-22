@@ -1,0 +1,6 @@
+predatory_fish_preys_on_benthivorous_fish: 0.0151088 -> 0.028329
+predatory_fish_preys_on_krill: 0.001712 -> 0.00321
+predatory_fish_preys_on_mackerel: 5.3536e-06 -> 1.0038e-05
+predatory_fish_preys_on_planktivorous_fish: 0.0037568 -> 0.007044
+predatory_fish_preys_on_whiting: 0.0137728 -> 0.025824
+predatory_fish_preys_on_zooplankton: 5.008e-06 -> 9.39e-06
