@@ -1,0 +1,19 @@
+[ke_step] step 4 at Ke 0.002 lx (s4_rows269.py, 0 Ke anchor(s))
+17 pairs; window key A_band|ling anglerfish|k+1.7
+  whiting_preys_on_krill                           a 0.0455  dark_ratio None  table 0.157/0.0379/0.00174
+  planktivorous_fish_preys_on_krill                a 0.0225  dark_ratio 0.57  table 0.0707/0.0197/0.00364
+  predatory_fish_preys_on_krill                    a 0.0123  dark_ratio 0.0367  table 0.0322/0.0151/0.0026
+  mackerel_preys_on_krill                          a 0.00398  dark_ratio 0.42  table 0.00543/0.00441/0.00314
+  predatory_fish_preys_on_planktivorous_fish       a 0.0178  dark_ratio 0.0641  table 0.04/0.0224/0.00609
+  predatory_fish_preys_on_benthivorous_fish        a 0.0424  dark_ratio 0.164  stage_access [0.392, 0.0386]  table 0.0732/0.0602/0.0197
+  predatory_fish_preys_on_whiting                  a 0.0366  dark_ratio 0.136  table 0.0632/0.0526/0.0168
+  predatory_fish_preys_on_mackerel                 a 0.000142  dark_ratio 0.938  table 0.000246/0.000132/0.000102
+  whiting_preys_on_planktivorous_fish              a 0.0333  dark_ratio 0.21  table 0.0642/0.0354/0.0193
+  whiting_preys_on_benthivorous_fish               a 0.103  dark_ratio 0.56  table 0.137/0.123/0.0787
+  mackerel_preys_on_planktivorous_fish             a 0.0248  dark_ratio 0.16
+  benthivorous_fish_preys_on_krill                 a 0.0072  dark_ratio 0.0519  table 0.0237/0.00625/0.000697
+  benthivorous_fish_preys_on_planktivorous_fish    a 0.0216  dark_ratio 0.147  table 0.0417/0.0275/0.00987
+  benthivorous_fish_preys_on_whiting               a 0.0229  dark_ratio 0.179  table 0.0386/0.0324/0.0111
+  benthivorous_fish_preys_on_benthic_infauna       a 0.0256  dark_ratio -
+  benthivorous_fish_preys_on_mobile_epifauna       a 0.11  dark_ratio -
+  benthivorous_fish_preys_on_norway_lobster        a 0.308  dark_ratio -

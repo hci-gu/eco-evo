@@ -1,0 +1,22 @@
+[ke_step] step 8 at Ke 0.002 lx (s8_compose.py, 0 Ke anchor(s))
+K_deep 0.09: WC -> benthivores a 0.1179 (x0.9392), stage_access [0.3746, 0.01104]
+   predatory_fish->whiting              a 0.1065, stage_access [0.4067, 0.07183]
+   predatory_fish->planktivorous_fish   a 0.02864, stage_access [0.6483, 0.1733]
+   predatory_fish->mackerel             a 3.407e-05
+  whiting_preys_on_krill                           a 0.0455  dark_ratio None
+  planktivorous_fish_preys_on_krill                a 0.0225  dark_ratio 0.57
+  predatory_fish_preys_on_krill                    a 0.0123  dark_ratio 0.0367
+  mackerel_preys_on_krill                          a 0.00398  dark_ratio 0.42
+  predatory_fish_preys_on_planktivorous_fish       a 0.02864  dark_ratio 0.125  stage_access [0.6483, 0.1733]
+  predatory_fish_preys_on_benthivorous_fish        a 0.1179  dark_ratio 0.164  stage_access [0.3746, 0.01104]
+  predatory_fish_preys_on_whiting                  a 0.1065  dark_ratio 0.138  stage_access [0.4067, 0.07183]
+  predatory_fish_preys_on_mackerel                 a 3.407e-05  dark_ratio 0.902  stage_access [0.14, 0.14]
+  whiting_preys_on_planktivorous_fish              a 0.06425  dark_ratio 0.34  stage_access [0.18, 0.0073]
+  whiting_preys_on_benthivorous_fish               a 0.2687  dark_ratio 0.56  stage_access [0.038, 0.0064]
+  mackerel_preys_on_planktivorous_fish             a 0.04579  dark_ratio 0.16  stage_access [0.02, 0.0029]
+  benthivorous_fish_preys_on_krill                 a 0.0072  dark_ratio 0.0519
+  benthivorous_fish_preys_on_planktivorous_fish    a 0.02939  dark_ratio 0.248  stage_access [0.62, 0.18]
+  benthivorous_fish_preys_on_whiting               a 0.0464  dark_ratio 0.182  stage_access [0.68, 0.24]
+  benthivorous_fish_preys_on_benthic_infauna       a 0.0256  dark_ratio -
+  benthivorous_fish_preys_on_mobile_epifauna       a 0.11  dark_ratio -
+  benthivorous_fish_preys_on_norway_lobster        a 0.308  dark_ratio -

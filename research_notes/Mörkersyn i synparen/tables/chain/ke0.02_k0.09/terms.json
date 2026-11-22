@@ -1,0 +1,124 @@
+{
+ "predatory_fish->planktivorous_fish": {
+  "eq": 0.014707428756327403,
+  "eq_band_pairs_json": 0.014707428756327403,
+  "nd": 0.07034880682969523,
+  "shares": {
+   "pout|day": 0.5082438048794984,
+   "herring|day": 0.31254220265475646,
+   "blue whiting|day": 0.0985605935821111,
+   "pout|night": 0.046983476444517676,
+   "herring|night": 0.018081522886838168,
+   "sprat|day": 0.011847267609656837,
+   "blue whiting|night": 0.0030557312555752197,
+   "sprat|night": 0.0006854006870462122
+  },
+  "reff": {
+   "herring|day": 0.8182653683291893,
+   "sprat|day": 0.8182653683291887,
+   "blue whiting|day": 0.6758012061919759,
+   "pout|day": 0.6295449867316089,
+   "herring|night": 0.39036100375206845,
+   "sprat|night": 0.39036100375206817,
+   "blue whiting|night": 0.3564148694659182,
+   "pout|night": 0.3126695151692105
+  }
+ },
+ "predatory_fish->benthivorous_fish": {
+  "eq": 0.03516272542928393,
+  "eq_band_pairs_json": 0.03516272542928393,
+  "nd": 0.2089691472645429,
+  "shares": {
+   "juvenile benthivores|day": 0.8347309442078014,
+   "juvenile benthivores|night": 0.1652690557921986
+  },
+  "reff": {}
+ },
+ "predatory_fish->whiting": {
+  "eq": 0.029268964093533485,
+  "eq_band_pairs_json": 0.029268964093533485,
+  "nd": 0.17219339760221075,
+  "shares": {
+   "whiting|day": 0.8588826288821789,
+   "whiting|night": 0.14111737111782108
+  },
+  "reff": {}
+ },
+ "predatory_fish->mackerel": {
+  "eq": 0.0001817881126585581,
+  "eq_band_pairs_json": 0.0001817881126585581,
+  "nd": 0.923290734298309,
+  "shares": {
+   "herring|night": 0.3150549592829725,
+   "herring|day": 0.2678479776425811,
+   "pout|night": 0.17107992507224204,
+   "pout|day": 0.15421539853672936,
+   "blue whiting|night": 0.03665998394405186,
+   "blue whiting|day": 0.03304615682929914,
+   "sprat|night": 0.011942516507116287,
+   "sprat|day": 0.010153082185007586
+  },
+  "reff": {
+   "herring|day": 0.3059708912808469,
+   "sprat|day": 0.30597089128084687,
+   "blue whiting|day": 0.30517202029617924,
+   "pout|day": 0.3051720202961792,
+   "herring|night": 0.3071536904539349,
+   "sprat|night": 0.30715369045393476,
+   "blue whiting|night": 0.3063274765965001,
+   "pout|night": 0.3063274765965
+  }
+ },
+ "whiting->planktivorous_fish": {
+  "eq": 0.030248863000508663,
+  "eq_band_pairs_json": 0.030248863000508663,
+  "nd": 0.23525937489767645,
+  "shares": {
+   "pout|day": 0.5018515719285833,
+   "herring|day": 0.24292672232993462,
+   "pout|night": 0.17175409057837315,
+   "blue whiting|day": 0.06773181286500675,
+   "sprat|day": 0.009208413662326043,
+   "blue whiting|night": 0.003646899784722312,
+   "herring|night": 0.0027752883886674904,
+   "sprat|night": 0.00010520046238631279
+  },
+  "reff": {
+   "herring|day": 0.4561111561182302,
+   "sprat|day": 0.45611115611823144,
+   "blue whiting|day": 0.408983658431369,
+   "pout|day": 0.389699854570815,
+   "herring|night": 0.3220196120269629,
+   "sprat|night": 0.32201961202696594,
+   "blue whiting|night": 0.30627307957764754,
+   "pout|night": 0.30158877154126945
+  }
+ },
+ "whiting->benthivorous_fish": {
+  "eq": 0.0936994563806364,
+  "eq_band_pairs_json": 0.0936994563806364,
+  "nd": 0.6410256530407928,
+  "shares": {
+   "juvenile benthivores|day": 0.6173215828048163,
+   "juvenile benthivores|night": 0.3826784171951837
+  },
+  "reff": {}
+ },
+ "mackerel->planktivorous_fish": {
+  "eq": 0.024685430076831445,
+  "eq_band_pairs_json": 0.024685430076831445,
+  "nd": 0.8336944158142692,
+  "shares": {
+   "herring|day": 0.48925698863819517,
+   "herring|night": 0.4742212722313702,
+   "sprat|day": 0.01854584252960668,
+   "sprat|night": 0.01797589660082811
+  },
+  "reff": {
+   "herring|day": 0.5150305830611318,
+   "sprat|day": 0.5150305830611287,
+   "herring|night": 0.3161607867455495,
+   "sprat|night": 0.3161607867455484
+  }
+ }
+}

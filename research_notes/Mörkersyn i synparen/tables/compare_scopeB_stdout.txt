@@ -1,0 +1,90 @@
+Equal-cell diet gate (encounter / booked share; verdict), live -> copy
+  benthivorous_fish    -> benthic_infauna          1.03 ok         ->   1.01 ok
+  benthivorous_fish    -> krill                    0.82 ok         ->   0.95 ok
+  benthivorous_fish    -> mobile_epifauna          1.00 ok         ->   0.99 ok
+  benthivorous_fish    -> norway_lobster           2.17 ok         ->   2.14 ok
+  benthivorous_fish    -> planktivorous_fish       0.69 ok         ->   0.82 ok
+  benthivorous_fish    -> whiting                  0.52 ok         ->   0.63 ok
+  mackerel             -> krill                    1.60 ok         ->   1.63 ok
+  mackerel             -> planktivorous_fish       1.40 ok         ->   1.37 ok
+  mackerel             -> zooplankton              0.53 ok         ->   0.52 ok
+  planktivorous_fish   -> krill                    0.89 ok         ->   0.93 ok
+  planktivorous_fish   -> zooplankton              1.07 ok         ->   1.05 ok
+  predatory_fish       -> benthivorous_fish        1.95 ok         ->   1.98 ok
+  predatory_fish       -> krill                    1.03 ok         ->   1.02 ok
+  predatory_fish       -> whiting                  1.24 ok         ->   1.26 ok
+  predatory_fish       -> zooplankton              0.33 ok         ->   0.27 ok
+  whiting              -> krill                    1.32 ok         ->   1.35 ok
+  whiting              -> mobile_epifauna          0.49 ok         ->   0.43 ok
+  whiting              -> planktivorous_fish       0.95 ok         ->   0.92 ok
+  whiting              -> zooplankton              0.39 ok         ->   0.35 ok
+
+Field-spread diet gate, live -> copy
+  predatory_fish       -> benthivorous_fish        2.13 ok   ->   1.85 ok
+  predatory_fish       -> krill                    1.02 ok   ->   1.10 ok
+  predatory_fish       -> mackerel                 0.01 ok   ->   0.00 ok
+  predatory_fish       -> planktivorous_fish       0.87 ok   ->   0.87 ok
+  predatory_fish       -> whiting                  1.24 ok   ->   1.01 ok
+  predatory_fish       -> zooplankton              0.68 ok   ->   0.47 ok
+  whiting              -> benthivorous_fish        0.35 ok   ->   0.34 ok
+  whiting              -> krill                    1.45 ok   ->   1.46 ok
+  whiting              -> mobile_epifauna          0.22 OFF  ->   0.20 OFF
+  whiting              -> planktivorous_fish       0.77 ok   ->   0.75 ok
+  whiting              -> zooplankton              0.17 ok   ->   0.16 ok
+
+Prey side (implied / booked M2 per pair, equal cells; field spread in brackets), live -> copy
+  benthivorous_fish    -> benthic_infauna          1.03 ok   ->   1.01 ok
+  whiting              -> benthivorous_fish        0.28 OFF  ->   0.28 OFF  [0.35 -> 0.34]
+  predatory_fish       -> benthivorous_fish        1.95 ok   ->   1.98 ok  [2.13 -> 1.85]
+  planktivorous_fish   -> krill                    0.89 ok   ->   0.93 ok
+  whiting              -> krill                    1.32 ok   ->   1.35 ok  [1.45 -> 1.46]
+  mackerel             -> krill                    1.60 ok   ->   1.63 ok
+  predatory_fish       -> krill                    1.03 ok   ->   1.02 ok  [1.02 -> 1.1]
+  benthivorous_fish    -> krill                    0.82 ok   ->   0.95 ok
+  predatory_fish       -> mackerel                 0.00 OFF  ->   0.00 OFF  [0.01 -> 0.0]
+  benthivorous_fish    -> mobile_epifauna          1.00 ok   ->   0.99 ok
+  whiting              -> mobile_epifauna          0.49 ok   ->   0.43 ok  [0.22 -> 0.2]
+  benthivorous_fish    -> norway_lobster           2.17 ok   ->   2.14 ok
+  benthivorous_fish    -> planktivorous_fish       0.69 ok   ->   0.82 ok
+  whiting              -> planktivorous_fish       0.95 ok   ->   0.92 ok  [0.77 -> 0.75]
+  mackerel             -> planktivorous_fish       1.40 ok   ->   1.37 ok
+  benthivorous_fish    -> whiting                  0.52 ok   ->   0.63 ok
+  predatory_fish       -> whiting                  1.24 ok   ->   1.26 ok  [1.24 -> 1.01]
+  planktivorous_fish   -> zooplankton              1.07 ok   ->   1.05 ok
+  mackerel             -> zooplankton              0.53 ok   ->   0.52 ok
+  whiting              -> zooplankton              0.39 ok   ->   0.35 ok  [0.17 -> 0.16]
+  predatory_fish       -> zooplankton              0.33 ok   ->   0.27 ok  [0.68 -> 0.47]
+  prey totals (implied / booked): benthic_infauna 1.03 -> 1.01; krill 0.96 -> 1.00; mobile_epifauna 0.94 -> 0.92; norway_lobster 2.17 -> 2.14; planktivorous_fish 0.95 -> 0.98; whiting 0.67 -> 0.72; zooplankton 1.04 -> 1.02
+
+OFF in both: Diet gate: porpoises -> benthivorous_fish; Diet gate: porpoises -> whiting; Diet gate: whiting -> benthivorous_fish; Diet gate at the field spread: whiting -> mobile_epifauna; Prey-side check: porpoises -> benthivorous_fish; Prey-side check: porpoises -> predatory_fish; Prey-side check: porpoises -> whiting; Prey-side check: predatory_fish -> mackerel; Prey-side check: seals -> predatory_fish; Prey-side check: whiting -> benthivorous_fish
+Goes OFF:    none
+Comes back ON: none
+
+Section 298 potential ration at the field spread (x field Q/B; short months; month range; ceiling share; krill share), live -> copy
+  benthivorous_fish    (adults, GOV in the box, annual) 1.90 x, 0 short, 1.82-1.99, ceil 0.99, krill 0.03  ->  1.89 x, 0 short, 1.81-1.98, ceil 0.99, krill 0.03
+                       by month copy: 1.93 1.85 1.81 1.82 1.83 1.85 1.87 1.90 1.93 1.94 1.97 1.98
+  mackerel             (equal cells) 4.72 x, 0 short, 3.04-7.00, ceil 0.66, krill 0.61  ->  4.76 x, 0 short, 3.07-7.07, ceil 0.67, krill 0.62
+                       by month copy: 3.24 3.07 3.17 3.58 4.14 5.06 6.42 7.02 7.07 5.80 4.70 3.90
+  planktivorous_fish   (equal cells) 3.16 x, 0 short, 2.07-4.59, ceil 0.72, krill 0.31  ->  3.18 x, 0 short, 2.08-4.62, ceil 0.73, krill 0.33
+                       by month copy: 2.12 2.08 2.20 2.56 2.96 3.55 4.23 4.60 4.62 3.81 3.01 2.44
+  predatory_fish       (saithe, GOV in the box) 1.10 x, 5 short, 0.85-1.36, ceil 0.41, krill 0.36  ->  1.44 x, 0 short, 1.12-1.78, ceil 0.53, krill 0.41
+                       by month copy: 1.12 1.15 1.19 1.25 1.35 1.48 1.69 1.72 1.78 1.75 1.49 1.26
+  whiting              (whiting, GOV in the box) 1.77 x, 0 short, 1.54-2.15, ceil 0.85, krill 0.73  ->  1.79 x, 0 short, 1.57-2.18, ceil 0.86, krill 0.73
+                       by month copy: 1.77 1.66 1.65 1.85 1.59 1.57 1.70 1.89 2.18 1.88 1.87 1.88
+
+Policy-free intake by bed class (intake_by_class.py, 60x60): G = I(< 150) / I(150-250), I(< 100) / I(150-250); I = share of the ceiling per class
+  predatory_fish
+    Jan: G 2.76 (3.02) -> 1.91 (2.03);  I 0.847 / 0.719 / 0.280 / 0.173  ->  0.855 / 0.766 / 0.421 / 0.179
+    Apr: G 2.35 (2.53) -> 1.72 (1.81);  I 0.881 / 0.766 / 0.348 / 0.243  ->  0.889 / 0.811 / 0.491 / 0.251
+    Jul: G 2.02 (2.09) -> 1.51 (1.54);  I 0.884 / 0.828 / 0.422 / 0.280  ->  0.892 / 0.861 / 0.580 / 0.291
+    Oct: G 2.40 (2.56) -> 1.69 (1.77);  I 0.880 / 0.782 / 0.343 / 0.204  ->  0.887 / 0.820 / 0.501 / 0.212
+  whiting
+    Jan: G 2.09 (2.21) -> 1.83 (1.91);  I 0.932 / 0.844 / 0.422 / 0.373  ->  0.936 / 0.865 / 0.490 / 0.370
+    Apr: G 1.86 (2.00) -> 1.72 (1.83);  I 0.878 / 0.766 / 0.439 / 0.410  ->  0.884 / 0.795 / 0.483 / 0.409
+    Jul: G 1.73 (1.67) -> 1.57 (1.50);  I 0.777 / 0.829 / 0.467 / 0.428  ->  0.785 / 0.852 / 0.525 / 0.428
+    Oct: G 2.04 (2.14) -> 1.76 (1.83);  I 0.942 / 0.863 / 0.441 / 0.388  ->  0.945 / 0.882 / 0.515 / 0.385
+  benthivorous_fish
+    Jan: G 1.00 (1.00) -> 1.00 (1.00);  I 0.994 / 0.993 / 0.992 / 0.992  ->  0.994 / 0.993 / 0.993 / 0.992
+    Apr: G 1.00 (1.00) -> 1.00 (1.00);  I 0.994 / 0.993 / 0.993 / 0.992  ->  0.994 / 0.993 / 0.993 / 0.992
+    Jul: G 1.00 (1.00) -> 1.00 (1.00);  I 0.994 / 0.993 / 0.993 / 0.992  ->  0.994 / 0.994 / 0.993 / 0.993
+    Oct: G 1.00 (1.00) -> 1.00 (1.00);  I 0.994 / 0.993 / 0.992 / 0.992  ->  0.994 / 0.993 / 0.993 / 0.992

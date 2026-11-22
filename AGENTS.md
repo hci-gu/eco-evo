@@ -236,7 +236,9 @@ fabricates mass.
   a is per tonne of the WHOLE predator group (the engine has no phi
   since 221; the 220 "per capable tonne" values over-credited by 1/phi):
   Since section 269 every visual fish pair (krill and fish prey) has ONE
-  vision rule (rule A: R^2 = R_nv^2 (1 - g) + R_sat^2 g, g = E/(E + 0.02 lx),
+  vision rule (rule A: R^2 = R_nv^2 (1 - g) + R_sat^2 g, g = E/(E + Ke), the
+  gadoid-eye Ke 0.002 lx since section 299 (was 0.02 judged; the clupeid eye
+  keeps its own),
   R_sat = min(image-area R0, 2 L_pred), |C0| krill 0.4 / fish 0.7, R_nv
   0.1 / 0.3 m, the measured light at depth) and the BAND overlap: one
   search-time profile f_m(z) per member shared by all its prey, the only
@@ -314,6 +316,16 @@ fabricates mass.
   (search effort, encounter realisation) is unmeasured; ration / density
   anchors sit x5-30 lower (research_notes/"Motesfaktorn per grupp",
   "Krillsidan", o-umlaut / a-umlaut). Mackerel and the benthivores unchanged.
+  Since section 299 the gadoid-eye Ke is 0.002 lx (Aksnes & Utne 1997 fit of
+  Anthony 1981's cod thresholds at F 1; one corner of an unmeasured 2e-4 -
+  0.07 lx bracket): 13 visual pairs re-derived through the 280 chain (a x1.04
+  - 1.25, dark_ratio, class tables, the WC windows), and whiting's factor
+  x0.154 (Rindorf's anchor held at the new chain a), which the water column's
+  transferred factor follows (the values listed above are before 299). Why:
+  at Ke 0.02 field saithe could not eat their field ration at their field
+  bed depths (budget_gate's section 298 block: 1.10x, 5 short months; now
+  1.41x, none); research_notes/"Morkersyn i synparen", "Djupgradientens
+  barare" (o-umlaut / a-umlaut). Checkpoints before 299 are invalid.
 - Daylight (opt-in, section 137): a pair with `dark_ratio` < 1 has
   `a(t) = a * m(t)`, m from the sun's elevation vs `light_threshold_deg`,
   normalised so the library `a` is the annual mean; every DM then also

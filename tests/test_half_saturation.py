@@ -92,30 +92,32 @@ def test_fish_pairs_carry_the_encounter_theory_rates():
         ('benthivorous_fish', 'mobile_epifauna'): 0.11,
         ('whiting', 'mobile_epifauna'): 0.0116,
         ('benthivorous_fish', 'norway_lobster'): 0.308,
-        ('benthivorous_fish', 'planktivorous_fish'): 0.02431,  # 280: K_deep 0.09
-        ('benthivorous_fish', 'whiting'): 0.03745,  # 251: whiting's own band share
-        ('predatory_fish', 'planktivorous_fish'): 0.02348,
+        ('benthivorous_fish', 'planktivorous_fish'): 0.02939,  # 299: Ke 0.002
+        ('benthivorous_fish', 'whiting'): 0.0464,  # 251: whiting's own band share; 299
+        ('predatory_fish', 'planktivorous_fish'): 0.02864,
         ('mackerel', 'planktivorous_fish'): 0.04579,
-        ('whiting', 'planktivorous_fish'): 0.05913,
+        ('whiting', 'planktivorous_fish'): 0.06425,
         # Section 245: krill is its own group; the zooplankton pairs keep
         # their copepod part (water column x 0.13, whiting x 0.06) and
         # mackerel's is the measured clearance (biting + filtering).
         ('predatory_fish', 'zooplankton'): 3.13e-05,
         ('mackerel', 'zooplankton'): 0.00084,
         ('whiting', 'zooplankton'): 0.000138,
-        ('planktivorous_fish', 'krill'): 0.0214,  # 262: field bed-depth evidence
-        ('benthivorous_fish', 'krill'): 0.00641,
-        ('predatory_fish', 'krill'): 0.0107,
-        ('mackerel', 'krill'): 0.00382,
-        ('whiting', 'krill'): 0.041,
-        ('predatory_fish', 'benthivorous_fish'): 0.09443,
-        ('whiting', 'benthivorous_fish'): 0.2455,
-        ('predatory_fish', 'whiting'): 0.08608,
-        ('predatory_fish', 'mackerel'): 3.346e-05,
+        ('planktivorous_fish', 'krill'): 0.0225,  # 262: field bed-depth evidence; 299
+        ('benthivorous_fish', 'krill'): 0.0072,
+        ('predatory_fish', 'krill'): 0.0123,
+        ('mackerel', 'krill'): 0.00398,
+        ('whiting', 'krill'): 0.0455,
+        ('predatory_fish', 'benthivorous_fish'): 0.1179,
+        ('whiting', 'benthivorous_fish'): 0.2687,
+        ('predatory_fish', 'whiting'): 0.1065,
+        ('predatory_fish', 'mackerel'): 3.407e-05,
     }
     # Section 296: the measured-a level, one factor per predator on every
-    # pair (the values above are the encounter chain's).
-    measured = {'planktivorous_fish': 0.36, 'whiting': 0.16, 'predatory_fish': 0.16}
+    # pair (the values above are the encounter chain's). Section 299: the
+    # gadoid-eye Ke 0.002 lx re-derives 13 visual pairs (the chain values
+    # above), and whiting's factor (the water column's follows) is x0.154.
+    measured = {'planktivorous_fish': 0.36, 'whiting': 0.154, 'predatory_fish': 0.154}
     for (pred, prey), a in expected.items():
         i = env.dm_ids.index(pred)
         j = env.global_fg_order.index(prey)
@@ -134,22 +136,22 @@ def test_fish_pair_light_settings_keep_a_zero_threshold():
         'interaction_definitions']
     expected = {
         'planktivorous_fish_preys_on_zooplankton': (0.03, 0.0),  # 243.3
-        'benthivorous_fish_preys_on_planktivorous_fish': (0.28, 0.0),  # 280
-        'benthivorous_fish_preys_on_whiting': (0.21, 0.0),  # 251
-        'predatory_fish_preys_on_planktivorous_fish': (0.14, -5.0),  # 270
+        'benthivorous_fish_preys_on_planktivorous_fish': (0.248, 0.0),  # 299
+        'benthivorous_fish_preys_on_whiting': (0.182, 0.0),  # 251, 299
+        'predatory_fish_preys_on_planktivorous_fish': (0.125, -5.0),  # 270, 299
         'mackerel_preys_on_planktivorous_fish': (0.16, -5.0),  # stomachs (228.4)
-        'whiting_preys_on_planktivorous_fish': (0.375, -5.0),  # 270
+        'whiting_preys_on_planktivorous_fish': (0.34, -5.0),  # 270, 299
         'predatory_fish_preys_on_zooplankton': (0.51, -5.0),
         'mackerel_preys_on_zooplankton': (0.24, -5.0),  # night filtering (245)
         'planktivorous_fish_preys_on_krill': (0.57, 0.0),  # stomachs (245)
-        'benthivorous_fish_preys_on_krill': (0.0366, 0.0),  # 253
-        'predatory_fish_preys_on_krill': (0.0257, 0.0),  # 253
+        'benthivorous_fish_preys_on_krill': (0.0519, 0.0),  # 253, 299
+        'predatory_fish_preys_on_krill': (0.0367, 0.0),  # 253, 299
         'mackerel_preys_on_krill': (0.42, -5.0),
         'whiting_preys_on_zooplankton': (0.78, -5.0),
-        'predatory_fish_preys_on_benthivorous_fish': (0.209, -5.0),
-        'whiting_preys_on_benthivorous_fish': (0.641, -5.0),
-        'predatory_fish_preys_on_whiting': (0.172, -5.0),
-        'predatory_fish_preys_on_mackerel': (0.916, -5.0),
+        'predatory_fish_preys_on_benthivorous_fish': (0.164, -5.0),
+        'whiting_preys_on_benthivorous_fish': (0.56, -5.0),
+        'predatory_fish_preys_on_whiting': (0.138, -5.0),
+        'predatory_fish_preys_on_mackerel': (0.902, -5.0),
     }
     for key, (rho, theta) in expected.items():
         assert daylight.pair_settings(inter[key]) == pytest.approx((rho, theta))

@@ -1,0 +1,11 @@
+[ke_step] step 6 at Ke 0.02 lx (s6_combined.py, 0 Ke anchor(s))
+K_deep 0.09: benthivore rows night/day 0.169 / 0.21, pout share 0.84, bed radii day/night planktivores 0.537/0.299 m, whiting 0.531/0.298 m (0.6 / 0.3 at K_deep 0.06)
+  predatory_fish->planktivorous_fish       a269 0.0148 p x2.961 F 0.537 (day 0.503, night 1.000) factor x1.5897 -> a 0.02353; night/day 0.0703 -> 0.1398
+  predatory_fish->benthivorous_fish        a269 0.034 p x2.961 F 1.000 (day 1.000, night 1.000) factor x2.9605 -> a 0.1007; night/day 0.209 -> 0.209
+  predatory_fish->whiting                  a269 0.0292 p x2.961 F 1.000 (day 1.000, night 1.000) factor x2.9605 -> a 0.08645; night/day 0.172 -> 0.172
+  predatory_fish->mackerel                 a269 0.000137 p x2.743 F 0.089 (day 0.089, night 0.089) factor x0.2443 -> a 3.347e-05; night/day 0.923 -> 0.9159
+  whiting->planktivorous_fish              a269 0.0301 p x2.831 F 0.694 (day 0.627, night 1.000) factor x1.9644 -> a 0.05913; night/day 0.235 -> 0.3746
+  whiting->benthivorous_fish               a269 0.0941 p x2.609 F 1.000 (day 1.000, night 1.000) factor x2.6088 -> a 0.2455; night/day 0.641 -> 0.641
+  mackerel->planktivorous_fish             a269 0.0248 p x3.087 F 0.598 (day 0.209, night 1.000) factor x1.8465 -> a 0.04579; night/day 0.16 -> 0.16
+  benthivorous_fish->planktivorous_fish    a269 0.0174 p x2.113 F 0.661 (day 0.604, night 1.000) factor x1.3970 -> a 0.02431; night/day 0.169 -> 0.2798
+  benthivorous_fish->whiting               a269 0.0182 p x2.058 F 1.000 (day 1.000, night 1.000) factor x2.0577 -> a 0.03745; night/day 0.21 -> 0.21

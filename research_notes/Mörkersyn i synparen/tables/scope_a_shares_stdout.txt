@@ -1,0 +1,21 @@
+Band stage (step 1), K_deep 0.09, rule A; Ke 0.02 -> 0.002 lx. a ratios are to the band a at Ke 0.02.
+
+Krill pairs: non-gadoid share of the a at Ke 0.02 / at the new Ke; a_B / a_0, a_A / a_0
+  whiting -> krill                     non-gadoid  0.000 /  0.000;  B x1.1091  A x1.1091  (A/B 1.0000)
+  planktivorous_fish -> krill          non-gadoid  0.000 /  0.000;  B x1.0550  A x1.0550  (A/B 1.0000)
+  predatory_fish -> krill              non-gadoid  0.000 /  0.000;  B x1.1498  A x1.1498  (A/B 1.0000)
+  benthivorous_fish -> krill           non-gadoid  0.141 /  0.140;  B x1.1111  A x1.0965  (A/B 0.9869)
+  mackerel -> krill                    non-gadoid  0.295 /  0.323;  B x1.0418  A x1.0000  (A/B 0.9599)
+
+Fish pairs (band_fish_pair members >= 0.005 of the a): non-gadoid share; a_B / a_0, a_A / a_0
+  predatory_fish->planktivorous_fish       non-gadoid  0.000 /  0.000;  B x1.2005  A x1.2005
+  predatory_fish->benthivorous_fish        non-gadoid  0.000 /  0.000;  B x1.2484  A x1.2484
+  predatory_fish->whiting                  non-gadoid  0.000 /  0.000;  B x1.2504  A x1.2504
+  predatory_fish->mackerel                 non-gadoid  0.000 /  0.000;  B x1.0376  A x1.0376
+  whiting->planktivorous_fish              non-gadoid  0.000 /  0.000;  B x1.1043  A x1.1043
+  whiting->benthivorous_fish               non-gadoid  0.000 /  0.000;  B x1.0996  A x1.0996
+  mackerel->planktivorous_fish             non-gadoid  0.045 /  0.045;  B x1.0000  A x1.0000
+
+Benthivore fish pairs (one_rule_pairs.benth_V by species): non-gadoid share of V; a_B / a_0, a_A / a_0
+  benthivorous_fish->planktivorous_fish    non-gadoid  0.086 /  0.077;  B x1.2365  A x1.2275   (species: cod, grey gurnard, haddock, long rough dab, starry ray)
+  benthivorous_fish->whiting               non-gadoid  0.071 /  0.066;  B x1.2454  A x1.2345   (species: cod, grey gurnard, starry ray)

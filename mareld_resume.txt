@@ -26927,3 +26927,35 @@ remain open exactly as described in 71.9 / 71.11.
     headroom at its field spread. Note: fix106's 60 x 60 west-edge clump (u585: enrichment 1.7-5.5) was a
     checkpoint sample: u862 at 60 x 60 gives 1.0-1.5 on the same three seeds (benthivore crowding 9-11,
     inland peaks 147-514 t/cell). fix107 continues fix106 at 60 x 60 (train_gpu --init-from, 0994139).
+
+299 GADOID-EYE KE 0.002 LX IN THE VISUAL PAIRS; WHITING'S FACTOR x0.154 (2026-11-22; user: "Tillampa, med
+    vitlingens faktor 0,154")
+    Why (298, 298.1): at the judged Ke 0.02 lx the water column's potential ration at its GOV field spread was
+    1.10x field Q/B and short Dec-Apr, so the trained water column stood over < 150 m beds and the benthivores
+    avoided it. research_notes/"Djupgradientens barare" (a-umlaut) found the shallow-bed gradient carried
+    mostly by the vision term at the bed; the Ke bracket from the cod thresholds (Anthony 1981, Aksnes & Utne
+    1997; 2e-4 to ~0.07 lx by the fitted light range and the geometry factor F) is unresolved, and the user
+    chose its F 1 corner, 2e-3, as the end consistent with field saithe eating their ration where they stand
+    (a consistency check against field data; no gate, booking or model run chose it).
+    Derivation (research_notes/"Morkersyn i synparen", o-umlaut): the section 280 chain with Ke-aware drivers
+    reproduces all 130 values of the 17 pairs at Ke 0.02 / K_deep 0.09 x the 296 factors exactly; at Ke 2e-3
+    13 pairs change (scope B: every member on the gadoid eye key, hake and ling as Gadiformes; horse mackerel,
+    long rough dab, grey gurnard, starry ray and the minor flatfish share the key; herring and mackerel keep
+    the clupeid eye; the chain carries Ke per eye key, not per member - a gadoid-only scope differs by <= 4 %
+    at the band stage). Every changed a rises (fish -> fish x1.09-1.25, krill x1.04-1.15, WC -> mackerel
+    x1.02); the class tables gain most over 100-250 m beds; night/day falls on the fish pairs (x0.79-0.99) and
+    rises on the WC and benthivore krill pairs (x1.42); the WC windows move (WC -> benthivores f_A 0.01256 ->
+    0.01104; planktivores, whiting by 1e-4). Unchanged: mackerel -> planktivores and the three benthic pairs.
+    Whiting's 296 factor: its Rindorf anchor (whiting -> planktivores at Rindorf's bed mix) sees the chain a
+    x1.040 at Ke 2e-3, so holding it is x0.154 (was 0.16) on every whiting pair; the water column's
+    transferred factor follows (11 pairs x0.9625; each pair carries a section 299 comment with its old value).
+    No derived growth_rate moves.
+    budget_gate: no pair OFF or back ON (whiting -> benthivores at the field spread 0.35 -> 0.34, OFF below
+    1/3); section 298 block: water column 1.10 -> 1.41x field Q/B, short months 5 -> 0 (1.10-1.75 by month);
+    whiting 1.78, benthivores 1.89, planktivores 3.18, mackerel 4.76. Policy-free intake gradient of the
+    water column (< 150 m / 150-250 m beds) 2.0-2.8 -> 1.5-1.9 (still > 1: the trained water column may still
+    favour shallow beds, less strongly); whiting 1.7-2.1 -> 1.6-1.8; benthivores saturated, no gradient.
+    Not re-derived: the WC, whiting and mackerel -> zooplankton pairs (section 245, gadoid Ke in the 0-25 m
+    light: twilight only, expected small). Checkpoints before 299 are invalid (night/day payoffs and a move);
+    the user retrains (60 x 60). Confidence in the Ke value is low; budget_gate's 298 block is the check if a
+    measurement of gadoid detection in near-darkness turns up.
