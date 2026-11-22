@@ -1,0 +1,23 @@
+source,doi,species,site,bed_m,month,quantity,value_low,value_central,value_high,unit,timing,tag,quote_ref
+ICES stomach DB (this note),,saithe,NE+NW North Sea,rect median,Q1+Q3 mainly,krill FO in fed records (Time!=1200),,0.52,,share of records (n 463),day (sun>0),D,tables/saithe_krill_by_hour_stdout.txt
+ICES stomach DB (this note),,saithe,NE+NW North Sea,rect median,Q1+Q3 mainly,krill FO in fed records (Time!=1200),,0.39,,share of records (n 70),twilight (-12..0 deg),D,tables/saithe_krill_by_hour_stdout.txt
+ICES stomach DB (this note),,saithe,NE+NW North Sea,rect median,Q1+Q3 mainly,krill FO in fed records (Time!=1200),,0.47,,share of records (n 38),night (<-12 deg),D,tables/saithe_krill_by_hour_stdout.txt
+ICES stomach DB (this note),,saithe,NE+NW North Sea,rect median,Q1+Q3 mainly,krill FO by haul,0.43,0.52,0.52,share of hauls (day 173 / twilight 32 / night 21),low=night central=day high=day; twilight 0.47,D,tables/saithe_krill_by_hour_stdout.txt
+ICES stomach DB (this note),,saithe,NE+NW North Sea,150-250,Q1+Q3 mainly,krill FO in fed records,0.38,0.51,0.74,share of records,low=night (n13) central=day (n112) high=twilight (n19),D,tables/saithe_krill_by_hour_stdout.txt
+ICES stomach DB (this note),,saithe,NE+NW North Sea,100-150,Q1+Q3 mainly,krill FO in fed records,0.19,0.50,0.54,share of records,low=twilight (n36) central=day (n270) high=night (n24),D,tables/saithe_krill_by_hour_stdout.txt
+ICES stomach DB (this note),,saithe,NE+NW North Sea,rect median,Q1+Q3 mainly,krill weight share (records with weights),0.05,0.28,,share (pooled / mean per record; n 129),day only; no night weights,D,tables/saithe_krill_by_hour_stdout.txt
+ICES stomach DB (this note),,saithe,NE+NW North Sea,rect median,all,krill prey rows with a digestion stage,,66,,rows of 1509 (all stage 1),all by day,D,tables/saithe_krill_by_hour_stdout.txt
+ICES stomach DB (this note),,hake,Skagerrak+Kattegat mainly (2024),rect median,Q3 mainly,krill FO in fed records,0,0.024,0.06,share of records (n 126 day; 35-70 cm 0.06 n 36),day; no night sample,D,tables/saithe_krill_by_hour_stdout.txt
+Dolgov et al. 1992,hdl:11250/107818,cod,Rybachy Bank Barents Sea,175-240,June,euphausiid share of diet by weight,,0.841,,share,24-h station; FO flat over 24 h; max feeding 20-04 h (midnight sun),S,Results 2b
+Dolgov et al. 1992,hdl:11250/107818,cod,Murman shallow Barents Sea,125-150,August,cod height above bed when krill ascended,10,,15,m above bed,during krill migration; krill at 20-30 m above bed at 08 h,S,Results 2a
+Skaret et al. 2020,10.3354/meps13254,cod,N Barents Sea bank,160-170,October,cod height above bed (acoustic tracks),0,,10,m above bed,all day; higher in the morning,S,p.13 abstract; p.19
+Skaret et al. 2020,10.3354/meps13254,krill (Thysanoessa inermis),N Barents Sea bank,160-170,October,krill position by day [value_central: close to bottom],,,,qualitative,day,S,p.18
+Kaartvedt et al. 1996,10.3354/meps136051,Norway pout,outer Norwegian shelf,295,April,pout ascent into the lower krill layer,50,,,m above bed (lower bound; upper bound illegible in the extraction),day (front with low light),S,Results; abstract
+Kaartvedt et al. 1996,10.3354/meps136051,saithe,outer Norwegian shelf,~300,April,saithe catch in the upper-layer haul at 100-145 m depth,,0.5,,kg per nautical mile,04:10 GMT+1 (dawn),F,Table 1 Stn 292
+Onsrud & Kaartvedt 1998,10.3354/meps171209,krill (M. norvegica) and fish,Oslofjord,,several,krill day depth; fish among krill by day; fish invade krill layer at night,,70,,m depth (krill below ~70 m by day),day / night,A,abstract
+Mackas et al. 1997,10.1139/f97-113,Pacific hake and euphausiids,Vancouver Island shelf break,,spring-autumn,vertical separation hake vs euphausiid layers [value_central: tens of m],,,,m,day,A,abstract
+Rexstad & Pikitch 1986,Fish Bull 84:947,Pacific hake,Washington-Oregon,,August,diel feeding pattern [value_central: weak nocturnal],,,,qualitative (no tows 20-07 h),night?,F,p.952-954
+Livingston 1983,Fish Bull 81:629,Pacific hake,Washington-Oregon,,July,peak stomach content,,2.5,,% body weight at 1800 h,evening,S,p.634 via Krillintag q1_evidence S5
+Widder et al. 1992,10.1093/plankt/14.11.1607,krill (M. norvegica),Gulf of Maine,,,krill day SSL height above bed,0,,50,m above bed,day; night in upper 30 m,A,abstract
+Hirai & Jones 2011,10.1080/17451000.2011.594891,krill (M. norvegica),Faroe-Shetland Channel,400-600,,krill near seabed (<5 m),,596,,ind/m3 max at 480 m,highest 06-09 and 18-21 h at 400-480 m; lower at night,A,abstract
+Carruthers et al. 2005,10.1111/j.0022-1112.2005.00594.x,saithe (pollock),Scotian Shelf + Bay of Fundy,,,euphausiid FO in stomachs with food,0.09,,0.65,share (1996-2002 / 1958-67),no diel split,A,abstract

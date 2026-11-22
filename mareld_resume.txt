@@ -26875,3 +26875,35 @@ remain open exactly as described in 71.9 / 71.11.
     the tensor engine (~6x faster at 60 x 60; equal to float32 rounding, no longer bit-equal to the CPU
     warm-up). train.py's probe keeps the CPU engine. inference.py --engine gpu already warmed up on the tensor
     engine (277), its baseline worlds too.
+
+298 POTENTIAL RATION AT THE FIELD SPREAD (2026-11-22; user: "Gor kontrollen", after the fix106 edge-clump
+    and water-column depth diagnosis; diagnostic only, nothing in the library changed)
+    Why: frozen fix106 u585 at 60 x 60 put the water column over shallow beds (0.41-0.43 / 0.42-0.45 /
+    0.11-0.15 / 0.01 on < 100 / 100-150 / 150-250 / >= 250 m against GOV saithe 0.04 / 0.13 / 0.78 /
+    0.05; the same at 30 x 30, fished or not); the benthivores avoid it, stand deep (realised F 0.31-0.36
+    against 0.17 booked: high-effort beds) and pile up against the closed west edge (266.16) at 60 x 60.
+    Edge perception and own-biomass clipping were ruled out (observation-patched arms, three seeds); the
+    benthivores blind to the water column's spatial pattern dropped the edge clump to 30 x 30 levels on
+    three seeds. Policy-free, the current library (after 280, 295, 296) gives the water column a potential
+    intake per tonne 2.0-2.8x higher over < 150 m than over 150-250 m beds; its krill and planktivore depth
+    tables each carry about half (flattening either alone: 1.1-1.4); research_notes/"Djupgradientens
+    barare" (a-umlaut): the gradient is mostly the vision term at the bed (Ke, R_nv in near-darkness,
+    unmeasured), not the krill position; no field-tied variant brings it near 1. Section 296's x0.16 on the
+    water column (a [J] transfer of whiting's Rindorf slope) turned the gradient from a diet matter (278.2:
+    intake 1.09-1.11x) into a ration matter.
+    The check: lib/diagnostics/field_diet.potential_ration (the engine's multi-prey response, fixed attack,
+    T = 1, interference at the predator's field density, no reserve cap, no depletion) and a last block in
+    tools/probes/budget_gate.py: each fish group in FIELD_QB at its field spread (GOV bed shares; the
+    benthivores' adult stage shares; else equal cells), its prey at the field-spread densities (the krill
+    pool at its month layout and season), per month with the daylight multiplier per pair, the ingestion
+    q10 and krill's energy season. An upper bound, so the field Q/B must fit under it: SHORT = the annual
+    mean below it; months below it are counted (the Q/B is annual: a month is a coarse comparison).
+    Today (16 x 16): benthivores 1.90x (0.99 of the ceiling), mackerel 4.72x, planktivores 3.16x, whiting
+    1.77x, water column 1.10x and short in 5 of 12 months (0.85-0.97 Dec-Apr; 60 x 60 without
+    interference 1.13x, 150-250 m beds alone 0.92x): field saithe eat their ration where the model's saithe
+    could at most just eat it foraging all the time. Which term is wrong (296's level for the water column,
+    the vision term at depth, or the field Q/B) is not decided by the check; the factor on every water-column
+    a that would bring the potential to the Q/B at T = 1 is 1.0-1.3 Dec-Apr at the field spread and 1.4-1.8
+    Dec-Mar over 150-250 m beds - a lower bound, not a value to set.
+    Tests: tests/test_potential_ration.py (Holling II and III, shared handling, the ceiling bound,
+    monotone in a, interference, weights, budget_gate's block).

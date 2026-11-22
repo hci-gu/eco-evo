@@ -1,0 +1,99 @@
+krill Aphia ids found: {'110671': 63} SpecVal codes: {'6': 21, '4': 13, '7': 29}
+country-year-quarter strata with any krill record: [('SE', 2001, '3'), ('SE', 2002, '3'), ('SE', 2013, '3'), ('SE', 2014, '1'), ('SE', 2017, '3'), ('SE', 2018, '1'), ('SE', 2018, '3'), ('SE', 2019, '1'), ('SE', 2019, '3'), ('SE', 2020, '1'), ('SE', 2020, '3'), ('SE', 2021, '1'), ('SE', 2021, '3'), ('SE', 2022, '1'), ('SE', 2022, '3'), ('SE', 2023, '1'), ('SE', 2023, '3'), ('SE', 2024, '1'), ('SE', 2024, '3'), ('SE', 2025, '1')]
+
+box 57.3-59.3N 8-12.2E, Q1, hauls in strata that recorded krill at least once (day hauls only in NS-IBTS):
+  bed      0-50 m: hauls   49  with euphausiids   1  share 0.02
+  bed    50-100 m: hauls  105  with euphausiids  10  share 0.10
+  bed   100-150 m: hauls   45  with euphausiids  16  share 0.36
+  bed   150-200 m: hauls    4  with euphausiids   1  share 0.25
+  bed   200-250 m: hauls   16  with euphausiids   0  share 0.00
+  bed   250-400 m: hauls    9  with euphausiids   0  share 0.00
+
+box 57.3-59.3N 8-12.2E, Q3, hauls in strata that recorded krill at least once (day hauls only in NS-IBTS):
+  bed      0-50 m: hauls  112  with euphausiids   0  share 0.00
+  bed    50-100 m: hauls  104  with euphausiids   3  share 0.03
+  bed   100-150 m: hauls   35  with euphausiids   4  share 0.11
+  bed   150-200 m: hauls   34  with euphausiids   9  share 0.26
+  bed   200-250 m: hauls   16  with euphausiids   3  share 0.19
+  bed   250-400 m: hauls    6  with euphausiids   0  share 0.00
+
+all cached region, Q1, hauls in strata that recorded krill at least once (day hauls only in NS-IBTS):
+  bed      0-50 m: hauls   66  with euphausiids   1  share 0.02
+  bed    50-100 m: hauls  132  with euphausiids  22  share 0.17
+  bed   100-150 m: hauls   45  with euphausiids  16  share 0.36
+  bed   150-200 m: hauls    4  with euphausiids   1  share 0.25
+  bed   200-250 m: hauls   16  with euphausiids   0  share 0.00
+  bed   250-400 m: hauls    9  with euphausiids   0  share 0.00
+
+all cached region, Q3, hauls in strata that recorded krill at least once (day hauls only in NS-IBTS):
+  bed      0-50 m: hauls  140  with euphausiids   0  share 0.00
+  bed    50-100 m: hauls  137  with euphausiids   7  share 0.05
+  bed   100-150 m: hauls   35  with euphausiids   4  share 0.11
+  bed   150-200 m: hauls   34  with euphausiids   9  share 0.26
+  bed   200-250 m: hauls   16  with euphausiids   3  share 0.19
+  bed   250-400 m: hauls    6  with euphausiids   0  share 0.00
+
+Positive hauls: year Q country ship haulno depth lat lon daynight
+  2001 3 SE 77AR 18 105.0 58.3263 10.9988 D
+  2002 3 SE 77AR 8 212.0 57.7767 8.7633 D
+  2013 3 SE 26D4 15 159.0 58.0548 9.9688 D
+  2014 1 SE 26D4 10 60.0 57.8758 9.8153 D
+  2014 1 SE 26D4 14 89.0 58.5502 10.8435 D
+  2014 1 SE 26D4 24 68.0 57.1613 11.4485 D
+  2014 1 SE 26D4 26 130.0 58.3382 10.846 D
+  2014 1 SE 26D4 4 102.0 57.9815 9.8777 D
+  2014 1 SE 26D4 42 62.0 57.3492 11.5877 D
+  2014 1 SE 26D4 46 54.0 57.1028 11.8333 D
+  2017 3 SE 26D4 40 87.0 57.6808 11.4138 D
+  2018 1 SE 26D4 13 82.0 57.7425 10.1395 D
+  2018 1 SE 26D4 16 90.0 58.5457 10.8465 D
+  2018 1 SE 26D4 21 108.0 58.2938 10.9667 D
+  2018 3 SE 26D4 1 169.0 58.8127 10.2468 D
+  2018 3 SE 26D4 14 156.0 58.0337 9.8722 D
+  2018 3 SE 26D4 15 202.0 58.036 9.7775 D
+  2018 3 SE 26D4 2 156.0 58.5802 10.5962 D
+  2018 3 SE 26D4 22 94.0 58.3375 11.0135 D
+  2018 3 SE 26D4 3 226.0 58.4933 10.5087 D
+  2018 3 SE 26D4 37 72.0 57.1872 11.6592 D
+  2018 3 SE 26D4 4 136.0 58.4445 10.7552 D
+  2019 1 SE 26D4 10 154.0 58.031 9.8673 D
+  2019 1 SE 26D4 28 109.0 58.2932 10.9645 D
+  2019 1 SE 26D4 43 69.0 57.1615 11.448 D
+  2019 1 SE 26D4 46 74.0 57.185 11.6593 D
+  2019 3 SE 26D4 48 192.0 58.0918 10.8615 D
+  2020 1 SE 77SE 1 69.0 57.1684 11.447 D
+  2020 1 SE 77SE 15 71.0 57.1834 11.6583 D
+  2020 1 SE 77SE 24 129.0 58.0836 11.069 D
+  2020 1 SE 77SE 36 133.0 58.3271 10.847 D
+  2020 3 SE 77SE 5 159.0 58.1186 10.3763 D
+  2021 1 SE 77SE 27 104.0 57.9651 9.8264 D
+  2021 3 SE 77SE 19 172.0 57.9642 10.7006 D
+  2021 3 SE 77SE 2 88.0 58.7961 10.7582 D
+  2022 1 SE 77SE 19 132.0 58.064 11.077 D
+  2022 1 SE 77SE 32 53.0 57.1036 11.8343 D
+  2022 1 SE 77SE 37 64.0 57.6902 11.3468 D
+  2022 1 SE 77SE 41 133.0 58.3294 10.848 D
+  2022 1 SE 77SE 42 109.0 58.3201 10.9963 D
+  2022 1 SE 77SE 5 102.0 57.9816 9.8748 D
+  2022 3 SE 77SE 31 69.0 57.1848 11.4449 D
+  2022 3 SE 77SE 46 77.0 57.1846 11.6585 D
+  2023 1 SE 77SE 16 63.0 57.3489 11.5874 D
+  2023 1 SE 77SE 32 73.0 57.1867 11.6606 D
+  2023 1 SE 77SE 37 104.0 57.9629 9.8199 D
+  2023 3 SE 77SE 18 175.0 58.3974 10.6945 D
+  2023 3 SE 77SE 20 102.0 58.7447 10.6451 D
+  2024 1 SE 77SE 1 40.0 57.4669 10.873 D
+  2024 1 SE 77SE 20 129.0 58.0564 11.0823 D
+  2024 1 SE 77SE 22 104.0 58.3268 10.9998 D
+  2024 1 SE 77SE 27 81.0 57.6369 8.8275 D
+  2024 1 SE 77SE 3 67.0 57.1759 11.4469 D
+  2024 1 SE 77SE 37 102.0 57.978 9.8677 D
+  2024 1 SE 77SE 43 54.0 57.1342 11.8516 D
+  2024 1 SE 77SE 45 74.0 57.1781 11.6591 D
+  2024 1 SE 77SE 46 64.0 57.3108 11.5768 D
+  2024 3 SE 77SE 22 73.0 57.1856 11.6612 D
+  2024 3 SE 77SE 43 104.0 57.9349 11.2374 D
+  2024 3 SE 77SE 46 191.0 58.1145 10.8599 D
+  2025 1 SE 77SE 15 64.0 57.3367 11.5826 D
+  2025 1 SE 77SE 16 68.0 57.1837 11.4479 D
+  2025 1 SE 77SE 35 104.0 57.831 10.62 D

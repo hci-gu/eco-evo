@@ -518,3 +518,122 @@ for i, pid in enumerate(env.dm_ids):
         booked += m2 * density.get(prey_id, 0.0) / density[pid]
     qb, source = FIELD_QB[pid]
     print(f"{pid:>20} {booked:>7.2f} {qb:>6.2f} {booked / qb:>6.2f}  {source}")
+
+# ---------------------------------------------------------------------------
+# Potential ration at the field spread (section 298). The rows above compare
+# shares and booked flows; neither sees a predator that CANNOT eat its field
+# ration where the field fish stand. Here each fish group stands at its field
+# bed-depth spread (GOV shares; the benthivores' adults; else equal cells),
+# its prey at the field-spread densities above (the krill pool at its month's
+# layout and season), and it forages the whole tick with every prey attacked
+# (lib/diagnostics/field_diet.potential_ration: shared handling, the month's
+# daylight multiplier per pair, the ingestion q10 factor, the prey's energy
+# season on h, interference at the predator's field density; no reserve cap,
+# no depletion). That is an upper bound on its intake there, so the field
+# Q/B must fit under it: an annual mean below 1 is SHORT - the library and
+# the field position contradict each other whatever the policy does (the
+# trained fish must stand elsewhere to eat). Months below 1 are counted too
+# (the Q/B is an annual mean, so a month is a coarse comparison: a group with
+# no headroom in winter must stand elsewhere then). Diagnostic only; nothing is set
+# from it, and a SHORT row does not say which term (a level, a depth table,
+# the field Q/B) is wrong.
+# ---------------------------------------------------------------------------
+from lib.diagnostics.field_diet import (  # noqa: E402
+    FIELD_STAGE_BED_SHARES, potential_ration)
+print()
+print("=== potential ration at the field spread vs field Q/B (section 298) ===")
+print("t prey / t predator / yr if the month lasted a year; T = 1, every prey attacked,")
+print("no reserve cap, no depletion: an upper bound, so the field Q/B must fit under it.")
+_C = H * W
+_daylight = getattr(env, 'light_mult_table', None) is not None
+_period = int(env.light_period) if _daylight else int(round(365 * TICKS_PER_DAY))
+_months = ([(15.0 + 30.4 * k) for k in range(12)] if _daylight else [None])
+
+
+def _month_ticks(day):
+    if day is None:
+        return None
+    t0 = int(round((day - 15.0) * TICKS_PER_DAY))
+    return np.arange(t0, t0 + int(round(30 * TICKS_PER_DAY))) % _period
+
+
+def _potential(i, pid, weights, ticks):
+    """(total, ceiling share, krill share) for predator i at ``weights``."""
+    q = 1.0
+    if ticks is not None and getattr(env, '_has_ingestion_temperature', False):
+        q = float(env.ingestion_temp_table[ticks, i].mean())
+    rows = []
+    for j in range(env.N_all):
+        if not env.eat_static_mask[i, j]:
+            continue
+        prey_id = env.global_fg_order[j]
+        months = (getattr(env, 'open_target_months', {}) or {}).get(prey_id)
+        if prey_id not in density and months is None:
+            continue
+        a = float(env.max_intake_mat[i, j]) * q
+        if ticks is not None:
+            a *= float(env.light_mult_table[ticks, i, j].mean())
+        mult = (np.asarray(env.pair_depth_mult[i, j], dtype=np.float64).ravel()
+                if getattr(env, '_has_pair_depth', False) else np.ones(_C))
+        h = float(env.handling_time_mat[i, j]) / q
+        if ticks is not None and getattr(env, '_has_prey_energy', False):
+            h *= float(env.prey_energy_table[ticks, j].mean())
+        if months is not None and ticks is not None:
+            mw = env.open_month_weights[ticks].mean(axis=0)
+            dens = (mw[:, None, None] * np.asarray(months, dtype=np.float64)).sum(axis=0)
+            season = (getattr(env, 'open_season', {}) or {}).get(prey_id)
+            if season is not None:
+                dens = dens * float(np.asarray(season)[ticks].mean())
+            bv = dens.ravel() * _visible_share(i, j, prey_id)
+        else:
+            bv = (density[prey_id] * _field_prey_cells(i, j, prey_id)).ravel()
+        type3 = float(env._type3_pred_mask[i, j, 0, 0]) > 0.0
+        rows.append((prey_id, a * mult, h, bv, type3))
+    names = [r[0] for r in rows]
+    wvec = weights.ravel()
+    own = density.get(pid, 0.0) * wvec * _C
+    w_int = (float(np.asarray(env.dm_interference)[i].ravel()[0])
+             if getattr(env, '_has_interference', False) else 0.0)
+    total, per_prey, ceil = potential_ration(
+        np.array([r[1] for r in rows]), np.array([r[2] for r in rows]),
+        np.array([r[3] for r in rows]), wvec, interference=w_int, predator=own,
+        type3=np.array([r[4] for r in rows]), ticks_per_year=_period)
+    krill = float(per_prey[names.index('krill')]) / total if 'krill' in names and total > 0 else 0.0
+    return total, ceil, krill
+
+
+potential_short = []
+for i, pid in enumerate(env.dm_ids):
+    if pid not in FIELD_QB or _depth is None:
+        continue
+    if pid in FIELD_BED_SHARES:
+        shares, label = FIELD_BED_SHARES[pid]
+    elif pid in FIELD_STAGE_BED_SHARES:
+        shares, label = FIELD_STAGE_BED_SHARES[pid]
+    else:
+        shares, label = None, 'equal cells'
+    weights = (field_cell_weights(_depth, shares) if shares is not None
+               else np.full(_depth.shape, 1.0 / _depth.size))
+    qb = FIELD_QB[pid][0]
+    by_month = [_potential(i, pid, weights, _month_ticks(d)) for d in _months]
+    pot = np.array([m[0] for m in by_month])
+    mean = float(pot.mean())
+    n_short = int((pot < qb).sum())
+    verdict = ('SHORT' if mean < qb else
+               (f'short in {n_short} of {len(pot)} months' if n_short else 'ok'))
+    if mean < qb or n_short:
+        potential_short.append((pid, mean, qb, n_short, len(pot)))
+    print(f"{pid:>20} ({label}) field Q/B {qb:.2f}: potential {mean:.2f} = {mean / qb:.2f} x"
+          f"  {verdict}; months {pot.min() / qb:.2f}-{pot.max() / qb:.2f} x;"
+          f" ceiling share {np.mean([m[1] for m in by_month]):.2f};"
+          f" krill share {np.mean([m[2] for m in by_month]):.2f}")
+    if len(pot) == 12:
+        print(f"{'':>20} by month (x field Q/B): "
+              + " ".join(f"{x / qb:.2f}" for x in pot))
+print()
+if potential_short:
+    print("Potential ration at the field spread below field Q/B - "
+          + "; ".join(f"{p} {m:.2f} vs {q:.2f} ({'SHORT' if m < q else 'annual ok'},"
+                      f" {n} of {k} months short)" for p, m, q, n, k in potential_short))
+else:
+    print("Potential ration: every fish group can eat its field Q/B at its field spread in every month.")

@@ -105,3 +105,40 @@ def field_stage_shapes(prey_id, fg, depth):
         juv = np.asarray(juv, dtype=np.float64)
         juv = juv / juv.mean()
     return juv, adult
+
+
+def potential_ration(attack, handling, prey, weights, interference=0.0,
+                     predator=None, type3=None, ticks_per_year=1460):
+    """Section 298: a predator's POTENTIAL ration where it stands, t prey per
+    t predator per year: the engine's multi-prey response (section 242) with
+    every prey attacked (fixed attack, p = 1) and the whole tick spent
+    foraging (T = 1), no reserve cap and no depletion:
+
+        take_j(c) = lambda_j(c) / (1 + sum_k h_k lambda_k(c) + w B_pred(c)),
+        lambda_j = a_j(c) B_vis,j(c)   (Type III: a_j B_vis,j^2),
+
+    averaged over the cells with ``weights`` (summing to 1) and summed over j.
+    ``attack`` and ``prey`` are (P, C) arrays (a per tick with every
+    multiplier on it; the visible prey density), ``handling`` (P,) or
+    (P, C), ``predator`` the predator's own density per cell (C,) for the
+    interference term, ``type3`` a (P,) bool mask. Returns ``(total,
+    per_prey (P,), ceiling_share)``; ceiling_share is the weighted share of
+    the handling ceiling, S / (1 + S + w B_pred). An upper bound on what the
+    predator can eat there: the field ration must fit under it."""
+    attack = np.asarray(attack, dtype=np.float64)
+    prey = np.asarray(prey, dtype=np.float64)
+    weights = np.asarray(weights, dtype=np.float64).ravel()
+    h = np.asarray(handling, dtype=np.float64)
+    if h.ndim == 1:
+        h = h[:, None]
+    lam = attack * prey
+    if type3 is not None:
+        lam = np.where(np.asarray(type3, dtype=bool)[:, None], lam * prey, lam)
+    load = (h * lam).sum(axis=0)
+    crowd = 0.0
+    if predator is not None and interference:
+        crowd = float(interference) * np.asarray(predator, dtype=np.float64).ravel()
+    denom = 1.0 + load + crowd
+    take = lam / denom * float(ticks_per_year)
+    per_prey = (take * weights).sum(axis=1)
+    return float(per_prey.sum()), per_prey, float((weights * load / denom).sum())

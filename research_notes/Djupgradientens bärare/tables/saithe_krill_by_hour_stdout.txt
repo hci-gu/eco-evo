@@ -1,0 +1,266 @@
+
+===== saithe: records with a usable Time 1278, fed records 803 =====
+Time == 1200 (suspected filler): 469 of 1278
+
+-- all fed: krill FO (share of fed records with krill) by sun phase
+          n_rec  fo_krill  n_fish_in_records
+phase                                       
+day         695  0.494964               6010
+night        38  0.473684                327
+twilight     70  0.385714                537
+-- all fed: haul-level krill FO by phase (size = hauls)
+          size      mean
+phase                   
+day        294  0.523810
+night       21  0.428571
+twilight    32  0.468750
+-- all fed: by 3-h UTC bin
+      n_rec  fo_krill
+hbin                 
+0        16  0.500000
+3        21  0.333333
+6       119  0.310924
+9       140  0.600000
+12      322  0.487578
+15       98  0.428571
+18       56  0.660714
+21       31  0.548387
+-- all fed: krill weight share in records with prey weights, by phase (mean of per-record shares; pooled = sum krill g / sum g)
+              n  mean_share   pooled
+phase                               
+day       213.0    0.272229  0.13372
+twilight   25.0    0.000000  0.00000
+
+-- fed, Time != 1200: krill FO (share of fed records with krill) by sun phase
+          n_rec  fo_krill  n_fish_in_records
+phase                                       
+day         463  0.520518               3281
+night        38  0.473684                327
+twilight     70  0.385714                537
+-- fed, Time != 1200: haul-level krill FO by phase (size = hauls)
+          size      mean
+phase                   
+day        173  0.520231
+night       21  0.428571
+twilight    32  0.468750
+-- fed, Time != 1200: by 3-h UTC bin
+      n_rec  fo_krill
+hbin                 
+0        16  0.500000
+3        21  0.333333
+6       119  0.310924
+9       140  0.600000
+12       90  0.600000
+15       98  0.428571
+18       56  0.660714
+21       31  0.548387
+-- fed, Time != 1200: krill weight share in records with prey weights, by phase (mean of per-record shares; pooled = sum krill g / sum g)
+              n  mean_share    pooled
+phase                                
+day       129.0     0.28455  0.047716
+twilight   25.0     0.00000  0.000000
+
+-- fed, 35-70 cm, Time != 1200: krill FO (share of fed records with krill) by sun phase
+          n_rec  fo_krill  n_fish_in_records
+phase                                       
+day         385  0.506494               2412
+night        28  0.464286                232
+twilight     61  0.360656                438
+-- fed, 35-70 cm, Time != 1200: haul-level krill FO by phase (size = hauls)
+          size      mean
+phase                   
+day        159  0.503145
+night       19  0.421053
+twilight    30  0.466667
+-- fed, 35-70 cm, Time != 1200: by 3-h UTC bin
+      n_rec  fo_krill
+hbin                 
+0        15  0.466667
+3        14  0.428571
+6        95  0.294737
+9       115  0.591304
+12       81  0.580247
+15       88  0.397727
+18       45  0.622222
+21       21  0.523810
+-- fed, 35-70 cm, Time != 1200: krill weight share in records with prey weights, by phase (mean of per-record shares; pooled = sum krill g / sum g)
+              n  mean_share    pooled
+phase                                
+day       126.0    0.291325  0.048942
+twilight   23.0    0.000000  0.000000
+
+-- saithe: fed, Time != 1200: krill FO by quarter x phase (size, mean)
+          size                     mean                    
+phase      day night twilight       day     night  twilight
+quarter                                                    
+1        162.0  12.0     36.0  0.518519  0.333333  0.083333
+2         16.0   NaN      3.0  0.625000       NaN  1.000000
+3        256.0  20.0     25.0  0.531250  0.450000  0.720000
+4         29.0   6.0      6.0  0.379310  0.833333  0.500000
+-- saithe: fed, Time != 1200: records by 3-h UTC bin x quarter, and krill FO
+         size                       mean                              
+quarter     1    2     3     4         1         2         3         4
+hbin                                                                  
+0         3.0  NaN  13.0   NaN  0.000000       NaN  0.615385       NaN
+3         6.0  1.0  14.0   NaN  0.500000  1.000000  0.214286       NaN
+6        63.0  NaN  50.0   6.0  0.190476       NaN  0.460000  0.333333
+9        49.0  4.0  75.0  12.0  0.591837  0.500000  0.640000  0.416667
+12       39.0  4.0  40.0   7.0  0.743590  1.000000  0.500000  0.142857
+15       48.0  4.0  35.0  11.0  0.375000  0.250000  0.485714  0.545455
+18        NaN  3.0  48.0   5.0       NaN  0.666667  0.625000  1.000000
+21        2.0  3.0  26.0   NaN  0.000000  1.000000  0.538462       NaN
+
+-- saithe: fed, Time != 1200: krill FO by bed class (bed_rectmed) x phase
+              size                     mean                    
+phase          day night twilight       day     night  twilight
+bed_rectmed                                                    
+100-150      270.0  24.0     36.0  0.503704  0.541667  0.194444
+150-250      112.0  13.0     19.0  0.508929  0.384615  0.736842
+<100          53.0   1.0     10.0  0.433962  0.000000  0.400000
+>250          28.0   NaN      5.0  0.892857       NaN  0.400000
+-- saithe: years, months, areas of fed records with Time != 1200
+year
+1981     63
+1982     42
+1983     19
+1984     54
+1986    129
+1987    106
+1991      4
+2024      1
+2026    153
+quarter          1   2    3   4
+area                           
+C+S North Sea    1   4    9   5
+NE North Sea   116  15  134  14
+NW North Sea    93   0  157  22
+Skagerrak        0   0    1   0
+
+-- saithe: prey rows for fed records 4818; DigestionStage values: {nan: 4505, '1': 209, '0': 91, '2': 13}
+-- saithe: euphausiid prey rows 1509; by phase x DigestionStage
+DigestionStage   1   NaN
+phase                   
+day             66  1253
+night            0    65
+twilight         0   125
+   by filler flag: {False: 1229, True: 280}
+
+===== hake: records with a usable Time 336, fed records 135 =====
+Time == 1200 (suspected filler): 14 of 336
+
+-- all fed: krill FO (share of fed records with krill) by sun phase
+          n_rec  fo_krill  n_fish_in_records
+phase                                       
+day         126   0.02381                130
+twilight      9   0.00000                  9
+-- all fed: haul-level krill FO by phase (size = hauls)
+          size      mean
+phase                   
+day         54  0.037037
+twilight     4  0.000000
+-- all fed: by 3-h UTC bin
+      n_rec  fo_krill
+hbin                 
+0         2  0.000000
+3        19  0.000000
+6        42  0.000000
+9        33  0.090909
+12       15  0.000000
+15       24  0.000000
+-- all fed: krill weight share in records with prey weights, by phase (mean of per-record shares; pooled = sum krill g / sum g)
+              n  mean_share    pooled
+phase                                
+day       109.0    0.010986  0.002821
+twilight    4.0    0.000000  0.000000
+
+-- fed, Time != 1200: krill FO (share of fed records with krill) by sun phase
+          n_rec  fo_krill  n_fish_in_records
+phase                                       
+day         126   0.02381                130
+twilight      9   0.00000                  9
+-- fed, Time != 1200: haul-level krill FO by phase (size = hauls)
+          size      mean
+phase                   
+day         54  0.037037
+twilight     4  0.000000
+-- fed, Time != 1200: by 3-h UTC bin
+      n_rec  fo_krill
+hbin                 
+0         2  0.000000
+3        19  0.000000
+6        42  0.000000
+9        33  0.090909
+12       15  0.000000
+15       24  0.000000
+-- fed, Time != 1200: krill weight share in records with prey weights, by phase (mean of per-record shares; pooled = sum krill g / sum g)
+              n  mean_share    pooled
+phase                                
+day       109.0    0.010986  0.002821
+twilight    4.0    0.000000  0.000000
+
+-- fed, 35-70 cm, Time != 1200: krill FO (share of fed records with krill) by sun phase
+          n_rec  fo_krill  n_fish_in_records
+phase                                       
+day          36  0.055556                 37
+twilight      3  0.000000                  3
+-- fed, 35-70 cm, Time != 1200: haul-level krill FO by phase (size = hauls)
+          size      mean
+phase                   
+day         22  0.090909
+twilight     2  0.000000
+-- fed, 35-70 cm, Time != 1200: by 3-h UTC bin
+      n_rec  fo_krill
+hbin                 
+0         2  0.000000
+3         1  0.000000
+6        11  0.000000
+9        14  0.142857
+12        5  0.000000
+15        6  0.000000
+-- fed, 35-70 cm, Time != 1200: krill weight share in records with prey weights, by phase (mean of per-record shares; pooled = sum krill g / sum g)
+             n  mean_share   pooled
+phase                              
+day       30.0    0.038624  0.00442
+twilight   2.0    0.000000  0.00000
+
+-- hake: fed, Time != 1200: krill FO by quarter x phase (size, mean)
+        size               mean         
+phase    day twilight       day twilight
+quarter                                 
+1         27        7  0.000000      0.0
+3         99        2  0.030303      0.0
+-- hake: fed, Time != 1200: records by 3-h UTC bin x quarter, and krill FO
+         size       mean          
+quarter     1     3    1         3
+hbin                              
+0         NaN   2.0  NaN  0.000000
+3         NaN  19.0  NaN  0.000000
+6         9.0  33.0  0.0  0.000000
+9        12.0  21.0  0.0  0.142857
+12        6.0   9.0  0.0  0.000000
+15        7.0  17.0  0.0  0.000000
+
+-- hake: fed, Time != 1200: krill FO by bed class (bed_rectmed) x phase
+             size               mean         
+phase         day twilight       day twilight
+bed_rectmed                                  
+100-150      24.0      4.0  0.000000      0.0
+150-250      11.0      NaN  0.090909      NaN
+<100         91.0      5.0  0.021978      0.0
+-- hake: years, months, areas of fed records with Time != 1200
+year
+2024    135
+quarter         1   3
+area                 
+C+S North Sea   8   5
+Kattegat        0  28
+NE North Sea    1   7
+NW North Sea   23  13
+Skagerrak       2  48
+
+-- hake: prey rows for fed records 184; DigestionStage values: {'1': 122, '2': 30, nan: 27, '0': 5}
+-- hake: euphausiid prey rows 3; by phase x DigestionStage
+DigestionStage  1
+phase            
+day             3
+   by filler flag: {False: 3}

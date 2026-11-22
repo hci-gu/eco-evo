@@ -767,6 +767,11 @@ python3 tools/probes/budget_gate.py
 # Section 249: both also judge from the PREY's side (budget_gate: encounter-implied
 # M2 per pair; probe_diets: realised M2) - a prey's derived g pays its booked M2,
 # and a pair minor for the predator (benthivores -> whiting) passes the diet gate.
+# Section 298: budget_gate's last block, each fish group's POTENTIAL ration at
+# its field bed-depth spread (T = 1, every prey attacked, the month's light,
+# q10 and krill season; field_diet.potential_ration) against its field Q/B:
+# an upper bound, so SHORT (annual) or short months = library and field
+# position contradict each other whatever the policy does.
 python3 tools/probes/probe_diets.py results/<run-name> [--evaluation N]
 # Section 278: each decision maker's crowding (Lloyd's mean crowding / mean,
 # lib/diagnostics/crowding.py; 1 = even) per long-run probe against NS-IBTS

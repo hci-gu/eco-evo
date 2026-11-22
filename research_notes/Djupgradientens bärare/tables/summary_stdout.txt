@@ -1,0 +1,260 @@
+Variants (pre-296 class a's in library units; the loader renormalises each table to an equal-cell mean 1).
+G = a(< 150 m, cell-weighted) / a(150-250 m); R0 = a(< 100 m) / a(150-250 m) (caller's x27 for krill).
+Intake G = policy-free intake per tonne I(< 150 m) / I(150-250 m) (Jan / Apr / Jul / Oct), intake_by_class.py.
+Gate = budget_gate's diet gate at the field spread (saithe GOV bed shares), WC encounter / booked, krill and
+planktivores; scope wc = the four WC pairs written (a and table), all = also whiting, planktivores and mackerel ->
+krill, wcshape = the four WC tables only at the live a (section 296 level kept). OFF sets are diffed by pair name
+against the library's (budget_gate's field-spread, equal-cell and prey-side lists).
+
+== library: 
+   krill        0.0302 / 0.0129 / 0.0011 / 6.8e-05   G 18.20  R0 27.5  a x1.000  n/d 0.0257
+   planktivores 0.038 / 0.0167 / 0.00368 / 0.00284   G 6.91  R0 10.3  a x1.000
+   benthivores  0.0676 / 0.0426 / 0.0141 / 0.0127   G 3.76  a x1.000
+   whiting      0.0588 / 0.0379 / 0.0112 / 0.00966   G 4.17  a x1.000
+   [wc] intake G 2.76 / 2.35 / 2.02 / 2.40   I by class Jul 0.884 / 0.828 / 0.422 / 0.280   krill share of encounters Jul 0.06 / 0.55 / 0.41 / 0.06
+   [wc] field-spread gate: krill enc 0.376 ratio 1.02 ok; planktivores 0.446 ratio 0.87 ok; benthivores ratio 2.13 ok; whiting ratio 1.24 ok
+   [wc] prey side implied/booked M2: krill 0.96, planktivores 0.95, benthivores 0.74, whiting 0.67
+   [wc] OFF sets vs library: unchanged
+   [all] intake G 2.76 / 2.35 / 2.02 / 2.40   I by class Jul 0.884 / 0.828 / 0.422 / 0.280   krill share of encounters Jul 0.06 / 0.55 / 0.41 / 0.06
+   [all] field-spread gate: krill enc 0.376 ratio 1.02 ok; planktivores 0.446 ratio 0.87 ok; benthivores ratio 2.13 ok; whiting ratio 1.24 ok
+   [all] prey side implied/booked M2: krill 0.96, planktivores 0.95, benthivores 0.74, whiting 0.67
+   [all] OFF sets vs library: unchanged
+   [wcshape] intake G 2.76 / 2.35 / 2.02 / 2.40   I by class Jul 0.884 / 0.828 / 0.422 / 0.280   krill share of encounters Jul 0.06 / 0.55 / 0.41 / 0.06
+   [wcshape] field-spread gate: krill enc 0.376 ratio 1.02 ok; planktivores 0.446 ratio 0.87 ok; benthivores ratio 2.13 ok; whiting ratio 1.24 ok
+   [wcshape] prey side implied/booked M2: krill 0.96, planktivores 0.95, benthivores 0.74, whiting 0.67
+   [wcshape] OFF sets vs library: unchanged
+
+== krill_far_oslofjord200: Q1: Kaartvedt et al. 2002 Stn D (200 m bed) gap 87 m; Balino & Aksnes 1993; Degnbol 1985 at 250 m [F/D]
+   krill        0.0302 / 0.0129 / 0.00102 / 6.8e-05   G 19.51  R0 29.5  a x0.998  n/d 0.0257
+   planktivores 0.038 / 0.0167 / 0.00368 / 0.00284   G 6.91  R0 10.3  a x1.000
+   benthivores  0.0676 / 0.0426 / 0.0141 / 0.0127   G 3.76  a x1.000
+   whiting      0.0588 / 0.0379 / 0.0112 / 0.00966   G 4.17  a x1.000
+   [wc] intake G 2.81 / 2.37 / 2.05 / 2.45   I by class Jul 0.884 / 0.828 / 0.417 / 0.280   krill share of encounters Jul 0.06 / 0.55 / 0.39 / 0.06
+   [wc] field-spread gate: krill enc 0.371 ratio 1.00 ok; planktivores 0.450 ratio 0.88 ok; benthivores ratio 2.14 ok; whiting ratio 1.25 ok
+   [wc] prey side implied/booked M2: krill 0.96, planktivores 0.95, benthivores 0.74, whiting 0.67
+   [wc] OFF sets vs library: unchanged
+   [all] intake G 2.81 / 2.37 / 2.05 / 2.45   I by class Jul 0.884 / 0.828 / 0.417 / 0.280   krill share of encounters Jul 0.06 / 0.55 / 0.39 / 0.06
+   [all] field-spread gate: krill enc 0.371 ratio 1.00 ok; planktivores 0.450 ratio 0.88 ok; benthivores ratio 2.14 ok; whiting ratio 1.25 ok
+   [all] prey side implied/booked M2: krill 0.98, planktivores 0.95, benthivores 0.74, whiting 0.67
+   [all] OFF sets vs library: unchanged
+   [wcshape] intake G 2.81 / 2.37 / 2.05 / 2.45   I by class Jul 0.884 / 0.828 / 0.417 / 0.280   krill share of encounters Jul 0.06 / 0.55 / 0.39 / 0.06
+   [wcshape] field-spread gate: krill enc 0.371 ratio 1.00 ok; planktivores 0.450 ratio 0.88 ok; benthivores ratio 2.14 ok; whiting ratio 1.25 ok
+   [wcshape] prey side implied/booked M2: krill 0.96, planktivores 0.95, benthivores 0.74, whiting 0.67
+   [wcshape] OFF sets vs library: unchanged
+
+== krill_near_scotian: Q1: Cochrane et al. 1994, Herman et al. 1993 (Scotian basins, analogue) gap 7 m over 190-245 m beds [F/D]
+   krill        0.0302 / 0.0129 / 0.00139 / 6.8e-05   G 14.39  R0 21.8  a x1.009  n/d 0.0269
+   planktivores 0.038 / 0.0167 / 0.00368 / 0.00284   G 6.91  R0 10.3  a x1.000
+   benthivores  0.0676 / 0.0426 / 0.0141 / 0.0127   G 3.76  a x1.000
+   whiting      0.0588 / 0.0379 / 0.0112 / 0.00966   G 4.17  a x1.000
+   [wc] intake G 2.61 / 2.27 / 1.93 / 2.26   I by class Jul 0.884 / 0.828 / 0.442 / 0.280   krill share of encounters Jul 0.06 / 0.55 / 0.46 / 0.06
+   [wc] field-spread gate: krill enc 0.395 ratio 1.07 ok; planktivores 0.432 ratio 0.85 ok; benthivores ratio 2.06 ok; whiting ratio 1.20 ok
+   [wc] prey side implied/booked M2: krill 0.96, planktivores 0.95, benthivores 0.73, whiting 0.67
+   [wc] OFF sets vs library: unchanged
+   [all] intake G 2.61 / 2.27 / 1.93 / 2.26   I by class Jul 0.884 / 0.828 / 0.442 / 0.280   krill share of encounters Jul 0.06 / 0.55 / 0.46 / 0.06
+   [all] field-spread gate: krill enc 0.395 ratio 1.07 ok; planktivores 0.432 ratio 0.85 ok; benthivores ratio 2.06 ok; whiting ratio 1.20 ok
+   [all] prey side implied/booked M2: krill 0.98, planktivores 0.95, benthivores 0.73, whiting 0.67
+   [all] OFF sets vs library: unchanged
+   [wcshape] intake G 2.62 / 2.27 / 1.93 / 2.27   I by class Jul 0.884 / 0.827 / 0.441 / 0.280   krill share of encounters Jul 0.06 / 0.54 / 0.46 / 0.06
+   [wcshape] field-spread gate: krill enc 0.393 ratio 1.06 ok; planktivores 0.434 ratio 0.85 ok; benthivores ratio 2.07 ok; whiting ratio 1.20 ok
+   [wcshape] prey side implied/booked M2: krill 0.96, planktivores 0.95, benthivores 0.74, whiting 0.67
+   [wcshape] OFF sets vs library: unchanged
+
+== krill_near_Q3only: Q1: GOV Q3 near-bed presence over 150-250 m beds (DATRAS) [D] x the Scotian geometry, Jul-Sep only; library the rest of the year
+   krill        0.0302 / 0.0129 / 0.00118 / 6.8e-05   G 16.90  R0 25.6  a x1.003  n/d 0.0259
+   planktivores 0.038 / 0.0167 / 0.00368 / 0.00284   G 6.91  R0 10.3  a x1.000
+   benthivores  0.0676 / 0.0426 / 0.0141 / 0.0127   G 3.76  a x1.000
+   whiting      0.0588 / 0.0379 / 0.0112 / 0.00966   G 4.17  a x1.000
+   [wc] intake G 2.72 / 2.32 / 1.99 / 2.36   I by class Jul 0.884 / 0.828 / 0.428 / 0.280   krill share of encounters Jul 0.06 / 0.55 / 0.42 / 0.06
+   [wc] field-spread gate: krill enc 0.382 ratio 1.03 ok; planktivores 0.442 ratio 0.87 ok; benthivores ratio 2.11 ok; whiting ratio 1.22 ok
+   [wc] prey side implied/booked M2: krill 0.96, planktivores 0.95, benthivores 0.74, whiting 0.67
+   [wc] OFF sets vs library: unchanged
+   [all] intake G 2.72 / 2.32 / 1.99 / 2.36   I by class Jul 0.884 / 0.828 / 0.428 / 0.280   krill share of encounters Jul 0.06 / 0.55 / 0.42 / 0.06
+   [all] field-spread gate: krill enc 0.382 ratio 1.03 ok; planktivores 0.442 ratio 0.87 ok; benthivores ratio 2.11 ok; whiting ratio 1.22 ok
+   [all] prey side implied/booked M2: krill 0.97, planktivores 0.95, benthivores 0.74, whiting 0.67
+   [all] OFF sets vs library: unchanged
+   [wcshape] intake G 2.72 / 2.32 / 1.99 / 2.36   I by class Jul 0.884 / 0.828 / 0.428 / 0.280   krill share of encounters Jul 0.06 / 0.55 / 0.42 / 0.06
+   [wcshape] field-spread gate: krill enc 0.381 ratio 1.03 ok; planktivores 0.443 ratio 0.87 ok; benthivores ratio 2.11 ok; whiting ratio 1.23 ok
+   [wcshape] prey side implied/booked M2: krill 0.96, planktivores 0.95, benthivores 0.74, whiting 0.67
+   [wcshape] OFF sets vs library: unchanged
+
+== saithe_runs0.15: Q2: <= 0.15 of the day in the krill layer: Armannsson & Jonsson 2012 rapid vertical runs 0.15 of the time (upper bound; not linked to prey) [F/J]
+   krill        0.0346 / 0.0149 / 0.0024 / 0.00095   G 9.60  R0 14.4  a x1.199  n/d 0.0215
+   planktivores 0.0391 / 0.0162 / 0.00341 / 0.00259   G 7.50  R0 11.5  a x0.996
+   benthivores  0.0652 / 0.0383 / 0.013 / 0.0118   G 3.80  a x0.931
+   whiting      0.0601 / 0.0349 / 0.0102 / 0.00892   G 4.41  a x0.964
+   [wc] intake G 2.32 / 2.11 / 1.74 / 1.97   I by class Jul 0.886 / 0.835 / 0.492 / 0.364   krill share of encounters Jul 0.07 / 0.60 / 0.62 / 0.51
+   [wc] field-spread gate: krill enc 0.485 ratio 1.31 ok; planktivores 0.370 ratio 0.72 ok; benthivores ratio 1.70 ok; whiting ratio 1.05 ok
+   [wc] prey side implied/booked M2: krill 0.97, planktivores 0.92, benthivores 0.67, whiting 0.62
+   [wc] OFF sets vs library: unchanged
+   [all] intake G 2.32 / 2.11 / 1.74 / 1.97   I by class Jul 0.886 / 0.835 / 0.492 / 0.364   krill share of encounters Jul 0.07 / 0.60 / 0.62 / 0.51
+   [all] field-spread gate: krill enc 0.485 ratio 1.31 ok; planktivores 0.370 ratio 0.72 ok; benthivores ratio 1.70 ok; whiting ratio 1.05 ok
+   [all] prey side implied/booked M2: krill 0.97, planktivores 0.92, benthivores 0.67, whiting 0.62
+   [all] OFF sets vs library: unchanged
+   [wcshape] intake G 2.41 / 2.17 / 1.81 / 2.06   I by class Jul 0.887 / 0.823 / 0.470 / 0.348   krill share of encounters Jul 0.06 / 0.55 / 0.57 / 0.46
+   [wcshape] field-spread gate: krill enc 0.435 ratio 1.18 ok; planktivores 0.399 ratio 0.78 ok; benthivores ratio 1.97 ok; whiting ratio 1.18 ok
+   [wcshape] prey side implied/booked M2: krill 0.96, planktivores 0.95, benthivores 0.73, whiting 0.66
+   [wcshape] OFF sets vs library: unchanged
+
+== Ke_2e-3_F1: Q3: Aksnes & Utne 1997 fit of Anthony 1981 cod thresholds in downwelling lx at F 1 (Torskfiskars syn i morker E1) [D]
+   krill        0.0322 / 0.0151 / 0.0026 / 9.14e-05   G 8.51  R0 12.4  a x1.150  n/d 0.0367
+   planktivores 0.04 / 0.0224 / 0.00609 / 0.00289   G 4.86  R0 6.6  a x1.201
+   benthivores  0.0732 / 0.0602 / 0.0197 / 0.0127   G 3.32  a x1.248
+   whiting      0.0632 / 0.0526 / 0.0168 / 0.00966   G 3.39  a x1.250
+   [wc] intake G 1.91 / 1.73 / 1.51 / 1.70   I by class Jul 0.890 / 0.860 / 0.577 / 0.287   krill share of encounters Jul 0.06 / 0.51 / 0.50 / 0.08
+   [wc] field-spread gate: krill enc 0.407 ratio 1.10 ok; planktivores 0.439 ratio 0.86 ok; benthivores ratio 1.89 ok; whiting ratio 1.02 ok
+   [wc] prey side implied/booked M2: krill 0.96, planktivores 0.95, benthivores 0.75, whiting 0.68
+   [wc] OFF sets vs library: unchanged
+   [all] intake G 1.91 / 1.73 / 1.51 / 1.70   I by class Jul 0.890 / 0.860 / 0.577 / 0.287   krill share of encounters Jul 0.06 / 0.51 / 0.50 / 0.08
+   [all] field-spread gate: krill enc 0.407 ratio 1.10 ok; planktivores 0.439 ratio 0.86 ok; benthivores ratio 1.89 ok; whiting ratio 1.02 ok
+   [all] prey side implied/booked M2: krill 1.00, planktivores 0.94, benthivores 0.74, whiting 0.68
+   [all] OFF sets vs library: field spread NEW OFF: whiting -> benthivorous_fish
+   [wcshape] intake G 2.04 / 1.84 / 1.59 / 1.80   I by class Jul 0.870 / 0.839 / 0.536 / 0.252   krill share of encounters Jul 0.07 / 0.52 / 0.51 / 0.08
+   [wcshape] field-spread gate: krill enc 0.420 ratio 1.14 ok; planktivores 0.434 ratio 0.85 ok; benthivores ratio 1.79 ok; whiting ratio 0.97 ok
+   [wcshape] prey side implied/booked M2: krill 0.96, planktivores 0.95, benthivores 0.73, whiting 0.66
+   [wcshape] OFF sets vs library: unchanged
+
+== Ke_0.06_F30: Q3: same fit at F 30 (upper edge of the bracket) [D]
+   krill        0.0283 / 0.0108 / 0.000669 / 5.77e-05   G 26.87  R0 42.3  a x0.890  n/d 0.0230
+   planktivores 0.036 / 0.0132 / 0.00327 / 0.00282   G 6.91  R0 11.0  a x0.890
+   benthivores  0.0631 / 0.0328 / 0.0133 / 0.0127   G 3.40  a x0.876
+   whiting      0.0551 / 0.0293 / 0.0103 / 0.00966   G 3.87  a x0.873
+   [wc] intake G 3.12 / 2.57 / 2.25 / 2.75   I by class Jul 0.877 / 0.796 / 0.370 / 0.276   krill share of encounters Jul 0.06 / 0.56 / 0.32 / 0.05
+   [wc] field-spread gate: krill enc 0.350 ratio 0.95 ok; planktivores 0.463 ratio 0.91 ok; benthivores ratio 2.21 ok; whiting ratio 1.31 ok
+   [wc] prey side implied/booked M2: krill 0.96, planktivores 0.96, benthivores 0.74, whiting 0.67
+   [wc] OFF sets vs library: unchanged
+   [all] intake G 3.12 / 2.57 / 2.25 / 2.75   I by class Jul 0.877 / 0.796 / 0.370 / 0.276   krill share of encounters Jul 0.06 / 0.56 / 0.32 / 0.05
+   [all] field-spread gate: krill enc 0.350 ratio 0.95 ok; planktivores 0.463 ratio 0.91 ok; benthivores ratio 2.21 ok; whiting ratio 1.31 ok
+   [all] prey side implied/booked M2: krill 0.93, planktivores 0.97, benthivores 0.75, whiting 0.67
+   [all] OFF sets vs library: unchanged
+   [wcshape] intake G 2.94 / 2.43 / 2.13 / 2.59   I by class Jul 0.890 / 0.814 / 0.397 / 0.300   krill share of encounters Jul 0.06 / 0.56 / 0.32 / 0.05
+   [wcshape] field-spread gate: krill enc 0.349 ratio 0.94 ok; planktivores 0.462 ratio 0.91 ok; benthivores ratio 2.24 ok; whiting ratio 1.34 ok
+   [wcshape] prey side implied/booked M2: krill 0.96, planktivores 0.96, benthivores 0.74, whiting 0.67
+   [wcshape] OFF sets vs library: unchanged
+
+== Ke_2.4e-4_scot: Q3: scotopic-branch refit of Anthony 1981 (Torskfiskars syn i morker E1 row 3; its plateau R^2 is ~1/3 of the bright one, not modelled) [D/J]
+   krill        0.0331 / 0.0158 / 0.00382 / 0.000118   G 6.00  R0 8.7  a x1.227  n/d 0.0516
+   planktivores 0.0409 / 0.0249 / 0.0101 / 0.00298   G 3.11  R0 4.0  a x1.355
+   benthivores  0.0766 / 0.0686 / 0.0308 / 0.0127   G 2.33  a x1.454
+   whiting      0.0659 / 0.0594 / 0.027 / 0.00967   G 2.30  a x1.456
+   [wc] intake G 1.52 / 1.41 / 1.29 / 1.40   I by class Jul 0.894 / 0.870 / 0.682 / 0.297   krill share of encounters Jul 0.06 / 0.49 / 0.47 / 0.10
+   [wc] field-spread gate: krill enc 0.397 ratio 1.07 ok; planktivores 0.466 ratio 0.91 ok; benthivores ratio 1.74 ok; whiting ratio 0.88 ok
+   [wc] prey side implied/booked M2: krill 0.96, planktivores 0.95, benthivores 0.77, whiting 0.70
+   [wc] OFF sets vs library: unchanged
+   [all] intake G 1.52 / 1.41 / 1.29 / 1.40   I by class Jul 0.894 / 0.870 / 0.682 / 0.297   krill share of encounters Jul 0.06 / 0.49 / 0.47 / 0.10
+   [all] field-spread gate: krill enc 0.397 ratio 1.07 ok; planktivores 0.466 ratio 0.91 ok; benthivores ratio 1.74 ok; whiting ratio 0.88 ok
+   [all] prey side implied/booked M2: krill 1.02, planktivores 0.93, benthivores 0.75, whiting 0.70
+   [all] OFF sets vs library: field spread NEW OFF: whiting -> benthivorous_fish
+   [wcshape] intake G 1.65 / 1.52 / 1.36 / 1.50   I by class Jul 0.859 / 0.837 / 0.623 / 0.240   krill share of encounters Jul 0.07 / 0.52 / 0.50 / 0.11
+   [wcshape] field-spread gate: krill enc 0.424 ratio 1.15 ok; planktivores 0.451 ratio 0.88 ok; benthivores ratio 1.57 ok; whiting ratio 0.79 ok
+   [wcshape] prey side implied/booked M2: krill 0.96, planktivores 0.94, benthivores 0.72, whiting 0.66
+   [wcshape] OFF sets vs library: unchanged
+
+== Rnv_fish_0.05: Q3: burbot dark reactive distance scaled by predator length (Michels 2020; Torskfiskars syn i morker E2), low edge [D/J]
+   krill        0.0302 / 0.0129 / 0.0011 / 6.8e-05   G 18.20  R0 27.5  a x1.000  n/d 0.0257
+   planktivores 0.0369 / 0.0151 / 0.00117 / 0.000348   G 20.60  R0 31.6  a x0.870
+   benthivores  0.0623 / 0.0346 / 0.00266 / 0.00115   G 17.29  a x0.732
+   whiting      0.0547 / 0.0319 / 0.00222 / 0.000579   G 18.61  a x0.759
+   [wc] intake G 4.48 / 4.08 / 3.02 / 3.54   I by class Jul 0.878 / 0.818 / 0.280 / 0.064   krill share of encounters Jul 0.07 / 0.58 / 0.68 / 0.31
+   [wc] field-spread gate: krill enc 0.462 ratio 1.25 ok; planktivores 0.362 ratio 0.71 ok; benthivores ratio 1.99 ok; whiting ratio 1.34 ok
+   [wc] prey side implied/booked M2: krill 0.97, planktivores 0.94, benthivores 0.65, whiting 0.61
+   [wc] OFF sets vs library: unchanged
+   [all] intake G 4.48 / 4.08 / 3.02 / 3.54   I by class Jul 0.878 / 0.818 / 0.280 / 0.064   krill share of encounters Jul 0.07 / 0.58 / 0.68 / 0.31
+   [all] field-spread gate: krill enc 0.462 ratio 1.25 ok; planktivores 0.362 ratio 0.71 ok; benthivores ratio 1.99 ok; whiting ratio 1.34 ok
+   [all] prey side implied/booked M2: krill 0.97, planktivores 0.94, benthivores 0.65, whiting 0.61
+   [all] OFF sets vs library: unchanged
+   [wcshape] intake G 4.36 / 3.92 / 2.94 / 3.46   I by class Jul 0.897 / 0.831 / 0.292 / 0.070   krill share of encounters Jul 0.05 / 0.53 / 0.65 / 0.29
+   [wcshape] field-spread gate: krill enc 0.415 ratio 1.12 ok; planktivores 0.374 ratio 0.73 ok; benthivores ratio 2.44 ok; whiting ratio 1.59 ok
+   [wcshape] prey side implied/booked M2: krill 0.96, planktivores 0.95, benthivores 0.74, whiting 0.67
+   [wcshape] OFF sets vs library: unchanged
+
+== Rnv_fish_0.5: Q3: same, scaled by prey size, high edge [D/J]
+   krill        0.0302 / 0.0129 / 0.0011 / 6.8e-05   G 18.20  R0 27.5  a x1.000  n/d 0.0257
+   planktivores 0.0401 / 0.0197 / 0.00828 / 0.00739   G 3.39  R0 4.8  a x1.240
+   benthivores  0.0773 / 0.0569 / 0.0342 / 0.0331   G 1.91  a x1.475
+   whiting      0.0662 / 0.049 / 0.0273 / 0.0261   G 2.05  a x1.438
+   [wc] intake G 1.88 / 1.62 / 1.50 / 1.73   I by class Jul 0.892 / 0.844 / 0.577 / 0.495   krill share of encounters Jul 0.06 / 0.50 / 0.23 / 0.03
+   [wc] field-spread gate: krill enc 0.281 ratio 0.76 ok; planktivores 0.539 ratio 1.06 ok; benthivores ratio 2.27 ok; whiting ratio 1.13 ok
+   [wc] prey side implied/booked M2: krill 0.95, planktivores 0.97, benthivores 0.85, whiting 0.75
+   [wc] OFF sets vs library: unchanged
+   [all] intake G 1.88 / 1.62 / 1.50 / 1.73   I by class Jul 0.892 / 0.844 / 0.577 / 0.495   krill share of encounters Jul 0.06 / 0.50 / 0.23 / 0.03
+   [all] field-spread gate: krill enc 0.281 ratio 0.76 ok; planktivores 0.539 ratio 1.06 ok; benthivores ratio 2.27 ok; whiting ratio 1.13 ok
+   [all] prey side implied/booked M2: krill 0.95, planktivores 0.97, benthivores 0.85, whiting 0.75
+   [all] OFF sets vs library: unchanged
+   [wcshape] intake G 2.02 / 1.73 / 1.58 / 1.86   I by class Jul 0.865 / 0.824 / 0.531 / 0.441   krill share of encounters Jul 0.07 / 0.56 / 0.28 / 0.03
+   [wcshape] field-spread gate: krill enc 0.335 ratio 0.91 ok; planktivores 0.517 ratio 1.01 ok; benthivores ratio 1.83 ok; whiting ratio 0.93 ok
+   [wcshape] prey side implied/booked M2: krill 0.96, planktivores 0.95, benthivores 0.74, whiting 0.67
+   [wcshape] OFF sets vs library: unchanged
+
+== near_scotian+Ke_2e-3: combination of krill_near_scotian and Ke_2e-3_F1
+   krill        0.0322 / 0.0151 / 0.00325 / 9.14e-05   G 6.80  R0 9.9  a x1.170  n/d 0.0373
+   planktivores 0.04 / 0.0224 / 0.00609 / 0.00289   G 4.86  R0 6.6  a x1.201
+   benthivores  0.0732 / 0.0602 / 0.0197 / 0.0127   G 3.32  a x1.248
+   whiting      0.0632 / 0.0526 / 0.0168 / 0.00966   G 3.39  a x1.250
+   [wc] intake G 1.81 / 1.67 / 1.46 / 1.61   I by class Jul 0.890 / 0.860 / 0.600 / 0.287   krill share of encounters Jul 0.06 / 0.51 / 0.55 / 0.08
+   [wc] field-spread gate: krill enc 0.435 ratio 1.18 ok; planktivores 0.418 ratio 0.82 ok; benthivores ratio 1.80 ok; whiting ratio 0.98 ok
+   [wc] prey side implied/booked M2: krill 0.96, planktivores 0.95, benthivores 0.75, whiting 0.68
+   [wc] OFF sets vs library: unchanged
+   [all] intake G 1.81 / 1.67 / 1.46 / 1.61   I by class Jul 0.890 / 0.860 / 0.600 / 0.287   krill share of encounters Jul 0.06 / 0.51 / 0.55 / 0.08
+   [all] field-spread gate: krill enc 0.435 ratio 1.18 ok; planktivores 0.418 ratio 0.82 ok; benthivores ratio 1.80 ok; whiting ratio 0.98 ok
+   [all] prey side implied/booked M2: krill 1.02, planktivores 0.93, benthivores 0.73, whiting 0.68
+   [all] OFF sets vs library: field spread NEW OFF: whiting -> benthivorous_fish
+   [wcshape] intake G 1.93 / 1.77 / 1.52 / 1.70   I by class Jul 0.870 / 0.838 / 0.559 / 0.252   krill share of encounters Jul 0.07 / 0.52 / 0.56 / 0.08
+   [wcshape] field-spread gate: krill enc 0.444 ratio 1.20 ok; planktivores 0.416 ratio 0.81 ok; benthivores ratio 1.72 ok; whiting ratio 0.93 ok
+   [wcshape] prey side implied/booked M2: krill 0.96, planktivores 0.94, benthivores 0.73, whiting 0.66
+   [wcshape] OFF sets vs library: unchanged
+
+== sens_Rnv_krill0.25: SENSITIVITY ONLY [J], no field source: dark detection of krill 0.25 m (krill_pairs_wc.py 'biolum' centre); Q3 found no measurement
+   krill        0.0331 / 0.0141 / 0.00193 / 0.000155   G 11.33  R0 17.1  a x1.119  n/d 0.0830
+   planktivores 0.038 / 0.0167 / 0.00368 / 0.00284   G 6.91  R0 10.3  a x1.000
+   benthivores  0.0676 / 0.0426 / 0.0141 / 0.0127   G 3.76  a x1.000
+   whiting      0.0588 / 0.0379 / 0.0112 / 0.00966   G 4.17  a x1.000
+   [wc] intake G 2.37 / 2.15 / 1.81 / 2.06   I by class Jul 0.884 / 0.832 / 0.471 / 0.290   krill share of encounters Jul 0.07 / 0.56 / 0.54 / 0.13
+   [wc] field-spread gate: krill enc 0.441 ratio 1.19 ok; planktivores 0.400 ratio 0.78 ok; benthivores ratio 1.91 ok; whiting ratio 1.11 ok
+   [wc] prey side implied/booked M2: krill 0.97, planktivores 0.93, benthivores 0.71, whiting 0.65
+   [wc] OFF sets vs library: unchanged
+   [all] intake G 2.37 / 2.15 / 1.81 / 2.06   I by class Jul 0.884 / 0.832 / 0.471 / 0.290   krill share of encounters Jul 0.07 / 0.56 / 0.54 / 0.13
+   [all] field-spread gate: krill enc 0.441 ratio 1.19 ok; planktivores 0.400 ratio 0.78 ok; benthivores ratio 1.91 ok; whiting ratio 1.11 ok
+   [all] prey side implied/booked M2: krill 1.13, planktivores 0.91, benthivores 0.70, whiting 0.65
+   [all] OFF sets vs library: field spread NEW OFF: whiting -> benthivorous_fish
+   [wcshape] intake G 2.46 / 2.18 / 1.84 / 2.12   I by class Jul 0.884 / 0.827 / 0.463 / 0.289   krill share of encounters Jul 0.06 / 0.54 / 0.52 / 0.12
+   [wcshape] field-spread gate: krill enc 0.413 ratio 1.12 ok; planktivores 0.420 ratio 0.82 ok; benthivores ratio 2.00 ok; whiting ratio 1.16 ok
+   [wcshape] prey side implied/booked M2: krill 0.96, planktivores 0.95, benthivores 0.73, whiting 0.66
+   [wcshape] OFF sets vs library: unchanged
+
+== sens_dark_near: DECOMPOSITION ONLY: sens_dark with the krill_near_scotian layer (geometry left once the krill reach the bed)
+   krill        0.00147 / 0.000625 / 0.000493 / 1.82e-05   G 1.97  R0 3.0  a x0.062  n/d 0.2926
+   planktivores 0.00497 / 0.00325 / 0.00288 / 0.00272   G 1.38  R0 1.7  a x0.230
+   benthivores  0.013 / 0.0127 / 0.0128 / 0.0127   G 1.00  a x0.378
+   whiting      0.00996 / 0.00967 / 0.00979 / 0.00966   G 1.00  a x0.334
+   [wc] intake G 1.51 / 1.48 / 1.37 / 1.45   I by class Jul 0.530 / 0.403 / 0.334 / 0.270   krill share of encounters Jul 0.02 / 0.18 / 0.25 / 0.02
+   [wc] field-spread gate: krill enc 0.207 ratio 0.56 ok; planktivores 0.605 ratio 1.18 ok; benthivores ratio 2.35 ok; whiting ratio 0.85 ok
+   [wc] prey side implied/booked M2: krill 0.93, planktivores 1.02, benthivores 1.16, whiting 0.95
+   [wc] OFF sets vs library: equal cells NEW OFF: predatory_fish -> benthivorous_fish; prey side NEW OFF: predatory_fish -> benthivorous_fish
+   [all] intake G 1.51 / 1.48 / 1.37 / 1.45   I by class Jul 0.530 / 0.403 / 0.334 / 0.270   krill share of encounters Jul 0.02 / 0.18 / 0.25 / 0.02
+   [all] field-spread gate: krill enc 0.207 ratio 0.56 ok; planktivores 0.605 ratio 1.18 ok; benthivores ratio 2.35 ok; whiting ratio 0.85 ok
+   [all] prey side implied/booked M2: krill 0.68, planktivores 1.25, benthivores 1.39, whiting 0.95
+   [all] OFF sets vs library: field spread back ON: whiting -> mobile_epifauna; equal cells NEW OFF: predatory_fish -> benthivorous_fish; equal cells back ON: whiting -> benthivorous_fish; prey side NEW OFF: predatory_fish -> benthivorous_fish; prey side back ON: whiting -> benthivorous_fish
+   [wcshape] intake G 1.13 / 1.11 / 1.04 / 1.09   I by class Jul 0.813 / 0.799 / 0.771 / 0.618   krill share of encounters Jul 0.09 / 0.53 / 0.60 / 0.07
+   [wcshape] field-spread gate: krill enc 0.516 ratio 1.40 ok; planktivores 0.410 ratio 0.80 ok; benthivores ratio 0.97 ok; whiting ratio 0.40 ok
+   [wcshape] prey side implied/booked M2: krill 0.97, planktivores 0.93, benthivores 0.71, whiting 0.64
+   [wcshape] OFF sets vs library: unchanged
+
+== sens_dark: DECOMPOSITION ONLY: every visual member at R_nv (geometry and member mix)
+   krill        0.00147 / 0.000625 / 0.000188 / 1.82e-05   G 5.16  R0 7.8  a x0.053  n/d 0.3117
+   planktivores 0.00497 / 0.00325 / 0.00288 / 0.00272   G 1.38  R0 1.7  a x0.230
+   benthivores  0.013 / 0.0127 / 0.0128 / 0.0127   G 1.00  a x0.378
+   whiting      0.00996 / 0.00967 / 0.00979 / 0.00966   G 1.00  a x0.334
+   [wc] intake G 1.71 / 1.56 / 1.49 / 1.66   I by class Jul 0.530 / 0.402 / 0.307 / 0.270   krill share of encounters Jul 0.02 / 0.18 / 0.11 / 0.02
+   [wc] field-spread gate: krill enc 0.116 ratio 0.31 OFF; planktivores 0.674 ratio 1.32 ok; benthivores ratio 2.62 ok; whiting ratio 0.95 ok
+   [wc] prey side implied/booked M2: krill 0.93, planktivores 1.04, benthivores 1.19, whiting 0.98
+   [wc] OFF sets vs library: field spread NEW OFF: predatory_fish -> krill; equal cells NEW OFF: predatory_fish -> benthivorous_fish, predatory_fish -> krill; prey side NEW OFF: predatory_fish -> benthivorous_fish
+   [all] intake G 1.71 / 1.56 / 1.49 / 1.66   I by class Jul 0.530 / 0.402 / 0.307 / 0.270   krill share of encounters Jul 0.02 / 0.18 / 0.11 / 0.02
+   [all] field-spread gate: krill enc 0.116 ratio 0.31 OFF; planktivores 0.674 ratio 1.32 ok; benthivores ratio 2.62 ok; whiting ratio 0.95 ok
+   [all] prey side implied/booked M2: krill 0.66, planktivores 1.28, benthivores 1.43, whiting 0.98
+   [all] OFF sets vs library: field spread NEW OFF: predatory_fish -> krill; field spread back ON: whiting -> mobile_epifauna; equal cells NEW OFF: predatory_fish -> benthivorous_fish, predatory_fish -> krill; equal cells back ON: whiting -> benthivorous_fish; prey side NEW OFF: predatory_fish -> benthivorous_fish; prey side back ON: whiting -> benthivorous_fish
+   [wcshape] intake G 1.30 / 1.21 / 1.15 / 1.25   I by class Jul 0.815 / 0.810 / 0.709 / 0.619   krill share of encounters Jul 0.10 / 0.57 / 0.40 / 0.08
+   [wcshape] field-spread gate: krill enc 0.387 ratio 1.05 ok; planktivores 0.519 ratio 1.02 ok; benthivores ratio 1.23 ok; whiting ratio 0.50 ok
+   [wcshape] prey side implied/booked M2: krill 0.96, planktivores 0.94, benthivores 0.72, whiting 0.66
+   [wcshape] OFF sets vs library: unchanged
+

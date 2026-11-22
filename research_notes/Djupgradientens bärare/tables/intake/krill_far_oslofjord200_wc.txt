@@ -1,0 +1,77 @@
+library /tmp/claude-1001/-home-simon-eco-evo/e0eee01e-271b-421b-9afd-b4e8be6f3927/scratchpad/dgb/libs/lib_krill_far_oslofjord200_wc.yaml
+60x60; area by class <100/100-150/150-250/>=250: 0.23 0.30 0.32 0.15
+pair depth tables (class mean of m):
+  benthivorous_fish        1.942   1.223   0.405   0.365
+  krill                    2.698   1.152   0.091   0.006
+  mackerel                 1.648   0.914   0.734   0.734
+  planktivorous_fish       2.467   1.084   0.239   0.184
+  whiting                  1.961   1.263   0.374   0.322
+  zooplankton              1.000   1.000   1.000   1.000
+
+== Jan: intake as share of the ceiling S/(1+S) by class; G = I(<150)/I(150-250), I(<100)/I(150-250); krill share of encounters by class
+  library                    I 0.847 0.719 0.276 0.173  G  2.81  3.07  krill 0.28 0.45 0.30 0.04   S   5.52   2.56   0.38   0.21
+      share benthivorous_fish      0.194 0.118 0.068 0.046
+      share krill                  0.279 0.451 0.302 0.044
+      share mackerel               0.000 0.000 0.000 0.000
+      share planktivorous_fish     0.398 0.390 0.598 0.866
+      share whiting                0.127 0.038 0.009 0.001
+      share zooplankton            0.001 0.003 0.023 0.043
+  krill pool uniform         I 0.870 0.722 0.267 0.172  G  2.94  3.26  krill 0.40 0.46 0.27 0.03
+  flat benthivorous_fis      I 0.836 0.715 0.290 0.181  G  2.65  2.88  krill 0.31 0.46 0.27 0.04
+  flat krill                 I 0.819 0.706 0.596 0.616  G  1.27  1.37  krill 0.13 0.42 0.83 0.88
+  flat mackerel              I 0.847 0.719 0.276 0.173  G  2.81  3.07  krill 0.28 0.45 0.30 0.04
+  flat planktivorous_fi      I 0.801 0.712 0.536 0.509  G  1.40  1.50  krill 0.37 0.47 0.10 0.01
+  flat whiting               I 0.840 0.718 0.278 0.173  G  2.77  3.02  krill 0.30 0.45 0.30 0.04
+  flat zooplankton           I 0.847 0.719 0.276 0.173  G  2.81  3.07  krill 0.28 0.45 0.30 0.04
+  all flat + prey uniform    I 0.698 0.698 0.698 0.698  G  1.00  1.00  krill 0.45 0.45 0.45 0.45
+
+== Apr: intake as share of the ceiling S/(1+S) by class; G = I(<150)/I(150-250), I(<100)/I(150-250); krill share of encounters by class
+  library                    I 0.881 0.766 0.344 0.243  G  2.37  2.56  krill 0.22 0.40 0.26 0.04   S   7.40   3.27   0.53   0.32
+      share benthivorous_fish      0.202 0.123 0.069 0.044
+      share krill                  0.217 0.401 0.260 0.036
+      share mackerel               0.000 0.000 0.000 0.000
+      share planktivorous_fish     0.442 0.433 0.643 0.885
+      share whiting                0.137 0.041 0.010 0.001
+      share zooplankton            0.001 0.003 0.019 0.034
+  krill pool uniform         I 0.897 0.767 0.337 0.241  G  2.44  2.66  krill 0.35 0.41 0.23 0.03
+  flat benthivorous_fis      I 0.872 0.763 0.362 0.253  G  2.24  2.41  krill 0.24 0.41 0.24 0.03
+  flat krill                 I 0.868 0.758 0.609 0.621  G  1.32  1.42  krill 0.09 0.37 0.79 0.86
+  flat mackerel              I 0.881 0.766 0.344 0.243  G  2.37  2.56  krill 0.22 0.40 0.26 0.04
+  flat planktivorous_fi      I 0.835 0.758 0.635 0.618  G  1.25  1.32  krill 0.29 0.41 0.09 0.01
+  flat whiting               I 0.874 0.765 0.347 0.243  G  2.34  2.52  krill 0.23 0.40 0.26 0.04
+  flat zooplankton           I 0.881 0.766 0.344 0.243  G  2.37  2.56  krill 0.22 0.40 0.26 0.04
+  all flat + prey uniform    I 0.747 0.747 0.747 0.747  G  1.00  1.00  krill 0.40 0.40 0.40 0.40
+
+== Jul: intake as share of the ceiling S/(1+S) by class; G = I(<150)/I(150-250), I(<100)/I(150-250); krill share of encounters by class
+  library                    I 0.884 0.828 0.417 0.280  G  2.05  2.12  krill 0.06 0.55 0.39 0.06   S   7.59   4.82   0.71   0.39
+      share benthivorous_fish      0.240 0.092 0.056 0.042
+      share krill                  0.062 0.547 0.387 0.063
+      share mackerel               0.000 0.000 0.000 0.000
+      share planktivorous_fish     0.533 0.329 0.534 0.864
+      share whiting                0.164 0.031 0.008 0.001
+      share zooplankton            0.001 0.002 0.014 0.030
+  krill pool uniform         I 0.923 0.822 0.398 0.277  G  2.18  2.32  krill 0.47 0.52 0.32 0.04
+  flat benthivorous_fis      I 0.873 0.826 0.433 0.290  G  1.96  2.02  krill 0.07 0.56 0.36 0.06
+  flat krill                 I 0.881 0.819 0.739 0.755  G  1.14  1.19  krill 0.02 0.51 0.87 0.92
+  flat mackerel              I 0.884 0.828 0.417 0.280  G  2.05  2.12  krill 0.06 0.55 0.39 0.06
+  flat planktivorous_fi      I 0.828 0.823 0.684 0.660  G  1.21  1.21  krill 0.09 0.56 0.14 0.01
+  flat whiting               I 0.876 0.827 0.420 0.280  G  2.02  2.09  krill 0.07 0.55 0.38 0.06
+  flat zooplankton           I 0.884 0.828 0.417 0.280  G  2.05  2.12  krill 0.06 0.55 0.39 0.06
+  all flat + prey uniform    I 0.805 0.805 0.805 0.805  G  1.00  1.00  krill 0.51 0.51 0.51 0.51
+
+== Oct: intake as share of the ceiling S/(1+S) by class; G = I(<150)/I(150-250), I(<100)/I(150-250); krill share of encounters by class
+  library                    I 0.880 0.782 0.337 0.204  G  2.45  2.61  krill 0.36 0.54 0.38 0.06   S   7.34   3.59   0.51   0.26
+      share benthivorous_fish      0.170 0.097 0.059 0.044
+      share krill                  0.355 0.539 0.381 0.061
+      share mackerel               0.000 0.000 0.000 0.000
+      share planktivorous_fish     0.360 0.330 0.534 0.856
+      share whiting                0.113 0.031 0.008 0.001
+      share zooplankton            0.001 0.002 0.018 0.037
+  krill pool uniform         I 0.903 0.785 0.325 0.202  G  2.58  2.78  krill 0.49 0.55 0.34 0.05
+  flat benthivorous_fis      I 0.873 0.780 0.351 0.213  G  2.34  2.48  krill 0.39 0.55 0.35 0.06
+  flat krill                 I 0.851 0.769 0.698 0.719  G  1.15  1.22  krill 0.17 0.50 0.87 0.92
+  flat mackerel              I 0.880 0.782 0.337 0.204  G  2.45  2.61  krill 0.36 0.54 0.38 0.06
+  flat planktivorous_fi      I 0.847 0.777 0.591 0.558  G  1.37  1.43  krill 0.45 0.55 0.14 0.01
+  flat whiting               I 0.875 0.781 0.339 0.204  G  2.42  2.58  krill 0.38 0.54 0.38 0.06
+  flat zooplankton           I 0.880 0.782 0.337 0.204  G  2.45  2.61  krill 0.36 0.54 0.38 0.06
+  all flat + prey uniform    I 0.764 0.764 0.764 0.764  G  1.00  1.00  krill 0.54 0.54 0.54 0.54
