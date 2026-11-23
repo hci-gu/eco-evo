@@ -350,7 +350,8 @@ def _apply_decision_maker_population_change(env, fg_id, fg):
 
     # ``--mass-balance``: charge the growth to the reserve before anything
     # downstream reads the delta, so the loss accounting below sees the
-    # biomass that was actually paid for. Off by default (section 116).
+    # biomass that was actually paid for. On by default since section 120
+    # (--no-mass-balance turns it off; section 116 introduced it).
     if getattr(env, "mass_balance", False):
         biomass_delta = _charge_growth_to_reserve(env, fg, biomass_delta)
 

@@ -868,8 +868,12 @@ class LiveTrainingProgress(TrainingProgress):
               f"(separate process){_overrides_note(overrides)}", flush=True)
 
     def config_ecology(self):
+        # Section 302: the worker's settle() reads warmup_ticks from this
+        # dict; without it every asynchronous probe scored the un-warmed
+        # start (fix106, fix108, fix109 until 2026-11-23).
         keys = ("project", "library", "grid", "mortality", "migration",
-                "mortality_multiplier", "mass_balance", "currents", "tick_hours")
+                "mortality_multiplier", "mass_balance", "currents", "tick_hours",
+                "warmup_ticks", "warmup_reanchor")
         return {k: self.config[k] for k in keys if k in self.config}
 
     def __call__(self, trainer, step, run_dir, args):

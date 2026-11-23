@@ -417,7 +417,8 @@ def build_static_caches(env):
             if impact_id in blind:
                 env.dm_impact_obs[i, k] = 0.0
     # Per-DM input dimension. Each DM sees:
-    #   center : [B_own, E_own, B_obs_others (k_i), J (m_i), impacts (n_obs_imp)]
+    #   center : [B_own, s_own (reserve fill R/(B ME)), B_obs_others (k_i),
+    #             J (m_i), impacts (n_obs_imp)]
     #   neighbour (N/E/S/W) : [B_own, B_obs_others (k_i), J (m_i), impacts]
     # so center_dim_i = 2 + k_i + m_i + n_obs_imp and nbr_dim_i =
     # 1 + k_i + m_i + n_obs_imp; m_i = 0 without juvenile compartments.

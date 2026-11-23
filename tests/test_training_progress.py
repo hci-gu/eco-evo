@@ -624,3 +624,35 @@ def test_the_viewers_overrides_reach_the_worker_and_the_record(monkeypatch, tmp_
 def test_a_viewer_without_override_getters_changes_nothing(monkeypatch, tmp_path):
     progress = _live(monkeypatch, tmp_path, SimpleNamespace())
     assert progress.viewer_overrides() == {} and progress.ticks == 4380
+
+
+def test_the_asynchronous_probe_worker_gets_the_runs_warm_up(monkeypatch):
+    """Section 302: the worker settles with config["warmup_ticks"]; the live
+    viewer's config_ecology() used to drop it, so every asynchronous probe
+    scored the un-warmed start."""
+    import lib.runners.training_progress as tp
+    progress = tp.LiveTrainingProgress("cpu", 1, 10, 0.3, 3.0, 0, 1.0)
+    progress.config = {"project": "p.yaml", "library": "l.yaml", "grid": [4, 4],
+                       "mortality": True, "migration": True,
+                       "mortality_multiplier": 1.0, "mass_balance": True,
+                       "currents": None, "tick_hours": 6, "warmup_ticks": 240,
+                       "warmup_reanchor": ["seals"], "baseline_maps": {}}
+    eco = progress.config_ecology()
+    assert eco["warmup_ticks"] == 240
+    assert eco["warmup_reanchor"] == ["seals"]
+
+    seen = {}
+    monkeypatch.setattr(tp, "build_inference_env", lambda config, seed: object())
+    monkeypatch.setattr(tp, "apply_viewer_overrides", lambda *a, **k: None)
+    monkeypatch.setattr(tp, "_unpack_policies", lambda p: p)
+
+    class _Env:
+        def rebuild_batched_weights(self):
+            pass
+    monkeypatch.setattr(tp, "build_inference_env", lambda config, seed: _Env())
+    monkeypatch.setattr(tp, "settle",
+                        lambda env, ticks, seed=None: seen.setdefault("ticks", ticks))
+    monkeypatch.setattr(tp, "run_probe", lambda env, *a: "done")
+    assert tp._probe_in_process(eco, 0, 1.0, 10, 0.3, 3.0, {}, None, None,
+                                1) == "done"
+    assert seen["ticks"] == 240

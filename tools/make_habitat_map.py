@@ -10,7 +10,8 @@ depth map, so both select the same cells on any grid.
 
 The map is a physical field (where the beds are shallow); what it costs a
 group is that group's ``<fg>_impacted_by_shallow_beds`` table in the
-library. Section 300: only the water column has one.
+library. Section 300 gave the water column one; section 300.1 removed it,
+so no group has one today.
 """
 import argparse
 import os

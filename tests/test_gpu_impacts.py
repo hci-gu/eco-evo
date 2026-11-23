@@ -291,10 +291,6 @@ def observable_project(data, tmp_path):
     for iv in data["impact_variables"]:
         if iv["impact_id"] == "windfarm_noise":
             iv["muted"] = False
-        # Section 300: the habitat term is observable too; these tests are
-        # about a spawned observable impact alone.
-        if iv["impact_id"] == "shallow_beds":
-            iv["muted"] = True
     path = tmp_path / "observable.yaml"
     with open(path, "w", encoding="utf-8") as f:
         yaml.safe_dump(data, f, sort_keys=False)

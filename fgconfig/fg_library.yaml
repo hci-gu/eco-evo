@@ -4065,73 +4065,6 @@ interaction_definitions:
   zooplankton_impacted_by_windfarm_noise:
     impact_affects: false
     impact_table: []
-  # Section 300: the water column's habitat term, the user's explicit exception to the
-  # learned-behaviour rule (as section 271's light-entrained set point). Field saithe stand over
-  # 150-250 m beds (GOV in the box 0.04 / 0.13 / 0.78 / 0.05), research_notes/"Sejens djuplage"
-  # (a-umlaut) found no mechanism for it (temperature, oxygen, food quantity and predation risk
-  # ruled out or unsupported), and the library's own encounter terms pay 1.5-1.9x more food per
-  # tonne over beds < 150 m, so the trained water column stood there and ate whiting at 2-3.4x its
-  # booked M2 (299.1). The map (maps/shallow_beds.npz, tools/make_habitat_map.py) is 1 over beds
-  # < 150 m; energy_factor f multiplies every action cost there by 1 + f. f 0.5 is SIZED, not
-  # measured: the policy-free indifference f (the foraging-time saving and the deep beds' winter
-  # shortfall at the realised ration 3.2 t/t/yr) is 0.16-0.52 by month, mean 0.28-0.32, and 0.5
-  # sits at or above it in every month for a margin (resume 300). It is not a temperature effect
-  # (f 0.5 = +4.9 C at Q10 2.3; the bed classes differ <= 1 C). The GOV placement is the target,
-  # so it is no longer an independent test of the water column.
-  predatory_fish_impacted_by_shallow_beds:
-    impact_affects: true
-    impact_table:
-    - value: 0.0
-      biomass_factor: 0.0
-      energy_factor: 0.0
-    - value: 1.0
-      biomass_factor: 0.0
-      energy_factor: 0.5
-  phytoplankton_impacted_by_shallow_beds:
-    impact_affects: false
-    impact_table: []
-  subsurface_phytoplankton_impacted_by_shallow_beds:
-    impact_affects: false
-    impact_table: []
-  zooplankton_impacted_by_shallow_beds:
-    impact_affects: false
-    impact_table: []
-  microzooplankton_impacted_by_shallow_beds:
-    impact_affects: false
-    impact_table: []
-  benthic_infauna_impacted_by_shallow_beds:
-    impact_affects: false
-    impact_table: []
-  mobile_epifauna_impacted_by_shallow_beds:
-    impact_affects: false
-    impact_table: []
-  norway_lobster_impacted_by_shallow_beds:
-    impact_affects: false
-    impact_table: []
-  krill_impacted_by_shallow_beds:
-    impact_affects: false
-    impact_table: []
-  planktivorous_fish_impacted_by_shallow_beds:
-    impact_affects: false
-    impact_table: []
-  benthivorous_fish_impacted_by_shallow_beds:
-    impact_affects: false
-    impact_table: []
-  whiting_impacted_by_shallow_beds:
-    impact_affects: false
-    impact_table: []
-  mackerel_impacted_by_shallow_beds:
-    impact_affects: false
-    impact_table: []
-  porpoises_impacted_by_shallow_beds:
-    impact_affects: false
-    impact_table: []
-  seals_impacted_by_shallow_beds:
-    impact_affects: false
-    impact_table: []
-  seabirds_impacted_by_shallow_beds:
-    impact_affects: false
-    impact_table: []
   # Section 275: what a group knows of another is what it MET in the tick
   # (reading B, research_notes/Observabilitetsparen design.md 5). Per region
   # a list [share, kappa]: kappa = encounters per 6 h tick per t/km2 of the
@@ -4514,5 +4447,3 @@ impact_definitions:
     display_name: "Windfarm Noise"
   rotor:
     display_name: "Rotor Impact"
-  shallow_beds:
-    display_name: "Shallow beds (< 150 m)"

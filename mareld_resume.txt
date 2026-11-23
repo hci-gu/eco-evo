@@ -27053,3 +27053,108 @@ remain open exactly as described in 71.9 / 71.11.
     the benthivores' placement and crowding. Every DM gains five input slots (all zero but the water column's):
     checkpoints before 300 are invalid; retrain under a new run name (no --resume / --init-from fix108). The
     final 299 policies (fix108 u767) are copied in the session scratchpad (fix108_final_299) as the baseline.
+
+301 STRATEGY DECK, EDITION 4: Strategi_nov2.pdf (2026-11-23; user: edition 3 used terms, variables, constants and
+    functions without defining them, e.g. Cmax, ec, B g; everything in a formula must be specified and explained,
+    worked examples for every concept and calculation, the correlated random walk of the encounter rule and the
+    "own room" channel described; rewrite)
+301.1 Generator tools/make_strategi_deck4.py (Swedish). It imports make_strategi_deck3.py for page geometry,
+    helpers, library readers, the layout check and most figures; edition 3 and Strategi_nov.pdf are unchanged.
+    Default output Strategi_nov2.pdf (203 slides); --png DIR for proofing.
+301.2 Enforced at build time: every symbol registered once (sym(): rendering, meaning, unit, value or library
+    key; a second symbol with the same rendering is refused); a formula slide refuses to build without a symbol
+    list and draws the symbol table under the formulas (continued on the next slide); a worked example refuses a
+    symbol no earlier slide defined; inline math with a space inside $...$ is refused; Appendix A (symbol index)
+    lists every registered symbol with the slide that first defines it and fails on an unused one. Swedish
+    numbers in display math get {,} decimals and thin-space thousands; e-notation becomes x.10^n.
+301.3 Worked examples compute from the library and the engine's own functions (multi_prey_rate, tonne_price,
+    hunger_at, growth_budget, set_point, spawning, relocation.tau, merge_subunit_fractions, met_probability,
+    tick_time.rescale_value, ars_update, crowding, the research-note walk neighbour_weight.visits); several
+    assert that their printed steps reproduce the function. Figure labels re-written in the edition-4 notation;
+    the per-group value tables, start reserve, movement and concentration-grazing slides kept from edition 3. The benthivore cell (15 Jul / 15 Mar) reproduces the engine to float
+    precision (I 11.94 MJ, C 6.63 MJ, G 3.99 MJ; March room 8.28 MJ, G 1.98 MJ).
+301.4 Content brought to section 300: Ke 0.002 lx (299), kappa_field factors (296), krill depth/energy season
+    (295), potential ration (298), shallow_beds cost and observed_by (300). Results from fix108 (last 20 probes,
+    u570-u760); fix109 named as the run on today's library. Notation: one meaning per bare letter (e.g. light E,
+    prey energy e_j, hunger gate calH(s) vs handling h, light level Lambda(t), clock gamma_clk, recruit import
+    I_rek, emigration mu_J/mu_A, outside density B_ute, target B_hat, Lloyd C_Lloyd); Cmax defined as the
+    ingested-energy ceiling Q_max = e_j / h (library convention, 250 x kJ/g/d).
+301.5 Findings while writing (not fixed, reported): (1) the asynchronous long-run probe never ran the warm-up:
+    training_progress.LiveTrainingProgress.config_ecology() does not pass warmup_ticks, so fix106/108/109 probes
+    start un-warmed on 28 May (verified: fix108 u760 initial_biomass = 0.25 x inference totals for mackerel 765 and
+    zooplankton 8750, groups never re-anchored; mackerel 1.155, water column 0.776, krill 0.59, phytoplankton ratios measure the
+    start); (2) edition 3 listed the exchange rates under the "loss" rescale rule (code: flux); its Ke 0.02 in
+    rule A was right for section 280, the state it describes; (3) stale comments: population_change.py:352 (mass balance "off by default"; it is on),
+    state.py:420 ("E_own" is the fill); (4) the crowding statistic is n sum b^2/(sum b)^2 (no -1 of Lloyd's count
+    form); (5) the seals' focussed CRW member hits the bisection bound (net 0.22 km vs 0.1 km input); encounter
+    unit masses porpoise 45 kg / seal 80 kg differ from min_split_biomass 50 / 55 kg.
+301.6 Not done: English edition (make_strategy_deck3_en.py has no edition-4 counterpart). Nothing in the engine,
+    the library, the manifest or the tests was touched; no commit.
+
+302 FIXES FROM SECTION 301.5 (2026-11-23; user: "Atgarda felen")
+302.1 The asynchronous long-run probe now warms up: LiveTrainingProgress.config_ecology() passes warmup_ticks and
+    warmup_reanchor to the worker, whose settle() reads them (training_progress.py). Before, every live probe of
+    fix106, fix108 and fix109 scored the un-warmed start (verified: fix108 u760 initial_biomass = 0.25 x the
+    inference totals for mackerel 765 and zooplankton 8750, groups never re-anchored). The fix reaches a run only
+    when it is started or resumed after it: fix109 was resumed at update 84 after the fix, so its probes from
+    evaluation 10 (u84) on are warmed and evaluations 1-9 are not. Probe ratios before and
+    after the fix are not comparable for mackerel, water column, krill and plankton. Test:
+    tests/test_training_progress.py test_the_asynchronous_probe_worker_gets_the_runs_warm_up.
+302.2 Comments: population_change.py (mass balance is on by default since section 120), state.py (centre slot 1
+    is the reserve fill s = R/(B ME), not "E_own").
+302.3 Edition 3 generators (make_strategi_deck3.py, make_strategy_deck3_en.py): the exchange rates moved from the
+    "loss" to the "flux" row of the tick-length table. Strategi_nov.pdf / Strategy_Nov.pdf were not rebuilt (a
+    rebuild would read today's library into a deck that describes section 280).
+302.4 Strategi_nov2.pdf rebuilt (203 slides) with the probe defect described as fixed. pytest (CPU) 1847 passed,
+    241 skipped; train.py one-generation smoke run passed.
+
+303 STRATEGY DECK, EDITION 4 IN ENGLISH: Strategy_Nov2.pdf (2026-11-23; user: "Gor den engelska versionen")
+303.1 tools/make_strategy_deck4_en.py: a translated copy of make_strategi_deck4.py (same code, slides, checks and
+    worked examples; only user-visible text translated). It imports make_strategy_deck3_en and calls en3.setup()
+    first in build() (English figure labels, "." decimals and "," thousands), then its own English set_labels().
+    Symbol subscripts are English (R_room, o_room, Delta s_spawn, B_out, S_out, I_rec, kappa_field, R_vis,
+    c_trip, L_day, e_lean, beta_herring, p_strike, q_esc, r_re, sigma_school, k_shell); registry keys are the
+    Swedish module's. The e-notation regex accepts a decimal point.
+303.2 Build: 205 slides (two more than the Swedish: longer text pushes symbol tables onto continuation slides),
+    0 layout problems; the PDF text has no Swedish left except the research_notes directory names. Keep the two
+    generators in step: a change to the Swedish master must be repeated in the English copy.
+303.3 Both editions gained a perception slide for the water column's bed-depth channel (section 300; part6e, after
+    the observation normalisation): o_imp,d = x_imp(c_d) 1_X for the own cell and the four neighbours, not drawn by
+    the encounter rule, zeros for every group outside observed_by; worked example on the 60 x 60 map (a 139 m cell
+    with two deep neighbours: inputs 1, 1, 1, 0, 0; foraging cost x1.5 there). Strategi_nov2.pdf 206 slides,
+    Strategy_Nov2.pdf 208.
+
+300.1 SECTION 300 REMOVED: THE HABITAT COST DID NOT DO ITS JOB (2026-11-23; user: "Ja, ta bort det och skriv 300.1")
+    fix109 (run pzbpgp248nsrpfix109; 300 library, 30 x 30, lr 0.05 as fix106, fix108 had 0.03) at u850. Resumed at
+    u84 after section 302, so probe evaluations 10+ are warmed and their mackerel / water column / krill / plankton
+    ratios are not comparable with fix106 / fix108.
+300.1.1 Placement (60 x 60, fished inference, frozen u852, default spawn, currents on, seeds 123 / 1 / 2, 1 year;
+    bed classes < 100 / 100-150 / 150-250 / >= 250 m). Water column 0.17-0.19 / 0.37-0.39 / 0.37-0.39 / 0.05-0.07
+    against fix108 u650 0.32-0.34 / 0.48-0.52 / 0.13-0.19 / 0.01 and GOV saithe 0.04 / 0.13 / 0.78 / 0.05: the term
+    moved it halfway to its target, and its fill fell to 0.64-0.94 (fix108 0.93-0.99). Whiting 0.69-0.83 under 100 m
+    (field 0.77; fix108 0.51-0.61) but crowded, Lloyd 64-164 (field 4.1), peaks 194-634 t. Benthivores
+    0.15-0.30 / 0.05-0.08 / 0.29-0.38 / 0.36-0.39 (field 0.31 / 0.44 / 0.19 / 0.06), the west-edge clump back
+    (enrichment 3.6-8.8 against 1.1-2.4), Lloyd 18-38 (16-21).
+300.1.2 The three tests section 300 kept all failed. Whiting's unfished probe year 3 (u600-850) 0.41 (fix108 0.48,
+    fix106 0.38 at the same lr); water column -> whiting realised M2 3.7-5.4x booked 0.157 (fix108 3.1-4.0x);
+    benthivore placement and crowding as above, not better.
+300.1.3 Why: 299.1's premise fails. Overlap of the water column and whiting, N sum(W H) / (sum W sum H) per
+    snapshot (1 = independent), by quarter of the inference year: fix109 1.0-3.4, fix108 0.4-1.5; the water-column
+    density a whiting tonne meets 0.46-2.08 t/cell (mean 0.61) against 0.24-0.70. The water column left the
+    shallow beds as a whole, and the part that stayed sits on the whiting clumps: the predation is pursuit of
+    the prey, not a by-product of bed depth, so a bed-depth cost is the wrong lever for whiting. With nothing
+    else to show for it, the term did not justify its exception to the learned-behaviour rule.
+300.1.4 Removed: the `shallow_beds` impact_variables entry and inference map in mareld2.yaml, the
+    `*_impacted_by_shallow_beds` rows and the impact definition in fg_library.yaml (the 300 hunks reversed);
+    tests/test_impact_loading.py and tests/test_gpu_impacts.py back to their pre-300 form;
+    tests/test_impact_observed_by.py keeps the mechanism tests and loses the mareld2 term test. Kept: the
+    `observed_by` key (loader, both engines, FG editor; no use today), maps/shallow_beds.npz and
+    tools/make_habitat_map.py. The water column's shallow placement is again the known defect of 298.1. Every DM
+    loses the five impact slots: checkpoints of 300 (fix109) are invalid; retrain under a new run name. fix109's
+    last policies (u871) are kept in the session scratchpad (fix109_last300); evaluating them needs the 300
+    library (commit ff9ee9b).
+300.1.5 Open, not part of this removal: (1) the water column's realised M2 on whiting at 4-5x booked through pursuit
+    (do not set a from the outcome); (2) fix109's porpoise crash in the probes from u820 (year 3 0.16-0.28, was
+    1.1-1.4; ration unchanged 17.8, porpoise Lloyd 10 -> 20-30 from u770; 60 x 60 inference 84 -> 44-60 t in a
+    year, seals 15 -> 10-13), cause not diagnosed. (3) The edition-4 deck generators (make_strategi_deck4.py,
+    make_strategy_deck4_en.py) describe section 300 and read its library rows; the PDFs were not rebuilt.
