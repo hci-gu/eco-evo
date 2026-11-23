@@ -341,34 +341,68 @@ def _near_empty(min_split=200, extinction_factor=0.3, **kw):
 
 
 @pytest.mark.parametrize("daylight", [True, False])
-def test_swept_arrivals_are_out_of_the_net_exchange(daylight):
+def test_arrivals_below_the_threshold_are_not_swept(daylight):
+    """Section 304: the sweep spares this tick's arrival cells, so an import
+    under the threshold per cell and tick stays (it was deleted on arrival in
+    every empty cell before) and the net exchange is the gross import."""
     env = _near_empty(daylight=daylight,
                       **({} if daylight else {"regen": {"a": dict(OPEN, outside_density=0.05)}}))
     a = env.fgs["a"]
     b0 = a.biomass.astype(np.float64).copy()
     r0 = a.energy_reserve.astype(np.float64).copy()
     e0 = float(b0.sum()) * float(a.params["energy_content"]) + float(r0.sum())
-    env.loss_exchange, env.gain_exchange = {}, {}
+    env.loss_exchange, env.gain_exchange, env.loss_starvation = {}, {}, {}
     env.tick_import_cells = {}
     open_pool.migrate(env)
     migrated = env.gain_exchange.get("a", 0.0)          # into the empty west edge
     assert daylight or migrated > 0.0
     stages.exchange(env)
     booked = env.gain_exchange["a"]
+    threshold = a.min_split_biomass * a.extinction_threshold_factor
+    assert 0.0 < (booked - migrated) / a.biomass.size < threshold   # the import per cell is sub-threshold
     population_change.apply_extinction_threshold(env)
-    stayed = a.biomass > 0
-    assert int(stayed.sum()) == 2                       # every arrival in an empty cell swept
-    # Only the arrivals in the two occupied cells count as imported.
+    assert bool((a.biomass > 0).all())                 # every arrival cell kept
+    assert env.loss_starvation.get("a", 0.0) == 0.0
     export = env.loss_exchange["a"]
-    kept = (booked - migrated) * 2 / a.biomass.size
-    assert env.tick_exchange_biomass["a"] == pytest.approx(kept - export, rel=1e-4, abs=1e-9)
-    assert env.gain_exchange["a"] == pytest.approx(booked)   # the loss books keep the gross import
-    # The ledger's numerators stay non-negative.
+    assert env.tick_exchange_biomass["a"] == pytest.approx(booked - export, rel=1e-4, abs=1e-9)
+    # The ledger's numerators stay non-negative and the energy index is ~1.
     now_b = float(a.biomass.astype(np.float64).sum())
     now_e = now_b * float(a.params["energy_content"]) + float(a.energy_reserve.astype(np.float64).sum())
     assert now_b - env.tick_exchange_biomass["a"] >= 0.0
     assert now_e - env.tick_exchange_energy["a"] >= 0.0
     assert (now_e - env.tick_exchange_energy["a"]) / e0 == pytest.approx(1.0, rel=1e-3)
+
+
+def test_sweep_still_clears_remnants_without_an_arrival():
+    env = _near_empty()
+    a = env.fgs["a"]
+    threshold = np.float32(a.min_split_biomass * a.extinction_threshold_factor)
+    a.biomass.flat[[0, 1]] = threshold * 0.5           # two sub-threshold remnants
+    arrivals = np.zeros(a.biomass.shape, dtype=np.float32)
+    arrivals.flat[1] = threshold * 0.1                 # only cell 1 received an arrival
+    env.loss_starvation = {}
+    env.tick_import_cells = {"a": (arrivals, arrivals * 300.0)}
+    population_change.apply_extinction_threshold(env)
+    assert a.biomass.flat[0] == 0.0 and a.biomass.flat[1] > 0.0
+    assert a.biomass.flat[3] == pytest.approx(0.5) and a.biomass.flat[11] == pytest.approx(0.5)
+    assert env.loss_starvation["a"] == pytest.approx(float(threshold) * 0.5, rel=1e-5)
+    assert env.tick_import_cells == {}                 # used once
+
+
+def test_sub_threshold_import_accumulates_in_empty_cells():
+    env = _near_empty()
+    a = env.fgs["a"]
+    threshold = a.min_split_biomass * a.extinction_threshold_factor
+    dose = None
+    for _ in range(40):
+        env.tick_import_cells = {}
+        before = a.biomass.astype(np.float64).copy()
+        stages.exchange(env)
+        dose = dose or float((a.biomass.astype(np.float64) - before).flat[0])
+        population_change.apply_extinction_threshold(env)
+    assert 0.0 < dose < threshold
+    empty = np.ones(a.biomass.size, dtype=bool); empty[[3, 11]] = False
+    assert bool((a.biomass.flat[empty] > threshold).all())   # the doses added up past the threshold
 
 
 def test_gpu_matches_the_net_exchange_of_a_near_empty_group(device):

@@ -425,6 +425,16 @@ def apply_extinction_threshold(env):
     Only FGs with ``min_split_biomass > 0`` AND
     ``extinction_threshold_factor > 0`` are affected. Continuous FGs
     (e.g. plankton, msb=0) are untouched.
+
+    Section 304: a cell that received arrivals from the outside this tick
+    (a recruit import or a migrating group's immigrants,
+    ``open_pool.note_import_cells``) is not swept in that tick. An import
+    delivered below the threshold per cell and tick (whiting's June and
+    September recruits at 6 h: 0.22 kg against 0.25 kg) was otherwise
+    deleted on arrival in every empty cell, tick after tick, and never
+    accumulated; exempt, the doses add up until the cell passes the
+    threshold, whatever the tick length, cell size or depth weight. Cells
+    without an arrival are swept as before.
     """
     # This tick's arrivals from the outside, used once (the next tick's
     # exchange keeps its own).
@@ -440,13 +450,12 @@ def apply_extinction_threshold(env):
         if biomass is None:
             continue
         dead_mask = (biomass > 0.0) & (biomass < threshold)
+        if fg_id in imports:
+            # Section 304: this tick's arrival cells are kept.
+            dead_mask &= ~(np.asarray(imports[fg_id][0]) > 0.0)
         if not np.any(dead_mask):
             continue
         lost = float(biomass[dead_mask].sum())
-        if fg_id in imports:
-            # Arrivals swept in the tick they arrived never stayed: out of
-            # the reward ledger's net exchange (energy_ledger).
-            open_pool.discount_swept_import(env, fg_id, fg, imports[fg_id], dead_mask)
         # Booked as starvation: semantically the closest channel, the cell
         # holds too little biomass to form a viable unit.
         env.loss_starvation[fg_id] = (
@@ -551,7 +560,7 @@ def apply_population_change(env, clip_nonviable=True):
             _apply_non_decision_maker_population_change(env, fg_id, fg)
     # Section 246: migrating decision makers exchange with the outside on
     # their group total, before the extinction sweep. The per-cell
-    # arrivals are kept for the sweep (open_pool.discount_swept_import).
+    # arrivals are kept for the sweep, which spares their cells (section 304).
     env.tick_import_cells = {}
     open_pool.migrate(env)
     # Section 250: the open-population groups' recruit import and

@@ -27150,7 +27150,9 @@ remain open exactly as described in 71.9 / 71.11.
     tests/test_impact_observed_by.py keeps the mechanism tests and loses the mareld2 term test. Kept: the
     `observed_by` key (loader, both engines, FG editor; no use today), maps/shallow_beds.npz and
     tools/make_habitat_map.py. The water column's shallow placement is again the known defect of 298.1. Every DM
-    loses the five impact slots: checkpoints of 300 (fix109) are invalid; retrain under a new run name. fix109's
+    loses the five impact slots: checkpoints of 300 (fix109) are invalid. Library and manifest are again those of
+    section 299 (commit 1b07c2b), so fix108's checkpoints (u767) are valid again (input widths checked) and the run
+    can be resumed; its probes after the resume are warmed (section 302). fix109's
     last policies (u871) are kept in the session scratchpad (fix109_last300); evaluating them needs the 300
     library (commit ff9ee9b).
 300.1.5 Open, not part of this removal: (1) the water column's realised M2 on whiting at 4-5x booked through pursuit
@@ -27158,3 +27160,62 @@ remain open exactly as described in 71.9 / 71.11.
     1.1-1.4; ration unchanged 17.8, porpoise Lloyd 10 -> 20-30 from u770; 60 x 60 inference 84 -> 44-60 t in a
     year, seals 15 -> 10-13), cause not diagnosed. (3) The edition-4 deck generators (make_strategi_deck4.py,
     make_strategy_deck4_en.py) describe section 300 and read its library rows; the PDFs were not rebuilt.
+
+304 WHITING'S DECLINE: THE MASS BUDGET, AND ARRIVALS EXEMPT FROM THE EXTINCTION SWEEP (2026-11-23/24; user: "Dags att
+    ta sig an varfor vitlingen minskar brant", then "Ja, implementera undantaget for ankomster")
+304.1 Rig: frozen fix108 u650 (scratchpad copy), the long-run probe reproduced on the CPU (30 x 30, unfished, seed
+    20260530, evaluation 67's spawn overrides, 60-day warm-up), 299 library copy; one checkpoint, one seed. Base
+    reproduces 299.1: whiting 0.90 / 0.75 / 0.54. Books per tick: import, emigration, M1, M2 per predator, the
+    sweep; growth measured in the growth step (equals the residual). Rates /yr per mean biomass.
+304.2 Why steep: an open population sits at B* = I / (L - P). Whiting's booked L - P is 0.41 /yr (M1 0.25 + M2 0.49 +
+    emigration 0.28 - P 0.61) against an import of 0.39 B/yr, so each 0.1 /yr of excess loss lowers the level ~20 %.
+    Year 3 of the base: L - P 0.91, B* 0.42 B0. The excess +0.50 /yr:
+      water column M2       +0.38  (0.54 vs booked 0.157)
+      growth shortfall      +0.14  (P 0.47 vs 0.61)
+      "starvation"          +0.09  (the extinction sweep, 304.4)
+      benthivores           +0.02  annual mean, 0.5-1.1 /yr in the last months as they reach 1.5x start
+      seals +0.02, emigration -0.02, porpoises -0.135 (they realise 0.04 of their booked 0.14: a mask)
+304.3 The water column's part, in three steps: budget_gate's equal-cell encounter 0.20 (1.26x booked); x1.36-1.54
+    from whiting's J/B 0.28-0.36 in the probe against the field's 0.14-0.19 (the pair's access is [0.41, 0.072])
+    = 0.27-0.30; the rest is pursuit. Blind arms (raw observation 0 on the channels, own cell and four
+    neighbours; the observation array is (N_dm, cells, channels)): the water column blind to whiting (group and J)
+    -> whiting 0.98 / 0.90 / 0.82, its M2 0.29 / 0.34 / 0.34, so pursuit is +0.09 (year 1) and +0.20 (year 3);
+    whiting blind to the water column -> 0.77 / 0.51 / 0.35, M2 0.60 / 0.91 / 1.12, its bed spread changes
+    (< 100 m 0.18-0.47): whiting uses the signal. Overlap N sum(W H) / (sum W sum H) 1.04-1.19 in the base.
+    Pursuit is learned behaviour, not a lever. The J/B: the import 0.39 B/yr into a 0.165 B compartment plus J's
+    share of the new tonnes exceeds the J outflow at booked rates (graduation 0.65, e_J 0.2, M1 0.25, M2_J 1.06);
+    gamma and kappa (230, closed form, Z_J 1.90) were never re-checked against 250's import. Open; to re-derive
+    through research_notes/"Arsungarnas andel" (A-ring) scripts/stage_box_model.py with the import, no value
+    from the outcome.
+304.4 The sweep. 18.2 of the 18.7 t booked as whiting starvation in year 1 was the extinction sweep, ~12 % of the
+    year's import; real starvation 0.5 t. The recruit import is uniform per cell: 0.21-0.23 kg per cell and tick
+    in June and September at 6 h, under the 0.25 kg threshold (0.5 x min_split 0.5 kg), so in every empty cell it
+    was deleted in the tick it arrived (import, then sweep) and never accumulated. July-August doses (0.47-0.50 kg)
+    survive. Benthivores: 48-100 % of the cells under the threshold in June-September (recruit_depth_table 0.05 /
+    0.21 over deep beds); planktivores only in May.
+304.5 Growth shortfall: not the fill (0.86-0.97 at the growth step in June-August). 25-51 % of the growth ceiling
+    B g (s - u) is lost in June-August where the tick's I - C <= 0 (the 244.10 rule): about half the whiting
+    biomass eats below its cost in summer. Cause (policy foraging, the krill season over < 100 m beds, the fish
+    prey at 0.17-0.28 of booked) not diagnosed; budget_gate's potential ration is >= 1.55x field Q/B every month.
+304.6 Fix (both engines; user's choice over lowering the factor, which fails at 1-3 h ticks and on the deep-bed
+    benthivore doses): the extinction sweep spares the cells that received arrivals from the outside this tick
+    (stages.exchange recruits, open_pool.migrate immigrants; `env.tick_import_cells`, GPU the arrival tensors
+    returned by `_migrate` / `_stage_exchange`). Doses accumulate until the cell passes the threshold; cells
+    without an arrival are swept as before. open_pool.discount_swept_import and the GPU `_discount_swept_import`
+    removed (no arrival can be swept any more, so the ledger's net exchange is the gross import; the fix105
+    update-562 NaN cannot recur). No observation change: checkpoints stay valid, dynamics move a little.
+    Tests: tests/test_open_population.py - the swept-arrivals test replaced by arrivals-kept (both daylight
+    branches, ledger numerators), remnants without an arrival still swept, sub-threshold doses accumulate past
+    the threshold; GPU parity on the near-empty group unchanged.
+304.7 Effect (same rig, new code): whiting 0.93 / 0.79 / 0.63 (was 0.90 / 0.75 / 0.54), "starvation" 0.004-0.011 /yr
+    (was 0.056-0.087); every other group within 0.01. The running fix108 (resumed 22:55 on 2026-11-23) and its
+    probe worker imported the old code and keep it until restarted.
+304.8 The exemption lasts one tick: a cell is swept the next tick if it gets no new arrival and is still under the
+    threshold. In the import season every cell gets a dose every tick (whiting and planktivores uniform,
+    benthivores depth-weighted but > 0 everywhere), so the cell is exempt again and the doses stack (whiting
+    0.22 -> 0.44 kg in two ticks; the deepest benthivore beds 0.011 kg a tick, ~23 ticks); a sub-unit cell that
+    moves whole lands in a cell with its own dose. Left exposed: a cell still under the threshold on the first
+    tick without arrivals (season end), and an immigrant packet that leaves the edge entry cells. Measured with
+    the 304.1 rig on the new code, one probe year: the sweep removed 0 t from each of whiting, benthivores,
+    planktivores, the water column and mackerel (imports 155 / 165 / 1264 / 800 / 1520 t), against 18.2 t from
+    whiting before.
