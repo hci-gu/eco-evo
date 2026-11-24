@@ -51,11 +51,13 @@ PER_YEAR = daylight_module.ticks_per_year(6)
 RHO = [0, 0, 0, 0, 0, 1.0, 2.0, 2.0, 1.0, 0, 0, 0]
 
 
-def block(rho=RHO, start=0.3, recruit=None, emigration=None):
+def block(rho=RHO, start=0.3, recruit=None, emigration=None, adult=None):
     out = {"growth_ratio": 4.0, "graduation_rate": 1.0, "recruitment": list(rho),
            "start_share": start}
     if recruit is not None:
         out["recruit_import"] = recruit
+    if adult is not None:
+        out["adult_import"] = adult
     if emigration is not None:
         out["emigration"] = list(emigration)
     return out
@@ -190,7 +192,7 @@ def test_mareld2_open_population():
     sd = _library()["species_definitions"]
     expected = {"planktivorous_fish": (0.66, 0.527, [0.1, 0.0]),
                 "benthivorous_fish": (0.74, 0.183, [1.1, 0.17]),
-                "whiting": (0.61, 0.172, [0.2, 0.3])}
+                "whiting": (0.61, 0.0545, [0.2, 0.3])}
     for fid, (p, imp, em) in expected.items():
         assert sd[fid]["somatic_production"] == pytest.approx(p), fid
         assert "r_max" not in sd[fid] and "feeding_season_months" not in sd[fid], fid
@@ -338,6 +340,69 @@ def _near_empty(min_split=200, extinction_factor=0.3, **kw):
     a.juvenile = (a.biomass * 0.3).astype(np.float32)
     a.energy_reserve = (a.biomass * 300.0).astype(np.float32)
     return env
+
+
+def test_adult_import_is_checked():
+    spec = stages.settings(FunctionalGroup("a", {"is_decision_maker": True,
+                                                 "juvenile_stage": block(adult=0.3)}))
+    assert spec["adult_import"] == 0.3 and spec["import"] is None
+    for bad in (-0.1, "x", float("inf")):
+        with pytest.raises(ValueError):
+            stages.settings(FunctionalGroup("a", {"is_decision_maker": True,
+                                                  "juvenile_stage": block(adult=bad)}))
+    assert stages.settings(FunctionalGroup("a", {"is_decision_maker": True,
+                                                 "juvenile_stage": block()}))["adult_import"] is None
+
+
+def test_adult_import_alone_keeps_the_own_recruitment():
+    env = env_with({"a": block(adult=1.5)})
+    ja = env.global_fg_order.index("a")
+    assert env.stage_exchange_ids == ["a"]
+    assert env.stage_rho[:, ja].max() > 0.0                 # rho untouched
+    assert float(env.stage_import[:, ja].sum()) == 0.0
+    np.testing.assert_allclose(env.stage_adult_import[:, ja], 1.5 / PER_YEAR, rtol=1e-6)  # even in time
+
+
+def test_one_exchange_step_with_an_adult_import():
+    env = env_with({"a": block(rho=[1.0] * 12, recruit=3.0, emigration=[2.0, 0.5], adult=1.2)})
+    a = env.fgs["a"]
+    rng = np.random.default_rng(1)
+    a.biomass = rng.uniform(1.0, 3.0, a.biomass.shape).astype(np.float32)
+    a.juvenile = (a.biomass * rng.uniform(0.1, 0.6, a.biomass.shape)).astype(np.float32)
+    a.energy_reserve = (a.biomass * rng.uniform(100.0, 400.0, a.biomass.shape)).astype(np.float32)
+    b0, j0, r0 = (x.astype(np.float64).copy() for x in (a.biomass, a.juvenile, a.energy_reserve))
+    env.loss_exchange, env.gain_exchange, env.tick_import_cells = {}, {}, {}
+    stages.exchange(env)
+    kj, ka = math.exp(-2.0 / PER_YEAR), math.exp(-0.5 / PER_YEAR)
+    rec, adu = 3.0 / PER_YEAR, 1.2 / PER_YEAR
+    new_j, new_b = j0 * kj, j0 * kj + (b0 - j0) * ka
+    me, ec = float(a.max_energy_reserve), float(a.params["energy_content"])
+    np.testing.assert_allclose(a.juvenile, new_j + rec, rtol=1e-5)            # recruits only in J
+    np.testing.assert_allclose(a.biomass, new_b + rec + adu, rtol=1e-5)       # adults join A
+    np.testing.assert_allclose(a.energy_reserve, r0 * new_b / b0 + (rec + adu) * 0.7 * me, rtol=1e-5)
+    imported = (rec + adu) * a.biomass.size
+    export = float((b0 - new_b).sum())
+    leaving = float((r0 - r0 * new_b / b0).sum())
+    assert env.gain_exchange["a"] == pytest.approx(imported, rel=1e-6)
+    assert env.tick_exchange_biomass["a"] == pytest.approx(imported - export, rel=1e-4)
+    assert env.tick_exchange_energy["a"] == pytest.approx(
+        (imported - export) * ec + imported * 0.7 * me - leaving, rel=1e-4)
+    np.testing.assert_allclose(env.tick_import_cells["a"][0], rec + adu, rtol=1e-5)  # the sweep's arrivals
+
+
+def test_gpu_matches_reference_with_an_adult_import(device):
+    env = env_with({"a": block(recruit=2.0, emigration=[1.5, 0.3], adult=1.0),
+                    "b": block(adult=0.5)}, mortality=True, handling=0.3)
+    model = _assert_parity(env, device, ticks=8, base_tol=1e-5)
+    assert model.stage_exchange_on
+
+
+def test_mareld2_whiting_import_split():
+    js = _library()["species_definitions"]["whiting"]["juvenile_stage"]
+    assert js["adult_import"] == pytest.approx(0.1175)
+    assert js["recruit_import"] + js["adult_import"] == pytest.approx(0.172)   # the 250 total kept
+    for fid in ("planktivorous_fish", "benthivorous_fish"):
+        assert "adult_import" not in _library()["species_definitions"][fid]["juvenile_stage"]
 
 
 @pytest.mark.parametrize("daylight", [True, False])

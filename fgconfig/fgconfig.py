@@ -998,6 +998,8 @@ class FGConfigApp:
             ("  Fishing selectivity (impact = s_J, ...; unset = 1)", "juvenile_fishing_selectivity", "entry", 0.0, 100.0),
             # Section 250: the open population (stages.exchange).
             ("  Recruit import (t/km2/yr into J; empty = own recruitment)", "juvenile_recruit_import", "entry", 0.0, 1000.0),
+            # Section 305: older immigrants into A.
+            ("  Adult import (t/km2/yr into A; empty = none)", "juvenile_adult_import", "entry", 0.0, 1000.0),
             ("  Emigration e_J, e_A (1/yr; empty = none)", "juvenile_emigration", "entry", 0.0, 100.0),
             # Section 270: the recruit import's shape by bed depth.
             ("  Recruit depth shape (depth m: weight, ...; empty = uniform)", "juvenile_recruit_depth_table", "entry", 0.0, 1000.0),
@@ -5344,6 +5346,7 @@ class FGConfigApp:
         self.juvenile_vars["juvenile_fishing_selectivity"].set(
             ", ".join(f"{k} = {float(v):g}" for k, v in sel.items()))
         self.juvenile_vars["juvenile_recruit_import"].set(fmt(block.get("recruit_import")))
+        self.juvenile_vars["juvenile_adult_import"].set(fmt(block.get("adult_import")))
         self.juvenile_vars["juvenile_emigration"].set(fmt(block.get("emigration")))
         rows = block.get("recruit_depth_table") or []
         self.juvenile_vars["juvenile_recruit_depth_table"].set(", ".join(
@@ -5491,6 +5494,9 @@ class FGConfigApp:
             recruit = str(values.get("juvenile_recruit_import", "") or "").strip()
             if recruit:
                 block["recruit_import"] = float(recruit)
+            adults = str(values.get("juvenile_adult_import", "") or "").strip()
+            if adults:
+                block["adult_import"] = float(adults)
             emigration = numbers(values.get("juvenile_emigration"))
             if emigration:
                 block["emigration"] = emigration

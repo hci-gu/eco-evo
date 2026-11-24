@@ -27219,3 +27219,36 @@ remain open exactly as described in 71.9 / 71.11.
     the 304.1 rig on the new code, one probe year: the sweep removed 0 t from each of whiting, benthivores,
     planktivores, the water column and mackerel (imports 155 / 165 / 1264 / 800 / 1520 t), against 18.2 t from
     whiting before.
+
+305 WHITING'S IMPORT SPLIT BY STAGE: `juvenile_stage.adult_import` (2026-11-24; user: "Ja, bygg A")
+305.1 Why (304.3's J/B). Section 250 put whiting's whole import, SMS stock age-1 Q1 biomass x the box's survey
+    share (0.61-1.12 %) = 0.172 t/km2/yr = 0.386 B/yr, into J. The box's own GOV age composition (2001-25,
+    Walker q-corrected; research_notes/"Arsungarnas andel" (A-ring) tables/juvenile_share_by_group.csv) puts
+    age 1 at 0.122 of whiting's biomass in Q1, i.e. 0.0545 t/km2/yr by the same definition: the 250 value is
+    3.2x the box's own age-1 stock (benthivores: 0.12 against their 0.120, consistent; planktivores take their
+    adults through the migration). The field stage box model's recruitment for the survey J/B 0.165 is 0.104
+    B/yr, the same order. Library arithmetic (no policy, booked per-stage losses, scratchpad split.py): holding
+    J/B 0.165 with B stationary needs I_J 0.07 and I_A 0.35-0.42 B/yr. The remainder arrives as older fish: the
+    box cohort 1 -> 2 is net ~0 against a mortality ~0.7 /yr, the 1-groups still arriving
+    (research_notes/"Bestandsreglering" (a-ring) migration.md 2.5).
+305.2 Engine (both): `juvenile_stage.adult_import` I_A (t/km2/yr, box mean, >= 0) enters A in stages.exchange
+    after the emigration, I_A / ticks per year in every cell (even in time and space), at the month's start_fill
+    (else 0.7); booked with the recruit import (gain_exchange, the tick's net exchange for the ledger) and in
+    tick_import_cells, so the 304 sweep spares the cells. Needs no recruit_import, leaves rho alone.
+    `env.stage_adult_import`, GPU `stage_adult_import` in `_stage_exchange` (J gets the recruits only). FG
+    editor field "Adult import" (Juvenile Stage), field help.
+305.3 Library: whiting recruit_import 0.172 -> 0.0545, adult_import 0.1175 (total kept). No other group.
+    Observation widths unchanged; whiting's J/B (an observed channel) and payoffs move: retrain whiting.
+305.4 Frozen fix108 u650, the 304.1 rig (policies trained at J/B ~0.3; whiting sees its own J channel, so
+    behaviour is out of distribution): whiting 0.99 / 0.95 / 0.83 (304: 0.93 / 0.79 / 0.63); J/B 0.15-0.16
+    (field 0.14-0.19); water column -> whiting M2 0.19 / 0.23 / 0.19 (booked 0.157; was 0.41-0.58), so the
+    J share carried the pursuit as well; whiting's P 0.30-0.38 (was 0.47-0.51), ration 3.0-3.3 (3.6), Lloyd
+    33-40 (14-17), fill ~0.66: the frozen whiting policy reacts to the unfamiliar J/B. Every other group
+    within 0.04. P and crowding are judged after retraining.
+305.5 Tests: test_open_population (key checked, adult import alone keeps rho, one exact exchange step with both
+    imports and the sweep's arrival cells, GPU parity, mareld2 split), test_fgconfig_juvenile round trip.
+    pytest 2084 passed, 12 skipped; 1-generation train.py and train_gpu.py smokes passed.
+305.6 Running fix108 (restarted on 304's code 2026-11-24 00:23): its probe worker reloads fg_library.yaml but
+    its code ignores adult_import, so from the library edit (00:51; evaluation 87, update 840: whiting 0.59 /
+    0.34 / 0.20) its probes import only 0.0545 into J. Those probes are invalid until fix108 is restarted on
+    the 305 code.

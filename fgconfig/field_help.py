@@ -973,7 +973,18 @@ FIELD_HELP = {
         "group's own new tonnes no longer recruit (rho 0). Booked as the "
         "exchange; the reward ledger takes it out. Library: SMS stock "
         "recruits x the box's survey share (planktivores 0.527, "
-        "benthivores 0.183, whiting 0.172)."
+        "benthivores 0.183); whiting 0.0545, the box's own age-1 Q1 "
+        "biomass (section 305)."
+    ),
+    "juvenile_adult_import": (
+        "Adult import I_A (t/km2/yr, box mean; empty = none). Section 305.\n\n"
+        "Older immigrants: each tick I_A / ticks per year enters A in every "
+        "cell at the month's Start Fill (else 0.7), evenly over the year. "
+        "Booked as the exchange with the recruit import; the reward ledger "
+        "takes it out, and the extinction sweep spares the arrival cells. "
+        "Library: whiting 0.1175, the part of the 250 import (0.172) above "
+        "the box's own age-1 Q1 biomass, so its J/B stays at the survey's "
+        "0.14-0.19 (the 1-groups keep arriving in their second year)."
     ),
     "juvenile_emigration": (
         "Emigration e_J, e_A (1/yr, two values >= 0; empty = none). Section "

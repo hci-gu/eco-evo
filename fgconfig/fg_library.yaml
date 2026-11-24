@@ -1500,7 +1500,15 @@
       # Emigration [e_J, e_A] /yr (WP2 survey cohorts, upper bounds).
       # research_notes/"Oppen population" (O-umlaut) summary.md.
       recruitment: [0, 0, 0, 0, 0, 0.6, 1.3, 1.4, 0.6, 0, 0, 0]
-      recruit_import: 0.172
+      # Section 305: the 250 import (0.172, SMS age-1 Q1 x the box's survey
+      # share) split by stage. Into J: the box's own age-1 Q1 biomass, GOV
+      # 2001-25 q-corrected share 0.122 of B x 0.446 t/km2 = 0.0545
+      # (Arsungarnas andel, A-ring, juvenile_share_by_group.csv; the stage
+      # box model's R0 0.104 B/yr agrees). The rest arrives as older fish
+      # into A (cohort 1 -> 2 net ~0 in the box: 1-groups still arriving;
+      # Bestandsreglering, a-ring, migration.md 2.5); total unchanged.
+      recruit_import: 0.0545
+      adult_import: 0.1175
       emigration: [0.2, 0.3]
       start_share: [0.167, 0.159, 0.152, 0.145, 0.138, 0.139, 0.156, 0.181, 0.195, 0.193, 0.184, 0.175]
       fishing_selectivity:

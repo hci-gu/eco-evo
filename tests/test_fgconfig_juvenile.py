@@ -41,6 +41,17 @@ def test_open_population_rows_round_trip():
     assert block is None and error
 
 
+def test_adult_import_round_trip():
+    # Section 305: older immigrants into A.
+    block, error = App._collect_juvenile_block(
+        dict(ROWS, juvenile_recruit_import="0.0545", juvenile_adult_import="0.1175"), "whiting")
+    assert error is None and block["adult_import"] == 0.1175 and block["recruit_import"] == 0.0545
+    block, error = App._collect_juvenile_block(dict(ROWS, juvenile_adult_import=""), "whiting")
+    assert error is None and "adult_import" not in block
+    block, error = App._collect_juvenile_block(dict(ROWS, juvenile_adult_import="x"), "whiting")
+    assert block is None and error
+
+
 def test_recruit_depth_rows_round_trip():
     # Section 270: "depth: weight, ..." rows of the recruit import's shape.
     rows = dict(ROWS, juvenile_recruit_import="0.183",

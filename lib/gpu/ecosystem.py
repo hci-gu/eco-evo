@@ -407,6 +407,8 @@ class TensorEcosystem:
             self.stage_exchange_mask = tensor([fid in exchange_ids for fid in self.ids],
                                               torch.bool)[None, :, None]
             self.stage_import = tensor(env.stage_import)[:, :, None]
+            # Section 305: the adult import per cell and tick (even), into A.
+            self.stage_adult_import = tensor(env.stage_adult_import)[:, :, None]
             self.stage_import_map = tensor(np.asarray(env.stage_import_map, dtype=np.float32)
                                            .reshape(len(self.ids), self.C))[None]
             self.stage_fill = tensor(env.stage_fill)[:, :, None]
@@ -2017,20 +2019,26 @@ class TensorEcosystem:
 
     def _stage_exchange(self, b, r, juvenile, light_index, record):
         """Section 250, mirror of ``stages.exchange``: emigration per stage,
-        then the recruit import into J at the month's fill."""
+        then the recruit import into J and (section 305) the adult import
+        into A at the month's fill. Returns the arrivals per cell last (the
+        sweep spares their cells, section 304)."""
         if light_index is None or self.stage_import.shape[0] == 1:
             per_cell = self.stage_import[:1].expand(b.shape[0], -1, -1)
+            adult_cell = self.stage_adult_import[:1].expand(b.shape[0], -1, -1)
             fill = self.stage_fill[:1].expand(b.shape[0], -1, -1)
         else:
             t = light_index.reshape(-1)
             per_cell, fill = self.stage_import[t], self.stage_fill[t]
+            adult_cell = self.stage_adult_import[t]
         mask = self.stage_exchange_mask
         j = torch.minimum(juvenile.clamp_min(0), b)
         a = (b - j).clamp_min(0)
         new_j = torch.where(mask, j * self.stage_emig_keep_j, juvenile)
         new_b = torch.where(mask, new_j + a * self.stage_emig_keep_a, b)
         kept = torch.where(mask & (b > 0), r * (new_b / b.clamp_min(1e-30)), r)
-        imported = torch.where(mask, per_cell * self.stage_import_map, 0.0)
+        recruits = torch.where(mask, per_cell * self.stage_import_map, 0.0)
+        # Section 305: the adult immigrants (even over the cells) join A.
+        imported = recruits + torch.where(mask, adult_cell, 0.0).expand_as(recruits)
         arriving = imported * fill * self.max_reserve
         if record is not None:
             ec = self.energy_content
@@ -2045,7 +2053,7 @@ class TensorEcosystem:
             record["exchange_reserve"] = record.get("exchange_reserve", zero) + energy_in - leaving
             record["exchange_energy"] = (record.get("exchange_energy", zero)
                                          + (inn - out) * ec + energy_in - leaving)
-        return new_b + imported, kept + arriving, new_j + imported, imported
+        return new_b + imported, kept + arriving, new_j + recruits, imported
 
     def advect(self, biomass, reserve, tick, keys=None, track=False, juvenile=None):
         """Drift every responding group; ``track`` also returns the shares.
