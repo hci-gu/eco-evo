@@ -14,6 +14,7 @@ from lib.gpu.cli import (add_common_arguments, builder_from_args, positive_int,
                          targets_from_args, trainer_options)
 from lib.gpu.config import ProjectSpec
 from lib.gpu.device import default_execution, resolve_device
+from lib.gpu.rollout import StopRequested, set_stop_check
 from lib.gpu.trainer import TensorARSTrainer
 from lib.training_profiles import add_profile_argument, parse_training_args
 from lib.runners.rnd_baseline import add_rnd_baseline_argument
@@ -216,6 +217,17 @@ def main(argv=None, *, on_step=None):
         nonlocal stop_requested
         stop_requested = True
     previous_handlers = {sig: signal.signal(sig, request_stop) for sig in (signal.SIGINT, signal.SIGTERM)}
+    # Section 307: the rollouts (training, warm-up, the viewer's GPU probe)
+    # read the flag between tick blocks and raise StopRequested, so a stop
+    # discards the running update instead of waiting for it. Nothing
+    # persistent changes before train_step's last lines, so the save below
+    # still holds exactly the last completed update.
+    # The checkpoint counts whole iterations, and without co-evolution one
+    # iteration trains the groups one batch at a time: a stop may cut the
+    # first batch's update or anything after the last one (the viewer
+    # probe), never a batch in between.
+    stoppable = True
+    set_stop_check(lambda: stop_requested and stoppable)
     save_final = finished = False
     visual = None
     try:
@@ -242,11 +254,19 @@ def main(argv=None, *, on_step=None):
                     # The viewer's spawn dropdowns reach the training worlds.
                     spawn = {} if visual is None else visual.training_spawn(trainer)
                     batches = [targets] if args.coevolution else [[species] for species in targets]
-                    for batch in batches:
+                    for index, batch in enumerate(batches):
+                        stoppable = index == 0
                         if visual is None:
                             trainer.train_step(batch, ticks, epoch)
                         else:
                             visual.train_step(trainer, batch, ticks, epoch)
+                        if index == len(batches) - 1:
+                            # The iteration is complete; a stop now keeps it.
+                            next_generation, next_within = gen, iteration + 1
+                            stoppable = True
+                        else:
+                            stoppable = False
+                        if visual is not None:
                             visual.update(trainer, batch, gen, iteration, args.ticks)
                             visual.update_progress(trainer, args)
                         if on_step is not None:
@@ -286,10 +306,11 @@ def main(argv=None, *, on_step=None):
                     np.savez_compressed(directory / f"snapshot_{gen + 1:06d}.npz",
                                         group_ids=np.asarray(trainer.model.ids), **trainer.runner.snapshot())
             save_final = finished = True
-    except KeyboardInterrupt:
-        print("Interrupted; saving the last completed update.", flush=True)
+    except (KeyboardInterrupt, StopRequested):
+        print("Interrupted; the running update is discarded, saving the last completed one.", flush=True)
         save_final = True
     finally:
+        set_stop_check(None)
         if visual is not None:
             # The last probe is recorded after a finished run; an
             # interrupt (now or while waiting for it) stops it instead.

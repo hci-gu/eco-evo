@@ -27252,3 +27252,37 @@ remain open exactly as described in 71.9 / 71.11.
     its code ignores adult_import, so from the library edit (00:51; evaluation 87, update 840: whiting 0.59 /
     0.34 / 0.20) its probes import only 0.0545 into J. Those probes are invalid until fix108 is restarted on
     the 305 code.
+
+307 Ctrl+C stops train_gpu.py within a tick block (2026-11-25, user: "abort directly on Ctrl+C, without
+      waiting for the running update").
+307.1 Cause. train_gpu's SIGINT/SIGTERM handler only set a flag, read after the whole update, and the
+      update is queued without host syncs, so the main thread sat in a blocking CUDA readback (the log
+      line's metrics()) where no Python handler runs: fix110 (30x30, 1460 ticks) waited ~100 s. A toy
+      test: a blocking .item() on 30 s of queued matmuls ran the handler after the queue; polling an
+      event ran it at once.
+307.2 Mechanism. lib/gpu/rollout.py: set_stop_check(check) installs one process-wide check; with it
+      RolloutRunner.run runs in blocks of graph_ticks, queues block i, waits on block i-1's event
+      (torch.Event; none on cpu) and raises StopRequested (a BaseException, so the viewer's
+      except Exception and a probe's except KeyboardInterrupt do not turn it into a partial result).
+      One block stays in flight, so the GPU never idles. Without a check (inference, probes, tests,
+      the long-run probe's process) run() is unchanged. train_gpu.py installs lambda: stop_requested
+      and stoppable for the run and removes it in finally; the except catches StopRequested too and
+      saves the last completed update (message: the running update is discarded). It covers the
+      training rollout, the warm-up and the viewer's GPU probe, headless and --visual (the update runs
+      in the viewer's worker thread; the future re-raises).
+307.3 Consistency. Nothing persistent changes in train_step before its last lines (ars_update, obs
+      merge, iteration), and refresh_worlds is a pure function of the keys, so a cut update leaves
+      exactly the last completed state. The checkpoint counts whole iterations: next_within is now
+      set right after the iteration's last batch, and without co-evolution (one batch per group) a
+      stop may cut only the first batch or what follows the last (stoppable). A stop in the viewer
+      probe after an update keeps that update but its training.jsonl line is not written.
+307.4 Checks (16x16, 1460 ticks, 4 deltas, warm-up 10 d, seed 7; fix110 sharing the GPU): SIGINT 8 s
+      into update 2 -> exit 1.1 s after it (was ~14 s, the rest of the update); --resume then gave
+      updates 2-3 bit-identical rewards to an uninterrupted run. --visual: 1.0 s mid-update, 0.7 s in
+      the viewer probe (saved 1 update, next iteration 1, no partial biomass.jsonl record).
+      seconds/update unchanged (HEAD 19.5, new 19.5, updates 2-4). train.py (CPU) left as is: its
+      pool.map wait is interruptible and the pool is terminated on KeyboardInterrupt (read from the
+      code; a timed run was not done - the 60x60 CPU start probe alone took ~9 min).
+307.5 pytest: 2082 passed, 12 skipped, 3 failed (test_config_encoding spawn defaults,
+      test_viewer_spawn_overrides x2); they fail with HEAD's rollout.py and train_gpu.py too: the
+      uncommitted fg_library.yaml has spawn mode perlin where the tests expect colony.

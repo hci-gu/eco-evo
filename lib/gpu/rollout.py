@@ -7,6 +7,41 @@ from lib.gpu.random import fold_in, uniform
 from lib.runners.population_stability import validate_reward
 
 
+class StopRequested(BaseException):
+    """A training entry point asked every rollout to stop (Ctrl+C, SIGTERM).
+
+    Raised by ``RolloutRunner.run`` between tick blocks once the installed
+    stop check fires (``set_stop_check``). A BaseException, so neither the
+    viewer's ``except Exception`` nor a probe's ``except KeyboardInterrupt``
+    turns it into a partial result: it reaches the entry point, which
+    saves the last completed update.
+    """
+
+
+# Section 307: one process-wide check, installed by train_gpu.py for the
+# run's lifetime. None (the default, every other caller) keeps run() as it
+# was: no events, no host waits.
+_stop_check = None
+
+
+def set_stop_check(check):
+    """Install ``check`` (no arguments, True = stop) for every runner; None removes it."""
+    global _stop_check
+    _stop_check = check
+
+
+def _block_event(device):
+    """An event to wait on one tick block, or None where ops are synchronous."""
+    if device.type == "cpu":
+        return None
+    try:
+        event = torch.Event(device=device)
+        event.record()
+        return event
+    except (RuntimeError, TypeError, AttributeError):
+        return None
+
+
 class RolloutRunner:
     # Row order of ``loss_book``; the names of loss_accounting.LOSS_CAUSES.
     LOSS_ORDER = ("starvation", "predation", "impact", "natural", "exchange")
@@ -417,7 +452,10 @@ class RolloutRunner:
     @torch.no_grad()
     def run(self, ticks):
         self.prepare()
-        if self.graphs:
+        check = _stop_check
+        if check is not None:
+            self._run_stoppable(ticks, check)
+        elif self.graphs:
             blocks, remainder = divmod(ticks, self.graph_ticks)
             for _ in range(blocks):
                 self.graphs[self.graph_ticks].replay()
@@ -426,6 +464,37 @@ class RolloutRunner:
         else:
             for _ in range(ticks):
                 self._execute_tick()
+
+    def _run_stoppable(self, ticks, check):
+        """``run`` with a stop check between blocks of ``graph_ticks`` ticks.
+
+        The rollout is queued without host syncs, so a stop flag read only
+        after it (or a signal handler waiting on a blocking readback)
+        lands after the whole update. Here the host keeps one block in
+        flight: it queues block i, waits for block i - 1 and then reads the
+        check, so the GPU stays busy and a stop is seen within about two
+        blocks. Raises ``StopRequested``; the runner's state is then
+        mid-rollout and only fit to be discarded.
+        """
+        blocks, remainder = divmod(ticks, self.graph_ticks)
+        sizes = [self.graph_ticks] * blocks + ([remainder] if remainder else [])
+        pending = None
+        for size in sizes:
+            if self.graphs:
+                if size == self.graph_ticks:
+                    self.graphs[size].replay()
+                else:
+                    for _ in range(size):
+                        self.graphs[1].replay()
+            else:
+                for _ in range(size):
+                    self._execute_tick()
+            event = _block_event(self.model.device)
+            if pending is not None:
+                pending.synchronize()
+            pending = event
+            if check():
+                raise StopRequested
 
     def results(self, ticks):
         m = self.model
