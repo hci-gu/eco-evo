@@ -6,6 +6,7 @@ from pathlib import Path
 
 import torch
 
+from lib.gpu.device import default_execution, resolve_device, wide_dtype
 from lib.gpu.ecosystem import TensorEcosystem
 from lib.gpu.policy import PolicyBank
 from lib.gpu.random import fold_in, normal
@@ -55,43 +56,42 @@ def reanchor_worlds(target, biomass, reserve, juvenile, start, mask, tissue):
     juveniles and (``tissue``) its reserve; a dead one gets its start
     fields back. Returns (biomass, reserve, juvenile).
     """
-    current = biomass.double().sum(-1)
-    target = target.double()
+    wide = wide_dtype(biomass.device)
+    current = biomass.to(wide).sum(-1)
+    target = target.to(wide)
     on = mask[None, :] & (target > 0)
     dead = (on & (current <= 0))[..., None]
     k = torch.where(on & (current > 0), target / current.clamp_min(1e-30),
                     torch.ones_like(current))[..., None]
-    b = torch.where(dead, start[0].to(biomass.dtype), (biomass.double() * k).to(biomass.dtype))
-    scaled_r = torch.where(tissue[None, :, None], reserve.double() * k, reserve.double())
+    b = torch.where(dead, start[0].to(biomass.dtype), (biomass.to(wide) * k).to(biomass.dtype))
+    scaled_r = torch.where(tissue[None, :, None], reserve.to(wide) * k, reserve.to(wide))
     r = torch.where(dead, start[1].to(reserve.dtype), scaled_r.to(reserve.dtype))
     j = None
     if juvenile is not None:
-        j = (juvenile.double() * k).to(juvenile.dtype)
+        j = (juvenile.to(wide) * k).to(juvenile.dtype)
         if start[2] is not None:
             j = torch.where(dead, start[2].to(juvenile.dtype), j)
     return b, r, j
 
 
 class TensorARSTrainer:
-    def __init__(self, spec, device="cuda", *, n_deltas=10, worlds=1,
+    def __init__(self, spec, device="auto", *, n_deltas=10, worlds=1,
                  top_deltas=None, sigma=0.1, lr=0.03, seed=0,
                  hidden_dim=30, hidden_layers=2, activation="sig",
                  uniform_bias_init=False, obs_normalize=True,
                  integral_reward=True, legacy_reward=False, alpha=1.0, beta=1.0,
                  survival_bonus=0.0, survival_threshold=0.01,
                  entropy_coef=0.0, argmax_penalty=0.0,
-                 execution="cuda-graph", graph_ticks=32, pairs_per_batch=None,
+                 execution=None, graph_ticks=32, pairs_per_batch=None,
                  population_stability=None, local_reward=None, warmup_ticks=0,
                  depleted_patches=0.0):
         if n_deltas < 1 or worlds < 1:
             raise ValueError("n_deltas and worlds must be positive")
         if sigma <= 0 or not math.isfinite(sigma) or lr < 0 or not math.isfinite(lr):
             raise ValueError("sigma must be positive and lr nonnegative, both finite")
-        device = torch.device(device)
-        if device.type == "cuda" and not torch.cuda.is_available():
-            raise RuntimeError("CUDA is unavailable. Install a CUDA-enabled PyTorch build on the NVIDIA machine; use --device cpu --execution eager for validation.")
-        if device.type not in ("cuda", "cpu"):
-            raise ValueError("This backend supports CUDA and CPU validation")
+        device = resolve_device(device)
+        if execution is None:
+            execution = default_execution(device)
         self.spec = spec
         self.model = TensorEcosystem(spec.env, device)
         self.bank = PolicyBank(self.model, hidden_dim, hidden_layers, activation,
@@ -127,7 +127,7 @@ class TensorARSTrainer:
         self.temperature = self.model.tensor(1.0)
         self.iterations_completed = 0
         self.last_world_epoch = None
-        self.obs_mean = torch.zeros((self.model.D, self.model.F), dtype=torch.float64, device=device)
+        self.obs_mean = torch.zeros((self.model.D, self.model.F), dtype=self.model.wide, device=device)
         self.obs_var = torch.ones_like(self.obs_mean)
         self.obs_count = torch.zeros(self.model.D, dtype=torch.int64, device=device)
         self.runner_options = dict(obs_normalize=obs_normalize, integral_reward=integral_reward,
@@ -138,8 +138,8 @@ class TensorARSTrainer:
                                    execution=execution, graph_ticks=graph_ticks)
         self.architecture = dict(hidden_dim=hidden_dim, hidden_layers=hidden_layers,
                                  activation=self.bank.activation)
-        self.rewards = torch.zeros((2, n_deltas, self.model.D), dtype=torch.float64, device=device)
-        self.actions = torch.zeros((*self.rewards.shape, 4), dtype=torch.float64, device=device)
+        self.rewards = torch.zeros((2, n_deltas, self.model.D), dtype=self.model.wide, device=device)
+        self.actions = torch.zeros((*self.rewards.shape, 4), dtype=self.model.wide, device=device)
         self.last_metrics = {}
         self._allocate_worlds()
 
@@ -312,7 +312,7 @@ class TensorARSTrainer:
             # Section 274: the listed groups start the scored rollout at the
             # world's drawn totals, on the settled layout.
             warm_b, warm_r, warm_j = reanchor_worlds(
-                self.world_biomass.double().sum(-1), warm_b, warm_r, warm_j,
+                self.world_biomass.to(m.wide).sum(-1), warm_b, warm_r, warm_j,
                 (b, r, start_j), m.reanchor_mask, m.reanchor_tissue)
         self.world_warm_biomass.copy_(warm_b)
         self.world_warm_reserve.copy_(warm_r)
@@ -349,14 +349,14 @@ class TensorARSTrainer:
                 candidates.append(w[None].expand(2 * self.n_deltas, -1))
         sums, squares = torch.zeros_like(self.obs_mean), torch.zeros_like(self.obs_mean)
         runner, m = self.runner, self.model
-        biomass_mean = torch.zeros(m.G, device=m.device, dtype=torch.float64)
+        biomass_mean = torch.zeros(m.G, device=m.device, dtype=m.wide)
         observation_count = torch.zeros((), device=m.device, dtype=torch.int64)
-        failure_count = torch.zeros((), device=m.device, dtype=torch.float64)
-        valid_tick_count = torch.zeros((), device=m.device, dtype=torch.float64)
+        failure_count = torch.zeros((), device=m.device, dtype=m.wide)
+        valid_tick_count = torch.zeros((), device=m.device, dtype=m.wide)
         # ``--local_reward`` diagnostic: the mean number of cells that took
         # part per tick. The raw sum normalisation grows with it, so this is
         # the quantity that reveals a spreading gradient.
-        occupancy = torch.zeros(m.D, device=m.device, dtype=torch.float64)
+        occupancy = torch.zeros(m.D, device=m.device, dtype=m.wide)
         for start, count, pairs, indices in self.chunks:
             runner.set_weights(self.bank.pack([w[indices] for w in candidates]))
             # Both signs see exactly the same initial fields and future noise.
@@ -414,7 +414,7 @@ class TensorARSTrainer:
             reward = (reward - reward.mean((0, 1), keepdim=True)) / (reward.std((0, 1), correction=0, keepdim=True) + 1e-8)
             reward = reward + self.entropy_coef * self.actions[..., 0] / math.log(m.A)
             reward = reward - self.argmax_penalty * self.actions[..., 1:].amax(-1)
-        sigma_f = torch.zeros(m.D, dtype=torch.float64, device=m.device)
+        sigma_f = torch.zeros(m.D, dtype=m.wide, device=m.device)
         for d, fid in enumerate(m.dm_ids):
             if fid in selected:
                 updated, sd = ars_update(self.theta[d], deltas[d], reward[0, :, d], reward[1, :, d], self.lr, self.top_deltas)
@@ -529,8 +529,8 @@ class TensorARSTrainer:
             self.bank.policies[fid].load_state_dict(state)
             stats = payload.get("obs_stats")
             if stats is not None:
-                mean = self.model.tensor(stats["mean"], torch.float64)
-                var = self.model.tensor(stats["var"], torch.float64)
+                mean = self.model.tensor(stats["mean"], self.model.wide)
+                var = self.model.tensor(stats["var"], self.model.wide)
                 if mean.numel() not in (self.model.in_dims[d], self.model.F) or var.shape != mean.shape:
                     raise ValueError("Observation statistics have incompatible width for " + fid)
                 self.obs_mean[d].zero_()

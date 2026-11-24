@@ -208,7 +208,7 @@ def rebase_calendar(env):
     env.tick_count = 0
 
 
-def settle(env, ticks, seed=None, policies=None, obs=None, engine="cpu", device="cuda",
+def settle(env, ticks, seed=None, policies=None, obs=None, engine="cpu", device="auto",
            progress=None, pump=None):
     """The training warm-up for a probe or inference world (section 274).
 

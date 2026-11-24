@@ -13,6 +13,7 @@ import torch
 from lib.gpu.cli import (add_common_arguments, builder_from_args, positive_int,
                          targets_from_args, trainer_options)
 from lib.gpu.config import ProjectSpec
+from lib.gpu.device import default_execution, resolve_device
 from lib.gpu.trainer import TensorARSTrainer
 from lib.training_profiles import add_profile_argument, parse_training_args
 from lib.runners.rnd_baseline import add_rnd_baseline_argument
@@ -94,7 +95,8 @@ def resolve_init_from(path):
 def build_parser():
     parser = argparse.ArgumentParser(description=__doc__)
     add_common_arguments(parser)
-    parser.add_argument("--device", default="cuda", help="cuda, cuda:1, or cpu for validation")
+    parser.add_argument("--device", default="auto",
+                        help="auto (cuda, else mps, else cpu), cuda, cuda:1, mps, or cpu for validation")
     parser.add_argument("--generations", default="inf", help="Additional generations to run, or inf")
     parser.add_argument("--iter-per-gen", "--iter_per_gen", dest="iter_per_gen", type=positive_int, default=20)
     parser.add_argument("--run-name", "--run_name", dest="run_name", default="gpu")
@@ -136,8 +138,12 @@ def main(argv=None, *, on_step=None):
             raise ValueError("Use either --resume or --init-from")
         if args.snapshot_every < 0:
             raise ValueError("--snapshot-every cannot be negative")
-        if args.device == "cpu" and "graph" in args.execution:
-            raise ValueError("Use --execution eager or compile with --device cpu")
+        device = resolve_device(args.device)
+        if args.execution is None:
+            args.execution = default_execution(device)
+        if device.type != "cuda" and "graph" in args.execution:
+            raise ValueError(f"Use --execution eager or compile with --device {device.type}")
+        args.device = str(device)
         if args.rnd_baseline != "none" and not args.visual:
             raise ValueError("--rnd_baseline only affects the --visual probe; add --visual")
         torch.set_num_threads(1)

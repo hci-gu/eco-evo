@@ -31,6 +31,7 @@ project with seeding gives a different (equally valid) world.
 import numpy as np
 import torch
 
+from lib.gpu.device import default_execution, device_event
 from lib.gpu.ecosystem import TensorEcosystem
 from lib.gpu.policy import PolicyBank
 from lib.gpu.rollout import RolloutRunner
@@ -51,7 +52,7 @@ class InferenceRunner(RolloutRunner):
             # [tick, world, group] totals, written by ``_tick``.
             self.biomass_history = torch.zeros(
                 (max(1, int(max_ticks)), self.E, model.G),
-                dtype=torch.float64, device=model.device)
+                dtype=model.wide, device=model.device)
             self.state_buffers.append(self.biomass_history)
 
     def _tick(self):
@@ -61,7 +62,7 @@ class InferenceRunner(RolloutRunner):
         # ``tick`` has advanced, so this tick's row is tick - 1. A tensor
         # index keeps the write inside a captured graph.
         row = (self.tick - 1).clamp(0, self.biomass_history.shape[0] - 1).reshape(1)
-        self.biomass_history.index_copy_(0, row, self.biomass.sum(-1).double()[None])
+        self.biomass_history.index_copy_(0, row, self.biomass.sum(-1).to(self.biomass_history.dtype)[None])
 
 
 def _architecture(policy):
@@ -69,7 +70,7 @@ def _architecture(policy):
     return layers[0].out_features, len(layers) - 1, getattr(policy, "activation", "sig")
 
 
-def build_runner(env, policies, obs_mean, obs_var, n_ticks=None, device="cuda",
+def build_runner(env, policies, obs_mean, obs_var, n_ticks=None, device="auto",
                  execution=None, graph_ticks=32, random_dms=(), diagnostics=False):
     """Upload ``env``'s state and the frozen policies; returns ``(model, runner)``.
 
@@ -79,7 +80,7 @@ def build_runner(env, policies, obs_mean, obs_var, n_ticks=None, device="cuda",
     """
     model = TensorEcosystem(env, device)
     if execution is None:
-        execution = "cuda-graph" if model.device.type == "cuda" else "eager"
+        execution = default_execution(model.device)
     missing = [fid for fid in model.dm_ids if not isinstance(policies.get(fid), PolicyNetwork)]
     if missing:
         raise ValueError(f"the tensor engine needs a policy network for every decision "
@@ -167,7 +168,7 @@ def mirror_state(model, runner, envs, staged=None):
     return tick
 
 
-def warm_up(env, ticks, policies, obs_mean, obs_var, device="cuda", progress=None,
+def warm_up(env, ticks, policies, obs_mean, obs_var, device="auto", progress=None,
             block=24, pump=None):
     """Section 277: run the warm-up of ``env``'s world on the tensor engine.
 
@@ -213,10 +214,9 @@ def _pump_until_done(runner, pump, done, ticks, interval=0.05):
     """
     import time
     device = runner.model.device
-    if device.type != "cuda":
+    event = device_event(device)
+    if event is None:
         return pump(done, ticks) is not False
-    event = torch.cuda.Event()
-    event.record(torch.cuda.current_stream(device))
     keep = True
     while True:
         finished = event.query()
@@ -235,7 +235,7 @@ def _dead_threshold(env):
 
 
 def run_gpu_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
-                      progress_ticks=(), device="cuda", execution=None):
+                      progress_ticks=(), device="auto", execution=None):
     """Step ``env``'s world ``n_ticks`` on the tensor engine, headless.
 
     Returns ``{fid: [total biomass after tick 1, 2, ...]}`` like
@@ -305,7 +305,7 @@ class GpuStepper:
     """
 
     def __init__(self, envs, policies, obs_mean, obs_var, random_dms=(),
-                 device="cuda", execution=None, graph_ticks=1):
+                 device="auto", execution=None, graph_ticks=1):
         self.envs = list(envs)
         if len(random_dms) != len(self.envs) - 1:
             raise ValueError("one random_dms entry per baseline env")

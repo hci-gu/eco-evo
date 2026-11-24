@@ -13,6 +13,7 @@ from lib.environments.ecosystem_env import encounter
 from lib.environments.ecosystem_env.constants import MAX_HARVEST_FRAC
 from lib.environments.ecosystem_env.currents import direction_fractions
 from lib.environments.ecosystem_env.impacts import extract_impact_table, interp_impact
+from lib.gpu.device import resolve_device, wide_dtype
 from lib.gpu.random import fold_in, uniform_bits_i32
 from lib.world import nutrients
 from lib.world.energy_balance import tonne_price
@@ -25,8 +26,10 @@ HARVEST_FRACTION = float(MAX_HARVEST_FRAC)
 
 
 class TensorEcosystem:
-    def __init__(self, env, device="cuda"):
-        self.device = torch.device(device)
+    def __init__(self, env, device="auto"):
+        self.device = resolve_device(device)
+        # Accumulator dtype: float64, float32 on MPS (lib/gpu/device.py).
+        self.wide = wide_dtype(self.device)
         self.H, self.W = env.H, env.W
         self.C = self.H * self.W
         self.G, self.D = env.N_all, env.N_dm
@@ -471,9 +474,9 @@ class TensorEcosystem:
             # small k the float32 keep loses ~1e-5 of the net (section 250).
             self.open_dm_flux64 = torch.tensor([
                 -math.expm1(-float(env.fgs[fid].open_pool["rate"])) if fid in dm_open else 0.0
-                for fid in self.ids], dtype=torch.float64, device=self.device)[None, :, None]
+                for fid in self.ids], dtype=self.wide, device=self.device)[None, :, None]
             self.open_dm_total64 = torch.tensor([env.open_dm_total.get(fid, 0.0) for fid in self.ids],
-                                                dtype=torch.float64, device=self.device)[None, :, None]
+                                                dtype=self.wide, device=self.device)[None, :, None]
             self.open_dm_entry = tensor(np.stack([
                 np.asarray(env.open_dm_entry[fid], dtype=np.float32).reshape(-1)
                 if fid in dm_open else np.zeros(self.C, dtype=np.float32)
@@ -493,7 +496,7 @@ class TensorEcosystem:
                     [np.asarray(env.open_dm_season[fid], dtype=np.float64)
                      if fid in dm_open and env.open_dm_season.get(fid) is not None
                      else np.ones(period) for fid in self.ids], axis=1),
-                    dtype=torch.float64, device=self.device)[:, :, None]
+                    dtype=self.wide, device=self.device)[:, :, None]
                 self.open_dm_fill = tensor(np.stack(
                     [per_tick(env.open_dm_fill, fid) for fid in self.ids], axis=1))[:, :, None]
             else:
@@ -1101,7 +1104,7 @@ class TensorEcosystem:
         rest = actions[:, :, 4]
         eat = actions[:, :, 5:].sum(2)
         stats = torch.stack([(v * active).sum(-1) / denom for v in (entropy, move, rest, eat)], dim=-1)
-        return stats.to(torch.float64), (count > 0).to(torch.float64)
+        return stats.to(self.wide), (count > 0).to(self.wide)
 
     def deplete(self, biomass, reserve, factor):
         """Apply a depleted-patch factor [E, 1, C] to the benthic groups
@@ -1662,7 +1665,7 @@ class TensorEcosystem:
         """
         floor = (self.threshold[:, self.dm_index]
                  * self.energy_content[:, self.dm_index][:, :, None])
-        return (floor.double() * float(factor)).clamp_min(1e-12)
+        return (floor.to(self.wide) * float(factor)).clamp_min(1e-12)
 
     def mortality_keep_field(self, hidden, light_index=None):
         """Per-cell survival of M1 this tick: [B, G, C] or [1, G, 1]."""
@@ -1978,14 +1981,14 @@ class TensorEcosystem:
         # The group total, the net and the export share in float64, as the
         # reference sums them (section 250: the water column's seasonal
         # migration moves enough tonnes for the float32 sum to show).
-        total64 = adult.double().sum(-1, keepdim=True)
+        total64 = adult.to(self.wide).sum(-1, keepdim=True)
         net64 = torch.where(self.open_dm_mask, (target - total64) * self.open_dm_flux64, 0.0)
         share64 = torch.where(total64 > 0, (-net64).clamp_min(0) / total64.clamp_min(1e-30),
                               0.0).clamp(max=1.0)
         total = total64.to(b.dtype)
         imported = net64.clamp_min(0).to(b.dtype)
         share = share64.to(b.dtype)
-        fill_energy = (net64.clamp_min(0) * fill.double() * self.max_reserve.double()).to(b.dtype)
+        fill_energy = (net64.clamp_min(0) * fill.to(self.wide) * self.max_reserve.to(self.wide)).to(b.dtype)
         keep = (1.0 - share64).to(b.dtype)
         if juvenile is None:
             leaving = (r * share).sum(-1)

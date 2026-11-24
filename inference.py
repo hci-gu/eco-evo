@@ -32,6 +32,7 @@ from fractions import Fraction
 
 import numpy as np
 import torch
+from lib.gpu.device import gpu_available, resolve_device
 from lib.environments.ecosystem_env.currents import add_current_arguments, current_options
 from lib.environments.ecosystem_env.loss_accounting import LOSS_CAUSES
 
@@ -1006,7 +1007,7 @@ def run_warmup_days(checkpoint_dir):
 def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
                   viz=None, rnd_env=None, rnd_solo_envs=None,
                   diagnostics_interval=None, base_impact_maps=None,
-                  engine="cpu", device="cuda"):
+                  engine="cpu", device="auto"):
     """Install policies + frozen stats and step the environment ``n_ticks`` times.
 
     If ``viz`` is a :class:`lib.viz.LiveVisualizer`, biomass heatmaps and a
@@ -1460,28 +1461,35 @@ def main():
                               "warm-up, as in training."))
     parser.add_argument("--engine", choices=["cpu", "gpu"], default=None,
                         help="Simulation engine. 'gpu' (default when torch "
-                             "sees a CUDA device, else 'cpu') steps the world "
-                             "on the tensor engine (lib/gpu) as CUDA graphs, "
+                             "sees a CUDA or Apple MPS device, else 'cpu') "
+                             "steps the world on the tensor engine (lib/gpu), "
+                             "as CUDA graphs on CUDA and eager on MPS, "
                              "with --visual and --rnd_baseline too (the "
                              "baselines in the same batch); 'cpu' is the "
                              "reference EcosystemEnvironment. The two match "
                              "per tick to float32 rounding, not bit for bit "
                              "(sections 234, 235, 238).")
-    parser.add_argument("--cuda-device", "--cuda_device", dest="cuda_device",
-                        default="cuda",
-                        help="CUDA device for --engine gpu (default: cuda).")
+    parser.add_argument("--device", "--cuda-device", "--cuda_device", dest="cuda_device",
+                        default="auto",
+                        help="Device for --engine gpu: cuda, cuda:1 or mps "
+                             "(default auto: cuda, else mps).")
     add_current_arguments(parser)
     add_tick_length_argument(parser)
     args = parser.parse_args()
     if args.engine is None:
         # Default gpu, on a machine that has one (section 238).
-        args.engine = "gpu" if torch.cuda.is_available() else "cpu"
+        args.engine = "gpu" if gpu_available() else "cpu"
         if args.engine == "cpu":
-            print("[info] torch sees no CUDA device; running --engine cpu.",
+            print("[info] torch sees no CUDA or MPS device; running --engine cpu.",
                   file=sys.stderr)
-    elif args.engine == "gpu" and not torch.cuda.is_available():
-        parser.error("--engine gpu needs CUDA, and torch sees no CUDA "
-                     "device")
+    elif args.engine == "gpu" and not gpu_available():
+        parser.error("--engine gpu needs CUDA or MPS, and torch sees "
+                     "neither device")
+    if args.engine == "gpu":
+        try:
+            args.cuda_device = str(resolve_device(args.cuda_device))
+        except (RuntimeError, ValueError) as error:
+            parser.error(str(error))
     try:
         currents = current_options(args)
     except ValueError as error:

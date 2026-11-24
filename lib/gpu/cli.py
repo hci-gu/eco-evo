@@ -64,7 +64,8 @@ def add_common_arguments(parser):
     add_mortality_multiplier_argument(parser)
     add_mass_balance_argument(parser)
     parser.add_argument("--migration", choices=("on", "off"), default="on")
-    parser.add_argument("--execution", choices=("eager", "compile", "cuda-graph", "compile-graph"), default="cuda-graph")
+    parser.add_argument("--execution", choices=("eager", "compile", "cuda-graph", "compile-graph"), default=None,
+                        help="Default: cuda-graph on CUDA, eager on MPS and CPU")
     parser.add_argument("--graph-ticks", type=positive_int, default=32)
     parser.add_argument("--pairs-per-batch", type=positive_int, help="Limit simultaneous perturbation pairs to fit VRAM")
     add_warmup_argument(parser)

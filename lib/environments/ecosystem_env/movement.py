@@ -77,9 +77,13 @@ def current_direction_fractions(tick, world_seed, config, x=0.0, y=0.0):
     # octaves sample at u and 2u, so the finer one shifts by twice as much.
     scalar_sample = False
     if isinstance(tick, torch.Tensor):
-        offset = tick.to(torch.float64) / config.period
+        # MPS has no float64: split the offset on the host and send back
+        # the int64 cells and the float32 remainder (lib/gpu/device.py).
+        host = tick.cpu() if tick.device.type == "mps" else tick
+        offset = host.to(torch.float64) / config.period
         whole = torch.floor(offset / config.scale).to(torch.int64)
         remainder = (offset - whole * config.scale).to(torch.float32)
+        whole, remainder = whole.to(tick.device), remainder.to(tick.device)
     else:
         scalar_sample = np.ndim(x) == np.ndim(y) == np.ndim(world_seed) == 0
         offset = np.asarray(tick, dtype=np.float64) / np.float64(config.period)

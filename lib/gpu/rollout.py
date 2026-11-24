@@ -34,10 +34,11 @@ class RolloutRunner:
         if execution not in ("eager", "compile", "cuda-graph", "compile-graph"):
             raise ValueError("Unknown execution mode: " + execution)
         if "graph" in execution and model.device.type != "cuda":
-            raise ValueError("CUDA Graph execution requires a CUDA device; use eager on CPU")
+            raise ValueError("CUDA Graph execution requires a CUDA device; use eager on CPU or MPS")
         if graph_ticks < 1:
             raise ValueError("graph_ticks must be positive")
         self.model, self.bank = model, bank
+        self.wide = model.wide
         self.candidates, self.worlds = candidates, worlds
         self.E = candidates * worlds
         self.normalize = obs_normalize
@@ -68,24 +69,24 @@ class RolloutRunner:
         buffer("obs_var", (model.D, model.F))
         self.obs_var.fill_(1)
         for name in ("b0", "r0", "e0", "epsilon", "log_energy", "survived"):
-            buffer(name, (self.E, model.D), torch.float64)
+            buffer(name, (self.E, model.D), model.wide)
         # Section 246: the reward ledger of a migrating DM (energy_ledger.py),
         # local indices Q*_{t+1} = Q*_t (Q_{t+1} - X_t) / Q_t of its biomass,
         # reserve and energy, X_t the tick's net exchange; Q* = Q otherwise.
         if getattr(model, "ledger_on", False):
-            buffer("ledger_prev", (3, self.E, model.D), torch.float64)
-            buffer("ledger_index", (3, self.E, model.D), torch.float64)
+            buffer("ledger_prev", (3, self.E, model.D), model.wide)
+            buffer("ledger_index", (3, self.E, model.D), model.wide)
         for name in ("biomass_sum", "reserve_sum"):
-            buffer(name, (self.E, model.G), torch.float64)
+            buffer(name, (self.E, model.G), model.wide)
         for name in ("obs_sum", "obs_sumsq"):
-            buffer(name, (self.E, model.D, model.F), torch.float64)
-        buffer("action_sum", (self.E, model.D, 4), torch.float64)
-        buffer("active_ticks", (self.E, model.D), torch.float64)
+            buffer(name, (self.E, model.D, model.F), model.wide)
+        buffer("action_sum", (self.E, model.D, 4), model.wide)
+        buffer("active_ticks", (self.E, model.D), model.wide)
         buffer("failed", (self.E,), torch.bool)
         buffer("valid_ticks", (self.E,), torch.int64)
-        buffer("stability_sum", (self.E, model.D), torch.float64)
-        buffer("local_sum", (self.E, model.D), torch.float64)
-        buffer("local_occupied", (self.E, model.D), torch.float64)
+        buffer("stability_sum", (self.E, model.D), model.wide)
+        buffer("local_sum", (self.E, model.D), model.wide)
+        buffer("local_occupied", (self.E, model.D), model.wide)
         # Impact loss rate and cost surcharge per world (section 161),
         # only with impact tables so a project without them keeps the
         # exact same graph.
@@ -103,12 +104,12 @@ class RolloutRunner:
         # one it always was.
         self.diagnostics = bool(diagnostics)
         if self.diagnostics:
-            buffer("loss_book", (self.E, len(self.LOSS_ORDER), model.G), torch.float64)
+            buffer("loss_book", (self.E, len(self.LOSS_ORDER), model.G), model.wide)
             # Section 245: an open pool's import (the export is a loss row).
-            buffer("import_book", (self.E, model.G), torch.float64)
-            buffer("diet_book", (self.E, model.G, model.G), torch.float64)
+            buffer("import_book", (self.E, model.G), model.wide)
+            buffer("diet_book", (self.E, model.G, model.G), model.wide)
             # Section 279: gamete energy shed per world and DM (MJ).
-            buffer("gamete_book", (self.E, model.D), torch.float64)
+            buffer("gamete_book", (self.E, model.D), model.wide)
         self.local_min_energy = (
             model.local_min_energy(self.local_reward.min_energy_factor)
             if self.local_reward is not None else None)
@@ -180,9 +181,9 @@ class RolloutRunner:
             self.gamete_book.zero_()
         if hidden is not None:
             self.hidden.copy_(hidden)
-        self.b0.copy_(biomass[:, self.model.dm_index].sum(-1).double())
-        self.r0.copy_(reserve[:, self.model.dm_index].sum(-1).double())
-        self.e0.copy_(self.b0 * self.model.energy_content[:, self.model.dm_index].double() + self.r0)
+        self.b0.copy_(biomass[:, self.model.dm_index].sum(-1).to(self.wide))
+        self.r0.copy_(reserve[:, self.model.dm_index].sum(-1).to(self.wide))
+        self.e0.copy_(self.b0 * self.model.energy_content[:, self.model.dm_index].to(self.wide) + self.r0)
         self.epsilon.copy_((1e-6 * self.e0).clamp_min(1e-9))
         if getattr(self.model, "ledger_on", False):
             start = torch.stack((self.b0, self.r0, self.e0))
@@ -224,7 +225,7 @@ class RolloutRunner:
                              self.juvenile if m.stages_on else None,
                              tick=self.tick, keys=self.keys)
         if self.normalize:
-            raw = obs.double()
+            raw = obs.to(self.wide)
             if self.population_stability is not None:
                 raw = torch.where(alive[:, None, None, None], raw, 0.0)
             self.obs_sum.add_(raw.sum(2))
@@ -274,14 +275,14 @@ class RolloutRunner:
         juvenile = out[-1] if m.stages_on else None
         if self.diagnostics:
             self._book_diagnostics(record)
-        totals_b, totals_r = b.sum(-1).double(), r.sum(-1).double()
+        totals_b, totals_r = b.sum(-1).to(self.wide), r.sum(-1).to(self.wide)
         bd, rd = totals_b[:, m.dm_index], totals_r[:, m.dm_index]
-        energy = bd * m.energy_content[:, m.dm_index].double() + rd
+        energy = bd * m.energy_content[:, m.dm_index].to(self.wide) + rd
         if m.ledger_on:
             # Section 246: take the migration out of what the reward sees
             # (multiplicative indices, so they stay positive).
             now = torch.stack((bd, rd, energy))
-            exchange = torch.stack([record[k][:, m.dm_index].double() for k in
+            exchange = torch.stack([record[k][:, m.dm_index].to(self.wide) for k in
                                     ("exchange_biomass", "exchange_reserve", "exchange_energy")])
             ratio = torch.where(self.ledger_prev > 0,
                                 (now - exchange) / self.ledger_prev.clamp_min(1e-30), 1.0)
@@ -312,7 +313,7 @@ class RolloutRunner:
             hidden = torch.where(alive[:, None, None], hidden, self.hidden)
             if juvenile is not None:
                 juvenile = torch.where(alive[:, None, None], juvenile, self.juvenile)
-            totals_b, totals_r = b.sum(-1).double(), r.sum(-1).double()
+            totals_b, totals_r = b.sum(-1).to(self.wide), r.sum(-1).to(self.wide)
             # Update the flag only after the last use of ``alive``: a compiled
             # graph may fuse ``~failed`` into a later kernel, which would then
             # read the already mutated buffer and drop the failing tick from
@@ -333,11 +334,11 @@ class RolloutRunner:
     def _book_diagnostics(self, record):
         """Add one tick of ``TensorEcosystem.step``'s ``record`` to the books."""
         m = self.model
-        intake = record["intake"].double()                      # [E, D, G]
+        intake = record["intake"].to(self.wide)                      # [E, D, G]
         diet = torch.zeros_like(self.diet_book)
         diet[:, m.dm_index] = intake
         for entry, total in zip(m.ndm_grazers, record.get("grazing") or ()):
-            diet[:, entry["g"], entry["p"]] += total.double()
+            diet[:, entry["g"], entry["p"]] += total.to(self.wide)
         self.diet_book.add_(diet)
         rows = {"starvation": record["starvation"], "predation": diet.sum(1),
                 "natural": record["natural"]}
@@ -345,12 +346,12 @@ class RolloutRunner:
             rows["impact"] = record["impact"]
         if "exchange" in record:
             rows["exchange"] = record["exchange"]
-            self.import_book.add_(record["import"].double())
+            self.import_book.add_(record["import"].to(self.wide))
         for k, name in enumerate(self.LOSS_ORDER):
             if name in rows:
-                self.loss_book[:, k].add_(rows[name].double())
+                self.loss_book[:, k].add_(rows[name].to(self.wide))
         if "gamete" in record:
-            self.gamete_book.add_(record["gamete"].double())
+            self.gamete_book.add_(record["gamete"].to(self.wide))
 
     def _accumulate_local_reward(self, start, tracked, frac_in):
         """Aggregate this tick's per-cell ratios into ``local_sum``.
@@ -363,14 +364,14 @@ class RolloutRunner:
         reference and this engine would otherwise disagree visibly.
         """
         config = self.local_reward
-        a = start.double()
-        a_eff = a * frac_in.double()
+        a = start.to(self.wide)
+        a_eff = a * frac_in.to(self.wide)
         active = (a >= self.local_min_energy) & (a_eff > 0.0)
-        ratio = torch.where(active, tracked.double() / a_eff.clamp_min(1e-300), 1.0)
+        ratio = torch.where(active, tracked.to(self.wide) / a_eff.clamp_min(torch.finfo(a_eff.dtype).tiny), 1.0)
         ratio = ratio.clamp(config.clip_lo, config.clip_hi)
         term = ratio.log() if config.metric == "log" else ratio
         if config.theta == 0.0:
-            weight = active.double()
+            weight = active.to(self.wide)
         else:
             weight = torch.where(active, a_eff.clamp_min(0.0).pow(config.theta), 0.0)
         weighted = (weight * term).sum(-1)
@@ -384,7 +385,7 @@ class RolloutRunner:
             # traces as one fixed-shape graph.
             weighted = weighted / float(self.model.C)
         self.local_sum.add_(weighted)
-        self.local_occupied.add_(active.double().sum(-1))
+        self.local_occupied.add_(active.to(self.wide).sum(-1))
 
     @torch.no_grad()
     def prepare(self):
@@ -444,9 +445,9 @@ class RolloutRunner:
             r = self.reserve_sum[:, m.dm_index] / ticks
             log_energy = self.log_energy / ticks
         else:
-            b = self.biomass[:, m.dm_index].sum(-1).double()
-            r = self.reserve[:, m.dm_index].sum(-1).double()
-            energy = b * m.energy_content[:, m.dm_index].double() + r
+            b = self.biomass[:, m.dm_index].sum(-1).to(self.wide)
+            r = self.reserve[:, m.dm_index].sum(-1).to(self.wide)
+            energy = b * m.energy_content[:, m.dm_index].to(self.wide) + r
             if m.ledger_on:
                 b = torch.where(m.ledger_rows, self.ledger_index[0], b)
                 r = torch.where(m.ledger_rows, self.ledger_index[1], r)

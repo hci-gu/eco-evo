@@ -715,7 +715,7 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                    rnd_builder=None,
                    rnd_mode="all",
                    reward_by_fid=None,
-                   engine="cpu", device="cuda"):
+                   engine="cpu", device="auto"):
     """Run a probe rollout with the trainer's current policies and log
     per-FG biomass evolution.
 

@@ -1,0 +1,287 @@
+# Symphony demo on the current Mareld biology.
+# External noise/trawling fields only; no additional policy observations.
+project_metadata:
+  name: Symphony impact demo
+  reference_grid_width: 60
+  reference_grid_height: 60
+simulation_settings:
+  # Section 207: mean depth per cell (m), tools/make_depth_map.py; drives
+  # the benthos capacity table and is the spawn reference field 'depth'.
+  depth_map: maps/depth.npz
+  daylight:
+    enabled: true
+    latitude_deg: 58.15
+    start_day_of_year: random
+    light_attenuation_per_m: 0.29
+    mixed_layer_depth_m:
+      - 13.0
+      - 9.0
+      - 6.0
+      - 6.0
+      - 6.0
+      - 6.0
+      - 6.0
+      - 7.0
+      - 10.0
+      - 10.0
+      - 17.0
+      - 15.0
+    cloud_transmission:
+      - 0.66
+      - 0.66
+      - 0.73
+      - 0.78
+      - 0.75
+      - 0.74
+      - 0.74
+      - 0.73
+      - 0.7
+      - 0.66
+      - 0.6
+      - 0.69
+  nutrients:
+    enabled: true
+    sub_mixed_layer_umol_l: [5.73, 6.58, 6.79, 6.96, 4.9, 4.35, 2.79, 1.37, 0.9, 0.87, 2.5, 3.88]
+    surface_umol_l: [5.09, 4.84, 2.33, 0.32, 0.13, 0.1, 0.1, 0.1, 0.1, 0.32, 1.3, 3.61]
+    # Section 203: November-February 1.0 m/d (was 0.3). A17's winter
+    # column is nearly uniform (nitrate 5.1 umol/l at the surface, 5.5 at
+    # 15-30 m); at 0.3 the mixed layer held only 2.2-3.0 in Dec-Feb, at
+    # 1.0 it holds 4.1 in Jan-Feb (winter convection and wind mixing
+    # over the pycnocline: ~1e-4 m2/s across ~10 m). 3.0 overshot
+    # November (2.1 vs A17 1.3).
+    exchange_m_per_day: [1.0, 1.0, 0.2, 0.1, 0.05, 0.05, 0.05, 0.05, 0.1, 0.2, 1.0, 1.0]
+    # Section 180: the subsurface layer [M(t), 30 m] with its own
+    # producer (subsurface_phytoplankton). The exchange above is then
+    # between the mixed layer and this layer; the layer exchanges with
+    # the reservoir at 50 m (SHARK A17 2010-2023 NO2+NO3 at 50 m, monthly
+    # means). 30 m: the deepest A17 subsurface maximum (July). Kd below
+    # the mixed layer 0.17 /m: 1.7 / Secchi (A17 summer Secchi 8-12 m);
+    # the blue-shifted light under the surface layer decays slower than
+    # the surface PAR Kd 0.29 (section 144.2: effective 0.15-0.2); NE
+    # North Sea July kd 0.14 +- 0.03 (Bendtsen & Richardson 2018 [F]).
+    # Reservoir exchange: winter mixing 1.0 m/d, stratified 0.2 m/d (Kz
+    # ~0.5-2e-4 m2/s over ~20 m [D]); a FIT to A17 nitrate in and below
+    # the mixed layer (resume 180), not a measurement: the open NE North
+    # Sea pycnocline has 1e-6-1e-5 m2/s (Bendtsen & Richardson 2018
+    # [F]), the Celtic Sea ~5e-5 (Palmer et al. 2008 [A]); no winter
+    # Skagerrak value found (resume 181.8).
+    subsurface_layer:
+      bottom_m: 30.0
+      light_attenuation_per_m: 0.17
+      reservoir_umol_l: [6.34, 7.42, 7.48, 7.88, 7.20, 7.17, 6.36, 4.68, 4.40, 2.46, 4.60, 4.47]
+      reservoir_exchange_m_per_day: [1.0, 1.0, 0.6, 0.3, 0.2, 0.2, 0.2, 0.2, 0.3, 0.6, 1.0, 1.0]
+  temperature:
+    enabled: true
+    layers:
+      mean_0_50m:
+        - 6.3
+        - 5.4
+        - 5.2
+        - 6.1
+        - 7.8
+        - 9.9
+        - 12.1
+        - 13.4
+        - 13.8
+        - 12.8
+        - 10.5
+        - 8.4
+      at_50m:
+        - 7.7
+        - 7.2
+        - 6.6
+        - 6.6
+        - 6.8
+        - 7.2
+        - 8.0
+        - 8.5
+        - 10.2
+        - 11.7
+        - 10.6
+        - 9.3
+      # Section 223.15: bottom water at each cell's own depth (SHARK A16/A17
+      # 1991-2020; annual 7.40 C, cells p10-p90 7.0-7.8; research_notes/
+      # "Exponering av bottenbyten", tables/bottom_temperature_stdout.txt).
+      bottom:
+        - 7.80
+        - 6.99
+        - 6.59
+        - 6.58
+        - 6.69
+        - 6.96
+        - 7.22
+        - 7.41
+        - 7.70
+        - 8.04
+        - 8.36
+        - 8.50
+    group_layers:
+      planktivorous_fish: mean_0_50m
+      zooplankton: mean_0_50m
+      microzooplankton: mean_0_50m
+      benthivorous_fish: bottom
+      predatory_fish: at_50m
+      # Section 228: mackerel feeds in its prey's layer (user).
+      mackerel: mean_0_50m
+      # Section 223.26: whiting forages on the bed (J, as the benthivores).
+      whiting: bottom
+decision_makers:
+  # Section 209: the fish are three feeding groups. Demersal levels are the
+  # top of the long-run NS-IBTS span (2001-25, wing spread, q = 1, x 1.18):
+  # benthivores 1.53, predators 1.20 t/km2; planktivores ~3.3 t/km2 from
+  # the HERAS acoustic level (research_notes/"Fiskgrupper i rutan",
+  # Swedish letters).
+  - group_id: benthivorous_fish
+    initial_biomass_min: 2750
+    initial_biomass_max: 11000
+    inference_initial_biomass: 5500
+  # Section 223.26 (predator split G1): the 1.20 t/km2 predator level
+  # split by the long-run biomass shares: water column (predatory_fish)
+  # 0.754, whiting 0.446 t/km2; since section 228 the water column is
+  # predatory_fish 0.617 + mackerel 0.850 t/km2 (field level); ranges x0.5-2.
+  - group_id: predatory_fish
+    initial_biomass_min: 1110
+    initial_biomass_max: 4440
+    inference_initial_biomass: 2220
+  - group_id: mackerel
+    initial_biomass_min: 1530
+    initial_biomass_max: 6120
+    inference_initial_biomass: 3060
+  - group_id: whiting
+    initial_biomass_min: 800
+    initial_biomass_max: 3210
+    inference_initial_biomass: 1605
+  - group_id: planktivorous_fish
+    # Section 243.3: Norway pout re-booked 0.25 -> 1.64 t/km2 (GOV q), pool
+    # 4.72 t/km2 = 17 000 t (was 12 000).
+    initial_biomass_min: 8500
+    initial_biomass_max: 34000
+    inference_initial_biomass: 17000
+  - group_id: porpoises
+    initial_biomass_min: 6
+    initial_biomass_max: 18
+    inference_initial_biomass: 12
+  - group_id: seabirds
+    initial_biomass_min: 12
+    initial_biomass_max: 50
+    inference_initial_biomass: 25
+    muted: true
+  - group_id: seals
+    initial_biomass_min: 5
+    initial_biomass_max: 30
+    inference_initial_biomass: 15
+  - group_id: zooplankton
+    initial_biomass_min: 17500
+    initial_biomass_max: 70000
+    inference_initial_biomass: 35000
+non_decision_makers:
+  # Section 221: benthic_infauna is the infauna only (sum of today's
+  # equilibrium B*(c), +/-25 %); mobile_epifauna is the split-out mobile
+  # epifauna (research_notes/"Infauna och rorlig epifauna", Swedish
+  # letters).
+  - group_id: benthic_infauna
+    initial_biomass_min: 252750
+    initial_biomass_max: 421250
+    inference_initial_biomass: 337000
+  # E1 (section 223.12 decision): mobile_epifauna is the exposed taxa,
+  # norway_lobster the Nephrops; start = sum of today's equilibrium B*(c),
+  # +/-25 % (research_notes/"Havskrafta och exponerad epifauna" (Swedish letters)).
+  - group_id: mobile_epifauna
+    initial_biomass_min: 10200
+    initial_biomass_max: 17000
+    inference_initial_biomass: 13600
+  - group_id: norway_lobster
+    initial_biomass_min: 12400
+    initial_biomass_max: 20600
+    inference_initial_biomass: 16500
+  - group_id: phytoplankton
+    initial_biomass_min: 40000
+    initial_biomass_max: 100000
+    inference_initial_biomass: 80000
+  - group_id: subsurface_phytoplankton
+    initial_biomass_min: 20000
+    initial_biomass_max: 60000
+    inference_initial_biomass: 40000
+  # Section 245: the open krill pool, 5 t/km2 annual mean (start = the
+  # outside density; any mismatch to the start day's season relaxes away
+  # in ~1/k = 18 days); training range x0.5-2.
+  - group_id: krill
+    initial_biomass_min: 9000
+    initial_biomass_max: 36000
+    inference_initial_biomass: 18000
+  - group_id: microzooplankton
+    initial_biomass_min: 700
+    initial_biomass_max: 7200
+    inference_initial_biomass: 1440
+impact_variables:
+  - impact_id: bottom_trawling
+    value_min: 0.0
+    value_max: 100.0
+    observable: false
+  - impact_id: pelagic_trawling
+    value_min: 0.0
+    value_max: 10.0
+    baseline_map: maps/fishing_pelagic.npz
+    baseline_map_muted: true
+    muted: true
+  - impact_id: rotor
+    value_min: 0
+    value_max: 1
+    muted: true
+  - impact_id: windfarm_noise
+    value_min: 0.0
+    value_max: 140.0
+    observable: false
+spawn_templates:
+  colony:
+    25Colonies:
+      n_colonies: 25
+      sigma_cells: 1.0
+      amplitude_mode: jitter
+      amplitude_min: 0.0
+      amplitude_max: 1.0
+  perlin:
+    Perlin12:
+      scale: 12.0
+      octaves: 4
+      persistence: 0.5
+      lacunarity: 2.0
+      threshold: 0.0
+      min_frac_of_max: 0.1
+  uniform:
+    Uniform: {}
+  env_driven:
+    FollowPhyto:
+      floor: 0.0
+      noise_amp: 0.0
+      noise_scale: 4.0
+      min_frac_of_max: 0.1
+      refs:
+        - name: phytoplankton
+          weight: 1.0
+          transform: linear
+    Followfish:
+      floor: 0.0
+      noise_amp: 0.0
+      noise_scale: 4.0
+      min_frac_of_max: 0.0
+      refs:
+        - name: planktivorous_fish
+          weight: 1.0
+          transform: linear
+    FollowDemersalFish:
+      floor: 0.0
+      noise_amp: 0.0
+      noise_scale: 4.0
+      min_frac_of_max: 0.0
+      refs:
+        - name: benthivorous_fish
+          weight: 1.0
+          transform: linear
+        # Section 223.26: the bed-feeding fish; the water-column predators
+        # no longer follow the demersal pattern.
+        - name: whiting
+          weight: 1.0
+          transform: linear
+inference:
+  impact_maps: {}

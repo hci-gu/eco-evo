@@ -5,6 +5,7 @@ import math
 import numpy as np
 import torch
 
+from lib.gpu.device import wide_dtype
 from lib.gpu.random import fold_in, normal, uniform
 from lib.spawn.strategies import _apply_grid_scaling
 
@@ -15,8 +16,9 @@ def distribute_with_floor(weights, total, floor):
     weights: [world, cell], total: [world], floor: nonnegative scalar.
     Zero-weight worlds and totals below the floor retain reference behavior.
     """
-    weights = weights.clamp_min(0).to(torch.float64)
-    total = total.to(torch.float64).clamp_min(0)
+    wide = wide_dtype(weights.device)
+    weights = weights.clamp_min(0).to(wide)
+    total = total.to(wide).clamp_min(0)
     sums = weights.sum(-1, keepdim=True)
     if floor <= 0:
         return weights * total[:, None] / sums.clamp_min(1e-30)
@@ -37,9 +39,10 @@ def legacy_clusters(keys, total, floor, cells):
     host-controlled while loop. Cell order is sampled without replacement.
     Returns [world, eligible_cell]; the caller maps into the full grid.
     """
-    total = total.to(torch.float64).clamp_min(0)
-    draws = uniform(keys, (cells,), 71, torch.float64)
-    order = uniform(keys, (cells,), 72, torch.float64).argsort(dim=-1, stable=True)
+    wide = wide_dtype(total.device)
+    total = total.to(wide).clamp_min(0)
+    draws = uniform(keys, (cells,), 71, wide)
+    order = uniform(keys, (cells,), 72, wide).argsort(dim=-1, stable=True)
     if floor <= 0:
         return draws / (draws.sum(-1, keepdim=True) + 1e-9) * total[:, None]
     log_a = torch.log1p(-draws)
@@ -54,7 +57,7 @@ def legacy_clusters(keys, total, floor, cells):
     amounts = torch.where(active, floor + draws * (remaining - floor), 0.0)
     n = active.sum(-1).clamp_min(1)
     leftover = (total - amounts.sum(-1)).clamp_min(0)
-    pick = torch.floor(uniform(keys, (), 73, torch.float64) * n).long()
+    pick = torch.floor(uniform(keys, (), 73, wide) * n).long()
     amounts = amounts.scatter_add(1, pick[:, None], leftover[:, None])
     return torch.zeros_like(amounts).scatter(1, order, amounts)
 
@@ -91,6 +94,7 @@ class WorldSpawner:
     def __init__(self, spec, model):
         self.spec, self.model = spec, model
         self.device = model.device
+        self.wide = model.wide
         self.H, self.W, self.C = model.H, model.W, model.C
         mask = np.ones((self.H, self.W), dtype=bool) if spec.allowed_mask is None else np.asarray(spec.allowed_mask, dtype=bool).reshape(self.H, self.W)
         self.allowed = model.tensor(mask.reshape(-1), torch.bool)
@@ -98,10 +102,10 @@ class WorldSpawner:
         self.eligible = model.tensor(eligible if len(eligible) else np.arange(self.C), torch.long)
         self.n_eligible = self.eligible.numel()
         self.yy, self.xx = torch.meshgrid(
-            torch.arange(self.H, device=self.device, dtype=torch.float64),
-            torch.arange(self.W, device=self.device, dtype=torch.float64), indexing="ij")
-        fy = torch.fft.fftfreq(self.H, device=self.device, dtype=torch.float64)[:, None]
-        fx = torch.fft.fftfreq(self.W, device=self.device, dtype=torch.float64)[None, :]
+            torch.arange(self.H, device=self.device, dtype=self.wide),
+            torch.arange(self.W, device=self.device, dtype=self.wide), indexing="ij")
+        fy = torch.fft.fftfreq(self.H, device=self.device, dtype=self.wide)[:, None]
+        fx = torch.fft.fftfreq(self.W, device=self.device, dtype=self.wide)[None, :]
         self.frequency2 = fy * fy + fx * fx
         self.filters = {}
         # The grid factor the CPU spawn applies to n_colonies (section 258).
@@ -112,13 +116,13 @@ class WorldSpawner:
         # equilibrium patterns, fixed per project (no randomness).
         depth = getattr(spec, "depth", None)
         self.static_fields = ({} if depth is None else
-                              {"depth": model.tensor(np.asarray(depth).reshape(1, -1), torch.float64)})
+                              {"depth": model.tensor(np.asarray(depth).reshape(1, -1), self.wide)})
         self.equilibrium = {}
         for fid in model.ids:
             pattern = getattr(spec.env.fgs[fid], "equilibrium_map", None)
             if pattern is not None:
                 self.equilibrium[fid] = model.tensor(
-                    np.asarray(pattern, dtype=np.float64).reshape(1, self.H, self.W), torch.float64)
+                    np.asarray(pattern, dtype=np.float64).reshape(1, self.H, self.W), self.wide)
         # Constants and FFT filters are allocated during startup, never during
         # a captured tick. Reset itself can run eagerly on CUDA.
         for fid in spec.spawn_order:
@@ -198,14 +202,14 @@ class WorldSpawner:
             # B*(c), uniform without one.
             pattern = self.equilibrium.get(fid)
             if pattern is None:
-                pattern = torch.ones((1, *shape), dtype=torch.float64, device=self.device)
+                pattern = torch.ones((1, *shape), dtype=self.wide, device=self.device)
             return self.finalize(pattern.expand(batch, *shape))
         if mode == "perlin":
-            field = torch.zeros((batch, *shape), dtype=torch.float64, device=self.device)
+            field = torch.zeros((batch, *shape), dtype=self.wide, device=self.device)
             scale = float(cfg.get("scale", 10))
             amp = 1.0
             for octave in range(max(1, int(cfg.get("octaves", 4)))):
-                field = field + amp * self.smooth(normal(keys, shape, 100 + octave, torch.float64), max(1.0, scale))
+                field = field + amp * self.smooth(normal(keys, shape, 100 + octave, self.wide), max(1.0, scale))
                 amp *= float(cfg.get("persistence", 0.5))
                 scale /= float(cfg.get("lacunarity", 2))
             low, high = field.amin((-1, -2), keepdim=True), field.amax((-1, -2), keepdim=True)
@@ -216,12 +220,12 @@ class WorldSpawner:
             scaled = _apply_grid_scaling(cfg, {"biomass_scale": self.biomass_scale})
             n = max(0, min(int(scaled.get("n_colonies", 3)), self.n_eligible))
             sigma = max(1e-6, float(cfg.get("sigma_cells", 2)))
-            scores = uniform(keys, (self.n_eligible,), 201, torch.float64)
+            scores = uniform(keys, (self.n_eligible,), 201, self.wide)
             centers = self.eligible[scores.argsort(dim=-1, stable=True)[:, :n]]
             jitter = str(cfg.get("amplitude_mode", "uniform")).lower() == "jitter"
             lo, hi = sorted([min(1.0, max(0.0, float(cfg.get(k, default)))) for k, default in (("amplitude_min", 0), ("amplitude_max", 1))])
-            amplitudes = lo + (hi - lo) * uniform(keys, (n,), 202, torch.float64)
-            field = torch.zeros((batch, *shape), device=self.device, dtype=torch.float64)
+            amplitudes = lo + (hi - lo) * uniform(keys, (n,), 202, self.wide)
+            field = torch.zeros((batch, *shape), device=self.device, dtype=self.wide)
             # n is a static configuration value. Iterating over centers avoids
             # allocating an M*n*H*W temporary for large colony counts.
             for i in range(n):
@@ -235,7 +239,7 @@ class WorldSpawner:
                 return field.flatten(1).clamp(0, 1) * self.allowed
             return self.finalize(field)
         if mode == "env_driven":
-            out = torch.zeros((batch, *shape), device=self.device, dtype=torch.float64)
+            out = torch.zeros((batch, *shape), device=self.device, dtype=self.wide)
             for ref in cfg.get("refs", []) or []:
                 name = ref.get("name")
                 if name in fields:
@@ -256,11 +260,11 @@ class WorldSpawner:
                 out = out + float(ref.get("weight", 1)) * field
             noise_amp = float(cfg.get("noise_amp", 0))
             if noise_amp > 0:
-                out = out + noise_amp * self.smooth(normal(keys, shape, 301, torch.float64), float(cfg.get("noise_scale", 5)))
+                out = out + noise_amp * self.smooth(normal(keys, shape, 301, self.wide), float(cfg.get("noise_scale", 5)))
             out = (out - float(cfg.get("floor", 0))).clamp_min(0)
             return self.finalize(self.relative_floor(out, cfg.get("min_frac_of_max", 0)))
         # The CPU registry also falls back to uniform for unknown strategies.
-        return self.finalize(uniform(keys, shape, 401, torch.float64))
+        return self.finalize(uniform(keys, shape, 401, self.wide))
 
     def biomass(self, world_keys):
         fields = {}
@@ -268,7 +272,7 @@ class WorldSpawner:
             index = self.model.ids.index(fid)
             keys = fold_in(world_keys, index + 1000)
             lo, hi = self.spec.ranges[fid]
-            u = uniform(keys, (), 0, torch.float64)
+            u = uniform(keys, (), 0, self.wide)
             if lo > 0 and hi > lo:
                 # Log-uniform, rounded to whole tonnes (section 200; the CPU
                 # loader's _sample_total_biomass draws the same law).
@@ -284,7 +288,7 @@ class WorldSpawner:
                 fields[fid] = distribute_with_floor(weights * self.allowed, total, self.floors[fid])
             else:
                 allocated = legacy_clusters(keys, total, self.floors[fid], self.n_eligible)
-                fields[fid] = torch.zeros((world_keys.numel(), self.C), dtype=torch.float64, device=self.device).index_copy(1, self.eligible, allocated)
+                fields[fid] = torch.zeros((world_keys.numel(), self.C), dtype=self.wide, device=self.device).index_copy(1, self.eligible, allocated)
         return torch.stack([fields[f] for f in self.model.ids], dim=1).float()
 
     def reserves(self, biomass, pair_keys, light_start=None):
@@ -332,11 +336,11 @@ class WorldSpawner:
         """
         batch = world_keys.numel()
         keys = fold_in(world_keys, 90001)
-        on = uniform(keys, (), 0, torch.float64) < float(share)
-        coverage = 0.05 + 0.25 * uniform(keys, (), 1, torch.float64)
-        level = torch.pow(10.0, -2.0 + 1.5 * uniform(keys, (), 2, torch.float64))
+        on = uniform(keys, (), 0, self.wide) < float(share)
+        coverage = 0.05 + 0.25 * uniform(keys, (), 1, self.wide)
+        level = torch.pow(10.0, -2.0 + 1.5 * uniform(keys, (), 2, self.wide))
         self._filter(3.0)
-        noise = self.smooth(normal(keys, (self.H, self.W), 3, torch.float64), 3.0).reshape(batch, -1)
+        noise = self.smooth(normal(keys, (self.H, self.W), 3, self.wide), 3.0).reshape(batch, -1)
         index = ((1.0 - coverage) * (noise.shape[1] - 1)).long()
         threshold = noise.sort(dim=1).values.gather(1, index[:, None])
         patch = (noise > threshold) & on[:, None]
