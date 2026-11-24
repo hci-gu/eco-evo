@@ -48,7 +48,7 @@ fabricates mass.
 | `lib/environments/ecosystem.py` | Re-exports `EcosystemEnvironment` - "The Tick" pipeline, heavily optimised, in `lib/environments/ecosystem_env/environment.py`. |
 | `lib/runners/trainer.py`, `parallel_worker.py` | ARS trainer (CRN, ARS-V2 obs-norm, top-b) + multiprocessing worker. |
 | `lib/world/`, `lib/config/config_loader.py` | Grid, `FunctionalGroup`, project/library loading. |
-| `lib/world/growth_budget.py` | Derives every FG's `growth_rate` from `r_max`, `natural_mortality` and the checked `predation_mortality` pairs, paid at the ideal-conditions reserve s* (section 160); shared by loader, FG editor and tests (section 129). |
+| `lib/world/growth_budget.py` | Derives every FG's `growth_rate`: from a measured gross production `somatic_production` P where one exists (sections 250, 268, 306; M1 and M2 stay out), else from `r_max`, `natural_mortality` and the checked `predation_mortality` pairs (the booking, needed only because r_max is net; today the benthos), paid at the ideal-conditions reserve s* (section 160); shared by loader, FG editor and tests (section 129). |
 | `lib/world/daylight.py` | Daylight calendar (section 137): sun elevation from latitude and date, per-tick light level, and the per-pair attack-rate multiplier (annual mean exactly 1), and the light-limited producer growth factor (section 138: P-I curve over the mixed layer, 1 on the reference day in April). Off unless `simulation_settings.daylight.enabled` in the manifest; turning it on adds one observation channel (checkpoints invalid). The live viewer shows the month and a day-length frame around each heatmap (section 142), and the inference plot a month / clock-time band under its x axis (section 155). An optional `inference_start_day_of_year` in the block fixes the start day of inference worlds and the long-run probe (mode `inference`) while training worlds keep `start_day_of_year` (section 232.6). |
 | `lib/world/set_point.py` | Light-entrained reserve set point (section 271): a DM with `appetite: reserve_room` and a `reserve_set_point` block (member_share, depth, onset / low / top day lengths, observed) has its room end at s_T(t) B ME, s_T = 1 - share x depth x g, g an annual clock read from the day length and the sign of its change only (onset on falling days, low and top on rising days; linear in the photoperiod travelled). Per-tick table `env.set_point_table` on the daylight calendar (both engines), inert without daylight; `observed` adds one last observation slot, the own room max(s_T - s, 0) (checkpoints invalid); growth runs only while the target is not falling (form 2, user: `env.set_point_growth` on the material/income law's g ceiling, both engines; a set point needs such a law) and the budget pays P inside that window, g = P / (1460 mean(w (s_T - u))) (needs the site latitude: loader and FG editor pass it; reopens section 250's season refusal for the clock's window only). Planktivores: herring 0.554, depth 0.5, 13.64 / 14.11 / 17.44 h, window 15 Apr - 30 Aug, g 0.00136. research_notes/"Ljusstyrd aptit" design.md. |
 | `lib/world/spawning.py` | Spawning in the box (section 279): a `reserve_room` DM's `spawning` list, one entry per member whose mature fish build gonads AND spawn in the box (share = member share x in-box x mature, gamete_energy MJ/t/yr, reserve_share, fast_cut, fast_loss MJ/t/d, spawning_days, spawn_start / spawn_end as {day_length_h, rising}: day length and its sign only, a second use of 271.4's clock exception). Energy only (SMS P is net of the spawning loss): the gametes leave the reserve while shed (`env.spawn_shed_table`, CPU `movement.apply_energy_costs`, GPU `shed_gametes`; book `env.gamete_energy_shed`, GPU `gamete_book`), and the spawners' accumulated deficit (fast + reserve-paid gametes) is subtracted from `env.set_point_table`, so the room cap and an observed room of both engines read it; each fish refills at once after its spawning (user). No new observation slot; the set point's growth window is unchanged; the growth budget pays P at the lowered fill (`set_point.budget_gate(..., cut=)`). Inert without daylight. Library: benthivores 0.40 of the group (cod, haddock, long rough dab, dab, plaice, witch; room cut up to 0.09 in March, 181 MJ/t/yr), whiting 0.34 (0.03, 275), water column 0.06 (spurdog, hake), planktivores 0.04 (pout, sprat), mackerel none. FG editor: a Spawning text, one '\|'-separated line per entry. research_notes/"Lek i rutan" summary.md, design.md. |
@@ -97,8 +97,9 @@ fabricates mass.
   since section 246 a MIGRATING group (open_pool.migrate: the box total
   relaxes at 0.10 /d towards 0.85 t/km2 x the presence season, x0.1 in
   winter to x2.2 in August; emigrants leave pro rata with their reserve,
-  immigrants enter on the west and NW edges at the month's fat; r_max 0,
-  season 5.5 months, max reserve 6980, reference fill 0.672; the reward
+  immigrants enter on the west and NW edges at the month's fat; gross
+  production P 0.0707 /yr (lean growth in the box, section 306; was r_max
+  0 and season 5.5), max reserve 6980, reference fill 0.672; the reward
   runs on a ledger without the migration, lib/runners/energy_ledger.py;
   research_notes/"Makrillens sasong", a-umlaut); `predatory_fish` is the rest (saithe 0.80, spurdog,
   hake, anglerfish, ling, velvet belly, pollack; 0.617 t/km2, 2220 t);
@@ -488,7 +489,8 @@ fabricates mass.
   the reserve at the season's production. The cap acts on the bare
   tick's I (a meal is absorbed over 1-4 days; a gut buffer is open).
   Mackerel migrates since section 246 (5.5-month intake season, r_max
-  0), which replaced the x3 g of a resident pool.
+  0), which replaced the x3 g of a resident pool; since section 306 it
+  pays a measured lean P 0.0707 /yr with no season factor (g x 0.18).
   Open population (section 250; research_notes/"Oppen population",
   O-umlaut): planktivores, benthivores, whiting and the water column have
   NO r_max and NO feeding season. Their derived g pays the field somatic
@@ -565,7 +567,9 @@ fabricates mass.
   `natural_mortality` is its own loss M1 (respiration, sinking, lysis;
   section 173): removed before growth, follows `--mortality`, and
   counted in its derived growth `(r_max + M1 + sum M2)/1460`.
-  Phytoplankton M1 0.005 (its sinking loss; r_max 67.882 keeps g 0.0670)
+  Phytoplankton M1 0.005 (its sinking loss; r_max 67.882 keeps g 0.0670;
+  since section 306 the gross is entered directly, P 244.53 /yr, and M1 is
+  no longer in g)
   is on since section 174: pool + M1 give a March bloom; checkpoints
   from before 174 were trained in a flat-phytoplankton world. A
   nutrient-stress loss (`stress_loss_max`, section 175) exists but is
@@ -675,7 +679,17 @@ fabricates mass.
   `g = (r_max + M1 + sum checked predation_mortality) / ((s*-u)*1460)`
   (an open-population DM with `somatic_production` P: `P / ((s*-u)*1460)`,
   section 250),
-  NDM `r = (r_max + sum M2) / 1460`; an income-funded or material-capped
+  NDM `r = (r_max + sum M2) / 1460` (with P: `P / 1460`, sections 268, 306).
+  Section 306: `somatic_production` ("Gross production" in the FG editor,
+  up to 1000 /yr) is any FG's MEASURED gross production at ideal
+  conditions; M1 and the booked M2 stay out of g, so unchecking a
+  predator or `--mortality off` leaves g alone. Set on phytoplankton (both
+  layers) 244.53, zooplankton 57.98 (today's gross kept to full
+  precision: g unchanged with mortality on), mackerel 0.0707 (no
+  feeding season); with these, the M2 booking reaches g only for the
+  benthos (r_max is a net recovery rate there), and otherwise feeds the
+  diet diagnostics. With `--mortality off` zooplankton's g is now x1.86
+  and phytoplankton's x1.03 what it was (viability rig default); an income-funded or material-capped
   DM's g is x 12 / `feeding_season_months` (sections 184, 244); a `regional_carrying_capacity`
   loss is not in g (section 185). s* is the reserve a DM settles on
   under ideal conditions (checked prey at the Holling ceilings, the best
@@ -686,7 +700,7 @@ fabricates mass.
   growth; muted FGs are absent. A pair a group-biomass reward cannot
   learn (cannibalism) does not belong in the budget: within-group
   cannibalism is unchecked (section 160); cross-group fish predation
-  (predators on juvenile benthivores) is a learnable pair and is in it. With `--mortality off` the loader leaves M1 out of g (pass
+  (predators on juvenile benthivores) is a learnable pair and is in it. With `--mortality off` the loader leaves M1 out of an r_max g (pass
   `apply_natural_mortality` to the loader wherever an env is built). Edit
   `r_max`, `natural_mortality` (M1, non-FG losses only) or the pair's
   `predation_mortality`, never `growth_rate` itself.

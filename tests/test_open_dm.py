@@ -197,7 +197,9 @@ def test_mareld2_mackerel_migrates():
     assert np.mean(spec["outside_season"]) == pytest.approx(1.0, abs=2e-3)
     assert len(spec["outside_fill"]) == 12 and min(spec["outside_fill"]) == pytest.approx(0.13)
     assert spec["outside_entry"] == [{"edge": "west"}, {"edge": "north", "from": 0.0, "to": 0.5}]
-    assert float(spec["r_max"]) == 0.0 and spec["feeding_season_months"] == 5.5
+    # Section 306: the measured lean production P, no r_max, no season.
+    assert spec["somatic_production"] == pytest.approx(0.0707)
+    assert "r_max" not in spec and "feeding_season_months" not in spec
     assert spec["max_energy_reserve"] == 6980.0 and spec["reserve_reference_fill"] == 0.672
     fgs = load_project_config("mareld2.yaml", mode="inference")[0]
     assert fgs["mackerel"].open_pool["entry"] == [("west", 0.0, 1.0), ("north", 0.0, 0.5)]

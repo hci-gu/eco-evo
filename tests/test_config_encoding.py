@@ -46,6 +46,8 @@ def test_bundled_project_loads_with_windows_defaults(windows_text_encoding, gpu_
 def test_inference_spawn_settings_decode_utf8(tmp_path, windows_text_encoding):
     project = tmp_path / "project.yaml"
     project.write_text(
+        # The test's own library, not the repository's.
+        "library: fgconfig/fg_library.yaml\n"
         "spawn_templates:\n  colony:\n    Skärgård:\n      n_colonies: 2\n"
         "decision_makers:\n  - group_id: benthivorous_fish\n",
         encoding="utf-8-sig",

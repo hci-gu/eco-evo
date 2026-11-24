@@ -236,7 +236,8 @@ def test_exchange_is_booked_per_direction():
 
 def test_open_pool_local_production_sets_g():
     """Section 268: an open pool's somatic_production (local P/B) sets g; the booked
-    M2 stays out; refused with r_max > 0; inert without outside_density."""
+    M2 stays out; refused with r_max > 0. Section 306: a closed NDM's P sets g
+    the same way; without P it keeps r_max + M2."""
     from lib.world.growth_budget import growth_budget, TICKS_PER_YEAR
     spec = {"outside_density": 5.0, "outside_exchange_rate": 0.01, "r_max": 0.0,
             "somatic_production": 2.0}
@@ -248,6 +249,11 @@ def test_open_pool_local_production_sets_g():
                          inter).growth_rate == pytest.approx(3.0 / TICKS_PER_YEAR)
     assert "replaces r_max" in growth_budget("k", dict(species, k=dict(spec, r_max=1.0)), inter).error
     closed = {k: v for k, v in spec.items() if k != "outside_density"}
-    closed["r_max"] = 1.0
     assert growth_budget("k", dict(species, k=closed), inter).growth_rate == pytest.approx(
+        2.0 / TICKS_PER_YEAR)
+    assert "replaces r_max" in growth_budget(
+        "k", dict(species, k=dict(closed, r_max=1.0)), inter).error
+    no_p = {k: v for k, v in closed.items() if k != "somatic_production"}
+    no_p["r_max"] = 1.0
+    assert growth_budget("k", dict(species, k=no_p), inter).growth_rate == pytest.approx(
         4.0 / TICKS_PER_YEAR)

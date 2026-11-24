@@ -7,9 +7,9 @@
     # growth_rate is DERIVED by lib/world/growth_budget.py and recomputed
     # by the loader for every run; the number stored here is what the
     # loader computes for mareld2.yaml (seabirds muted) with
-    # --mortality on; with --mortality off the loader leaves M1 out. Edit
-    # r_max, natural_mortality or the predation matrix, not this value.
-    # NDM: g = (r_max + checked predation_mortality on this FG) / 1460.
+    # --mortality on. Edit somatic_production, not this value.
+    # NDM: g = P / 1460 (section 306); before 306 g = (r_max + M1 +
+    # checked predation_mortality on this FG) / 1460, as below.
     # The logistic r is the growth at LOW density, net of the losses the
     # model does not resolve (section 131). Highest in situ growth from
     # dilution experiments, 0.67 d-1 (Stelfox-Widdicombe et al. 2004,
@@ -23,7 +23,13 @@
     # Section 173: that rate is gross of sinking, which is now the
     # explicit M1 below, so r_max = 97.8 - 22.63 - 7.32 = 67.882 and
     # growth_rate stays 0.0670 (was r_max 75.2 with no M1).
-    r_max: 67.882
+    # Section 306: the measured gross rate is entered directly as P, the
+    # 0.67 d-1 gross of micrograzing (section 176: the microzooplankton pair
+    # carries the 60 %) = 244.53 /yr, today's gross r_max 67.882 + M1 7.318
+    # + M2 169.33 kept to full precision (0.67 x 365 = 244.55). g = P / 1460
+    # at the light reference day; M1 and the realised grazing are the
+    # model's own losses, the booked M2 no longer enters g.
+    somatic_production: 244.5303110624
     growth_rate: 0.16748651
     # Own loss M1 (section 173): the sinking loss, 0.005 /tick = 0.02 /d
     # = 7.32 /yr. The dilution rate behind growth_rate (Stelfox-
@@ -109,7 +115,8 @@
     is_decision_maker: false
     movement_speed: 0.0
     water_layer: subsurface
-    r_max: 67.882
+    # Section 306: the same measured gross rate as phytoplankton.
+    somatic_production: 244.5303110624
     growth_rate: 0.16748651
     natural_mortality: 0.005
     max_carrying_capacity: 24.0
@@ -215,14 +222,17 @@
     # growth_rate is DERIVED by lib/world/growth_budget.py and recomputed
     # by the loader for every run; the number stored here is what the
     # loader computes for mareld2.yaml (seabirds muted) with
-    # --mortality on; with --mortality off the loader leaves M1 out. Edit
-    # r_max, natural_mortality or the predation matrix, not this value.
-    # DM: g = (r_max + M1 + checked predation_mortality) /
-    #         ((1 - maintenance_level) x 1460).
+    # --mortality on. Edit somatic_production, not this value.
+    # DM: g = P / ((s* - u) x 1460) (section 306); before 306
+    #     g = (r_max + M1 + checked predation_mortality) / ((s* - u) x 1460).
     # r_max 33.4 /yr = food-unlimited copepod production, 0.16 d-1 at
     # 11.5 C (Huntley & Lopez 1992) = 58.4 /yr, minus total mortality
     # 25 /yr. Replaces the unsourced 15-40 /yr band of section 111.
-    r_max: 33.4
+    # Section 306: that gross production is entered directly as P, today's
+    # gross r_max 33.4 + M1 22.87 + M2 1.708 = 57.98 /yr kept to full
+    # precision (the source's 58.4 within its rounding). g = P / ((s* - u)
+    # x 1460); M1 and the realised predation are the model's own losses.
+    somatic_production: 57.977547786
     # Section 245 (krill moved out of four fish pairs): 0.11882721356 -> 0.1165193.
     # Section 268 (planktivore and mackerel pairs re-booked): -> 0.1174035.
     growth_rate: 0.11740351388
@@ -541,8 +551,10 @@
     # map is renormalised to the box mean: the krill move to deeper beds, the
     # stock stays the season's. research_notes/"Krillens sasong" (a-umlaut).
     outside_depth_season:
-      - {depth_m: 99.9, season: [1.41758, 1.41758, 1.41758, 1.41758, 0.164835, 0.164835, 0.164835, 0.164835, 1.41758, 1.41758, 1.41758, 1.41758]}
-      - {depth_m: 100.0, season: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]}
+      - {depth_m: 99.9, season: [1.41758, 1.41758, 1.41758, 1.41758, 0.164835, 
+              0.164835, 0.164835, 0.164835, 1.41758, 1.41758, 1.41758, 1.41758]}
+      - {depth_m: 100.0, season: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 
+              1.0, 1.0, 1.0]}
     # Derived growth g = (r_max + M1 + sum M2) / 1460 with r_max 0: the
     # local production replaces the booked fish predation at the outside
     # density, 2.07 /yr, which equals the field P/B 2 (1.2-3.5; Lindley's
@@ -569,7 +581,8 @@
     # normalised to the annual 5000 (6 / 5.15, 4.3 / 5.15). Moves each
     # predator's gain and handling time per tonne of krill (h = E / ceiling).
     # research_notes/"Krillens sasong" (a-umlaut).
-    energy_season: [1.16505, 1.16505, 1.16505, 0.834951, 0.834951, 0.834951, 0.834951, 0.834951, 0.834951, 1.16505, 1.16505, 1.16505]
+    energy_season: [1.16505, 1.16505, 1.16505, 0.834951, 0.834951, 0.834951, 
+          0.834951, 0.834951, 0.834951, 1.16505, 1.16505, 1.16505]
     min_split_biomass: 0.0
     extinction_threshold_factor: 0.0
     seed_rate: 0.0
@@ -605,7 +618,8 @@
     # 1977; Norway pout a judgement at 2-5.5 %, no series exists) as storage
     # (fat - 1 %) x 39.5 MJ/kg over ME.
     # research_notes/"Svaltgrans och startreserv" (Swedish letters) model/derive_u.py.
-    start_fill: [0.50, 0.36, 0.26, 0.20, 0.32, 0.81, 0.94, 0.96, 0.88, 0.88, 0.76, 0.68]
+    start_fill: [0.50, 0.36, 0.26, 0.20, 0.32, 0.81, 0.94, 0.96, 0.88, 0.88, 
+          0.76, 0.68]
     # Lean body + fat reserve (section 140). energy_content is the LEAN
     # tissue, ~4.1 kJ/g from 15-19 % protein (Warren et al. 2026); the
     # reserve is the fat, up to ~18 % (0.396 kJ/g per fat %), so a full
@@ -772,7 +786,8 @@
       recruitment: [0, 0, 0, 0, 0, 1.5, 3.7, 3.8, 1.7, 0, 0, 0]
       recruit_import: 0.527
       emigration: [0.1, 0.0]
-      start_share: [0.419, 0.411, 0.404, 0.396, 0.389, 0.389, 0.407, 0.433, 0.447, 0.445, 0.436, 0.428]
+      start_share: [0.419, 0.411, 0.404, 0.396, 0.389, 0.389, 0.407, 0.433, 
+            0.447, 0.445, 0.436, 0.428]
       fishing_selectivity:
         pelagic_trawling: 0.6
         bottom_trawling: 1.5
@@ -822,8 +837,10 @@
     # on the west and north edges [J]. Bestandsreglering migration.md section 4.
     outside_density: 2.111
     outside_exchange_rate: 0.025
-    outside_season: [0.7956, 0.7956, 0.8088, 0.8884, 1.074, 1.2597, 1.3259, 1.3259, 1.1403, 0.9547, 0.8221, 0.8088]
-    outside_fill: [0.50, 0.36, 0.26, 0.20, 0.32, 0.81, 0.94, 0.96, 0.88, 0.88, 0.76, 0.68]
+    outside_season: [0.7956, 0.7956, 0.8088, 0.8884, 1.074, 1.2597, 1.3259, 
+          1.3259, 1.1403, 0.9547, 0.8221, 0.8088]
+    outside_fill: [0.50, 0.36, 0.26, 0.20, 0.32, 0.81, 0.94, 0.96, 0.88, 0.88, 
+          0.76, 0.68]
     outside_entry:
       - {edge: west}
       - {edge: north}
@@ -860,16 +877,13 @@
     natural_mortality: 0.000186986
     max_intake_rate: 0.04
     spawn:
-      mode: colony
-      n_colonies: 25
-      sigma_cells: 1.0
-      amplitude_mode: jitter
-      amplitude_min: 0.0
-      amplitude_max: 1.0
-    # Section 247: starve_rate is a calibrated time to death (section 46),
-    # not an energy balance; at u 0.079 it keeps today's resting fast from
-    # fill 0.7 to 95 % loss (243 d; was 0.025 at u 0.2), drain at an
-    # empty reserve ~2.7 RM. model/fasting_time.py in research_notes/"Svaltgrans och startreserv" (Swedish letters).
+      mode: perlin
+      scale: 12.0
+      octaves: 4
+      persistence: 0.5
+      lacunarity: 2.0
+      threshold: 0.0
+      min_frac_of_max: 0.1
     starve_rate: 0.0675
     visibility_floor: 0.35
     # Beddington-DeAngelis w (section 162; was 0.7, set in section 86
@@ -918,7 +932,8 @@
     # 5 %), months between interpolated; the flatfish carcass store has no
     # value of its own.
     # research_notes/"Svaltgrans och startreserv" (Swedish letters) model/derive_u.py.
-    start_fill: [0.76, 0.76, 0.62, 0.47, 0.33, 0.33, 0.33, 0.57, 0.81, 0.81, 0.81, 0.79]
+    start_fill: [0.76, 0.76, 0.62, 0.47, 0.33, 0.33, 0.33, 0.57, 0.81, 0.81, 
+          0.81, 0.79]
     # Section 240: full appetite, intake capped at the reserve room. Cod
     # with livers at or above the wild maximum (HSI 9-17 %) eat at Cmax
     # for months and restricted rations fall on the same growth line up
@@ -1124,7 +1139,8 @@
         - {depth_m: 249.9, weight: 0.21}
         - {depth_m: 250.0, weight: 0.05}
       emigration: [1.1, 0.17]
-      start_share: [0.155, 0.150, 0.147, 0.143, 0.139, 0.139, 0.148, 0.161, 0.169, 0.168, 0.163, 0.159]
+      start_share: [0.155, 0.150, 0.147, 0.143, 0.139, 0.139, 0.148, 0.161, 
+            0.169, 0.168, 0.163, 0.159]
       fishing_selectivity:
         bottom_trawling: 0.15
         pelagic_trawling: 4.0
@@ -1167,16 +1183,13 @@
     natural_mortality: 0.00019861
     max_intake_rate: 0.04
     spawn:
-      mode: colony
-      n_colonies: 25
-      sigma_cells: 1.0
-      amplitude_mode: jitter
-      amplitude_min: 0.0
-      amplitude_max: 1.0
-    # Section 247: starve_rate is a calibrated time to death (section 46),
-    # not an energy balance; at u 0.078 it keeps today's resting fast from
-    # fill 0.7 to 95 % loss (210 d; was 0.01 at u 0.5), drain at an
-    # empty reserve ~6.7 RM. model/fasting_time.py in research_notes/"Svaltgrans och startreserv" (Swedish letters).
+      mode: perlin
+      scale: 12.0
+      octaves: 4
+      persistence: 0.5
+      lacunarity: 2.0
+      threshold: 0.0
+      min_frac_of_max: 0.1
     starve_rate: 0.0791
     # Section 270: no refuge state of the gadoid juveniles outside a on the box's mud; flatfish
     # burial unmeasured for the flatfish the windows take, dropped. research_notes/"Bottenfiskens
@@ -1225,7 +1238,8 @@
     # saithe liver ~6 % of the weight at ~60 % lipid with little season
     # (NIFES 2013, Norwegian and Barents Seas) -> 0.71 all year.
     # research_notes/"Svaltgrans och startreserv" (Swedish letters) model/derive_u.py.
-    start_fill: [0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71]
+    start_fill: [0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 
+          0.71, 0.71]
     # Liver reserve: saithe, hake, spurdog ~2000, anglerfish 1500 -> 2000
     # (1500-2500).
     max_energy_reserve: 2000.0
@@ -1344,8 +1358,10 @@
     # migration.md section 4.
     outside_density: 0.617
     outside_exchange_rate: 0.0082192
-    outside_season: [0.2159, 0.1619, 0.2339, 0.5217, 0.9715, 1.4933, 1.7991, 1.7991, 1.7811, 1.5292, 0.9715, 0.5217]
-    outside_fill: [0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71]
+    outside_season: [0.2159, 0.1619, 0.2339, 0.5217, 0.9715, 1.4933, 1.7991, 
+          1.7991, 1.7811, 1.5292, 0.9715, 0.5217]
+    outside_fill: [0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 
+          0.71, 0.71]
     outside_entry:
       - {edge: west}
       - {edge: north}
@@ -1368,16 +1384,13 @@
     natural_mortality: 0.000189238
     max_intake_rate: 0.04
     spawn:
-      mode: colony
-      n_colonies: 25
-      sigma_cells: 1.0
-      amplitude_mode: jitter
-      amplitude_min: 0.0
-      amplitude_max: 1.0
-    # Section 247: starve_rate is a calibrated time to death (section 46),
-    # not an energy balance; at u 0.07 it keeps today's resting fast from
-    # fill 0.7 to 95 % loss (258 d; was 0.0079 at u 0.5), drain at an
-    # empty reserve ~6.1 RM. model/fasting_time.py in research_notes/"Svaltgrans och startreserv" (Swedish letters).
+      mode: perlin
+      scale: 12.0
+      octaves: 4
+      persistence: 0.5
+      lacunarity: 2.0
+      threshold: 0.0
+      min_frac_of_max: 0.1
     starve_rate: 0.0681
     # Section 270: acts only on what its prey observe; a resting member stays within their cue range
     # and a floor below 1 leaked its activity state. research_notes/"Bottenfiskens och
@@ -1407,7 +1420,8 @@
     # start reserve; no whiting liver series exists: the haddock seasons of
     # benthivorous_fish at this ME 2000 (judgement).
     # research_notes/"Svaltgrans och startreserv" (Swedish letters) model/derive_u.py.
-    start_fill: [0.69, 0.69, 0.56, 0.43, 0.30, 0.30, 0.30, 0.52, 0.73, 0.73, 0.73, 0.71]
+    start_fill: [0.69, 0.69, 0.56, 0.43, 0.30, 0.30, 0.30, 0.52, 0.73, 0.73, 
+          0.73, 0.71]
     # Gadoid liver ~2000 MJ/t (1500-2500).
     max_energy_reserve: 2000.0
     # SMR 4.2 (Steinhausen et al. 2005, attributed to 8.4 C) re-read at the
@@ -1510,7 +1524,8 @@
       recruit_import: 0.0545
       adult_import: 0.1175
       emigration: [0.2, 0.3]
-      start_share: [0.167, 0.159, 0.152, 0.145, 0.138, 0.139, 0.156, 0.181, 0.195, 0.193, 0.184, 0.175]
+      start_share: [0.167, 0.159, 0.152, 0.145, 0.138, 0.139, 0.156, 0.181, 
+            0.195, 0.193, 0.184, 0.175]
       fishing_selectivity:
         bottom_trawling: 0.29
         pelagic_trawling: 4.0
@@ -1544,16 +1559,13 @@
     natural_mortality: 0.000171233
     max_intake_rate: 0.04
     spawn:
-      mode: colony
-      n_colonies: 25
-      sigma_cells: 1.0
-      amplitude_mode: jitter
-      amplitude_min: 0.0
-      amplitude_max: 1.0
-    # Section 247: starve_rate is a calibrated time to death (section 46),
-    # not an energy balance; at u 0.07 it keeps today's resting fast from
-    # fill 0.7 to 95 % loss (209 d; was 0.0099 at u 0.5), drain at an
-    # empty reserve ~6.1 RM. model/fasting_time.py in research_notes/"Svaltgrans och startreserv" (Swedish letters).
+      mode: perlin
+      scale: 12.0
+      octaves: 4
+      persistence: 0.5
+      lacunarity: 2.0
+      threshold: 0.0
+      min_frac_of_max: 0.1
     starve_rate: 0.0866
     # Section 270: no feeding-exclusive refuge (Cyanea shelter ~3 % of the biomass for three months;
     # "on the bed" is the band profile). research_notes/"Vitlingens golv"
@@ -1631,7 +1643,9 @@
     # intake season is the one it realises; the somatic window is ~4 months
     # (weight growth stops late September, Jansen et al. 2021).
     material_growth_share: 0.49
-    feeding_season_months: 5.5
+    # Section 306: no feeding_season_months - P below is an annual rate per
+    # annual-mean tonne (the material law still grows lean tissue only out
+    # of the tick's food); the 5.5 sized the booked M1 + M2 into the season.
     # Section 244.10: full appetite, intake capped at the reserve room, as
     # every fish group: mackerel fatten from spring lows to the autumn
     # peak on the feeding migration (no appetite study found). Frozen
@@ -1679,7 +1693,12 @@
     # 1 +0.10, age 2 -0.11 /yr per annual-mean tonne), so the local lean
     # production pays the booked losses (M1 + M2) and the season's gain,
     # fat, leaves with the departing fish.
-    r_max: 0.0
+    # Section 306: that lean production is entered directly as P, the box's
+    # age 1 / older weighting 0.85 / 0.15 ("Makrillens sasong" evidence.md,
+    # a-umlaut; 92 % age 1 by number in 3.a, Degnbol et al. 1988):
+    # 0.85 x 0.1027 - 0.15 x 0.1107 = 0.0707 /yr (model/derive_library.py
+    # weights). Was g = (M1 + M2 = 0.180) x 12/5.5, gross 0.39 /yr: g x 0.18.
+    somatic_production: 0.0707
     # Section 246: a MIGRATING decision maker (ecosystem_env/open_pool.py
     # migrate, on the group total): the box total relaxes towards 0.85
     # t/km2 x the season, emigrants leave pro rata with their reserve,
@@ -1696,13 +1715,15 @@
     # Dec-Mar 0.05 of July, 10 / 90 % points days 143 / 284; Danish
     # landings 1987-2008 give arrival 12 June, departure 14 October) + horse
     # mackerel 0.05 x its profile (Aug-Nov, peak October), / 0.85, mean 1.
-    outside_season: [0.124, 0.111, 0.105, 0.315, 1.050, 2.103, 2.118, 2.193, 1.849, 1.238, 0.570, 0.224]
+    outside_season: [0.124, 0.111, 0.105, 0.315, 1.050, 2.103, 2.118, 2.193, 
+          1.849, 1.238, 0.570, 0.224]
     # Reserve fill of the arriving fish by month, (fat - 0.01) x 39 500 /
     # 6980, clipped: lean after spawning in May (juveniles ~3 % fat), at the
     # cap from September.
     # Section 247: also the start reserve centre (no start_fill key): the
     # box composite's fat by month is the resident fill as well.
-    outside_fill: [0.70, 0.58, 0.45, 0.37, 0.13, 0.51, 0.57, 0.91, 1.00, 1.00, 0.94, 0.85]
+    outside_fill: [0.70, 0.58, 0.45, 0.37, 0.13, 0.51, 0.57, 0.91, 1.00, 1.00, 
+          0.94, 0.85]
     outside_entry:
       - {edge: west}
       - {edge: north, from: 0.0, to: 0.5}
@@ -1716,23 +1737,21 @@
     # (appetite reserve_room: s* 0.915 -> 1) -> 0.0017870; 246 (r_max 0,
     # season 5.5: gross 0.180 /yr x 12/5.5) -> 0.00053748.
     # Section 247 (u to the field value, g x (1 - u_old)/(1 - u_new)): 0.00053748 -> 0.00028498.
-    growth_rate: 0.0002849840446
+    # Section 306 (P 0.0707, no season): 0.00028498 -> 0.000051352.
+    growth_rate: 0.00005135170470
     # M1 = M0 + predation by groups NOT in the model (tuna, sharks, birds,
     # cetaceans other than porpoises): mackerel 0.15, horse mackerel 0.30
     # -> 0.159 /yr (0.11-0.21).
     natural_mortality: 0.000108783
     max_intake_rate: 0.04
     spawn:
-      mode: colony
-      n_colonies: 25
-      sigma_cells: 1.0
-      amplitude_mode: jitter
-      amplitude_min: 0.0
-      amplitude_max: 1.0
-    # Section 247: starve_rate is a calibrated time to death (section 46),
-    # not an energy balance; at u 0.057 it keeps today's resting fast from
-    # fill 0.7 to 95 % loss (394 d; was 0.0067 at u 0.5), drain at an
-    # empty reserve ~5.4 RM. model/fasting_time.py in research_notes/"Svaltgrans och startreserv" (Swedish letters).
+      mode: perlin
+      scale: 12.0
+      octaves: 4
+      persistence: 0.5
+      lacunarity: 2.0
+      threshold: 0.0
+      min_frac_of_max: 0.1
     starve_rate: 0.0942
     # Section 270: no refuge state left once schooling and vigilance are in a; rest is a feeding
     # pause at the swimming floor. research_notes/"Makrillens antipredatorbeteende" addendum
@@ -1815,15 +1834,12 @@
     # doing the ceiling's job of setting the ration (Section 92).
     max_intake_rate: 0.035
     spawn:
-      mode: env_driven
-      floor: 0.0
-      noise_amp: 0.0
-      noise_scale: 4.0
-      min_frac_of_max: 0.0
-      refs:
-        - name: planktivorous_fish
-          weight: 1.0
-          transform: linear
+      mode: colony
+      n_colonies: 25
+      sigma_cells: 1.0
+      amplitude_mode: jitter
+      amplitude_min: 0.0
+      amplitude_max: 1.0
     starve_rate: 0.5
     # Section 270: a resting porpoise stays in the top metres and its clicks are inaudible to fish
     # whether it rests or forages; observation only. research_notes/"Sal och tumlare golv"
@@ -1891,23 +1907,12 @@
     # section 166). The 7 free colonies started with ~no gadoid overlap.
     # Section 209: the demersal fish are two groups now.
     spawn:
-      mode: env_driven
-      floor: 0.0
-      noise_amp: 0.0
-      noise_scale: 4.0
-      min_frac_of_max: 0.0
-      refs:
-        - name: benthivorous_fish
-          weight: 1.0
-          transform: linear
-        - name: predatory_fish
-          weight: 1.0
-          transform: linear
-        - name: whiting
-          weight: 1.0
-          transform: linear
-    # 1.5 % of biomass per tick at an empty reserve: blubber lets a seal
-    # fast for weeks (30-60 day target, section 147).
+      mode: colony
+      n_colonies: 25
+      sigma_cells: 1.0
+      amplitude_mode: jitter
+      amplitude_min: 0.0
+      amplitude_max: 1.0
     starve_rate: 0.03
     # Section 270: a resting seal in the water does not vanish from every sense (0 ruled out); rest
     # cuts the vertical overlap with bed prey; observation only (nobody eats seals).
@@ -3842,55 +3847,55 @@ interaction_definitions:
   benthivorous_fish_impacted_by_bottom_trawling:
     impact_affects: true
     impact_table:
-    - value: 0.0
-      biomass_factor: 0.0
-      energy_factor: 0.0
-    - value: 100.0
-      biomass_factor: 0.00386304767
-      energy_factor: 0.0
+      - value: 0.0
+        biomass_factor: 0.0
+        energy_factor: 0.0
+      - value: 100.0
+        biomass_factor: 0.00386304767
+        energy_factor: 0.0
   # Section 228: water column F 0.260 /yr (saithe 0.30, hake 0.27, ling 0.17,
   # anglerfish ~0.08, spurdog 0.008; gillnet, longline and seine on this map).
   predatory_fish_impacted_by_bottom_trawling:
     impact_affects: true
     impact_table:
-    - value: 0.0
-      biomass_factor: 0.0
-      energy_factor: 0.0
-    - value: 100.0
-      biomass_factor: 0.0059035859233
-      energy_factor: 0.0
+      - value: 0.0
+        biomass_factor: 0.0
+        energy_factor: 0.0
+      - value: 100.0
+        biomass_factor: 0.0059035859233
+        energy_factor: 0.0
   # Section 228.1: mackerel group F 0.0123 /yr: the LOCAL 3.a.20 F of mackerel
   # (catch 343 t/yr / survey biomass 25 945 t = 0.0132) on its static gears (gillnet,
   # hooks) and bottom trawls; horse mackerel 0.003. Not the stock F (0.2).
   mackerel_impacted_by_bottom_trawling:
     impact_affects: true
     impact_table:
-    - value: 0.0
-      biomass_factor: 0.0
-      energy_factor: 0.0
-    - value: 100.0
-      biomass_factor: 0.00027979959184
-      energy_factor: 0.0
+      - value: 0.0
+        biomass_factor: 0.0
+        energy_factor: 0.0
+      - value: 100.0
+        biomass_factor: 0.00027979959184
+        energy_factor: 0.0
   # Section 223.26: whiting F 0.075 /yr.
   whiting_impacted_by_bottom_trawling:
     impact_affects: true
     impact_table:
-    - value: 0.0
-      biomass_factor: 0.0
-      energy_factor: 0.0
-    - value: 100.0
-      biomass_factor: 0.0017042857351
-      energy_factor: 0.0
+      - value: 0.0
+        biomass_factor: 0.0
+        energy_factor: 0.0
+      - value: 100.0
+        biomass_factor: 0.0017042857351
+        energy_factor: 0.0
   # Section 209: F 0.0004 /yr (industrial bycatch of haddock).
   benthivorous_fish_impacted_by_pelagic_trawling:
     impact_affects: true
     impact_table:
-    - value: 0.0
-      biomass_factor: 0.0
-      energy_factor: 0.0
-    - value: 10.0
-      biomass_factor: 0.000109755334
-      energy_factor: 0.0
+      - value: 0.0
+        biomass_factor: 0.0
+        energy_factor: 0.0
+      - value: 10.0
+        biomass_factor: 0.000109755334
+        energy_factor: 0.0
   # Section 228: no pelagic F on the water column (all of today's 0.029 was
   # mackerel's and horse mackerel's).
   predatory_fish_impacted_by_pelagic_trawling:
@@ -3901,22 +3906,22 @@ interaction_definitions:
   mackerel_impacted_by_pelagic_trawling:
     impact_affects: true
     impact_table:
-    - value: 0.0
-      biomass_factor: 0.0
-      energy_factor: 0.0
-    - value: 10.0
-      biomass_factor: 0.00064888628291
-      energy_factor: 0.0
+      - value: 0.0
+        biomass_factor: 0.0
+        energy_factor: 0.0
+      - value: 10.0
+        biomass_factor: 0.00064888628291
+        energy_factor: 0.0
   # Section 223.26: whiting F 0.005 /yr (industrial bycatch).
   whiting_impacted_by_pelagic_trawling:
     impact_affects: true
     impact_table:
-    - value: 0.0
-      biomass_factor: 0.0
-      energy_factor: 0.0
-    - value: 10.0
-      biomass_factor: 0.0013719416806
-      energy_factor: 0.0
+      - value: 0.0
+        biomass_factor: 0.0
+        energy_factor: 0.0
+      - value: 10.0
+        biomass_factor: 0.0013719416806
+        energy_factor: 0.0
   benthivorous_fish_impacted_by_rotor:
     impact_affects: false
     impact_table: []
@@ -4144,19 +4149,24 @@ interaction_definitions:
   benthivorous_fish_observes_predatory_fish:
     observes: true
     encounter_own: [[0.31, 173], [0.39, 173], [0.3, 173]]
-    encounter_neighbour: [[0.02567, 18.22], [0.02565, 98.49], [0.06082, 19.82], [0.06079, 90.84], [0.0084, 22.74], [0.0084, 110.5]]
+    encounter_neighbour: [[0.02567, 18.22], [0.02565, 98.49], [0.06082, 19.82], [
+          0.06079, 90.84], [0.0084, 22.74], [0.0084, 110.5]]
   benthivorous_fish_observes_mackerel:
     observes: true
     encounter_own: [[0.31, 0.008], [0.39, 0.012], [0.3, 0.002]]
-    encounter_neighbour: [[0.02567, 0.0008424], [0.02565, 0.004554], [0.06082, 0.001375], [0.06079, 0.006301], [0.0084, 0.0002629], [0.0084, 0.001277]]
+    encounter_neighbour: [[0.02567, 0.0008424], [0.02565, 0.004554], [0.06082, 
+              0.001375], [0.06079, 0.006301], [0.0084, 0.0002629], [0.0084, 
+              0.001277]]
   benthivorous_fish_observes_whiting:
     observes: true
     encounter_own: [[0.31, 200], [0.39, 200], [0.3, 200]]
-    encounter_neighbour: [[0.02567, 21.06], [0.02565, 113.9], [0.06082, 22.91], [0.06079, 105], [0.0084, 26.29], [0.0084, 127.7]]
+    encounter_neighbour: [[0.02567, 21.06], [0.02565, 113.9], [0.06082, 22.91], [
+          0.06079, 105], [0.0084, 26.29], [0.0084, 127.7]]
   predatory_fish_observes_benthivorous_fish:
     observes: true
     encounter_own: [[0.8, 800], [0.1, 480], [0.1, 40]]
-    encounter_neighbour: [[0.2218, 28.61], [0.2217, 117.6], [0.01675, 18.17], [0.01674, 48.61], [0.001419, 4.202], [0.001419, 23.67]]
+    encounter_neighbour: [[0.2218, 28.61], [0.2217, 117.6], [0.01675, 18.17], [
+              0.01674, 48.61], [0.001419, 4.202], [0.001419, 23.67]]
   mackerel_observes_benthivorous_fish:
     observes: true
     encounter_own: [[1, 1160]]
@@ -4172,7 +4182,9 @@ interaction_definitions:
   predatory_fish_observes_mackerel:
     observes: true
     encounter_own: [[0.8, 0.08], [0.1, 0.048], [0.1, 0.004]]
-    encounter_neighbour: [[0.2218, 0.002861], [0.2217, 0.01176], [0.01675, 0.001817], [0.01674, 0.004861], [0.001419, 0.0004202], [0.001419, 0.002367]]
+    encounter_neighbour: [[0.2218, 0.002861], [0.2217, 0.01176], [0.01675, 
+              0.001817], [0.01674, 0.004861], [0.001419, 0.0004202], [0.001419, 
+              0.002367]]
   mackerel_observes_predatory_fish:
     observes: true
     encounter_own: [[1, 290]]
@@ -4184,7 +4196,8 @@ interaction_definitions:
   predatory_fish_observes_whiting:
     observes: true
     encounter_own: [[0.8, 1333], [0.1, 800], [0.1, 66.67]]
-    encounter_neighbour: [[0.2218, 47.68], [0.2217, 196], [0.01675, 30.28], [0.01674, 81.02], [0.001419, 7.003], [0.001419, 39.46]]
+    encounter_neighbour: [[0.2218, 47.68], [0.2217, 196], [0.01675, 30.28], [
+              0.01674, 81.02], [0.001419, 7.003], [0.001419, 39.46]]
   mackerel_observes_whiting:
     observes: true
     encounter_own: [[1, 1933]]
@@ -4203,20 +4216,30 @@ interaction_definitions:
     encounter_neighbour: [[0.3118, .inf]]
   benthivorous_fish_observes_planktivorous_fish:
     observes: true
-    encounter_own: [[0.155, 0.008], [0.155, 400], [0.195, 0.012], [0.195, 600], [0.15, 0.002], [0.15, 100]]
-    encounter_neighbour: [[0.01284, 0.0008424], [0.01283, 0.004554], [0.01284, 42.12], [0.01283, 227.7], [0.03041, 0.001375], [0.0304, 0.006301], [0.03041, 68.73], [0.0304, 315.1], [0.0042, 0.0002629], [0.0042, 0.001277], [0.0042, 13.15], [0.0042, 63.87]]
+    encounter_own: [[0.155, 0.008], [0.155, 400], [0.195, 0.012], [0.195, 600], [
+          0.15, 0.002], [0.15, 100]]
+    encounter_neighbour: [[0.01284, 0.0008424], [0.01283, 0.004554], [0.01284, 
+              42.12], [0.01283, 227.7], [0.03041, 0.001375], [0.0304, 0.006301], [
+          0.03041, 68.73], [0.0304, 315.1], [0.0042, 0.0002629], [0.0042, 
+              0.001277], [0.0042, 13.15], [0.0042, 63.87]]
   predatory_fish_observes_planktivorous_fish:
     observes: true
-    encounter_own: [[0.4, 0.08], [0.4, 4000], [0.05, 0.048], [0.05, 2400], [0.05, 0.004], [0.05, 200]]
-    encounter_neighbour: [[0.1109, 0.002861], [0.1109, 0.01176], [0.1109, 143], [0.1109, 588.1], [0.008375, 0.001817], [0.008372, 0.004861], [0.008375, 90.84], [0.008372, 243.1], [0.0007094, 0.0004202], [0.0007094, 0.002367], [0.0007094, 21.01], [0.0007094, 118.4]]
+    encounter_own: [[0.4, 0.08], [0.4, 4000], [0.05, 0.048], [0.05, 2400], [0.05,
+          0.004], [0.05, 200]]
+    encounter_neighbour: [[0.1109, 0.002861], [0.1109, 0.01176], [0.1109, 143], [
+          0.1109, 588.1], [0.008375, 0.001817], [0.008372, 0.004861], [0.008375, 
+              90.84], [0.008372, 243.1], [0.0007094, 0.0004202], [0.0007094, 
+              0.002367], [0.0007094, 21.01], [0.0007094, 118.4]]
   mackerel_observes_planktivorous_fish:
     observes: true
     encounter_own: [[0.5, 0.116], [0.5, 5800]]
-    encounter_neighbour: [[0.1057, 0.002251], [0.1057, 0.005837], [0.1057, 112.5], [0.1057, 291.8]]
+    encounter_neighbour: [[0.1057, 0.002251], [0.1057, 0.005837], [0.1057, 112.5],
+       [0.1057, 291.8]]
   whiting_observes_planktivorous_fish:
     observes: true
     encounter_own: [[0.5, 0.012], [0.5, 600]]
-    encounter_neighbour: [[0.07797, 0.001375], [0.07794, 0.006301], [0.07797, 68.73], [0.07794, 315.1]]
+    encounter_neighbour: [[0.07797, 0.001375], [0.07794, 0.006301], [0.07797, 
+              68.73], [0.07794, 315.1]]
   benthivorous_fish_observes_phytoplankton:
     observes: false
   predatory_fish_observes_phytoplankton:
@@ -4228,11 +4251,13 @@ interaction_definitions:
   benthivorous_fish_observes_porpoises:
     observes: true
     encounter_own: [[0.31, 33.6], [0.39, 33.6], [0.3, 33.6]]
-    encounter_neighbour: [[0.02567, 3.538], [0.02565, 19.13], [0.06082, 3.849], [0.06079, 17.64], [0.0084, 4.418], [0.0084, 21.46]]
+    encounter_neighbour: [[0.02567, 3.538], [0.02565, 19.13], [0.06082, 3.849], [
+          0.06079, 17.64], [0.0084, 4.418], [0.0084, 21.46]]
   predatory_fish_observes_porpoises:
     observes: true
     encounter_own: [[0.8, 49.78], [0.1, 49.78], [0.1, 49.78]]
-    encounter_neighbour: [[0.2218, 1.78], [0.2217, 7.318], [0.01675, 1.884], [0.01674, 5.041], [0.001419, 5.229], [0.001419, 29.46]]
+    encounter_neighbour: [[0.2218, 1.78], [0.2217, 7.318], [0.01675, 1.884], [
+              0.01674, 5.041], [0.001419, 5.229], [0.001419, 29.46]]
   mackerel_observes_porpoises:
     observes: true
     encounter_own: [[1, 12.89]]
@@ -4252,11 +4277,13 @@ interaction_definitions:
   benthivorous_fish_observes_seals:
     observes: true
     encounter_own: [[0.31, 9.688], [0.39, 9.688], [0.3, 9.688]]
-    encounter_neighbour: [[0.02567, 1.02], [0.02565, 5.515], [0.06082, 1.11], [0.06079, 5.087], [0.0084, 1.274], [0.0084, 6.187]]
+    encounter_neighbour: [[0.02567, 1.02], [0.02565, 5.515], [0.06082, 1.11], [
+              0.06079, 5.087], [0.0084, 1.274], [0.0084, 6.187]]
   predatory_fish_observes_seals:
     observes: true
     encounter_own: [[0.8, 9.688], [0.1, 9.688], [0.1, 9.688]]
-    encounter_neighbour: [[0.2218, 0.3464], [0.2217, 1.424], [0.01675, 0.3667], [0.01674, 0.9811], [0.001419, 1.018], [0.001419, 5.733]]
+    encounter_neighbour: [[0.2218, 0.3464], [0.2217, 1.424], [0.01675, 0.3667], [
+          0.01674, 0.9811], [0.001419, 1.018], [0.001419, 5.733]]
   mackerel_observes_seals:
     observes: true
     encounter_own: [[1, 7.25]]
@@ -4285,19 +4312,23 @@ interaction_definitions:
   planktivorous_fish_observes_benthivorous_fish:
     observes: true
     encounter_own: [[0.55, 680], [0.45, 120]]
-    encounter_neighbour: [[0.1316, 24.27], [0.1315, 73.72], [0.05754, 11.94], [0.05754, 63.91]]
+    encounter_neighbour: [[0.1316, 24.27], [0.1315, 73.72], [0.05754, 11.94], [
+              0.05754, 63.91]]
   planktivorous_fish_observes_predatory_fish:
     observes: true
     encounter_own: [[0.55, 173], [0.45, 173]]
-    encounter_neighbour: [[0.1316, 6.176], [0.1315, 18.76], [0.05754, 17.21], [0.05754, 92.14]]
+    encounter_neighbour: [[0.1316, 6.176], [0.1315, 18.76], [0.05754, 17.21], [
+              0.05754, 92.14]]
   planktivorous_fish_observes_mackerel:
     observes: true
     encounter_own: [[0.55, 0.116], [0.45, 0.116]]
-    encounter_neighbour: [[0.1316, 0.004141], [0.1315, 0.01258], [0.05754, 0.01154], [0.05754, 0.06178]]
+    encounter_neighbour: [[0.1316, 0.004141], [0.1315, 0.01258], [0.05754, 
+              0.01154], [0.05754, 0.06178]]
   planktivorous_fish_observes_whiting:
     observes: true
     encounter_own: [[0.55, 1133], [0.45, 200]]
-    encounter_neighbour: [[0.1316, 40.46], [0.1315, 122.9], [0.05754, 19.89], [0.05754, 106.5]]
+    encounter_neighbour: [[0.1316, 40.46], [0.1315, 122.9], [0.05754, 19.89], [
+              0.05754, 106.5]]
   planktivorous_fish_observes_planktivorous_fish:
     observes: true
     encounter_own: [[1, .inf]]
@@ -4307,13 +4338,15 @@ interaction_definitions:
   planktivorous_fish_observes_porpoises:
     observes: true
     encounter_own: [[0.55, 124.4], [0.45, 124.4]]
-    encounter_neighbour: [[0.1316, 4.442], [0.1315, 13.49], [0.05754, 12.38], [0.05754, 66.28]]
+    encounter_neighbour: [[0.1316, 4.442], [0.1315, 13.49], [0.05754, 12.38], [
+              0.05754, 66.28]]
   planktivorous_fish_observes_seabirds:
     observes: true
   planktivorous_fish_observes_seals:
     observes: true
     encounter_own: [[0.55, 9.688], [0.45, 9.688]]
-    encounter_neighbour: [[0.1316, 0.3458], [0.1315, 1.05], [0.05754, 0.9636], [0.05754, 5.16]]
+    encounter_neighbour: [[0.1316, 0.3458], [0.1315, 1.05], [0.05754, 0.9636], [
+              0.05754, 5.16]]
   planktivorous_fish_observes_zooplankton:
     observes: true
     encounter_own: [[1, .inf]]
@@ -4339,7 +4372,8 @@ interaction_definitions:
   porpoises_observes_planktivorous_fish:
     observes: true
     encounter_own: [[0.5, 1.12], [0.5, 5.6e+04]]
-    encounter_neighbour: [[0.09322, 0.04084], [0.09322, 0.1064], [0.09322, 2042], [0.09322, 5322]]
+    encounter_neighbour: [[0.09322, 0.04084], [0.09322, 0.1064], [0.09322, 2042],
+       [0.09322, 5322]]
   porpoises_observes_phytoplankton:
     observes: false
   porpoises_observes_porpoises:
@@ -4381,29 +4415,38 @@ interaction_definitions:
   seals_observes_benthivorous_fish:
     observes: true
     encounter_own: [[0.5, 2000], [0.2, 2000], [0.3, 500]]
-    encounter_neighbour: [[0.107, 55.9], [0.1069, 149.6], [0.0249, 40.63], [0.02489, 104.6], [0.0207, 40.32], [0.0207, 282.8]]
+    encounter_neighbour: [[0.107, 55.9], [0.1069, 149.6], [0.0249, 40.63], [
+              0.02489, 104.6], [0.0207, 40.32], [0.0207, 282.8]]
   seals_observes_predatory_fish:
     observes: true
     encounter_own: [[0.5, 500], [0.2, 500], [0.3, 125]]
-    encounter_neighbour: [[0.107, 13.98], [0.1069, 37.41], [0.0249, 10.16], [0.02489, 26.15], [0.0207, 10.08], [0.0207, 70.69]]
+    encounter_neighbour: [[0.107, 13.98], [0.1069, 37.41], [0.0249, 10.16], [
+              0.02489, 26.15], [0.0207, 10.08], [0.0207, 70.69]]
   seals_observes_mackerel:
     observes: true
     encounter_own: [[0.5, 0.2], [0.2, 0.2], [0.3, 0.05]]
-    encounter_neighbour: [[0.107, 0.00559], [0.1069, 0.01496], [0.0249, 0.004063], [0.02489, 0.01046], [0.0207, 0.004032], [0.0207, 0.02828]]
+    encounter_neighbour: [[0.107, 0.00559], [0.1069, 0.01496], [0.0249, 0.004063],
+       [0.02489, 0.01046], [0.0207, 0.004032], [0.0207, 0.02828]]
   seals_observes_whiting:
     observes: true
     encounter_own: [[0.5, 3333], [0.2, 3333], [0.3, 833.3]]
-    encounter_neighbour: [[0.107, 93.17], [0.1069, 249.4], [0.0249, 67.72], [0.02489, 174.3], [0.0207, 67.21], [0.0207, 471.3]]
+    encounter_neighbour: [[0.107, 93.17], [0.1069, 249.4], [0.0249, 67.72], [
+              0.02489, 174.3], [0.0207, 67.21], [0.0207, 471.3]]
   seals_observes_planktivorous_fish:
     observes: true
-    encounter_own: [[0.25, 0.2], [0.25, 1e+04], [0.1, 0.2], [0.1, 1e+04], [0.15, 0.05], [0.15, 2500]]
-    encounter_neighbour: [[0.05348, 0.00559], [0.05347, 0.01496], [0.05348, 279.5], [0.05347, 748.2], [0.01245, 0.004063], [0.01244, 0.01046], [0.01245, 203.1], [0.01244, 523], [0.01035, 0.004032], [0.01035, 0.02828], [0.01035, 201.6], [0.01035, 1414]]
+    encounter_own: [[0.25, 0.2], [0.25, 1e+04], [0.1, 0.2], [0.1, 1e+04], [0.15, 
+              0.05], [0.15, 2500]]
+    encounter_neighbour: [[0.05348, 0.00559], [0.05347, 0.01496], [0.05348, 
+              279.5], [0.05347, 748.2], [0.01245, 0.004063], [0.01244, 0.01046], [
+          0.01245, 203.1], [0.01244, 523], [0.01035, 0.004032], [0.01035, 
+              0.02828], [0.01035, 201.6], [0.01035, 1414]]
   seals_observes_phytoplankton:
     observes: false
   seals_observes_porpoises:
     observes: true
     encounter_own: [[0.5, 22.22], [0.2, 22.22], [0.3, 5.556]]
-    encounter_neighbour: [[0.107, 0.6211], [0.1069, 1.663], [0.0249, 0.4514], [0.02489, 1.162], [0.0207, 0.448], [0.0207, 3.142]]
+    encounter_neighbour: [[0.107, 0.6211], [0.1069, 1.663], [0.0249, 0.4514], [
+              0.02489, 1.162], [0.0207, 0.448], [0.0207, 3.142]]
   seals_observes_seabirds:
     observes: true
   seals_observes_seals:

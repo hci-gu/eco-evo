@@ -67,6 +67,12 @@ def bound_keys():
     fgconfig.attach_help = spy
     try:
         app = fgconfig.FGConfigApp(root)
+        # Section 306: the library's zooplankton pays a Gross production P;
+        # an in-memory copy on the r_max budget (33.4 = 57.98 - M1 - M2)
+        # shows the r_max, M1 and M2 terms of the growth breakdown.
+        _zoo = app.global_library["species_definitions"]["zooplankton"]
+        _zoo.pop("somatic_production", None)
+        _zoo["r_max"] = 33.4
         # The spawn parameter rows only exist for the selected mode.
         for vars_store in (app.spawn_vars, app.ndm_spawn_vars,
                            app.impact_spawn_vars):
@@ -160,6 +166,12 @@ def test_fg_editor_growth_line_has_term_help():
 
     try:
         app = fgconfig.FGConfigApp(root)
+        # Section 306: the library's zooplankton pays a Gross production P;
+        # an in-memory copy on the r_max budget (33.4 = 57.98 - M1 - M2)
+        # shows the r_max, M1 and M2 terms of the growth breakdown.
+        _zoo = app.global_library["species_definitions"]["zooplankton"]
+        _zoo.pop("somatic_production", None)
+        _zoo["r_max"] = 33.4
         # Section 250: the planktivores pay their somatic production (P form);
         # zooplankton keeps the r_max budget with M2 from the planktivores.
         app.project_data["decision_makers"] = [

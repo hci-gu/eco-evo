@@ -174,6 +174,21 @@ bias, not a growth rate (section 249). P is an annual field rate, so it
 excludes ``r_max`` and ``feeding_season_months`` (the material law of 244
 still caps the new tonnes on today's food).
 
+Measured gross production (section 306). The same key carries any FG's
+measured gross production rate at ideal conditions, the rate before every
+loss the model applies: a non decision maker's g = P / TICKS_PER_YEAR
+(open pool or not; a producer's P is its rate at the light reference day,
+which the light and nutrient factors scale), a decision maker's as above.
+M1 and the booked M2 stay out of it, so the model's own losses (M1, the
+realised predation, the impacts) decide whether the group grows or
+shrinks, and ``--mortality off`` no longer lowers g. The booking is
+needed only where the field rate is a NET one (``r_max``, measured after
+the predation the group had): today the benthos. Library (306):
+phytoplankton (both layers) 244.53 (0.67 /d gross of micrograzing,
+Stelfox-Widdicombe et al. 2004, resume 131), zooplankton 57.98
+(Huntley & Lopez 1992 at 11.5 C, 58.4), mackerel 0.0707 (lean growth in
+the box, "Makrillens sasong").
+
 An FG without ``r_max`` keeps its hand-set ``growth_rate`` (legacy
 entries). ``r_max`` and ``predation_mortality`` are per year and
 therefore tick-independent; the derived ``growth_rate`` is per tick at
@@ -431,8 +446,9 @@ SOMATIC_KEY = "somatic_production"
 
 
 def somatic_production(spec):
-    """P (/yr) of an open-population DM (section 250) or an open pool's
-    local production P/B (section 268), or None."""
+    """P (/yr), the FG's measured gross production at ideal conditions
+    (open-population DM, section 250; open pool, 268; any FG, 306), or
+    None."""
     raw = (spec or {}).get(SOMATIC_KEY)
     if raw in (None, ""):
         return None
@@ -586,8 +602,8 @@ def growth_budget(prey_id, species_defs, interactions,
             return budget
         if budget.somatic is not None:
             if _as_float(spec.get("r_max")) > 0.0:
-                budget.error = (f"{SOMATIC_KEY} replaces r_max (section 250): r_max is "
-                                "a whole-life-cycle rate whose recruitment is imported")
+                budget.error = (f"{SOMATIC_KEY} replaces r_max (sections 250, 306): the "
+                                "measured gross production is the whole growth")
                 return budget
             if _as_float(spec.get("feeding_season_months")) not in (0.0, 12.0):
                 budget.error = (f"{SOMATIC_KEY} is an annual rate: feeding_season_months "
@@ -618,18 +634,18 @@ def growth_budget(prey_id, species_defs, interactions,
                 return budget
     else:
         budget.gate = 1.0
-        if spec.get("outside_density") not in (None, ""):
-            # Section 268: an open pool may carry its field local production
-            # P/B; the booked M2 above it is then paid by the exchange.
-            try:
-                budget.somatic = somatic_production(spec)
-            except ValueError as error:      # the FG editor, mid-keystroke
-                budget.error = str(error)
-                return budget
-            if budget.somatic is not None and _as_float(spec.get("r_max")) > 0.0:
-                budget.error = (f"{SOMATIC_KEY} replaces r_max (section 268): an open "
-                                "pool's local production is its whole growth")
-                return budget
+        # Section 268: an open pool's field local production P/B (the booked
+        # M2 above it is paid by the exchange); section 306: any NDM's
+        # measured gross production.
+        try:
+            budget.somatic = somatic_production(spec)
+        except ValueError as error:      # the FG editor, mid-keystroke
+            budget.error = str(error)
+            return budget
+        if budget.somatic is not None and _as_float(spec.get("r_max")) > 0.0:
+            budget.error = (f"{SOMATIC_KEY} replaces r_max (sections 268, 306): "
+                            "the measured gross production is the whole growth")
+            return budget
         if not math.isfinite(budget.m1_annual):
             budget.error = "natural_mortality must be below 1"
             return budget

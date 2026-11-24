@@ -9,7 +9,9 @@ no carrying capacity. Per cell and tick, after its M1:
 ``g`` is the derived growth rate with r_max 0, so the local production
 replaces exactly the booked losses (M1 + sum M2) at T and the exchange
 term is zero there: the exchange sits OUTSIDE the derived g, as impacts
-do, and nothing is paid twice. No logistic, no K, no clip at K.
+do, and nothing is paid twice. No logistic, no K, no clip at K. With a
+``somatic_production`` P (krill since section 268; a migrating DM such as
+mackerel since 306) g pays P instead, and the exchange carries the rest.
 
 Library keys (species):
 

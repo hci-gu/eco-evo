@@ -140,8 +140,10 @@ def test_migrating_mackerel_round_trips_and_closes(app):
     app.apply_fg_changes()
     assert not [t for t, _ in app.shown if t.startswith("Invalid")], app.shown
     for key in ("outside_density", "outside_exchange_rate", "outside_season",
-                "outside_fill", "outside_entry", "r_max", "feeding_season_months"):
+                "outside_fill", "outside_entry", "somatic_production"):
         assert entry[key] == before[key], key
+    # Section 306: P replaces r_max and the feeding season.
+    assert "r_max" not in entry and "feeding_season_months" not in entry
     budget = growth_budget("mackerel", app.global_library["species_definitions"],
                            app.global_library["interaction_definitions"],
                            active_predators=DMS + NDMS)

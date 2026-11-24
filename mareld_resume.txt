@@ -27253,6 +27253,55 @@ remain open exactly as described in 71.9 / 71.11.
     0.34 / 0.20) its probes import only 0.0545 into J. Those probes are invalid until fix108 is restarted on
     the 305 code.
 
+306 MEASURED GROSS PRODUCTION ENTERED DIRECTLY: PHYTOPLANKTON, ZOOPLANKTON, MACKEREL (2026-11-24; user: "Fixa sa att
+    fyto, zoo och makrill far bruttot direkt")
+306.1 Why. The M2 booking (g = (r_max + M1 + sum M2) / ...) is needed only where the field growth rate is NET
+    of the predation the group had (r_max): it adds that predation back to get the gross rate the engine
+    needs, since the engine subtracts M1, the realised predation and the impacts itself. Where a gross rate
+    is measured, the booking is an extra step: phytoplankton's 0.67 /d (in situ dilution, gross of
+    micrograzing; Stelfox-Widdicombe et al. 2004, section 131) and zooplankton's Huntley & Lopez 1992
+    production (58.4 /yr at 11.5 C, section 129) were already the gross, split into r_max + M1 + M2.
+    Mackerel's local lean production was measured in section 246 ("Makrillens sasong", a-umlaut). The
+    remaining net-rate groups are the benthos (Hiddink recovery r is net; a field P/B is the realised
+    rate at field density, ~ r (1 - B*/K), a lower bound on g, research_notes/"Litteraturbaserad growth
+    rate per FG" benthos.md Q5), so the booking stays there.
+306.2 Code. `somatic_production` P is now any FG's measured gross production at ideal conditions:
+    growth_budget reads it on every NDM (was open pools only; P with r_max > 0 refused), g = P / 1460
+    (NDM) or P / ((s* - u) 1460) (DM, unchanged). M1 and the booked M2 stay out of g: unchecking a
+    predator or --mortality off leaves g alone. config_loader's no-fallback refusal and the open_pool
+    docstring generalised. FG editor: the field is "Gross production P" on both panels (was "Somatic
+    production" on the DM panel, "Local production P/B ... open pool" on the NDM panel), range 0-1000 /yr
+    (was 0-10, too small for the plankton), the NDM field moved under r_max; Apply now derives g for a
+    closed group with P (it skipped the budget for any non-open group without r_max, so the benthivores'
+    and whiting's displayed g was not re-derived on Apply); hover and field help rewritten (r_max help
+    says why the booking exists).
+306.3 Library. phytoplankton and subsurface_phytoplankton: r_max 67.882 -> somatic_production
+    244.5303110624 (today's gross r_max + M1 + M2 to full precision; 0.67 x 365 = 244.55). zooplankton:
+    r_max 33.4 -> 57.977547786 (today's gross; the source's 58.4 within its rounding). mackerel: r_max 0 and
+    feeding_season_months 5.5 removed, somatic_production 0.0707 /yr = the lean growth per annual-mean
+    tonne while in the box weighted by the box's age 1 / older biomass 0.85 / 0.15 [J] (0.85 x 0.1027 -
+    0.15 x 0.1107; derive_library.py's SMS weights x the fat cycle). Mackerel's g 0.00028498 ->
+    0.000051352 (x 0.18: the old g paid the booked M1 + M2 0.180 x 12/5.5). Every predation_mortality
+    value and checkbox is unchanged (the diet diagnostics read them).
+306.4 Effect. With --mortality on, every derived g is unchanged to 1e-9 except mackerel's (x 0.18; its
+    level is set by the migration exchange, k 36.5 /yr, so the dynamic effect is small; judge it with the
+    long-run probe). With --mortality off (tools/viability.py's default) phytoplankton's g is x1.03 and
+    zooplankton's x1.86 of the old value (M1 is no longer subtracted from g). budget_gate output identical.
+    Observation and action widths unchanged; checkpoints stay valid, mackerel's payoff moves slightly.
+306.5 Running fix110 (train_gpu --resume, started before 306; user chose to edit the library now): its
+    viewer and long-run probe reload the library but keep their old code, which reads P only on open
+    pools, so from this edit its probes give phytoplankton (both layers) g = (M1 + M2) / 1460 ~ 0.121
+    instead of 0.1675. Those probes are invalid until fix110 is restarted on the 306 code (--resume).
+    GPU training is unaffected.
+306.6 Related note: research_notes/"Dietandelar och ranson"/design.md (not implemented) - diet shares and
+    Q/B instead of M2; after 306 the M2 reaches g only for the benthos.
+306.7 Tests updated where they encoded the old rule: test_growth_budget (mortality off lowers the g of an
+    r_max group with M1, porpoises; the P groups incl. zooplankton, phytoplankton, mackerel keep g),
+    test_open_pool (a closed NDM's P sets g; P with r_max refused; without P r_max + M2), test_open_dm and
+    test_fgconfig_open_pool (mackerel's P, no r_max, no season), test_fgconfig_field_help (an in-memory
+    zooplankton on the r_max budget shows the r_max / M1 / M2 terms). pytest 2084 passed, 12 skipped;
+    1-generation train.py smoke passed. Not committed.
+
 307 Ctrl+C stops train_gpu.py within a tick block (2026-11-25, user: "abort directly on Ctrl+C, without
       waiting for the running update").
 307.1 Cause. train_gpu's SIGINT/SIGTERM handler only set a flag, read after the whole update, and the
@@ -27286,3 +27335,7 @@ remain open exactly as described in 71.9 / 71.11.
 307.5 pytest: 2082 passed, 12 skipped, 3 failed (test_config_encoding spawn defaults,
       test_viewer_spawn_overrides x2); they fail with HEAD's rollout.py and train_gpu.py too: the
       uncommitted fg_library.yaml has spawn mode perlin where the tests expect colony.
+307.6 The fish spawn mode perlin is intended (user: tests must not depend on the project's settings).
+      test_config_encoding's project now names its own library (library: key; it read the repository's);
+      test_viewer_spawn_overrides judges a chosen pattern against a second chosen one (fish on Perlin12 vs
+      25Colonies), not against the project's spawn. Both pass on perlin and on HEAD's colony library.

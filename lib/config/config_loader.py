@@ -107,7 +107,8 @@ def _sample_total_biomass(min_b, max_b, rng):
 
 def _refuse_unpaid_open_population(sid, spec_defs, inter_defs, active, include_m1,
                                    latitude_deg=None):
-    """Section 250: an open-population DM (``somatic_production``) has no
+    """Sections 250, 306: an FG with ``somatic_production`` (an open
+    population, an open pool or any measured gross production) has no
     hand-set fallback - a budget error is an error, not the stored g."""
     spec = (spec_defs or {}).get(sid) or {}
     if spec.get(SOMATIC_KEY) in (None, ""):

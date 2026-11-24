@@ -890,14 +890,15 @@ class FGConfigApp:
             ("  Outside Season (12 monthly factors Jan..Dec, mean ~1; empty = flat)", "outside_season", "entry", 0.0, 10.0),
             ("  Arrival Fill (12 monthly reserve fills of the arriving fish, 0-1)", "outside_fill", "entry", 0.0, 1.0),
             ("  Entry Edges (e.g. west, north:0-0.5)", "outside_entry", "entry", 0.0, 0.0),
-            ("Max Net Growth r_max (1/yr, literature; 0 with no Somatic production = set Max Growth by hand)", "r_max", "entry", 0.0, 100.0),
-            # Section 250: an open population's g pays its somatic production.
-            ("  Somatic production P (1/yr, field; replaces r_max; 0 = off)", "somatic_production", "entry", 0.0, 10.0),
+            ("Max Net Growth r_max (1/yr, literature, net of the field predation; 0 with no Gross production = set Max Growth by hand)", "r_max", "entry", 0.0, 100.0),
+            # Sections 250, 306: g pays the measured gross production
+            # (an open population's somatic production, or any group's).
+            ("  Gross production P (1/yr, measured at ideal conditions; replaces r_max and the booked M2; 0 = off)", "somatic_production", "entry", 0.0, 1000.0),
             # Section 185: closes the logistic whose r the budget pays.
             ("  Regional carrying capacity K (t/km2, effective today; 0 = off)", "regional_carrying_capacity", "entry", 0.0, 100.0),
             # Section 202: share of the M1 loss returned to the nutrient pools.
             ("  Mortality regeneration (share of M1 back to the nutrient pools; 0 = off)", "mortality_regeneration", "entry", 0.0, 1.0),
-            ("Max Growth (MG_X, fraction/{tick}; derived from r_max or Somatic production)", "growth_rate", "entry", 0.0, 1.0),
+            ("Max Growth (MG_X, fraction/{tick}; derived from r_max or Gross production)", "growth_rate", "entry", 0.0, 1.0),
             ("Starve Rate (catabolism, fraction/{tick})", "starve_rate", "entry", 0.0, 1.0),
             ("Visibility Floor (default; overridable per predator)", "visibility_floor", "entry", 0.0, 1.0),
             ("Natural Mortality (fraction/{tick})", "natural_mortality", "entry", 0.0, 1.0),
@@ -1087,8 +1088,11 @@ class FGConfigApp:
         ndm_props = [
             # Display only (viewer hover): the member taxa and shares.
             ("Member species (name = share; ...; others[n] = share; empty = none)", "member_species", "entry", 0.0, 0.0),
-            ("Net Growth r_max (1/yr, literature; 0 = set Max Growth by hand, or derived for an open pool)", "r_max", "entry", 0.0, 100.0),
-            ("Max Growth (fraction/{tick}; derived when r_max > 0)", "growth_rate", "entry", 0.0, 1.0),
+            ("Net Growth r_max (1/yr, literature, net of the field predation; 0 = Gross production, set Max Growth by hand, or derived for an open pool)", "r_max", "entry", 0.0, 100.0),
+            # Sections 268, 306: the measured gross production (an open
+            # pool's local P/B, or any group's); g = P / ticks per year.
+            ("  Gross production P (1/yr, measured at ideal conditions; replaces r_max and the booked M2; 0 = off)", "somatic_production", "entry", 0.0, 1000.0),
+            ("Max Growth (fraction/{tick}; derived from r_max or Gross production)", "growth_rate", "entry", 0.0, 1.0),
             # Own losses of the producer (section 173).
             ("Natural Mortality M1 (fraction/{tick}; respiration, sinking, lysis)", "natural_mortality", "entry", 0.0, 1.0),
             ("Max Carrying Capacity (ton/cell)", "max_carrying_capacity", "entry", 0.0, 100000.0),
@@ -1104,8 +1108,6 @@ class FGConfigApp:
             # Section 295: the layout by month over bed depth and the energy by month.
             ("  Outside Depth Season (depth m: 12 factors Jan..Dec | ...; open pool; empty = none)", "outside_depth_season", "entry", 0.0, 0.0),
             ("Energy Season (12 monthly factors on the energy as prey, mean ~1; empty = constant)", "energy_season", "entry", 0.0, 10.0),
-            # Section 268: the open pool's local production P/B (0 = g pays the booked M2).
-            ("  Local production P/B (1/yr, field; open pool; 0 = the booked M2)", "somatic_production", "entry", 0.0, 10.0),
             # Light-limited growth on the daylight calendar (section 138).
             ("Light Saturation I_k (umol photons/m2/s; 1 or 12 monthly values; 0 = off)", "light_saturation", "entry", 0.0, 5000.0),
             ("Light Reference Day (day of year Max Growth applies; 0 = 105, mid April)", "light_reference_day", "entry", 0.0, 365.0),
@@ -3914,10 +3916,11 @@ class FGConfigApp:
         # by the row FG. While the pair is checked it is added to the
         # column FG's derived growth_rate (lib/world/growth_budget.py), so
         # checking / unchecking a predator raises / lowers the prey's
-        # growth at once; a column with somatic_production pays that instead
-        # (section 250). Cell active only if preys_on=True.
+        # growth at once; a column with somatic_production (Gross
+        # production) pays that instead (sections 250, 306): it ignores M2.
+        # Cell active only if preys_on=True.
         self.create_matrix_section(
-            "Predation Mortality M2 (1/yr; row's predation on column, added to column's growth unless it has Somatic production)",
+            "Predation Mortality M2 (1/yr; row's predation on column, added to column's growth unless it has Gross production)",
             "predation_mortality", pred_fgs, fgs, cell_type="nonneg_float",
             parent=self.matrix_container)
         self._build_derived_growth_panel(fgs)
@@ -4497,8 +4500,8 @@ class FGConfigApp:
             return (f"{name}: r_max = {budget.r_max:g} per year, adds "
                     f"{budget.per_tick(budget.r_max):.4g} per tick to g")
         if kind == "somatic":
-            return (f"{name}: P = {budget.somatic:g} per year, the somatic production "
-                    f"the open population's g pays (section 250)")
+            return (f"{name}: P = {budget.somatic:g} per year, the measured gross "
+                    f"production g pays; M1 and the booked M2 stay out (sections 250, 306)")
         if kind == "m1":
             per_tick = -math.expm1(-budget.m1_annual / TICKS_PER_YEAR)
             return (f"{name}: M1 = {budget.m1_annual:.4g} per year "
@@ -6011,9 +6014,10 @@ class FGConfigApp:
         # overwrite the field with the budget over the APPLIED predation
         # matrix and the active project FGs. r_max = 0 keeps the legacy
         # hand-set growth_rate and is not stored - except for an open pool
-        # (section 245), derived with r_max 0. An open population that pays
-        # its somatic production (section 250) has no r_max at all, migrating
-        # or not: its budget refuses one, and the library keeps the key out.
+        # (section 245), derived with r_max 0. A group that pays its
+        # measured gross production (Gross production, sections 250, 306)
+        # has no r_max at all, migrating or not: its budget refuses one, the
+        # library keeps the key out, and its g is derived here as well.
         try:
             somatic_on = float(config.get("somatic_production", 0.0) or 0.0) > 0.0
         except (TypeError, ValueError):
@@ -6022,7 +6026,8 @@ class FGConfigApp:
             config["r_max"] = 0.0
         elif somatic_on:
             config.pop("r_max", None)
-        if not open_pool_on and not float(config.get("r_max", 0.0) or 0.0):
+        if (not open_pool_on and not somatic_on
+                and not float(config.get("r_max", 0.0) or 0.0)):
             config.pop("r_max", None)
         else:
             budget = growth_budget(

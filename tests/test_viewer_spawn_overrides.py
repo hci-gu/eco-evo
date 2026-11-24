@@ -26,6 +26,10 @@ _SPAWN = {fid: {"mode": "perlin", "template": "Perlin12"}
           for fid in ("planktivorous_fish", "benthivorous_fish", "whiting")}
 _SPAWN["porpoises"] = {"mode": "env_driven", "template": "Followfish"}
 _SPAWN["seals"] = {"mode": "env_driven", "template": "FollowDemersalFish"}
+# The same choice with the fish on colonies: the reference a changed
+# pattern is judged against, whatever spawn the project itself has.
+_OTHER = dict(_SPAWN, **{fid: {"mode": "colony", "template": "25Colonies"}
+                         for fid in ("planktivorous_fish", "benthivorous_fish", "whiting")})
 
 
 def _env(seed=3):
@@ -142,7 +146,10 @@ def test_the_gpu_training_worlds_spawn_with_the_viewers_templates():
     assert order.index("seals") > max(order.index("benthivorous_fish"), order.index("whiting"))
     spawned = spawner.biomass(keys)
     i = {fid: model.ids.index(fid) for fid in model.ids}
-    assert not torch.equal(spawned[:, i["planktivorous_fish"]], plain[:, i["planktivorous_fish"]])
+    # The chosen template sets the pattern.
+    assert spawner.set_overrides(spawn_override_configs(_OTHER, _load_spawn_templates(PROJECT)))
+    other = spawner.biomass(keys)
+    assert not torch.equal(spawned[:, i["planktivorous_fish"]], other[:, i["planktivorous_fish"]])
     # The totals are the world's draw, whatever the pattern.
     torch.testing.assert_close(spawned.double().sum(-1), plain.double().sum(-1), rtol=1e-5, atol=1e-4)
     # Untouched groups keep their fields.
@@ -204,8 +211,11 @@ def test_the_cpu_training_builder_spawns_with_the_blocks_in_every_world():
         prey, porp = env.fgs["planktivorous_fish"].biomass, env.fgs["porpoises"].biomass
         assert np.all(prey[porp > 0] > 0)
         assert prey[porp > 0].mean() > prey.mean()
+    # The chosen template sets the pattern.
+    other = _make_env_builder(
+        spawn_configs=spawn_override_configs(_OTHER, _load_spawn_templates(PROJECT)), **common)(seed=11)
     assert not np.allclose(spawned.fgs["planktivorous_fish"].biomass,
-                           plain.fgs["planktivorous_fish"].biomass)
+                           other.fgs["planktivorous_fish"].biomass)
     assert spawned.fgs["porpoises"].biomass.sum() == pytest.approx(
         plain.fgs["porpoises"].biomass.sum(), rel=1e-5)
     # A training world draws its reserve per cell around the start fill,

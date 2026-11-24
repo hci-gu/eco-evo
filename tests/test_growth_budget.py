@@ -231,11 +231,12 @@ def test_loader_leaves_m1_out_when_mortality_is_off():
     full_off = setup_full_mareld_mvp(grid_size=(6, 6), seed=0, spawn_seed=0,
                                      apply_natural_mortality=False)
     full_on = setup_full_mareld_mvp(grid_size=(6, 6), seed=0, spawn_seed=0)
-    # Phytoplankton carries an M1 (its sinking loss) since section 173/174.
-    for fid in ("zooplankton", "phytoplankton"):
-        assert full_off[fid].growth_rate < full_on[fid].growth_rate
-    # Section 250: an open population's g pays its somatic production, not M1.
-    for fid in ("planktivorous_fish", "benthivorous_fish"):
+    # An r_max group with an M1 (porpoises) pays it only while M1 is applied.
+    assert full_off["porpoises"].growth_rate < full_on["porpoises"].growth_rate
+    # Sections 250, 306: a group paying a measured gross production P keeps
+    # its g whatever the mortality switch (M1 is not in it).
+    for fid in ("planktivorous_fish", "benthivorous_fish", "zooplankton",
+                "phytoplankton", "mackerel"):
         assert full_off[fid].growth_rate == pytest.approx(full_on[fid].growth_rate)
     assert full_off["benthic_infauna"].growth_rate == pytest.approx(
         full_on["benthic_infauna"].growth_rate)
