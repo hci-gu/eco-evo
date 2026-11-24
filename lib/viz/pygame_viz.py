@@ -492,6 +492,18 @@ def _decimate_polyline(xs: np.ndarray, ys: np.ndarray) -> tuple:
     return out_x, out_y
 
 
+def _stage_exchange(obj) -> bool:
+    """True when an open population (section 250) exchanges its stages with
+    the outside: emigration or a recruit / adult import in its
+    ``juvenile_stage`` (benthivores, whiting). Booked as ``loss_exchange``
+    like an open pool's export, so its loss line needs the 'ex' share too."""
+    block = (getattr(obj, "params", None) or {}).get("juvenile_stage")
+    if not isinstance(block, Mapping):
+        return False
+    return any(block.get(key) not in (None, "", [], 0, 0.0)
+               for key in ("emigration", "recruit_import", "adult_import"))
+
+
 class _NullViz:
     """Drop-in replacement when pygame is unavailable or init failed.
 
@@ -632,8 +644,9 @@ class LiveVisualizer:
         # rule based on their stripped base id.
         self._ndm_ids: set = set(ndm_ids or [])
         # Section 245: open pools (exchange with the outside), learned from
-        # the groups handed to update_biomass; their NDM loss line adds the
-        # export share.
+        # the groups handed to update_biomass; their loss line adds the
+        # export share. Open populations with a stage exchange (section 250:
+        # emigration, recruit / adult import) count too.
         self._open_ids: set = set()
         # How much real time one tick is (project_metadata.tick_hours,
         # section 97). The engine is tick-agnostic, so this is purely for
@@ -1392,7 +1405,7 @@ class LiveVisualizer:
                                    np.float32(0.0), arr).astype(np.float32,
                                                                 copy=False)
                 if hasattr(obj, "open_pool"):
-                    if obj.open_pool is not None:
+                    if obj.open_pool is not None or _stage_exchange(obj):
                         self._open_ids.add(fid)
                     else:
                         self._open_ids.discard(fid)

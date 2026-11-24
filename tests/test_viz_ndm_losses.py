@@ -132,3 +132,28 @@ def test_migrating_dm_line_adds_its_export(viz, monkeypatch):
                               "natural": 0.2, "exchange": 0.6}})
     lines = rendered_lines(viz, "benthivorous_fish", monkeypatch)
     assert any(line.startswith("pr/st/im/nm/ex = ") for line in lines), lines
+
+
+def test_open_population_line_adds_its_emigration(viz, monkeypatch):
+    """Section 250: an open population without an open pool (benthivores,
+    whiting) books its stage emigration as the exchange, so its loss line
+    carries 'ex' too; a staged group without exchange keeps the short line."""
+    import numpy as np
+    from types import SimpleNamespace
+    viz.update_biomass({
+        "benthivorous_fish": SimpleNamespace(
+            biomass=np.ones(GRID, dtype=np.float32), open_pool=None,
+            params={"juvenile_stage": {"recruit_import": 0.183,
+                                       "emigration": [1.1, 0.17]}})}, tick=1)
+    viz.update_action_fracs("benthivorous_fish", 10.0, 20.0, 70.0)
+    viz.update_loss_breakdown({
+        "benthivorous_fish": {"predation": 0.3, "starvation": 0.0, "impact": 0.0,
+                              "natural": 0.2, "exchange": 0.5}})
+    lines = rendered_lines(viz, "benthivorous_fish", monkeypatch)
+    assert any(line.startswith("pr/st/im/nm/ex = ") for line in lines), lines
+    viz.update_biomass({
+        "benthivorous_fish": SimpleNamespace(
+            biomass=np.ones(GRID, dtype=np.float32), open_pool=None,
+            params={"juvenile_stage": {"growth_ratio": 1.0}})}, tick=2)
+    lines = rendered_lines(viz, "benthivorous_fish", monkeypatch)
+    assert any(line.startswith("pr/st/im/nm = ") for line in lines), lines
