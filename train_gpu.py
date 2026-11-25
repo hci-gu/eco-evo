@@ -14,7 +14,7 @@ from lib.gpu.cli import (add_common_arguments, builder_from_args, positive_int,
                          targets_from_args, trainer_options)
 from lib.gpu.config import ProjectSpec
 from lib.gpu.device import default_execution, resolve_device
-from lib.gpu.rollout import StopRequested, set_stop_check
+from lib.runners.stop_request import StopRequested, set_stop_check
 from lib.gpu.trainer import TensorARSTrainer
 from lib.training_profiles import add_profile_argument, parse_training_args
 from lib.runners.rnd_baseline import add_rnd_baseline_argument
@@ -261,9 +261,35 @@ def main(argv=None, *, on_step=None):
                         else:
                             visual.train_step(trainer, batch, ticks, epoch)
                         if index == len(batches) - 1:
-                            # The iteration is complete; a stop now keeps it.
+                            # The iteration is complete; a stop now keeps it,
+                            # so its log line is written before the viewer
+                            # probe, which a stop may cut (section 307.8).
                             next_generation, next_within = gen, iteration + 1
                             stoppable = True
+                            if trainer.iterations_completed % args.log_every == 0:
+                                metrics = trainer.metrics()  # intentional compact readback
+                                now = time.perf_counter()
+                                record = dict(generation=gen, iteration=iteration,
+                                              updates=trainer.iterations_completed,
+                                              elapsed_seconds=now - started,
+                                              seconds_per_update=(now - last_log_time) / (trainer.iterations_completed - last_log_update),
+                                              worlds=count, **metrics)
+                                if spawn:
+                                    # Absent = the project's spawn.
+                                    record["spawn_overrides"] = spawn
+                                last_log_time, last_log_update = now, trainer.iterations_completed
+                                # A non-finite metric (one broken rollout) is logged
+                                # as null with a warning instead of ending the run;
+                                # ars_update leaves such delta pairs out.
+                                record, bad = finite_record(record, (trainer.model.dm_ids, trainer.model.ids))
+                                if bad:
+                                    print(f"WARNING: update {record['updates']}: non-finite "
+                                          f"{', '.join(bad)} logged as null", flush=True)
+                                log.write(json.dumps(record, allow_nan=False) + "\n")
+                                log.flush()
+                                rewards = ", ".join(f"{f}={r:+.5f}" for f, r in zip(trainer.model.dm_ids, metrics["reward_mean"]))
+                                print(f"gen={gen} iter={iteration + 1}/{args.iter_per_gen} "
+                                      f"seconds/update={record['seconds_per_update']:.3f} {rewards}", flush=True)
                         else:
                             stoppable = False
                         if visual is not None:
@@ -271,31 +297,6 @@ def main(argv=None, *, on_step=None):
                             visual.update_progress(trainer, args)
                         if on_step is not None:
                             on_step(trainer, trainer.iterations_completed, directory, args)
-                    next_generation, next_within = gen, iteration + 1
-                    if trainer.iterations_completed % args.log_every == 0:
-                        metrics = trainer.metrics()  # intentional compact readback
-                        now = time.perf_counter()
-                        record = dict(generation=gen, iteration=iteration,
-                                      updates=trainer.iterations_completed,
-                                      elapsed_seconds=now - started,
-                                      seconds_per_update=(now - last_log_time) / (trainer.iterations_completed - last_log_update),
-                                      worlds=count, **metrics)
-                        if spawn:
-                            # Absent = the project's spawn.
-                            record["spawn_overrides"] = spawn
-                        last_log_time, last_log_update = now, trainer.iterations_completed
-                        # A non-finite metric (one broken rollout) is logged
-                        # as null with a warning instead of ending the run;
-                        # ars_update leaves such delta pairs out.
-                        record, bad = finite_record(record, (trainer.model.dm_ids, trainer.model.ids))
-                        if bad:
-                            print(f"WARNING: update {record['updates']}: non-finite "
-                                  f"{', '.join(bad)} logged as null", flush=True)
-                        log.write(json.dumps(record, allow_nan=False) + "\n")
-                        log.flush()
-                        rewards = ", ".join(f"{f}={r:+.5f}" for f, r in zip(trainer.model.dm_ids, metrics["reward_mean"]))
-                        print(f"gen={gen} iter={iteration + 1}/{args.iter_per_gen} "
-                              f"seconds/update={record['seconds_per_update']:.3f} {rewards}", flush=True)
                     if stop_requested:
                         raise KeyboardInterrupt
                 next_generation, next_within = gen + 1, 0

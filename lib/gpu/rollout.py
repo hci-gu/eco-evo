@@ -5,29 +5,7 @@ import torch
 from lib.environments.ecosystem_env.source_tracking import LocalRewardConfig
 from lib.gpu.random import fold_in, uniform
 from lib.runners.population_stability import validate_reward
-
-
-class StopRequested(BaseException):
-    """A training entry point asked every rollout to stop (Ctrl+C, SIGTERM).
-
-    Raised by ``RolloutRunner.run`` between tick blocks once the installed
-    stop check fires (``set_stop_check``). A BaseException, so neither the
-    viewer's ``except Exception`` nor a probe's ``except KeyboardInterrupt``
-    turns it into a partial result: it reaches the entry point, which
-    saves the last completed update.
-    """
-
-
-# Section 307: one process-wide check, installed by train_gpu.py for the
-# run's lifetime. None (the default, every other caller) keeps run() as it
-# was: no events, no host waits.
-_stop_check = None
-
-
-def set_stop_check(check):
-    """Install ``check`` (no arguments, True = stop) for every runner; None removes it."""
-    global _stop_check
-    _stop_check = check
+from lib.runners.stop_request import StopRequested, stop_check
 
 
 def _block_event(device):
@@ -452,7 +430,7 @@ class RolloutRunner:
     @torch.no_grad()
     def run(self, ticks):
         self.prepare()
-        check = _stop_check
+        check = stop_check()
         if check is not None:
             self._run_stoppable(ticks, check)
         elif self.graphs:

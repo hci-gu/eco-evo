@@ -906,17 +906,22 @@ class LiveTrainingProgress(TrainingProgress):
         A running probe is waited for and recorded. ``cancel`` - a bool or
         a callable polled while waiting (train_gpu's Ctrl+C only sets a
         flag) - stops it instead, as does a KeyboardInterrupt; either way
-        without a traceback.
+        without a traceback. A probe that has already finished is recorded
+        either way.
         """
         import concurrent.futures
         stop = cancel if callable(cancel) else (lambda: cancel)
         try:
-            if self._pending is not None and not stop():
+            if self._pending is not None:
                 future = self._pending[0]
-                print(f"[progress] waiting for probe {self._pending[1]} "
-                      f"(Ctrl+C cancels it)...", flush=True)
-                while not future.done() and not stop():
-                    concurrent.futures.wait([future], timeout=0.5)
+                if not future.done() and not stop():
+                    print(f"[progress] waiting for probe {self._pending[1]} "
+                          f"(Ctrl+C cancels it)...", flush=True)
+                    while not future.done() and not stop():
+                        concurrent.futures.wait([future], timeout=0.5)
+                # A probe that has finished is recorded, cancel or not: it
+                # is collected only after the next update, so a stop in
+                # between used to throw a whole long run away.
                 if future.done():
                     self._collect(block=True)
         except KeyboardInterrupt:

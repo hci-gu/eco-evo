@@ -27339,3 +27339,25 @@ remain open exactly as described in 71.9 / 71.11.
       test_config_encoding's project now names its own library (library: key; it read the repository's);
       test_viewer_spawn_overrides judges a chosen pattern against a second chosen one (fish on Perlin12 vs
       25Colonies), not against the project's spawn. Both pass on perlin and on HEAD's colony library.
+307.7 Two stop gaps closed (user, 2026-11-25). (a) The viewer probe on the CPU engine (train_gpu without
+      CUDA: --device cpu, MPS) ran its tick loop outside the tensor runner, so Ctrl+C waited for the whole
+      probe; train._probe_biomass now calls raise_if_stopped() each tick on that path. The check moved to
+      lib/runners/stop_request.py (StopRequested, set_stop_check, stop_check, raise_if_stopped), read by
+      RolloutRunner.run and the probe loop. (b) LiveTrainingProgress.wait threw away a long-run probe
+      that had already finished but was not yet collected (collection happens after the next update,
+      ~100 s on fix110): a finished probe is now recorded on a stop too; a running one is still cancelled.
+      Checks: an in-process driver sends SIGINT 0.5 s into the viewer probe of a 16x16 --visual run:
+      main returned 0.11 s after it on --device cpu (probe engine cpu), 0.62 s on cuda (engine gpu);
+      saved 1 update, next iteration 1, no biomass.jsonl record. tests/test_stop_request.py (9): a stop
+      mid-update keeps the last completed state and resumes exactly, the check is read between blocks,
+      a finished long-run probe is recorded and a running one cancelled, a stop in the viewer probe
+      records nothing (cpu, gpu-on-cpu, cuda engines); the probe and long-run tests fail on the old code.
+307.8 The log line before the viewer probe (user, 2026-11-25). An interrupted run never skips an iteration:
+      a stop inside an update discards it and the checkpoint points at that iteration (resumed exactly,
+      307.4); a stop in the viewer probe comes after the update has been applied, so that iteration is
+      done and the resume goes on with the next. But the done update's training.jsonl line was written
+      after the probe and was lost, a gap in the log. train_gpu.py now writes it right after the
+      iteration's last batch, before the viewer probe and the on_step callback (seconds/update now
+      counts the probe in the next interval). tests/test_gpu_visual.py: SIGINT in the second update's
+      viewer probe -> training.jsonl updates [1, 2], biomass.jsonl iter [1], checkpoint 2 updates, next
+      (0, 2); it fails on the old order ([1]). The cancelled probe itself is not re-run.

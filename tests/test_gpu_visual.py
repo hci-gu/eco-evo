@@ -89,6 +89,36 @@ def test_visual_cli_renders_and_preserves_training(tmp_path, viewers, device, ex
     assert_same(visual["trainer"], plain["trainer"])
 
 
+def test_a_stop_in_the_viewer_probe_keeps_the_update_and_its_log_line(tmp_path, viewers, monkeypatch):
+    """Section 307.8: Ctrl+C during the viewer probe after the second update.
+    The update is complete, so it is saved and logged; the probe records
+    nothing, and a resume goes on with the next iteration."""
+    import os
+    import signal
+    import train
+    original = train._probe_biomass
+    calls = []
+
+    def probe(*args, **kwargs):
+        calls.append(1)
+        if len(calls) == 2:
+            os.kill(os.getpid(), signal.SIGINT)   # train_gpu's handler sets the flag
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(train, "_probe_biomass", probe)
+    directory = tmp_path / "visual"
+    arguments_ = arguments(directory) + ["--visual", "--iter-per-gen", "3"]
+    assert main(arguments_) == 0
+    assert len(calls) == 2
+    log = [json.loads(line) for line in (directory / "training.jsonl").read_text().splitlines()]
+    assert [r["updates"] for r in log] == [1, 2]
+    records = (directory / "biomass.jsonl").read_text().splitlines()
+    assert [json.loads(r)["iter"] for r in records] == [1]
+    saved = torch.load(directory / "trainer.pth", weights_only=False)
+    assert saved["trainer"]["iterations_completed"] == 2
+    assert (saved["generation"], saved["iteration_in_generation"]) == (0, 2)
+
+
 @pytest.fixture
 def inline_probe(monkeypatch):
     """Run the live probe in-line, so which updates probe is deterministic

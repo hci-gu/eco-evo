@@ -13,6 +13,7 @@ from lib.training_profiles import add_profile_argument, parse_training_args
 from lib.runners.training_progress import (add_progress_arguments, validate_progress_arguments,
                                            make_visual_progress, probe_due)
 from lib.runners.warmup import add_warmup_argument, warmup_ticks
+from lib.runners.stop_request import raise_if_stopped
 from lib.world.tick_time import (
     LIBRARY_TICK_HOURS, add_tick_length_argument, resolve_tick_hours,
 )
@@ -1004,9 +1005,13 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                              random_dms=_random_dms, device=device)
     for _t in range(int(n_ticks)):
         if stepper is not None:
-            # Every world at once; the envs below are its mirrors.
+            # Every world at once; the envs below are its mirrors (the
+            # tensor rollout reads the stop check itself).
             stepper.step()
         else:
+            # train_gpu's Ctrl+C (section 307): without CUDA this probe
+            # runs on the CPU engine between updates; nothing is recorded.
+            raise_if_stopped()
             observation = env.get_observation()
             actions = env.policy_controller.forward(observation)
             env.step(actions)
