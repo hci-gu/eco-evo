@@ -146,6 +146,7 @@ def test_progress_tab_continues_across_resume(tmp_path, viewers, inline_probe):
     assert main(flags, on_step=render_progress) == 0
     history = tmp_path / "progress" / "probe.jsonl"
     assert [r["step"] for r in _history(tmp_path)] == [0, 1, 2]
+    probed_at_checkpoint = _history(tmp_path)[2]
     # A crash may leave evaluations ahead of the saved checkpoint.
     with history.open("a") as stream:
         stream.write(json.dumps(dict(step=99, evaluation=99, survival_ticks={})) + "\n")
@@ -153,6 +154,8 @@ def test_progress_tab_continues_across_resume(tmp_path, viewers, inline_probe):
     records = _history(tmp_path)
     assert [r["step"] for r in records] == [0, 1, 2, 3, 4]
     assert [r["evaluation"] for r in records] == [1, 2, 3, 4, 5]
+    # The probe of the checkpoint's own update is kept, not run again (307.9).
+    assert records[2] == probed_at_checkpoint
     # The tab shows the latest probe: day 0 and day 1 of five 6 h ticks.
     viz = viewers[-1]
     assert [d for d, _ in viz._series["progress"]["benthivorous_fish"]] == [0, 1]

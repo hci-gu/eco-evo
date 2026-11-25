@@ -666,20 +666,27 @@ class TrainingProgress:
                 raise ValueError("Evaluation settings changed; use a new --plot-dir to keep the graph comparable")
             if self.history.exists():
                 self.records = [json.loads(line) for line in self.history.read_text().splitlines() if line.strip()]
-                # A crash can leave evaluations ahead of the saved checkpoint.
-                # Re-evaluate the resume point and discard the abandoned tail.
-                self.records = [r for r in self.records if r["step"] < step]
+                # A crash can leave evaluations ahead of the saved checkpoint:
+                # discard that abandoned tail. A probe of the checkpoint's own
+                # update ran the saved policies and is kept (since 307.7 a
+                # stop records a finished probe, so one can sit there); the
+                # resume then does not run it again (``_probed_at``).
+                self.records = [r for r in self.records if r["step"] <= step]
                 for number, record in enumerate(self.records, 1):
                     record["evaluation"] = number
             if self.latest_path.exists():
                 try:
                     latest = json.loads(self.latest_path.read_text())
-                    self.latest = latest if latest.get("step", step) < step else None
+                    self.latest = latest if latest.get("step", step) <= step else None
                 except ValueError:
                     self.latest = None
         with evaluation_randomness(self.seed):
             self.template = build_inference_env(ecology, self.seed)
         config_path.write_text(json.dumps(self.config, indent=2) + "\n")
+
+    def _probed_at(self, step):
+        """True when the history already holds a probe of update ``step``."""
+        return any(r.get("step") == step for r in self.records)
 
     def interval(self):
         """Updates between evaluations: the viewer's slider, else --eval-every."""
@@ -779,10 +786,15 @@ class TrainingProgress:
         first = self.config is None
         if first:
             self._start(trainer, step, run_dir, args.resume)
-        # Every multiple of the interval (a resume re-evaluates its first
-        # step, then returns to the grid). The live viewer's "Evaluation
-        # probe interval" slider can change the interval between updates.
+        # Every multiple of the interval (a resume evaluates its first step
+        # unless the history has it, then returns to the grid). The live
+        # viewer's "Evaluation probe interval" slider can change the
+        # interval between updates.
         if not first and step % self.interval():
+            return
+        if first and self._probed_at(step):
+            if self.visualizer is not None:
+                self.visualizer.set_training_progress(self.records, self.config, self.latest)
             return
         number = len(self.records) + 1
         overrides = self.viewer_overrides()
@@ -891,6 +903,8 @@ class LiveTrainingProgress(TrainingProgress):
                     self.visualizer.set_training_progress(self.records, self.config, self.latest)
             self._collect()
             if not first and step % self.interval():
+                return
+            if first and self._probed_at(step):
                 return
             if self._pending is not None:
                 return

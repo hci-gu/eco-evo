@@ -27361,3 +27361,13 @@ remain open exactly as described in 71.9 / 71.11.
       counts the probe in the next interval). tests/test_gpu_visual.py: SIGINT in the second update's
       viewer probe -> training.jsonl updates [1, 2], biomass.jsonl iter [1], checkpoint 2 updates, next
       (0, 2); it fails on the old order ([1]). The cancelled probe itself is not re-run.
+307.9 A resume keeps a probe of the checkpoint's own update. On --resume the history dropped every
+      long-run record from the checkpoint's update on (r.step < step) and then probed that update again.
+      Before 307.7 no record could sit there (a finished probe was collected only after a later update),
+      but 307.7 records a finished probe on a stop, so a stop during the update right after the probe left
+      a record at the checkpoint's update, which the resume threw away and re-ran (three years of
+      inference for a known result; the policies are the saved ones). Now records with step <= the
+      resume step are kept, probe_latest.json too, and the first call skips the probe when the history
+      has that update (_probed_at; the in-line class then publishes the history to the viewer).
+      A crash's tail beyond the checkpoint is still dropped. tests/test_gpu_visual.py: the resumed
+      history's record at the checkpoint's update is the original (fails on the old rule).
