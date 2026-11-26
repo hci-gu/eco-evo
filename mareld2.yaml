@@ -18,6 +18,18 @@ simulation_settings:
       - whiting
       - porpoises
       - seals
+  # Section 308.9: in this share of the GPU training worlds each listed group
+  # draws its start pattern from its own spawn and the spawn templates
+  # (uniform, perlin, colony); train_gpu.py --spawn-mix overrides the share.
+  # Training-world design, not biology.
+  spawn_mix:
+    share: 0.5
+    groups:
+      - benthivorous_fish
+      - mackerel
+      - planktivorous_fish
+      - predatory_fish
+      - whiting
   daylight:
     enabled: true
     latitude_deg: 58.15
@@ -266,7 +278,25 @@ spawn_templates:
       amplitude_mode: jitter
       amplitude_min: 0.0
       amplitude_max: 1.0
+    # Section 308.9: wider colonies for train_gpu's --spawn-mix (start
+    # Lloyd ~4 and ~11 on 30x30; the field's GOV crowding is 3.1-5.0).
+    Colonies25Wide:
+      n_colonies: 25
+      sigma_cells: 2.0
+      amplitude_mode: uniform
+    Colonies10Wide:
+      n_colonies: 10
+      sigma_cells: 2.0
+      amplitude_mode: uniform
   perlin:
+    # Section 308.9: patches over ~0.4 of the cells, start Lloyd ~3.5 on 30x30.
+    PerlinPatchy:
+      scale: 12.0
+      octaves: 4
+      persistence: 0.5
+      lacunarity: 2.0
+      threshold: 0.55
+      min_frac_of_max: 0.0
     Perlin12:
       scale: 12.0
       octaves: 4

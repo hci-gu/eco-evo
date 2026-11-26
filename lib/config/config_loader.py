@@ -1106,6 +1106,7 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
         fgs[sid] = fg
 
     mark_warmup_reanchor(project, fgs, spec_defs)
+    check_spawn_mix(project, spec_defs)
     check_encounter_complete(fgs)
     return fgs, impact_vars, impact_ranges, observable_impact_vars
 
@@ -1199,6 +1200,37 @@ def warmup_reanchor_ids(project):
     if not isinstance(ids, (list, tuple)) or not all(isinstance(i, str) for i in ids):
         raise ValueError("simulation_settings.warmup.reanchor must be a list of group ids")
     return list(ids)
+
+
+def spawn_mix_settings(project):
+    """Section 308.9: ``simulation_settings.spawn_mix`` as (share, group
+    ids). ``share`` (0-1) is the share of the GPU training worlds in which
+    each listed group draws its start pattern from the spawn templates
+    (``train_gpu.py --spawn-mix`` overrides it); absent = (0.0, [])."""
+    settings = (project or {}).get("simulation_settings") or {}
+    block = settings.get("spawn_mix") if isinstance(settings, dict) else None
+    if block is None:
+        return 0.0, []
+    if not isinstance(block, dict):
+        raise ValueError("simulation_settings.spawn_mix must be a mapping")
+    try:
+        share = float(block.get("share", 0.0) or 0.0)
+    except (TypeError, ValueError):
+        raise ValueError("simulation_settings.spawn_mix.share must be a number in [0, 1]")
+    if not 0.0 <= share <= 1.0:
+        raise ValueError("simulation_settings.spawn_mix.share must be in [0, 1]")
+    ids = block.get("groups") or []
+    if not isinstance(ids, (list, tuple)) or not all(isinstance(i, str) for i in ids):
+        raise ValueError("simulation_settings.spawn_mix.groups must be a list of group ids")
+    return share, list(ids)
+
+
+def check_spawn_mix(project, spec_defs):
+    """Refuse a malformed ``spawn_mix`` block or an unknown group id."""
+    _share, ids = spawn_mix_settings(project)
+    unknown = sorted(set(ids) - set(spec_defs))
+    if unknown:
+        raise ValueError(f"simulation_settings.spawn_mix.groups: unknown groups {unknown}")
 
 
 def mark_warmup_reanchor(project, fgs, spec_defs):

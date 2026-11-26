@@ -751,6 +751,18 @@ class FGConfigApp:
                      pady=(4, 0))
             attach_help([lbl, ent], f"nutrients_{key}")
 
+        # Section 308.9: the share of the GPU training worlds in which the
+        # groups with "Random choice" ticked (Spawn Strategy) draw their
+        # start pattern from the spawn templates; stored in
+        # simulation_settings.spawn_mix.share, train_gpu --spawn-mix
+        # overrides it.
+        mix_lbl = ttk.Label(info_frame, text="Random spawn share (training worlds, 0-1):")
+        mix_lbl.grid(row=16, column=0, columnspan=2, sticky="w", padx=5, pady=(4, 0))
+        self.spawn_mix_share_var = tk.StringVar(value="")
+        mix_ent = ttk.Entry(info_frame, textvariable=self.spawn_mix_share_var, width=10)
+        mix_ent.grid(row=16, column=2, sticky="w", padx=(0, 8), pady=(4, 0))
+        attach_help([mix_lbl, mix_ent], "spawn_mix_share")
+
         # tk.Entry supports a 'background' option that ttk.Entry does not.
         # We toggle a ttk style instead.
         try:
@@ -1430,6 +1442,16 @@ class FGConfigApp:
         outer = ttk.Frame(parent)
         outer.pack(side="top", fill="x", anchor="w", padx=8, pady=6)
 
+        if vars_store.get("_owner_kind") in ("dm_fg", "ndm_fg"):
+            # Section 308.9: the group draws its start pattern per GPU
+            # training world (simulation_settings.spawn_mix.groups; the
+            # share is in Project Info). Written with Apply Changes.
+            random_var = tk.BooleanVar(value=False)
+            random_cb = ttk.Checkbutton(outer, text="Random choice", variable=random_var)
+            random_cb.pack(side="top", anchor="w", pady=(0, 4))
+            attach_help(random_cb, "spawn_random")
+            vars_store["random_var"] = random_var
+
         # Mode row
         mode_row = ttk.Frame(outer)
         mode_row.pack(side="top", fill="x", anchor="w")
@@ -1862,6 +1884,89 @@ class FGConfigApp:
                 block.pop("reanchor", None)
             if not block:
                 sim.pop("warmup", None)
+        return True
+
+    def _spawn_mix_block(self, create=False):
+        """The project's ``simulation_settings.spawn_mix`` mapping (section
+        308.9), None without one unless ``create``."""
+        data = getattr(self, "project_data", None)
+        if data is None:
+            return None
+        sim = data.get("simulation_settings")
+        if not isinstance(sim, dict):
+            if not create:
+                return None
+            sim = {}
+            data["simulation_settings"] = sim
+        block = sim.get("spawn_mix")
+        if not isinstance(block, dict):
+            if not create:
+                return None
+            block = {}
+            sim["spawn_mix"] = block
+        return block
+
+    def _drop_empty_spawn_mix(self):
+        block = self._spawn_mix_block()
+        if block is not None and not block.get("groups") and block.get("share") is None:
+            self.project_data["simulation_settings"].pop("spawn_mix", None)
+
+    def _spawn_random_ids(self):
+        """The project's "Random choice" groups (spawn_mix.groups)."""
+        block = self._spawn_mix_block() or {}
+        return [str(i) for i in (block.get("groups") or [])]
+
+    def _set_spawn_random(self, fg_id, on):
+        """Add ``fg_id`` to spawn_mix.groups or drop it, in place; an
+        emptied block leaves the manifest. Returns True when it changed."""
+        if bool(on) == (fg_id in self._spawn_random_ids()):
+            return False
+        block = self._spawn_mix_block(create=True)
+        ids = block.get("groups")
+        if not isinstance(ids, list):
+            ids = []
+            block["groups"] = ids
+        if on:
+            ids.append(fg_id)
+        else:
+            while fg_id in ids:
+                ids.remove(fg_id)
+            if not ids:
+                block.pop("groups", None)
+        self._drop_empty_spawn_mix()
+        return True
+
+    def _load_spawn_mix_share(self):
+        if not hasattr(self, "spawn_mix_share_var"):
+            return
+        share = (self._spawn_mix_block() or {}).get("share")
+        try:
+            self.spawn_mix_share_var.set("" if share is None else f"{float(share):g}")
+        except (TypeError, ValueError):
+            self.spawn_mix_share_var.set("")
+
+    def _store_spawn_mix_share(self):
+        """Write Project Info's random spawn share; empty removes it.
+        Returns False (after an error box) on an invalid value."""
+        if not hasattr(self, "spawn_mix_share_var"):
+            return True
+        text = self.spawn_mix_share_var.get().strip()
+        if not text:
+            block = self._spawn_mix_block()
+            if block is not None:
+                block.pop("share", None)
+                self._drop_empty_spawn_mix()
+            return True
+        try:
+            share = float(text)
+        except ValueError:
+            share = float("nan")
+        if not 0.0 <= share <= 1.0:
+            messagebox.showerror("Invalid value",
+                                 "Random spawn share: a number from 0 to 1 (or empty). "
+                                 "The project was not saved.")
+            return False
+        self._spawn_mix_block(create=True)["share"] = share
         return True
 
     def _make_prop_label(self, parent, template, help_key=None):
@@ -5196,6 +5301,10 @@ class FGConfigApp:
         # Section 274: the project's re-anchor list.
         self.reanchor_vars["dm" if category == "decision_makers" else "ndm"].set(
             fg_id in self._reanchor_ids())
+        # Section 308.9: the project's "Random choice" groups.
+        _sv = self.spawn_vars if category == "decision_makers" else self.ndm_spawn_vars
+        if "random_var" in _sv:
+            _sv["random_var"].set(fg_id in self._spawn_random_ids())
 
         # Show the editor matching the FG category, hide the other.
         if category == "decision_makers":
@@ -6269,6 +6378,10 @@ class FGConfigApp:
             fg_entry["initial_biomass_max"] = int(initial_biomass_max_val)
         # Section 274: the project's re-anchor list (written with Save Project).
         self._set_reanchor(fg_id, reanchor_on)
+        # Section 308.9: the project's "Random choice" groups (Save Project).
+        _sv = self.spawn_vars if is_dm else self.ndm_spawn_vars
+        if "random_var" in _sv:
+            self._set_spawn_random(fg_id, bool(_sv["random_var"].get()))
 
         # Juvenile Stage (stages.py): checked here, written after the merge
         # (in place, so the block keeps its comments).
@@ -7278,6 +7391,7 @@ class FGConfigApp:
         fg_id = fgs[idx]['group_id']
         self.project_data[category] = [fg for fg in fgs if fg['group_id'] != fg_id]
         self._set_reanchor(fg_id, False)
+        self._set_spawn_random(fg_id, False)
         if fg_id in self.current_fg_configs:
             del self.current_fg_configs[fg_id]
         if self.active_fg_category == category:
@@ -7511,6 +7625,7 @@ class FGConfigApp:
                 self._load_temperature_settings()
             if hasattr(self, 'nutrients_enabled_var'):
                 self._load_nutrient_settings()
+            self._load_spawn_mix_share()
             self._update_depth_map_view()
             # Tick length. Out-of-range / missing falls back to the
             # historical 6 h, so projects predating the field load
@@ -7863,6 +7978,8 @@ class FGConfigApp:
             if not self._store_temperature_settings():
                 return False
             if not self._store_nutrient_settings():
+                return False
+            if not self._store_spawn_mix_share():
                 return False
             self.save_yaml(self.project_data, self.project_path)
             self.add_to_recent(self.project_path)

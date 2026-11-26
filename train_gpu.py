@@ -181,6 +181,9 @@ def main(argv=None, *, on_step=None):
     metadata = {k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()}
     # The library actually read: a manifest's library key replaces the default.
     metadata["library"] = builder.library_path
+    # Section 308.9: the share and set in force (the flag or the project's).
+    metadata.update(spawn_mix_share=trainer.spawn_mix,
+                    spawn_mix_random_groups=list(trainer.spawn_random_groups))
     metadata.update(groups=trainer.model.ids, decision_makers=trainer.model.dm_ids,
                     torch_version=torch.__version__, cuda_version=torch.version.cuda)
     (directory / "gpu_run.json").write_text(json.dumps(metadata, indent=2) + "\n")
@@ -189,6 +192,15 @@ def main(argv=None, *, on_step=None):
     if trainer.warmup_ticks:
         print(f"World warm-up: {args.warmup_days:g} days = {trainer.warmup_ticks} ticks with the "
               "unperturbed policies before each scored rollout (section 200)", flush=True)
+    if trainer.edge_starts > 0.0:
+        groups = ", ".join(trainer.model.ids[g] for g in trainer.edge_rows) or "none"
+        print(f"Edge starts: {trainer.edge_starts:g} of the worlds; closed-edge groups: {groups} "
+              "(sections 308.6, 308.8)", flush=True)
+    if trainer.spawn_mix > 0.0:
+        groups = ", ".join(trainer.spawn_random_groups) or "none"
+        names = ", ".join(n for n, _c in trainer.spawn_menu) or "none"
+        print(f"Spawn mix: {trainer.spawn_mix:g} of the worlds; random groups: {groups}; "
+              f"templates: {names} (section 308.9)", flush=True)
     print(f"Output: {directory}. First iteration includes warmup/compilation/capture.", flush=True)
     if args.currents == "on":
         print(f"Currents: on; max drift={args.current_strength:g}/tick, "
@@ -277,6 +289,11 @@ def main(argv=None, *, on_step=None):
                                 if spawn:
                                     # Absent = the project's spawn.
                                     record["spawn_overrides"] = spawn
+                                choice = trainer.spawn_choice_record()
+                                if choice:
+                                    # Section 308.9: per group, each world's drawn
+                                    # template (None = its own spawn kept).
+                                    record["spawn_choices"] = choice
                                 last_log_time, last_log_update = now, trainer.iterations_completed
                                 # A non-finite metric (one broken rollout) is logged
                                 # as null with a warning instead of ending the run;

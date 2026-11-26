@@ -691,6 +691,30 @@ FIELD_HELP = {
         "Reference Grid and scaled with the grid's area. Inference "
         "uses the fixed value in the Inference tab instead."
     ),
+    "spawn_random": (
+        "Random choice (project setting, section 308.9; stored in the "
+        "manifest's simulation_settings.spawn_mix.groups, written with Apply "
+        "Changes and Save Project).\n\n"
+        "In the share of the GPU training worlds set by Project Info's "
+        "Random spawn share (train_gpu.py --spawn-mix overrides it), a "
+        "checked group draws its start pattern per world, uniformly, from "
+        "its own spawn strategy and the project's spawn templates of the "
+        "Uniform, Perlin and Colony modes (Env-driven templates are left "
+        "out). The totals are drawn as before; only the layout changes. "
+        "The training viewer's 'Random choice' boxes start from these "
+        "groups. Training-world design, so the policies meet even, patchy "
+        "and clumped starts; not biology. Inference and the probes keep "
+        "the spawn strategy."
+    ),
+    "spawn_mix_share": (
+        "Random spawn share (project setting, section 308.9; stored in the "
+        "manifest's simulation_settings.spawn_mix.share).\n\n"
+        "The share (0-1) of the GPU training worlds in which each group "
+        "with Random choice checked (Spawn Strategy) draws its start "
+        "pattern from its own spawn strategy and the spawn templates. "
+        "train_gpu.py --spawn-mix SHARE overrides it for a run; without the "
+        "flag this value holds. Empty or 0 = off."
+    ),
     "warmup_reanchor": (
         "Re-anchor after warm-up (project setting, section 274; stored in "
         "the manifest's simulation_settings.warmup.reanchor, written with "

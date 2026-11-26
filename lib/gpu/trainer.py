@@ -11,7 +11,9 @@ from lib.gpu.ecosystem import TensorEcosystem
 from lib.gpu.policy import PolicyBank
 from lib.gpu.random import fold_in, normal
 from lib.gpu.rollout import RolloutRunner
-from lib.gpu.spawn import WorldSpawner
+from lib.config.config_loader import load_config, spawn_mix_settings
+from lib.gpu.spawn import (WorldSpawner, closed_edge_rows, load_spawn_templates,
+                            random_spawn_menu)
 from lib.world.impact_maps import sample_impact_maps
 
 
@@ -84,7 +86,7 @@ class TensorARSTrainer:
                  entropy_coef=0.0, argmax_penalty=0.0,
                  execution=None, graph_ticks=32, pairs_per_batch=None,
                  population_stability=None, local_reward=None, warmup_ticks=0,
-                 depleted_patches=0.0):
+                 depleted_patches=0.0, edge_starts=0.0, spawn_mix=0.0, spawn_mix_groups=None):
         if n_deltas < 1 or worlds < 1:
             raise ValueError("n_deltas and worlds must be positive")
         if sigma <= 0 or not math.isfinite(sigma) or lr < 0 or not math.isfinite(lr):
@@ -98,6 +100,7 @@ class TensorARSTrainer:
                                uniform_bias_init, seed)
         self.theta = self.bank.flat_weights()
         self.spawner = WorldSpawner(spec, self.model)
+        self.edge_rows = closed_edge_rows(spec.env, self.model.ids)
         self.n_deltas, self.worlds = int(n_deltas), int(worlds)
         self.top_deltas = max(1, n_deltas // 2) if top_deltas is None else int(top_deltas)
         if not 1 <= self.top_deltas <= n_deltas:
@@ -117,6 +120,26 @@ class TensorARSTrainer:
         self.depleted_patches = float(depleted_patches)
         if not 0.0 <= self.depleted_patches <= 1.0:
             raise ValueError("depleted_patches must be in [0, 1]")
+        # Section 308.6: share of the training worlds whose closed-edge
+        # groups start in bands along a side or corner (0 = off).
+        self.edge_starts = float(edge_starts)
+        if not 0.0 <= self.edge_starts <= 1.0:
+            raise ValueError("edge_starts must be in [0, 1]")
+        # Section 308.9: share of the training worlds in which each group
+        # of the random set draws its start pattern from the project's
+        # spawn templates (0 = off). None = the project's
+        # simulation_settings.spawn_mix share; the set defaults to the
+        # project's list (muted groups left out).
+        project_path = getattr(getattr(spec, "builder", None), "project_path", None)
+        project_share, project_groups = spawn_mix_settings(
+            load_config(project_path) if project_path else {})
+        self.spawn_mix = project_share if spawn_mix is None else float(spawn_mix)
+        if not 0.0 <= self.spawn_mix <= 1.0:
+            raise ValueError("spawn_mix must be in [0, 1]")
+        self.spawn_menu = random_spawn_menu(load_spawn_templates(project_path))
+        if spawn_mix_groups is None:
+            spawn_mix_groups = [f for f in project_groups if f in self.model.ids]
+        self.set_spawn_random(spawn_mix_groups)
         self.entropy_coef, self.argmax_penalty = float(entropy_coef), float(argmax_penalty)
         self.obs_normalize = bool(obs_normalize)
         self.seed = self.model.tensor(seed, torch.int64)
@@ -152,6 +175,8 @@ class TensorARSTrainer:
         self.world_biomass = torch.zeros((self.worlds, m.G, m.C), device=m.device)
         self.world_light_start = torch.zeros(self.worlds, device=m.device, dtype=torch.int64)
         self.world_depletion = torch.ones((self.worlds, 1, m.C), device=m.device)
+        self.world_edge = torch.full((self.worlds, len(self.edge_rows)), -1, dtype=torch.long,
+                                     device=m.device)
         if m.has_impacts:
             self.world_impact_loss = torch.zeros((self.worlds, m.impact_rows, m.C), device=m.device)
             self.world_impact_cost = torch.zeros((self.worlds, m.D, m.C), device=m.device)
@@ -202,6 +227,33 @@ class TensorARSTrainer:
             self.last_world_epoch = None
         return changed
 
+    def set_spawn_random(self, groups):
+        """The groups (ids) whose start pattern is drawn per world from the
+        spawn templates (section 308.9; ``WorldSpawner.set_random``). A
+        change re-draws the worlds at the next update. Returns True when
+        anything changed."""
+        unknown = sorted(set(groups or ()) - set(self.model.ids))
+        if unknown:
+            raise ValueError(f"spawn_mix_groups: unknown groups {unknown}")
+        changed = self.spawner.set_random(self.spawn_mix, groups, self.spawn_menu)
+        if changed:
+            self.last_world_epoch = None
+        return changed
+
+    @property
+    def spawn_random_groups(self):
+        return tuple(self.spawner.random_groups) if self.spawn_mix > 0.0 else ()
+
+    def spawn_choice_record(self):
+        """{fid: [option name per world, None = own spawn kept]} of the
+        last world draw (section 308.9); {} with the choice off."""
+        choices = self.spawner.last_choices or {}
+        out = {}
+        for fid, pick in choices.items():
+            names = [n for n, _cfg in self.spawner.random_options(fid)]
+            out[fid] = [names[i] if i >= 0 else None for i in pick.tolist()]
+        return out
+
     def set_temperature(self, temperature):
         if temperature <= 0 or not math.isfinite(temperature):
             raise ValueError("Temperature must be positive and finite")
@@ -220,6 +272,15 @@ class TensorARSTrainer:
         self.world_light_start.copy_(self.spawner.light_starts(keys))
         if self.depleted_patches > 0.0:
             self.world_depletion.copy_(self.spawner.depletion(keys, self.depleted_patches))
+        if self.edge_starts > 0.0 and self.edge_rows:
+            b, prey, places = self.spawner.edge_starts(self.world_biomass, keys, self.edge_starts,
+                                                       self.edge_rows)
+            self.world_biomass.copy_(b)
+            if self.depleted_patches > 0.0:
+                self.world_depletion.mul_(prey)
+            else:
+                self.world_depletion.copy_(prey)
+            self.world_edge.copy_(places)
         if self.model.n_obs_imp:
             self._refresh_impacts(self.iterations_completed if epoch is None else epoch)
         self.last_world_epoch = epoch
@@ -255,6 +316,12 @@ class TensorARSTrainer:
             self.world_impact_cost.copy_(cost)
         if m.n_obs_imp:
             self.world_impact_obs.copy_(m.impact_observations(maps))
+
+    @property
+    def depletes(self):
+        """Whether the worlds' benthic prey factor is applied: depleted
+        patches (223.12) or the prey under the edge bands (308.6)."""
+        return self.depleted_patches > 0.0 or (self.edge_starts > 0.0 and bool(self.edge_rows))
 
     def _world_keys(self, epoch_key):
         keys = fold_in(fold_in(self.seed.expand(self.worlds), 20001), self.world_index)
@@ -296,7 +363,7 @@ class TensorARSTrainer:
         b = self.world_biomass
         r = m.initial_nutrients(self.spawner.reserves(b, keys, self.world_light_start),
                                 self.world_light_start)
-        if self.depleted_patches > 0.0:
+        if self.depletes:
             b, r = m.deplete(b, r, self.world_depletion)
         runner.set_weights(self.bank.pack([w[None] for w in self.theta]))
         impacts = (self.world_impact_loss, self.world_impact_cost) if m.has_impacts else None
@@ -380,7 +447,7 @@ class TensorARSTrainer:
                 light = self.world_light_start[None].expand(2 * self.pairs_per_batch, -1).reshape(runner.E)
                 r = self.spawner.reserves(b, keys, light)
                 r = m.initial_nutrients(r, light)
-                if self.depleted_patches > 0.0:
+                if self.depletes:
                     b, r = m.deplete(b, r, per_pair(self.world_depletion))
             impacts = impact_obs = None
             if m.has_impacts:
@@ -433,6 +500,10 @@ class TensorARSTrainer:
         if runner.local_reward is not None:
             self.last_metrics.update(
                 local_occupancy=occupancy / (2 * self.n_deltas * self.worlds))
+        if self.edge_starts > 0.0 and self.edge_rows:
+            # Section 308.6: each world's place per closed-edge group
+            # (index into WorldSpawner.EDGE_PLACES, -1 = none).
+            self.last_metrics.update(edge_start_places=self.world_edge.to(m.wide))
         self.iteration.add_(1)
         self.iterations_completed += 1
         return self.last_metrics

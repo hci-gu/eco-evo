@@ -76,6 +76,33 @@ def add_common_arguments(parser):
               "patches (infauna and epifauna emptied to 1-32 %% over 5-30 %% of "
               "the cells), so the fish meet emptied beds and can learn to "
               "leave them (default 0.5; 0 = off). Section 223.12."))
+    parser.add_argument(
+        "--edge-starts", "--edge_starts", dest="edge_starts",
+        type=float, default=0.0,
+        help=("Share of the training worlds in which each decision maker with "
+              "closed grid edges (the fish groups) starts, with probability 0.5, "
+              "in a patch at a point on the grid edge (a corner or a drawn point "
+              "along a side; decay length log-uniform 0.7-2 cells, share moved 0.75-1), half of those "
+              "worlds with the benthic prey drawn down under the patch, so the "
+              "policies meet the wall and can learn to leave it (default 0 = off; "
+              "0.25 suggested). Sections 308.6, 308.8."))
+    parser.add_argument(
+        "--spawn-mix", "--spawn_mix", dest="spawn_mix",
+        type=float, default=None,
+        help=("Share of the training worlds in which each group of the random "
+              "set draws its start pattern uniformly from its own spawn and the "
+              "project's spawn_templates (uniform, perlin and colony modes), so "
+              "the policies meet even, patchy and clumped starts (0 = off). "
+              "Given, it overrides the project's simulation_settings.spawn_mix "
+              "share (FG editor, Project Info); absent, the project's share "
+              "holds. The set is the project's 'Random choice' groups, "
+              "--spawn-mix-groups, or the viewer's boxes. Section 308.9."))
+    parser.add_argument(
+        "--spawn-mix-groups", "--spawn_mix_groups", dest="spawn_mix_groups",
+        nargs="*", default=None,
+        help=("Groups (ids) of --spawn-mix's random set (default: the project's "
+              "simulation_settings.spawn_mix groups, the FG editor's 'Random "
+              "choice' boxes)."))
 
 
 def parse_training_args(parser, argv=None):
@@ -122,7 +149,11 @@ def trainer_options(args):
                 pairs_per_batch=args.pairs_per_batch,
                 warmup_ticks=warmup_ticks(getattr(args, "warmup_days", 0.0),
                                           int(getattr(args, "tick_length", 6))),
-                depleted_patches=float(getattr(args, "depleted_patches", 0.0)))
+                depleted_patches=float(getattr(args, "depleted_patches", 0.0)),
+                edge_starts=float(getattr(args, "edge_starts", 0.0)),
+                spawn_mix=(None if getattr(args, "spawn_mix", None) is None
+                           else float(args.spawn_mix)),
+                spawn_mix_groups=getattr(args, "spawn_mix_groups", None))
 
 
 def targets_from_args(args, dm_ids):

@@ -27371,3 +27371,192 @@ remain open exactly as described in 71.9 / 71.11.
       has that update (_probed_at; the in-line class then publishes the history to the viewer).
       A crash's tail beyond the checkpoint is still dropped. tests/test_gpu_visual.py: the resumed
       history's record at the checkpoint's update is the original (fails on the old rule).
+308 FIX110 ASSESSMENT AT U1350 (2026-11-25; user: "Analysera fix110")
+308.1 Run. pzbpgp248nsrpfix110: train_gpu 30x30, 1 world, 16 deltas, lr 0.015 (fix108 0.03, fix109 0.05),
+      sigma 0.1, warm-up 60 d, currents on, mortality and migration on; started ~2026-11-24 04:40 on the
+      304 + 305 code (sweep exemption, whiting adult_import), so the whole run has them. Restarts (--resume)
+      at u293, u297, u504, u636, u727, u1274. Boundaries in the long-run probe series: the probe at u503
+      has mackerel's ration 6.5 -> 5.5 t/t/yr and a new start total, coinciding with 306's mackerel P in the
+      library (the old code reads P on open pools); from u636-640 the probe Lloyd of benthivores and whiting
+      steps up, coinciding with the fish spawn mode colony -> perlin (mammals env_driven -> colony; saved
+      from the FG editor, committed with 306); the 306 code from u727. Training reward flat for every DM
+      since ~u500. Verdict on u727+, core u1274-1340; comparisons with fix106-109 (other spawn, code, lr,
+      update count) are descriptive, not effects.
+308.2 Long-run probe (30x30, unfished, u1274-1340). 15/15 viable, V ~0.33 (worst phytoplankton,
+      microzooplankton). Year-3 ratios: planktivores 0.83-0.85, benthivores 1.51-1.53, whiting 0.66-0.92,
+      porpoises 1.48, seals 1.25-1.30, zooplankton 0.63-0.64; water column, mackerel and krill are set by
+      the exchange (their ratios and survival_ticks 478 / 725 / 213 are seasonal crossings of the 0.3 bound,
+      not extinctions). Whiting's level (fix106-109 0.34-0.50) is mostly the 304/305 code: frozen fix108
+      u650 already gave 0.83 on it (305.4). Water column -> whiting realised M2 0.33-0.73 per probe (u1340
+      0.39) against booked 0.157, with no trend inside u727-1340 (correlation with update 0.01); a rise in
+      coarser bins straddled the u640 boundary. Porpoises and seals grow at their r_max (no K) from ~u160 on;
+      porpoise Lloyd 30-40. Benthivores' 1.53 is about the unfished level (removing F 0.17 alone ~1.67),
+      but their diet is off: ration 6.2 (field 4.46), infauna 0.82 of the tonnes (booked 0.56), epifauna
+      0.07 (0.31), Nephrops M2 7x booked, infauna M2 3x. Rations: mackerel 5.5 (field 2.75), water column
+      3.2 (2.83), whiting 3.64 (4.2), planktivores 7.1 (6.2). Probe Lloyd: benthivores ~10 (field 3.1),
+      whiting 7-11 (4.1), water column 6-8 (5.0), planktivores 5-7 (4.4).
+308.3 60x60 fished inference, frozen u1350 (inference.py's world and maps, --engine gpu, the run's 60 d
+      warm-up, one year, seeds 123 / 1 / 2; per-cell maps recorded daily by a wrapper around
+      run_gpu_inference; scratch scripts, not in the repository; the earlier fix108/fix109 evaluation
+      scripts were lost with their scratchpad, so the method match to 300.1's numbers is unverified).
+      Bed-class shares (< 100 / 100-150 / 150-250 / >= 250 m), year mean of daily maps, against GOV:
+        benthivores   0.00 / 0.02-0.04 / 0.77-0.80 / 0.16-0.19   field 0.31 / 0.44 / 0.19 / 0.06
+        whiting       0.19-0.29 / 0.43-0.50 / 0.27-0.33 / 0.01   field 0.77 / 0.20 / 0.03 / 0.00
+        water column  0.36-0.38 / 0.46-0.51 / 0.09-0.15 / 0.02   field 0.04 / 0.13 / 0.78 / 0.05
+      Consistent over the three seeds (and over an un-warmed run that was discarded). Lloyd: benthivores
+      19-22, whiting 5-6, water column 8.5-10, planktivores 5-5.6, porpoises 23-32, seals 33-37. Overlap
+      (sum a b x N / (sum a sum b)): water column - benthivores 0.14-0.21, water column - whiting
+      0.45-0.78 (no pursuit signature; fix109 had 1.0-3.4), porpoises - planktivores 3.0-3.5. Benthivores'
+      west-third enrichment 0.4-0.6 (no west edge clump). One fished year: benthivores 0.83-0.85, whiting
+      0.92-1.00, Nephrops 0.86-0.87, porpoises 84 -> 93 t, seals 15 -> 15.6-15.9 t (fix109's porpoises fell
+      to 44-60 t). Bottom-trawl effort under the benthivores' biomass is 1.79-1.84x the box mean (whiting
+      0.89-0.97, water column 0.46-0.57): realised F ~0.31 against the table's 0.17, ~0.14 /yr of the
+      ~0.32 /yr gap between the fished year and the probe's unfished +16 %; the rest is not diagnosed.
+308.4 Reading. What holds: whiting (from 304/305), porpoises and seals fished and unfished, near-field
+      clumping of whiting, water column and planktivores. What does not: the placement of 298.1 is back in
+      full (water column shallow, benthivores on 150-250 m beds, segregated) at u1350, after 600 updates on
+      a flat reward (placement measured at u1350 only; the probe has no bed depth); the benthivores' depth puts them on the
+      trawl grounds (F x1.8 in inference) and on infauna and Nephrops instead of epifauna; benthivore
+      Lloyd is 6-7x field at 60x60. Open: the water column's 2-4.7x booked M2 on whiting without overlap
+      (mechanism not diagnosed for fix110), mackerel's 2x ration.
+308.5 The south-west corner clump (user, 2026-11-25: in a ten-year probe with fishing zeroed the benthivores
+      clump in the lower left corner, cells of 1000+ t). Reproduced: frozen u1350, 60x60, seed 123,
+      inference.py's world with the two trawl maps removed (wind farms kept), 10 years, maps every 5
+      days. Years 0-3 no clump (max cell 60-200 t, edge share 0.02-0.06 of the biomass, the outer ring
+      being 0.066 of the cells); the group grows to 1.7x by year 4 and draws its prey down (epifauna
+      0.6x, Nephrops 0.67x of the start); its centre of mass drifts west, column 28 -> 15 over years
+      2-4; from year 4 cell (58, 0) (72 m) holds 230-1500 t, edge share 0.2-0.35, Lloyd 30-130,
+      adults (J/B 0.03). Not food: the corner's epifauna, Nephrops and krill per cell are 0.6-0.8 of
+      the other < 100 m beds, seals are 6-13x denser there, the fill is ~1 everywhere; the group falls
+      9500 -> 4500 t by year 10 and whiting 1605 -> 733 t at year 5 (1074 at year 10).
+      Action probe (the tensor run to ticks 1460 / 3640 / 4380 / 5120 / 5840, state mirrored into
+      the CPU env, every DM's action probabilities read there; the mirrored state reproduced the
+      ten-year run's totals and maxima exactly). Benthivore moves are N/S 0.13-0.21 each per tick
+      and E/W only 0.01-0.02; the biomass-weighted E - W intent is ~0 at years 1 and 2.5 and
+      -0.004..-0.007 cells per tick at years 3-3.5, which over ~3000 ticks is the observed 12-20
+      cell drift. At the west wall (year 4) the policy with every move allowed wants W 0.13 in the
+      corner (the mask leaves 0.004) and 0.038 over the group (0.017 masked): the mask holds them
+      there, and no eastward move (0.004-0.04) takes them off it. Off-grid neighbours read 0 in
+      every channel (observations.py), the same as an empty cell; with the own cell's values copied
+      into the off-grid slots the edge behaviour changes (west-wall cells N 0.30 -> 0.06, corner S
+      0.15 -> 0.48) but E stays 0.004-0.04, so no observation change makes them leave: the policies
+      never met a wall. Training worlds are one year from mid-box starts, and fished, the group
+      stays below its start and does not drift. Why the E - W intent turns negative at year ~3 is
+      not shown.
+308.6 Edge starts of the training worlds: train_gpu.py --edge-starts SHARE (2026-11-25; user: "Ja").
+      Training-world design like --depleted-patches (223.12), not biology. A share SHARE of the
+      worlds is an edge world; in it each decision maker that can move and whose every edge move is
+      masked (lib.gpu.spawn.closed_edge_rows: the five fish groups with --migration on, every mobile
+      DM with it off; zooplankton never) is moved with probability 0.5, independently of the others,
+      towards one of eight places (four sides, four corners): B' = (1 - m) B + m T w, w =
+      exp(-d / lambda) on the allowed cells normalised to 1, d the distance in cells to the side or
+      corner cell, lambda uniform 1-3 cells, m uniform 0.5-1, T the drawn total (kept). In half of
+      the edge worlds the benthic prey under the moved groups' bands is drawn down by 1 - (1 - level)
+      exp(-d / lambda), level uniform 0.3-0.8 (the lowest factor over the bands; multiplied into
+      --depleted-patches' factor when both are on; applied by TensorEcosystem.deplete as the patches
+      are) - the ten-year corner's state. Keyed by the world (CRN: both signs and every pair see the
+      same start); the warm-up starts from it, so a policy that already leaves the wall has spread
+      before the scoring and one that stays is scored there. Default 0 (off); 0.25 suggested.
+      WorldSpawner.edge_starts / edge_distances / EDGE_PLACES, TensorARSTrainer(edge_starts=...),
+      refresh_worlds, the `depletes` property (patches or edge starts), training.jsonl key
+      edge_start_places (per world, per closed-edge group, index into EDGE_PLACES n e s w nw ne sw se,
+      -1 = none), gpu_run.json edge_starts. No observation or action change: checkpoints stay valid
+      and a run can be resumed with the flag. Not on train.py (CPU), like the patches.
+308.7 Wall probe, tools/probes/wall_probe.py: the inference world (build_env, the run's warm-up, frozen
+      checkpoints, --impact-scale ID=FACTOR on the inference maps, --currents as inference.py), one
+      group's whole biomass moved into a corner band (exp(-d / 3 cells), mean fill and J share kept),
+      --days on the tensor engine; per day 0 / 30 / 90 / end: ring = share in the outer ring / its area
+      share, near = share within 10 cells of the corner, dist = centre of mass from the corner, max
+      cell, Lloyd; row "none" = the settled layout. Default groups: closed_edge_rows. A diagnostic of
+      a training artefact, not a target. Baseline frozen fix110 u1350, 60x60, seed 123, unfished,
+      180 d (ring / near / max t at day 180):
+        benthivores   none 0.11 / 0.00 / 158; nw 5.78 / 0.02 / 1258; ne 0.10 / 0.00 / 162;
+                      sw 7.58 / 0.50 / 1051; se 3.24 / 0.00 / 453   (three of four corners: on the walls)
+        planktivores  none 0.64; nw 0.63; ne 2.99; sw 4.19; se 3.13 (leaving, slowly)
+        whiting       none 0.18; nw 2.15; ne 1.41; sw 0.91; se 1.04
+        water column  none 2.89, corners 2.8-3.2; mackerel none 2.90, corners 2.7-3.3: their ring share
+                      is set by the outside exchange's entry cells, not by the start.
+      The judgement after a retrain with edge starts: this probe on the same seed, the ten-year
+      unfished run (seeds 123 / 1 / 2: no corner clump, edge share near the area share), and the usual
+      long-run probe (V, rations, crowding) no worse.
+308.8 Edge starts as dense patches (2026-11-26; user: "Vore det inte lampligt att spawna hoga
+      koncentrationer vid kanten ocksa?" - "Ja, bygg."). The 308.6 draws did not reach the clump's
+      density: the ten-year unfished run's benthivores (60x60) had from year 4 a top cell of
+      400-1000 t (220-510x the mean, 6-14 % of the group), Lloyd 28-80, ring 3.2-4.9; a 308.6 side band
+      on 30x30 (whole group, m 1) reached 12-26 t a cell (a line of cells), a corner 79-465 t only at
+      lambda near 1, and lambda was uniform 1-3. Now: (a) a side place is a POINT at a position drawn
+      uniformly along that side (WorldSpawner.edge_points; a corner is its fixed point), w =
+      exp(-d / lambda) with d the distance to the point; (b) lambda log-uniform from 0.7 cells (below
+      0.7 over half the group sits in one cell, denser than anything seen). EDGE_PLACES and the
+      logged edge_start_places keep their meaning (a side index now names a point on that side);
+      edge_distances (sides as lines) is kept for the tests. Draws on 30x30 (benthivores ~1380 t,
+      m uniform 0.5-1, numpy replica of the formula): top cell q25 / q50 / q75 / q90 81 / 151 / 264 /
+      387 t, 20 % of the draws >= 300 t (corners 32 %, sides 7 %; a side point is a half-plane patch,
+      about half a corner's top share at the same lambda; a point between two cells splits its top).
+      Then denser (user, 2026-11-26: "Ta det tatare alternativet"): lambda log-uniform 0.7-2, m uniform
+      0.75-1 (the defaults of WorldSpawner.edge_starts): replica top cell q25 / q50 / q75 / q90 160 /
+      240 / 363 / 499 t, 37 % >= 300 t; the spawner itself (30x30, 400 edge worlds, drawn totals,
+      median 1286 t) 148 / 233 / 335 / 460 t, 34 % >= 300 t, median top share 0.18 of the group.
+      Training-world design, not biology; no observation or action change, checkpoints stay valid;
+      a running train_gpu.py keeps the code it started with (restart with --resume).
+      tests/test_edge_starts.py: edge points on their side / corner; short bands give a top cell
+      > 0.2 of the group on the edge, side points at several positions.
+308.9 Random spawn choice of the training worlds: train_gpu.py --spawn-mix SHARE (2026-11-26; user:
+      "Kanske borde spawningen variera mer? Slumpa spawnmetod samt mall varje ny varld?" - "Ja, bygg,
+      men lagg till en checkruta ovanfor rullgardinsmenyn 'Lage' i traningsviz, med etiketten Random
+      choice, for alla funktionsgrupper. Aktivera/kryssa for de grupper du foreslog."). Why: every fish
+      group spawned with Perlin12 at min_frac_of_max 0.1, which is nearly flat - start Lloyd on 30x30
+      (WorldSpawner, 200 worlds, benthivores): Perlin12 1.1, Uniform 1.3, FollowPhyto / Followfish
+      1.0-1.1 (they follow flat fields; Followfish on the planktivores follows itself), 25Colonies 17
+      (0.31 of the cells occupied); the GOV field values are 3.1 (benthivores), 4.1 (whiting), 5.0
+      (water column). The policies never started as clumped as the field, nor with empty ground.
+      Measured options for the menu: perlin threshold 0.55, floor 0 -> Lloyd 3.5 (q10-q90 2.6-6.5,
+      0.43 occupied); colony sigma 2, amplitude uniform: 25 colonies -> 4.0, 10 -> 10.6, 4 -> 18.
+      Added to mareld2.yaml's spawn_templates (also in the viewer's dropdowns): PerlinPatchy,
+      Colonies25Wide, Colonies10Wide.
+      Rule: in a share SHARE of the worlds (one draw per world) each group of the random set draws,
+      independently, one option uniformly: its own spawn block (WorldSpawner.config: a dropdown's or
+      the project's; named "own") and each template of the uniform, perlin and colony modes
+      (lib.gpu.spawn.random_spawn_menu over the manifest's spawn_templates, an identical block left
+      out). env_driven is left out (its references are flat today, and drawn references could form a
+      cycle); equilibrium has no template. Fish options today: own (Perlin12), Uniform, PerlinPatchy,
+      25Colonies, Colonies10Wide, Colonies25Wide. Totals are the world's draw as before; the other
+      groups keep their fields; edge starts (308.6) act after it, on the drawn field. Keyed by the
+      world (CRN). Default set: the closed-edge groups (closed_edge_rows: the five fish with
+      --migration on; with it off the mammals too); --spawn-mix-groups ID ... replaces it. CLI default
+      0.5, 0 = off; TensorARSTrainer(spawn_mix=0.0, spawn_mix_groups=None) defaults off.
+      Viewer (train_gpu --visual, with --spawn-mix on): a "Random choice" box above each panel's Mode
+      dropdown, every functional group (Swedish overlay "Slumpval", Italian "Scelta casuale"), ticked
+      for the random set at start; a toggle reaches the trainer at the next update and re-draws the
+      worlds (as the dropdowns; in memory only, a --resume starts on the default set). Not on train.py.
+      training.jsonl key spawn_choices {group: [template per world, null = own spawn kept]}; startup
+      line "Spawn mix: ...". Training-world design like 223.12 and 308.6, not biology; no observation
+      or action change, checkpoints stay valid. What it can and cannot do: robustness to starts the
+      policies never met (dense clumps, empty ground, field-level crowding); it does not touch the
+      depth placement (water column shallow, benthivores deep) or the water column's M2 on whiting,
+      which sit in the payoffs. The 60-day warm-up erodes part of the start difference (unmeasured).
+      Combined with 308.8 in one restart, the wall probe cannot attribute a change to either.
+      WorldSpawner.set_random / random_options / last_choices, TensorARSTrainer.set_spawn_random /
+      spawn_random_groups / spawn_choice_record, LiveVisualizer(spawn_random=...) set_spawn_random /
+      get_spawn_random / consume_spawn_random_change, GPUTrainingVisualizer.training_spawn.
+      tests/test_spawn_mix.py (10).
+308.10 The spawn mix in the manifest and the FG editor (2026-11-26; user: "Lagg till 'Random choice' i
+      fgconfig.py ocksa parat med mojligheten att satta andel. Andelen satts globalt i 'Project info' i
+      fgconfig. Lat projektfilen vara det som driver vilka kryssrutor som satts i viz vid start.
+      --spawn-mix overridar projektfilens andelsinstallning om flaggan anges fran terminalen, annars
+      galler projektfilens installning."). Manifest: simulation_settings.spawn_mix {share: 0-1,
+      groups: [ids]} (config_loader.spawn_mix_settings; check_spawn_mix in load_project_config refuses
+      a share outside [0, 1], a non-list and an unknown id; a muted group is skipped by the trainer).
+      mareld2.yaml: share 0.5, groups the five fish. train_gpu: --spawn-mix default None = the
+      manifest's share, a given value overrides it; the set is the manifest's groups unless
+      --spawn-mix-groups is given (no longer the closed-edge default of 308.9); gpu_run.json records
+      spawn_mix_share and spawn_mix_random_groups in force. The viewer's boxes start ticked for that
+      set (shown only with a share > 0). TensorARSTrainer(spawn_mix=None) reads the manifest; its
+      default stays 0.0 (off) so library code and tests that build a trainer are unchanged.
+      FG editor: a "Random choice" checkbox at the top of the Spawn Strategy section (above Mode) in
+      both FG editors (not the impacts'), shown from and written to spawn_mix.groups with Apply
+      Changes (a removed FG leaves the list; an emptied block leaves the manifest); Project Info row
+      "Random spawn share (training worlds, 0-1)" written with Save Project (empty removes it, a value
+      outside 0-1 refuses the save). Help texts spawn_random, spawn_mix_share.
+      tests/test_fgconfig_spawn_random.py (4), tests/test_spawn_mix.py (+3: project share and set, the
+      flag's override, the loader's refusals, the CLI's None).

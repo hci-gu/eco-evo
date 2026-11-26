@@ -90,6 +90,54 @@ def spawn_order(order, configs):
     return tuple(out)
 
 
+def closed_edge_rows(env, ids):
+    """Group indices (into ``ids``) of the decision makers that can move
+    and whose every edge move is masked (section 266.16; with --migration
+    off every mobile decision maker). Section 308.6's edge starts act on
+    these."""
+    mask = getattr(env, "dm_move_mask", None)
+    if mask is None:
+        mask = np.broadcast_to(env.move_mask, (len(env.dm_ids),) + tuple(env.move_mask.shape))
+    speed = np.asarray(getattr(env, "dm_v", np.ones(len(env.dm_ids))))
+    rows = []
+    for i, fid in enumerate(env.dm_ids):
+        m = np.asarray(mask[i])
+        closed = (m[0, 0, :].max() == 0 and m[2, -1, :].max() == 0
+                  and m[3, :, 0].max() == 0 and m[1, :, -1].max() == 0)
+        if closed and speed[i] > 0:
+            rows.append(list(ids).index(fid))
+    return rows
+
+
+# Section 308.9: spawn modes a random choice may draw. env_driven follows
+# other groups' fields (flat under today's templates; a drawn reference
+# could form a cycle) and equilibrium has no template.
+RANDOM_SPAWN_MODES = ("uniform", "perlin", "colony")
+
+
+def random_spawn_menu(templates):
+    """The project's ``spawn_templates`` ({mode: {name: params}}) as the
+    menu of a random spawn choice: [(name, spawn block)] for every
+    template of a ``RANDOM_SPAWN_MODES`` mode, sorted by mode and name."""
+    menu = []
+    for mode in RANDOM_SPAWN_MODES:
+        for name in sorted((templates or {}).get(mode, {}) or {}):
+            params = templates[mode][name]
+            if isinstance(params, dict):
+                menu.append((str(name), {"mode": mode, **params}))
+    return menu
+
+
+def load_spawn_templates(project_path):
+    """The manifest's ``spawn_templates`` tree, {} without one."""
+    if not project_path:
+        return {}
+    from lib.config.config_loader import load_config
+    data = load_config(project_path) or {}
+    tpls = data.get("spawn_templates")
+    return {str(m): dict(v) for m, v in tpls.items() if isinstance(v, dict)} if isinstance(tpls, dict) else {}
+
+
 class WorldSpawner:
     def __init__(self, spec, model):
         self.spec, self.model = spec, model
@@ -131,6 +179,11 @@ class WorldSpawner:
         # replacing the project's block on the training worlds.
         self.overrides = {}
         self.order = tuple(spec.spawn_order)
+        # Section 308.9: random spawn choice per world (set_random).
+        self.random_share = 0.0
+        self.random_menu = []
+        self.random_groups = ()
+        self.last_choices = None
 
     def _prepare(self, cfg):
         mode = str(cfg.get("mode", "")).strip().lower()
@@ -168,6 +221,36 @@ class WorldSpawner:
         self.order = spawn_order(self.spec.spawn_order,
                                  {fid: self.config(fid) or {} for fid in self.spec.spawn_order})
         return True
+
+    def set_random(self, share, groups, menu):
+        """Random spawn choice (section 308.9): in a share ``share`` of the
+        worlds each group of ``groups`` (ids) draws, independently of the
+        others, one start pattern uniformly from its options - its own
+        spawn block (``config``: a dropdown's or the project's) and each
+        ``menu`` entry ([(name, block)], ``random_spawn_menu``) that is not
+        the same block. Other worlds and groups keep their own block.
+        Returns True when anything changed."""
+        share = float(share)
+        if not 0.0 <= share <= 1.0:
+            raise ValueError("random spawn share must be in [0, 1]")
+        groups = tuple(f for f in self.model.ids if f in set(groups or ()))
+        menu = [(str(n), dict(c)) for n, c in (menu or [])]
+        if (share, groups, menu) == (self.random_share, self.random_groups, self.random_menu):
+            return False
+        for _name, cfg in menu:
+            self._prepare(cfg)
+        self.random_share, self.random_groups, self.random_menu = share, groups, menu
+        return True
+
+    def random_options(self, fid):
+        """[(name, block)] a random choice of ``fid`` draws from; the first
+        is its own block (name "own")."""
+        own = self.config(fid) or {}
+        out = [("own", own)]
+        for name, cfg in self.random_menu:
+            if dict(cfg) != dict(own):
+                out.append((name, cfg))
+        return out
 
     def _filter(self, sigma):
         if sigma not in self.filters:
@@ -267,7 +350,10 @@ class WorldSpawner:
         return self.finalize(uniform(keys, shape, 401, self.wide))
 
     def biomass(self, world_keys):
-        fields = {}
+        """Start biomass [world, G, C]. With a random spawn choice on
+        (``set_random``) ``last_choices`` holds {fid: [world] option index
+        into ``random_options(fid)``, -1 = a world without the choice}."""
+        fields, choices = {}, {}
         for fid in self.order:
             index = self.model.ids.index(fid)
             keys = fold_in(world_keys, index + 1000)
@@ -280,16 +366,32 @@ class WorldSpawner:
                 total = torch.round(total).clamp(lo, hi)
             else:
                 total = torch.floor(u * (hi - lo + 1)) + lo
-            cfg = self.config(fid)
-            if cfg and str(cfg.get("mode", "uniform")).strip():
-                if cfg.get("seed") is not None:
-                    keys = torch.full_like(keys, int(cfg["seed"]))
-                weights = self.weights(cfg, keys, fields, fid)
-                fields[fid] = distribute_with_floor(weights * self.allowed, total, self.floors[fid])
+            if self.random_share > 0.0 and fid in self.random_groups:
+                options = self.random_options(fid)
+                drawn = [self._field(cfg, keys, total, fields, fid, world_keys.numel())
+                         for _name, cfg in options]
+                ck = fold_in(fold_in(world_keys, 92001), 100 + index)
+                on = uniform(fold_in(world_keys, 92001), (), 0, self.wide) < self.random_share
+                pick = torch.floor(uniform(ck, (), 0, self.wide) * len(options)).long()
+                pick = torch.where(on, pick.clamp_(0, len(options) - 1), torch.zeros_like(pick))
+                fields[fid] = torch.stack(drawn, 1).gather(
+                    1, pick[:, None, None].expand(-1, 1, self.C))[:, 0]
+                choices[fid] = torch.where(on, pick, torch.full_like(pick, -1))
             else:
-                allocated = legacy_clusters(keys, total, self.floors[fid], self.n_eligible)
-                fields[fid] = torch.zeros((world_keys.numel(), self.C), dtype=self.wide, device=self.device).index_copy(1, self.eligible, allocated)
+                fields[fid] = self._field(self.config(fid), keys, total, fields, fid,
+                                          world_keys.numel())
+        self.last_choices = choices
         return torch.stack([fields[f] for f in self.model.ids], dim=1).float()
+
+    def _field(self, cfg, keys, total, fields, fid, batch):
+        """One group's start field [world, cell] under spawn block ``cfg``."""
+        if cfg and str(cfg.get("mode", "uniform")).strip():
+            if cfg.get("seed") is not None:
+                keys = torch.full_like(keys, int(cfg["seed"]))
+            weights = self.weights(cfg, keys, fields, fid)
+            return distribute_with_floor(weights * self.allowed, total, self.floors[fid])
+        allocated = legacy_clusters(keys, total, self.floors[fid], self.n_eligible)
+        return torch.zeros((batch, self.C), dtype=self.wide, device=self.device).index_copy(1, self.eligible, allocated)
 
     def reserves(self, biomass, pair_keys, light_start=None):
         """Start reserve per world: a fill drawn around u (section 43) or,
@@ -346,6 +448,92 @@ class WorldSpawner:
         patch = (noise > threshold) & on[:, None]
         factor = torch.where(patch, level[:, None], torch.ones_like(noise))
         return factor[:, None, :].float()
+
+    # Section 308.6: the eight edge-start places, (side or corner) - the
+    # band's distance is to that side's cells or that corner's cell.
+    EDGE_PLACES = ("n", "e", "s", "w", "nw", "ne", "sw", "se")
+
+    def edge_distances(self):
+        """[8, H, W] distance in cells to each place of ``EDGE_PLACES``
+        (a side as its whole line of cells, a corner as its cell)."""
+        if not hasattr(self, "_edge_distances"):
+            H, W, yy, xx = self.H, self.W, self.yy, self.xx
+            sides = [yy, (W - 1) - xx, (H - 1) - yy, xx]
+            corners = [torch.hypot(yy - r, xx - c)
+                       for r, c in ((0, 0), (0, W - 1), (H - 1, 0), (H - 1, W - 1))]
+            self._edge_distances = torch.stack(sides + corners)
+        return self._edge_distances
+
+    def edge_points(self, place, position):
+        """(row, col) of each world's edge point: a corner's cell, or for a
+        side the point at ``position`` (0-1) along it, from the west / north
+        end (row 0 is north). ``place`` [world] indexes ``EDGE_PLACES``."""
+        H1, W1 = float(self.H - 1), float(self.W - 1)
+        pr, pc = position * H1, position * W1
+        zero, h, w = torch.zeros_like(pr), torch.full_like(pr, H1), torch.full_like(pr, W1)
+        rows = torch.stack([zero, pr, h, pr, zero, zero, h, h], -1)
+        cols = torch.stack([pc, w, pc, zero, zero, w, zero, w], -1)
+        pick = place[:, None]
+        return rows.gather(-1, pick)[:, 0], cols.gather(-1, pick)[:, 0]
+
+    def edge_starts(self, biomass, world_keys, share, rows, group_share=0.5,
+                    length=(0.7, 2.0), mix=(0.75, 1.0), prey_share=0.5,
+                    prey_level=(0.3, 0.8)):
+        """Edge starts of the training worlds (sections 308.6, 308.8).
+
+        A share ``share`` of the worlds is an edge world. In it each group
+        of ``rows`` (the decision makers whose edges are closed, section
+        266.16) is moved, with probability ``group_share`` and independently
+        of the others, towards a point on the grid edge: one of the eight
+        places (four sides, four corners), a side's point at a position
+        drawn uniformly along it (``edge_points``). B' = (1 - m) B + m T w,
+        w = exp(-d / lambda) on the allowed cells normalised to 1, d the
+        distance in cells to the point, lambda log-uniform in ``length``
+        (0.7 - 2 cells), m uniform in ``mix`` (0.75 - 1), T the group's
+        drawn total (kept): on 30 x 30 the benthivores' top cell has a
+        median ~230 t and a third of the draws reach 300 t (fix110's corner
+        clump: 400 - 1000 t a cell; section 308.8). In a share ``prey_share`` of the edge worlds the
+        benthic prey under the patches is drawn down too: a factor
+        1 - (1 - level) exp(-d / lambda) (the lowest over the moved groups),
+        level uniform in ``prey_level`` - the state of fix110's ten-year
+        corner (prey 0.6-0.8 of the other shallow beds). Training-world
+        design: a policy that never meets the wall cannot learn to turn
+        there (fix110 benthivores, section 308). Keyed by the world, so
+        every candidate on a world sees the same start.
+
+        Returns (biomass [world, G, C], prey factor [world, 1, C], place
+        [world, len(rows)] as an index into ``EDGE_PLACES``, -1 = none).
+        """
+        batch = world_keys.numel()
+        keys = fold_in(world_keys, 91001)
+        on = uniform(keys, (), 0, self.wide) < float(share)
+        yy, xx = self.yy.reshape(1, -1), self.xx.reshape(1, -1)
+        allowed = self.allowed.to(self.wide)
+        out = biomass.clone()
+        factor = torch.ones((batch, 1, self.C), dtype=self.wide, device=self.device)
+        prey = on & (uniform(keys, (), 1, self.wide) < float(prey_share))
+        level = prey_level[0] + (prey_level[1] - prey_level[0]) * uniform(keys, (), 2, self.wide)
+        places = torch.full((batch, len(rows)), -1, dtype=torch.long, device=self.device)
+        log_lo, log_hi = math.log(float(length[0])), math.log(float(length[1]))
+        for k, g in enumerate(rows):
+            gk = fold_in(keys, 100 + int(g))
+            moved = on & (uniform(gk, (), 0, self.wide) < float(group_share))
+            place = torch.floor(uniform(gk, (), 1, self.wide) * 8).long().clamp_(0, 7)
+            lam = torch.exp(log_lo + (log_hi - log_lo) * uniform(gk, (), 2, self.wide))
+            m = mix[0] + (mix[1] - mix[0]) * uniform(gk, (), 3, self.wide)
+            r0, c0 = self.edge_points(place, uniform(gk, (), 4, self.wide))
+            band = torch.exp(-torch.hypot(yy - r0[:, None], xx - c0[:, None]) / lam[:, None])
+            w = band * allowed
+            w = w / w.sum(-1, keepdim=True).clamp_min(1e-30)
+            b = biomass[:, g].to(self.wide)
+            total = b.sum(-1, keepdim=True)
+            new = (1 - m[:, None]) * b + m[:, None] * total * w
+            out[:, g] = torch.where(moved[:, None], new, b).to(out.dtype)
+            drawn = 1 - (1 - level[:, None]) * band
+            factor = torch.minimum(factor, torch.where((moved & prey)[:, None], drawn,
+                                                       torch.ones_like(drawn))[:, None, :])
+            places[:, k] = torch.where(moved, place, places[:, k])
+        return out, factor.float(), places
 
     def light_starts(self, world_keys):
         """Year tick each world starts at (daylight calendar, section 137).

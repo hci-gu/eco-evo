@@ -43,7 +43,7 @@ fabricates mass.
 | `inference.py` | Runs trained policies from `results/<run-name>/policy_<fg>.pth`. |
 | `run_mareld_mvp.py`, `compare_scenarios.py` | Old smoke scripts on the library-only world (random actions, not `mareld2.yaml`); `compare_scenarios.py` compares two seeds. |
 | `mareld2.yaml` | Project manifest (`--project` value). An optional top-level `library:` key (relative to the manifest) replaces `fgconfig/fg_library.yaml` for every run built from it; an explicit library path (probes, `train_gpu.py --library`) still wins (section 232.5). |
-| `fgconfig/fgconfig.py` | Tkinter GUI for FGs, impacts, matrices, spawn strategies. Edits every library and manifest key the engines read (275.8-275.9: encounter lists, member species, the reserve eaten with the prey, the grazing non decision makers' pairs, the nutrient block; 276: relocation speed); Apply refuses what the loader refuses. |
+| `fgconfig/fgconfig.py` | Tkinter GUI for FGs, impacts, matrices, spawn strategies. Edits every library and manifest key the engines read (275.8-275.9: encounter lists, member species, the reserve eaten with the prey, the grazing non decision makers' pairs, the nutrient block; 276: relocation speed; 308.10: the spawn mix's Random choice box and share); Apply refuses what the loader refuses. |
 | `fgconfig/fg_library.yaml` | Central biological library (species/interaction/impact definitions). |
 | `lib/environments/ecosystem.py` | Re-exports `EcosystemEnvironment` - "The Tick" pipeline, heavily optimised, in `lib/environments/ecosystem_env/environment.py`. |
 | `lib/runners/trainer.py`, `parallel_worker.py` | ARS trainer (CRN, ARS-V2 obs-norm, top-b) + multiprocessing worker. |
@@ -813,6 +813,11 @@ python3 tools/probes/probe_diets.py results/<run-name> [--evaluation N]
 # lib/diagnostics/crowding.py; 1 = even) per long-run probe against NS-IBTS
 # GOV field values (benthivores 3.1, whiting 4.1, water column 5.0). Diagnostic only.
 python3 tools/probes/probe_crowding.py results/<run-name> [--last N]
+# Section 308.7: do frozen policies leave a grid corner? Each closed-edge group
+# started in a corner band of the inference world, followed --days on the
+# tensor engine (ring share vs area, near-corner share, max cell, Lloyd).
+python3 tools/probes/wall_probe.py results/<run-name> \
+    --impact-scale bottom_trawling=0 --impact-scale pelagic_trawling=0
 # Plankton against SHARK A17 (section 205): column biomass at A17's
 # measured C:chl, surface carbon, nitrate, zooplankton, PP and f-ratio.
 python3 tools/probes/a17_score.py run results/<run-name>      # ~2 min
@@ -860,6 +865,28 @@ training worlds starts with depleted benthic patches, 5-30 % of the cells
 at 1-32 % of their biomass - a refuge group loses accessible tonnes - so
 the fish meet emptied beds and can learn to leave them; training-world
 design, not biology; 0 = off; section 223.12),
+`--edge-starts SHARE` (train_gpu.py, default 0 = off, 0.25 suggested:
+in that share of the worlds each closed-edge group (the fish) starts, with
+probability 0.5, in a patch at a corner or a drawn point along a side
+(exp(-d / lambda), lambda log-uniform 0.7-2 cells, share moved 0.75-1:
+top cells up to the corner clump's density), half of them on drawn-down benthic prey, so the
+policies meet the wall; fix110's benthivores drifted into the south-west
+corner over years 2-4 of an unfished run and never moved east off it;
+checkpoints stay valid; sections 308.5-308.8),
+`--spawn-mix SHARE` (train_gpu.py; absent = the manifest's
+`simulation_settings.spawn_mix.share`, 0.5 in `mareld2.yaml`; given, it
+overrides it; 0 = off): in that share of
+the worlds each group of the random set draws its start pattern uniformly
+from its own spawn and the manifest's `spawn_templates` of the uniform,
+perlin and colony modes (env_driven left out; today Uniform, Perlin12,
+PerlinPatchy, 25Colonies, Colonies10Wide, Colonies25Wide: start Lloyd ~1 to
+~17 on 30x30, the fish's own Perlin12 is ~1.1, the field 3.1-5.0); the set
+is the manifest's `spawn_mix.groups` (the five fish in `mareld2.yaml`; FG
+editor: a "Random choice" box above the Spawn Strategy's Mode, the share in
+Project Info), `--spawn-mix-groups`, or the training viewer's "Random
+choice" box above each panel's Mode dropdown (ticked from the manifest);
+training.jsonl `spawn_choices` (per group, each world's template, null =
+own); training-world design, checkpoints stay valid; section 308.9),
 `--mortality_multiplier FACTOR` (scales every FG's `natural_mortality`;
 `keep = 1 - FACTOR*rate`, needs `--mortality on`, section 88),
 `--no-mass-balance` (revert to the pre-116 growth term, which adds biomass

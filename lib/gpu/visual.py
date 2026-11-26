@@ -107,6 +107,8 @@ class GPUTrainingVisualizer:
                 # flag: the two cannot then disagree. Section 106.
                 tick_hours=getattr(builder, "tick_hours", LIBRARY_TICK_HOURS),
                 heatmap_norm=getattr(args, "norm", "rolling"),
+                # Section 308.9: the "Random choice" boxes, with --spawn-mix on.
+                spawn_random=getattr(trainer, "spawn_mix", 0.0) > 0.0,
             )
             if not self.viz.enabled:
                 self._disable()
@@ -118,6 +120,7 @@ class GPUTrainingVisualizer:
             self.spawn_templates = _load_spawn_templates(builder.project_path)
             self.viz.set_spawn_templates(self.spawn_templates)
             self.viz.set_spawn_defaults(_load_spawn_defaults(builder.project_path))
+            self.viz.set_spawn_random(getattr(trainer, "spawn_random_groups", ()))
             self.viz.set_save_dir(str(directory))
             self.viz.update_biomass(env.fgs, tick=0)
             history = Path(directory) / "biomass.jsonl"
@@ -204,6 +207,15 @@ class GPUTrainingVisualizer:
                 print(f"[viz] Training worlds now spawn with {label}.", flush=True)
         except Exception as error:
             print(f"[viz] Spawn override for training failed: {error!r}", flush=True)
+        try:
+            # Section 308.9: the "Random choice" boxes set the random set.
+            consume = getattr(self.viz, "consume_spawn_random_change", None)
+            if consume is not None and consume():
+                if trainer.set_spawn_random(self.viz.get_spawn_random()):
+                    label = ", ".join(trainer.spawn_random_groups) or "none"
+                    print(f"[viz] Random spawn choice now on: {label}.", flush=True)
+        except Exception as error:
+            print(f"[viz] Random spawn choice failed: {error!r}", flush=True)
         return self.training_spawn_overrides
 
     def train_step(self, trainer, targets, ticks, epoch):

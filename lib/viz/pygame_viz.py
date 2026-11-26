@@ -549,6 +549,9 @@ class _NullViz:
     def set_reward_label(self, *a, **kw): pass
     def get_spawn_overrides(self, *a, **kw): return {}
     def consume_spawn_change(self, *a, **kw): return False
+    def set_spawn_random(self, *a, **kw): pass
+    def get_spawn_random(self, *a, **kw): return []
+    def consume_spawn_random_change(self, *a, **kw): return False
     def pump_events(self): return True
     def pace_rollout(self): return True
     def wait_for_close(self, *a, **kw): pass
@@ -616,6 +619,7 @@ class LiveVisualizer:
         tick_hours: Optional[int] = None,
         capture: bool = True,
         heatmap_norm: str = "rolling",
+        spawn_random: bool = False,
     ):
         import pygame
         self._pg = pygame
@@ -1024,6 +1028,14 @@ class LiveVisualizer:
         self._spawn_defaults: Dict[str, str] = {}
         self._spawn_explicit_default: set = set()
         self._spawn_dirty: bool = False
+        # Section 308.9: the training viewer's "Random choice" box above
+        # each Mode dropdown - the FGs whose start pattern train_gpu draws
+        # per world from the spawn templates (``--spawn-mix``). Only in
+        # train mode and only when the trainer offers it.
+        self._spawn_random_on: bool = bool(spawn_random) and mode == "train"
+        self._spawn_random: set = set()
+        self._spawn_random_dirty: bool = False
+        self._spawn_random_rects: list = []
         # Hit-rects per FG, registrerade varje frame av _draw_one_heatmap:
         # (rect, fid, which) där which='mode'|'template'.
         self._spawn_dropdown_rects: list = []
@@ -1106,7 +1118,7 @@ class LiveVisualizer:
         cbar_h = 16  # colorbar strip (gradient + 0/max labels)
         # Två extra rader under colorbaren: "Mode: …" och "Tpl: …".
         # Varje rad ~14 px text + 2 px padding ⇒ 32 px för båda.
-        spawn_dd_h = 34
+        spawn_dd_h = 34 + (17 if self._spawn_random_on else 0)
         pad = 8
         # The natural layout: ``self._cols`` panels of the reference cell
         # size per row. It sets the initial window; after that
@@ -1918,6 +1930,20 @@ class LiveVisualizer:
         """Return True iff a spawn dropdown was changed since the last call."""
         d = bool(self._spawn_dirty)
         self._spawn_dirty = False
+        return d
+
+    def set_spawn_random(self, fids) -> None:
+        """Tick the "Random choice" box of exactly ``fids`` (section 308.9)."""
+        self._spawn_random = {str(f) for f in (fids or ()) if str(f) in self.fg_ids}
+
+    def get_spawn_random(self) -> list:
+        """The FGs whose "Random choice" box is ticked, in panel order."""
+        return [f for f in self.fg_ids if f in self._spawn_random]
+
+    def consume_spawn_random_change(self) -> bool:
+        """True iff a "Random choice" box was toggled since the last call."""
+        d = bool(self._spawn_random_dirty)
+        self._spawn_random_dirty = False
         return d
 
     def set_reward_label(self, text: Optional[str]) -> None:
@@ -3221,6 +3247,12 @@ class LiveVisualizer:
         for rect, title in self._hm_header_rects:
             if self._hit_rect(rect, pos):
                 self._toggle_group(title)
+                return
+        # Section 308.9: a "Random choice" box toggles its FG.
+        for rect, fid in self._spawn_random_rects:
+            if self._hit_rect(rect, pos):
+                self._spawn_random ^= {fid}
+                self._spawn_random_dirty = True
                 return
         # Spawn-dropdown-rektanglar (Mode / Tpl per FG).
         for rect, fid, which in self._spawn_dropdown_rects:
@@ -4616,6 +4648,7 @@ class LiveVisualizer:
         self._slider_rects = []
         # Samma sak för spawn-dropdown-rektanglarna.
         self._spawn_dropdown_rects = []
+        self._spawn_random_rects = []
         self._member_rects = []
         self._hm_header_rects = []
         self._impact_restart_rects = []
@@ -4640,7 +4673,8 @@ class LiveVisualizer:
                     continue
                 self._screen.set_clip(span)
                 n0 = (len(self._slider_rects), len(self._spawn_dropdown_rects),
-                      len(self._member_rects), len(self._impact_restart_rects))
+                      len(self._member_rects), len(self._impact_restart_rects),
+                      len(self._spawn_random_rects))
                 if impacts:
                     self._draw_one_impact_map(fid, px, py)
                 else:
@@ -4649,7 +4683,8 @@ class LiveVisualizer:
                 for name, start in zip(("_slider_rects",
                                         "_spawn_dropdown_rects",
                                         "_member_rects",
-                                        "_impact_restart_rects"), n0):
+                                        "_impact_restart_rects",
+                                        "_spawn_random_rects"), n0):
                     rects = getattr(self, name)
                     rects[start:] = self._clip_hit_rects(
                         rects[start:], (span.top, span.height))
@@ -4665,6 +4700,7 @@ class LiveVisualizer:
         self._member_rects = self._clip_hit_rects(self._member_rects)
         self._impact_restart_rects = self._clip_hit_rects(
             self._impact_restart_rects)
+        self._spawn_random_rects = self._clip_hit_rects(self._spawn_random_rects)
         self._hm_header_rects = self._clip_hit_rects(self._hm_header_rects)
         self._draw_hm_scrollbar()
 
@@ -5766,6 +5802,24 @@ class LiveVisualizer:
         dd_y0 = cbar_y + cbar_strip_h + 1 + self._font.get_height() + 4
         dd_w = cbar_w
         dd_row_h = 15
+        if self._spawn_random_on:
+            # Section 308.9: the "Random choice" box above the Mode row.
+            b = self._FOLD_BOX
+            box_col = (150, 150, 170) if not dim else (80, 80, 92)
+            lbl_col = (210, 210, 220) if not dim else (110, 110, 120)
+            bx, by = hm_x, dd_y0 + (dd_row_h - b) // 2
+            pg.draw.rect(self._screen, (36, 36, 46), (bx, by, b, b))
+            pg.draw.rect(self._screen, box_col, (bx, by, b, b), 1)
+            if fid in self._spawn_random:
+                pg.draw.lines(self._screen, (215, 215, 230), False,
+                              [(bx + 2, by + b // 2), (bx + b // 2 - 1, by + b - 3),
+                               (bx + b - 3, by + 2)], 2)
+            lbl = self._font.render(self._t("Random choice"), True, lbl_col)
+            self._screen.blit(lbl, (bx + b + 5, dd_y0))
+            self._spawn_random_rects.append(
+                ((bx - 2, dd_y0 - 1, min(dd_w + 2, b + 5 + lbl.get_width() + 4),
+                  dd_row_h + 1), fid))
+            dd_y0 += dd_row_h + 2
         ov = self._spawn_overrides.get(fid, {})
         cur_mode_raw = ov.get("mode")
         cur_tpl = ov.get("template")
